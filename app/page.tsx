@@ -150,6 +150,16 @@ export default function Page() {
               />
             </div>
           </div>
+          <div className="mt-6 flex justify-start">
+            <button
+              onClick={onSubmit}
+              disabled={loading || !birthDate || !birthTime || !birthplace}
+              className="rounded-xl bg-rose-600 px-5 py-2 text-sm font-medium text-white 
+                        shadow hover:bg-rose-700 disabled:bg-rose-300 disabled:cursor-not-allowed"
+            >
+              {loading ? '计算中…' : '开始排盘'}
+            </button>
+          </div>
         </div>
 
 
