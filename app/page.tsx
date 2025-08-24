@@ -10,7 +10,7 @@ type FourPillars = { year: string[]; month: string[]; day: string[]; hour: strin
 type DayunItem = { age: number; start_year: number; pillar: string[] };
 type Mingpan = { four_pillars: FourPillars; dayun: DayunItem[] };
 
-const API = process.env.NEXT_PUBLIC_API_BASE;
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
 
 export default function Page() {
   const router = useRouter();
@@ -31,19 +31,24 @@ export default function Page() {
   // 提交到后端进行排盘
   const onSubmit = async () => {
     setError(null);
-    if (!API) { setError('缺少 NEXT_PUBLIC_API_BASE 环境变量'); return; }
     setLoading(true);
     try {
-      const res = await fetch(`/bazi/calc_paipan`, {
+      // ✅ 如果配置了 NEXT_PUBLIC_API_BASE，就用它直连后端；
+      // ✅ 否则默认走同域反代的 /api 前缀（Nginx -> 127.0.0.1:8000）
+      const endpoint = API_BASE
+        ? `${API_BASE}/bazi/calc_paipan`
+        : `/api/bazi/calc_paipan`;
+  
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           gender,
-          calendar,              // 'gregorian' / 'lunar'
-          birth_date: birthDate, // 'YYYY-MM-DD'
-          birth_time: birthTime, // 'HH:MM'
-          birthplace,            // 城市名
-          use_true_solar: true,  // 真太阳时
+          calendar,
+          birth_date: birthDate,
+          birth_time: birthTime,
+          birthplace,
+          use_true_solar: true,
         }),
       });
       if (!res.ok) {

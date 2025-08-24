@@ -8,29 +8,29 @@ type FourPillars = { year: string[]; month: string[]; day: string[]; hour: strin
 type DayunItem = { age: number; start_year: number; pillar: string[] };
 type Paipan = { four_pillars: FourPillars; dayun: DayunItem[] };
 
-const API = process.env.NEXT_PUBLIC_API_BASE;
+// 规范化 API 基址；为空则表示走同域反代 /api
+const RAW_API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
+const API_BASE = RAW_API_BASE.replace(/\/+$/, '');
+const api = (path: string) => (API_BASE ? `${API_BASE}${path}` : `/api${path}`);
 
 // 更健壮地从任意结构里提取首条回复
 function pickReply(d: unknown): string {
-    if (!d || typeof d !== 'object') return '';
-  
-    const obj = d as Record<string, unknown>;
-  
-    if (typeof obj.reply === 'string') return obj.reply;
-  
-    if (
-      typeof obj.data === 'object' &&
-      obj.data !== null &&
-      typeof (obj.data as Record<string, unknown>).reply === 'string'
-    ) {
-      return (obj.data as Record<string, unknown>).reply as string;
-    }
-  
-    if (typeof obj.message === 'string') return obj.message;
-    if (typeof obj.content === 'string') return obj.content;
-  
-    return '';
+  if (!d || typeof d !== 'object') return '';
+  const obj = d as Record<string, unknown>;
+  if (typeof obj.reply === 'string') return obj.reply;
+
+  const dataField = obj.data as unknown;
+  if (
+    dataField &&
+    typeof dataField === 'object' &&
+    typeof (dataField as Record<string, unknown>).reply === 'string'
+  ) {
+    return (dataField as Record<string, unknown>).reply as string;
   }
+  if (typeof obj.message === 'string') return obj.message;
+  if (typeof obj.content === 'string') return obj.content;
+  return '';
+}
 
 export default function ChatPage() {
   const router = useRouter();
@@ -47,11 +47,10 @@ export default function ChatPage() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [msgs, loading, booting]);
 
-  // 进入页面：立刻显示 loading；优先用 bootstrap_reply，否则无条件调用 /chat/start
+  // 进入页面：立刻显示 loading；优先用 bootstrap_reply，否则用 paipan 发起 /chat/start
   useEffect(() => {
     let alive = true;
     (async () => {
-      if (!API) { setErr('缺少 NEXT_PUBLIC_API_BASE 环境变量'); return; }
       setBooting(true);
 
       // 1) 若首页已提前放了首条回复（bootstrap_reply），优先展示
@@ -78,7 +77,7 @@ export default function ChatPage() {
 
       try {
         const paipan: Paipan = JSON.parse(paipanRaw);
-        const res = await fetch(`/chat/start`, {
+        const res = await fetch(api('/chat/start'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ paipan }),
@@ -94,7 +93,7 @@ export default function ChatPage() {
           setConversationId(cid);
         }
 
-        // ✅ 更宽松地提取后端返回的首条解读
+        // 提取首条解读
         const first = pickReply(data).trim();
         setMsgs([{ role: 'assistant', content: first || '（后端未返回解读内容）' }]);
       } catch (e: unknown) {
@@ -112,7 +111,6 @@ export default function ChatPage() {
   }, [conversationId, input, loading, booting]);
 
   const send = async () => {
-    if (!API) { setErr('缺少 NEXT_PUBLIC_API_BASE 环境变量'); return; }
     if (!conversationId) { setErr('缺少会话，请返回首页重新创建。'); return; }
     if (!input.trim()) return;
 
@@ -123,7 +121,7 @@ export default function ChatPage() {
     setLoading(true);
 
     try {
-      const res = await fetch(`/chat`, {
+      const res = await fetch(api('/chat'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ conversation_id: conversationId, message: userMsg.content }),
