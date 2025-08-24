@@ -34,7 +34,7 @@ export default function Page() {
     if (!API) { setError('缺少 NEXT_PUBLIC_API_BASE 环境变量'); return; }
     setLoading(true);
     try {
-      const res = await fetch(`${API}/bazi/calc_paipan`, {
+      const res = await fetch(`/bazi/calc_paipan`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -95,7 +95,8 @@ export default function Page() {
               <select
                 value={gender}
                 onChange={(e) => setGender(e.target.value as Gender)}
-                className="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm
+                          text-stone-900 bg-white placeholder-stone-500"
               >
                 <option value="男">男</option>
                 <option value="女">女</option>
@@ -107,7 +108,8 @@ export default function Page() {
               <select
                 value={calendar}
                 onChange={(e) => setCalendar(e.target.value as Calendar)}
-                className="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm
+                          text-stone-900 bg-white placeholder-stone-500"
               >
                 <option value="gregorian">公历</option>
                 <option value="lunar">农历</option>
@@ -120,7 +122,8 @@ export default function Page() {
                 type="date"
                 value={birthDate}
                 onChange={(e) => setBirthDate(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm
+                          text-stone-900 bg-white placeholder-stone-500"
               />
             </div>
 
@@ -130,7 +133,8 @@ export default function Page() {
                 type="time"
                 value={birthTime}
                 onChange={(e) => setBirthTime(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm
+                          text-stone-900 bg-white placeholder-stone-500"
               />
             </div>
 
@@ -141,28 +145,13 @@ export default function Page() {
                 value={birthplace}
                 onChange={(e) => setBirthplace(e.target.value)}
                 placeholder="例如：广东阳春"
-                className="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm
+                          text-stone-900 bg-white placeholder-stone-500"
               />
             </div>
           </div>
-
-          <div className="mt-4 flex items-center gap-3">
-            <button
-              onClick={onSubmit}
-              disabled={loading || !birthDate || !birthTime || !birthplace}
-              className="rounded-xl bg-stone-900 px-4 py-2 text-sm text-white disabled:opacity-50"
-            >
-              {loading ? '计算中…' : '提交计算'}
-            </button>
-            {error && <span className="text-sm text-rose-600">错误：{error}</span>}
-          </div>
-
-          {birthdayAdjusted && (
-            <div className="mt-3 text-sm text-stone-600">
-              已采用时间（真太阳时/本地时）：<span className="font-medium text-stone-800">{birthdayAdjusted}</span>
-            </div>
-          )}
         </div>
+
 
         {/* ===== 八字排盘卡片（基于后端返回渲染） ===== */}
         <div className="rounded-3xl bg-white/90 shadow ring-1 ring-black/5">

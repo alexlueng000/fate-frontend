@@ -78,7 +78,7 @@ export default function ChatPage() {
 
       try {
         const paipan: Paipan = JSON.parse(paipanRaw);
-        const res = await fetch(`${API}/chat/start`, {
+        const res = await fetch(`/chat/start`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ paipan }),
@@ -123,7 +123,7 @@ export default function ChatPage() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API}/chat`, {
+      const res = await fetch(`/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ conversation_id: conversationId, message: userMsg.content }),
