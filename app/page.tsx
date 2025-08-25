@@ -48,7 +48,7 @@ export default function Page() {
           birth_date: birthDate,
           birth_time: birthTime,
           birthplace,
-          use_true_solar: false,
+          use_true_solar: true,
         }),
       });
       if (!res.ok) {
