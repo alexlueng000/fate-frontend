@@ -1,231 +1,340 @@
+// app/page.tsx
 'use client';
-
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-type Gender = '男' | '女';
-type Calendar = 'gregorian' | 'lunar';
-
-type FourPillars = { year: string[]; month: string[]; day: string[]; hour: string[] };
-type DayunItem = { age: number; start_year: number; pillar: string[] };
-type Mingpan = { four_pillars: FourPillars; dayun: DayunItem[] };
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
-
-export default function Page() {
+export default function LandingPage() {
   const router = useRouter();
+  const [date, setDate] = useState('');
+  const [time, setTime] = useState('');
+  const [place, setPlace] = useState('');
 
-  // 表单
-  const [gender, setGender] = useState<Gender>('男');
-  const [calendar, setCalendar] = useState<Calendar>('gregorian');
-  const [birthDate, setBirthDate] = useState('');
-  const [birthTime, setBirthTime] = useState('');
-  const [birthplace, setBirthplace] = useState('');
-
-  // 状态
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [birthdayAdjusted, setBirthdayAdjusted] = useState<string | null>(null);
-  const [mingpan, setMingpan] = useState<Mingpan | null>(null);
-
-  // 提交到后端进行排盘
-  const onSubmit = async () => {
-    setError(null);
-    setLoading(true);
-    try {
-      // ✅ 如果配置了 NEXT_PUBLIC_API_BASE，就用它直连后端；
-      // ✅ 否则默认走同域反代的 /api 前缀（Nginx -> 127.0.0.1:8000）
-      const endpoint = API_BASE
-        ? `${API_BASE}/bazi/calc_paipan`
-        : `/api/bazi/calc_paipan`;
-  
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          gender,
-          calendar,
-          birth_date: birthDate,
-          birth_time: birthTime,
-          birthplace,
-          use_true_solar: true,
-        }),
-      });
-      if (!res.ok) {
-        const t = await res.text();
-        throw new Error(t || `HTTP ${res.status}`);
-      }
-      const data = await res.json();
-      setBirthdayAdjusted(data.birthday_adjusted || null);
-      setMingpan(data.mingpan || null);
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setLoading(false);
-    }
+  const onSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const params = new URLSearchParams({
+      birth_date: date || '',
+      birth_time: time || '12:00',
+      birth_place: place || '',
+      timezone: '+08:00',
+    });
+    router.push(`/paipan?${params.toString()}`);
   };
-
-  // 跳到 /chat：只存命盘，立刻跳转。/chat 页面会显示“正在解读中…”并调用 /chat/start
-  const goChat = () => {
-    if (!mingpan) {
-      alert('请先提交计算，生成排盘结果。');
-      return;
-    }
-    try {
-      sessionStorage.setItem('paipan', JSON.stringify({
-        four_pillars: mingpan.four_pillars,
-        dayun: mingpan.dayun,
-      }));
-      // 清掉旧的会话（可选，避免串会话）
-      sessionStorage.removeItem('conversation_id');
-      sessionStorage.removeItem('bootstrap_reply');
-      router.push('/chat');
-    } catch (e: unknown) {
-      alert(e instanceof Error ? e.message : String(e));
-    }
-  };
-
-  const j = (x?: string[]) => (x && x.length ? x.join('') : '（空）');
 
   return (
-    <main className="min-h-screen bg-[#f6f1e8] p-6 sm:p-10">
-      <div className="mx-auto w-full max-w-3xl space-y-6">
-
-        {/* ===== 信息输入表单 ===== */}
-        <div className="rounded-3xl bg-white/90 p-6 shadow ring-1 ring-black/5">
-          <h2 className="text-lg font-semibold text-stone-800">基本信息</h2>
-          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <label className="text-sm text-stone-600">性别</label>
-              <select
-                value={gender}
-                onChange={(e) => setGender(e.target.value as Gender)}
-                className="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm
-                          text-stone-900 bg-white placeholder-stone-500"
-              >
-                <option value="男">男</option>
-                <option value="女">女</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="text-sm text-stone-600">历法</label>
-              <select
-                value={calendar}
-                onChange={(e) => setCalendar(e.target.value as Calendar)}
-                className="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm
-                          text-stone-900 bg-white placeholder-stone-500"
-              >
-                <option value="gregorian">公历</option>
-                <option value="lunar">农历</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="text-sm text-stone-600">出生日期</label>
-              <input
-                type="date"
-                value={birthDate}
-                onChange={(e) => setBirthDate(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm
-                          text-stone-900 bg-white placeholder-stone-500"
-              />
-            </div>
-
-            <div>
-              <label className="text-sm text-stone-600">出生时间</label>
-              <input
-                type="time"
-                value={birthTime}
-                onChange={(e) => setBirthTime(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm
-                          text-stone-900 bg-white placeholder-stone-500"
-              />
-            </div>
-
-            <div className="sm:col-span-2">
-              <label className="text-sm text-stone-600">出生地</label>
-              <input
-                type="text"
-                value={birthplace}
-                onChange={(e) => setBirthplace(e.target.value)}
-                placeholder="例如：广东阳春"
-                className="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm
-                          text-stone-900 bg-white placeholder-stone-500"
-              />
-            </div>
-          </div>
-          <div className="mt-6 flex justify-start">
-            <button
-              onClick={onSubmit}
-              disabled={loading || !birthDate || !birthTime || !birthplace}
-              className="rounded-xl bg-rose-600 px-5 py-2 text-sm font-medium text-white 
-                        shadow hover:bg-rose-700 disabled:bg-rose-300 disabled:cursor-not-allowed"
-            >
-              {loading ? '计算中…' : '开始排盘'}
-            </button>
-          </div>
-        </div>
-
-
-        {/* ===== 八字排盘卡片（基于后端返回渲染） ===== */}
-        <div className="rounded-3xl bg-white/90 shadow ring-1 ring-black/5">
-          <div className="flex items-center justify-between px-6 py-5">
-            <h1 className="text-xl font-semibold tracking-wide text-stone-800">八字排盘</h1>
-            <button
-              type="button"
-              onClick={goChat}
-              disabled={!mingpan}
-              className="rounded-full bg-rose-50 px-3 py-1.5 text-sm text-rose-600 ring-1 ring-rose-100 disabled:opacity-50"
-              title={!mingpan ? '请先提交计算' : '跳转到对话页'}
-            >
-              💬 咨询解读
-            </button>
-          </div>
-
-          <div className="px-6 pb-6">
-            {/* 四柱表（仅展示天干；地支/长生可扩展） */}
-            <div className="overflow-hidden rounded-2xl ring-1 ring-stone-200">
-              <table className="w-full border-collapse text-center text-[15px]">
-                <thead className="bg-stone-50 text-stone-600">
-                  <tr>
-                    {['四柱','年柱','月柱','日柱','时柱'].map((h) => (
-                      <th key={h} className="px-3 py-2.5 font-semibold">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="text-stone-800">
-                  <tr className="border-t border-stone-200">
-                    <td className="px-3 py-3">天干</td>
-                    <td className="px-3 py-3">{j(mingpan?.four_pillars.year)}</td>
-                    <td className="px-3 py-3">{j(mingpan?.four_pillars.month)}</td>
-                    <td className="px-3 py-3">{j(mingpan?.four_pillars.day)}</td>
-                    <td className="px-3 py-3">{j(mingpan?.four_pillars.hour)}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            {/* 大运 */}
-            <section className="mt-5 rounded-2xl bg-stone-50 p-4">
-              <h2 className="mb-3 text-stone-700">大运</h2>
-              <div className="flex flex-wrap gap-3">
-                {(mingpan?.dayun || []).slice(0, 10).map((d, i) => (
-                  <div
-                    key={i}
-                    className="flex min-w-[88px] flex-col items-center gap-1 rounded-2xl bg-white px-4 py-2.5 text-stone-800 ring-1 ring-stone-200"
-                  >
-                    <div className="text-[15px]">{j(d.pillar)}</div>
-                    <div className="text-xs text-stone-500">{d.age}岁</div>
-                  </div>
-                ))}
-                {!mingpan && <div className="text-sm text-stone-500">提交后展示大运</div>}
-              </div>
-            </section>
-          </div>
-        </div>
-
+    <main className="min-h-screen bg-gradient-to-b from-neutral-950 via-neutral-900 to-neutral-950 text-neutral-50 antialiased">
+      {/* 顶部装饰光晕 */}
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <div className="absolute -top-24 left-1/2 h-72 w-[48rem] -translate-x-1/2 rounded-full bg-gradient-to-r from-indigo-500/20 via-fuchsia-500/20 to-cyan-500/20 blur-3xl" />
       </div>
+
+      {/* Header */}
+      <header className="container mx-auto px-4 py-6 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="h-8 w-8 rounded-xl bg-gradient-to-tr from-indigo-500 to-fuchsia-500" />
+          <span className="text-lg font-semibold tracking-wide">Bazi AI</span>
+        </div>
+        <nav className="hidden md:flex items-center gap-6 text-sm text-neutral-300">
+          <a href="#features" className="hover:text-white">功能</a>
+          <a href="#how" className="hover:text-white">流程</a>
+          <a href="#demo" className="hover:text-white">演示</a>
+          <a href="#testimonials" className="hover:text-white">口碑</a>
+          <a href="#cta" className="rounded-full bg-white/10 px-4 py-2 hover:bg-white/20 transition">立即体验</a>
+        </nav>
+      </header>
+
+      {/* Hero 首屏 */}
+      <section className="container mx-auto px-4 pt-4 pb-16 md:py-20">
+        <div className="grid items-center gap-10 md:grid-cols-2">
+          <div>
+            <h1 className="text-4xl md:text-6xl font-bold leading-tight tracking-tight">
+              一分钟，解锁你的<strong className="bg-gradient-to-r from-indigo-300 to-cyan-300 bg-clip-text text-transparent">专属八字命盘</strong>
+            </h1>
+            <p className="mt-4 text-neutral-300 text-lg">
+              融合传统命理与 AI 智能，为你解读
+              <span className="text-white"> 财运 / 感情 / 事业 </span>
+              等关键问题。
+            </p>
+
+            {/* 表单 */}
+            <form onSubmit={onSubmit} className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-md shadow-2xl">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="sm:col-span-1">
+                  <label className="mb-1 block text-sm text-neutral-300">出生日期</label>
+                  <input
+                    required
+                    type="date"
+                    className="w-full rounded-xl border border-white/10 bg-neutral-900/60 px-3 py-2.5 outline-none ring-0 focus:border-indigo-400"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                  />
+                </div>
+                <div className="sm:col-span-1">
+                  <label className="mb-1 block text-sm text-neutral-300">出生时间（可选）</label>
+                  <input
+                    type="time"
+                    placeholder="12:00"
+                    className="w-full rounded-xl border border-white/10 bg-neutral-900/60 px-3 py-2.5 outline-none ring-0 focus:border-indigo-400"
+                    value={time}
+                    onChange={(e) => setTime(e.target.value)}
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="mb-1 block text-sm text-neutral-300">出生地点（可选）</label>
+                  <input
+                    type="text"
+                    placeholder="深圳 / 上海 / 北京 …"
+                    className="w-full rounded-xl border border-white/10 bg-neutral-900/60 px-3 py-2.5 outline-none ring-0 focus:border-indigo-400"
+                    value={place}
+                    onChange={(e) => setPlace(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="mt-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <button
+                  type="submit"
+                  className="inline-flex justify-center rounded-xl bg-gradient-to-r from-indigo-500 to-cyan-500 px-6 py-3 text-base font-semibold text-white shadow-lg shadow-indigo-500/20 hover:brightness-110 transition"
+                >
+                  立即生成我的命盘
+                </button>
+                <a
+                  href="/chat"
+                  className="inline-flex justify-center rounded-xl border border-white/15 px-6 py-3 text-base font-semibold text-white/90 hover:bg-white/10 transition"
+                >
+                  先看看 AI 对话
+                </a>
+              </div>
+              <p className="mt-3 text-xs text-neutral-400">已服务 12,000+ 用户 · 数据全程加密，安全无忧</p>
+            </form>
+          </div>
+
+          {/* 右侧预览卡 */}
+          <div className="relative mx-auto w-full max-w-xl">
+            <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-indigo-500/30 to-cyan-500/30 blur-2xl" />
+            <div className="relative rounded-3xl border border-white/10 bg-neutral-900/60 p-6 shadow-2xl">
+              <div className="mb-4 text-sm text-neutral-400">AI 对话预览</div>
+              <div className="space-y-3">
+                <ChatBubble role="user" text="我最近适合换工作吗？" />
+                <ChatBubble role="ai" text="从你的命盘看，财星较旺，近期利于跳槽或合作，可重点关注沟通与资源整合。" />
+                <ChatBubble role="user" text="感情方面有什么建议？" />
+                <ChatBubble role="ai" text="情感星透显但受制，宜多倾听彼此需求；周三、周六更利于沟通与推进。" />
+              </div>
+              <div className="mt-6 h-32 rounded-xl border border-white/10 bg-[radial-gradient(ellipse_at_center,rgba(99,102,241,.15),rgba(0,0,0,0))] flex items-center justify-center text-sm text-neutral-400">
+                命盘图占位（四柱 / 五行强弱）
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 三步流程 */}
+      <section id="how" className="container mx-auto px-4 py-12 md:py-16">
+        <h2 className="text-center text-2xl md:text-3xl font-semibold">只需 3 步，立即获得专属解读</h2>
+        <div className="mx-auto mt-8 grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-3">
+          <Step title="输入出生信息" desc="选择日期、时间、地点" />
+          <Step title="AI 生成命盘" desc="一键生成四柱与摘要" />
+          <Step title="与 AI 对话" desc="解读财运 / 感情 / 事业" />
+        </div>
+      </section>
+
+      {/* Demo 区 */}
+      <section id="demo" className="container mx-auto px-4 py-12 md:py-16">
+        <div className="rounded-3xl border border-white/10 bg-white/5 p-6 md:p-10 backdrop-blur-md">
+          <h3 className="text-xl md:text-2xl font-semibold">即时 Demo</h3>
+          <p className="mt-2 text-neutral-300">看看它如何回答真实问题：</p>
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            <DemoCard
+              q="这周的财运如何把握？"
+              a="偏财星走强，宜主动沟通与谈判；避免情绪性决策，午后效率更高。"
+            />
+            <DemoCard
+              q="是否适合开始新的关系？"
+              a="感情星有机遇但有冲克，建议循序渐进，侧重建立稳定的节奏与边界。"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* 功能卡片 */}
+      <section id="features" className="container mx-auto px-4 py-12 md:py-16">
+        <h2 className="text-center text-2xl md:text-3xl font-semibold">核心功能与优势</h2>
+        <div className="mx-auto mt-8 grid max-w-6xl grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <FeatureCard title="智能排盘" desc="四柱八字，一键生成完整命盘。" />
+          <FeatureCard title="AI 解读" desc="随问随答，语义理解你的问题。" />
+          <FeatureCard title="历史记录" desc="自动保存与回看，持续洞察变化。" />
+          <FeatureCard title="隐私保护" desc="端到端加密存储，仅你本人可见。" />
+        </div>
+      </section>
+
+      {/* 口碑与背书 */}
+      <section id="testimonials" className="container mx-auto px-4 py-12 md:py-16">
+        <div className="mx-auto max-w-6xl">
+          <div className="grid gap-6 md:grid-cols-3">
+            <TestiCard
+              name="小A"
+              text="用了之后，对职业规划更有方向感！建议也能落到行动点。"
+            />
+            <TestiCard
+              name="小B"
+              text="AI 解读比我预想的更贴切，尤其把命盘和现实问题连起来。"
+            />
+            <TestiCard
+              name="小C"
+              text="界面清爽、上手很快。历史记录方便我复盘重要节点。"
+            />
+          </div>
+          <div className="mt-8 rounded-2xl border border-white/10 p-4 text-center text-sm text-neutral-400">
+            已有 <span className="text-white font-semibold">12,000+</span> 用户体验 · 获得多平台好评与推荐
+          </div>
+        </div>
+      </section>
+
+      {/* 徽章 */}
+      <section className="container mx-auto px-4 pb-6">
+        <div className="mx-auto max-w-6xl grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <Badge text="数据加密" />
+          <Badge text="隐私合规" />
+          <Badge text="高可用" />
+          <Badge text="7×24 支持" />
+        </div>
+      </section>
+
+      {/* 底部 CTA */}
+      <section id="cta" className="container mx-auto px-4 py-12 md:py-20">
+        <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-r from-indigo-600/30 to-cyan-600/30 p-6 md:p-10">
+          <div className="max-w-3xl">
+            <h3 className="text-2xl md:text-3xl font-bold">立即开启你的专属命盘解读</h3>
+            <p className="mt-2 text-neutral-100/80">
+              新用户限时免费体验一次完整排盘与 AI 解读。
+            </p>
+            <div className="mt-6 flex flex-col sm:flex-row gap-3">
+              <a
+                href="#top"
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="inline-flex justify-center rounded-xl bg-white px-6 py-3 text-base font-semibold text-neutral-900 hover:opacity-90 transition"
+              >
+                立即免费排盘
+              </a>
+              <a
+                href="/chat"
+                className="inline-flex justify-center rounded-xl border border-white/20 px-6 py-3 text-base font-semibold text-white hover:bg-white/10 transition"
+              >
+                Web 入口
+              </a>
+              {/* 二维码占位 */}
+              <div className="ml-0 sm:ml-6 mt-2 sm:mt-0 inline-flex items-center gap-3">
+                <div className="h-16 w-16 rounded-lg border border-white/20 bg-[repeating-linear-gradient(45deg,rgba(255,255,255,.2)_0_6px,transparent_6px_12px)]" />
+                <span className="text-sm text-neutral-100/80">小程序扫码体验</span>
+              </div>
+            </div>
+          </div>
+          {/* 右侧光斑 */}
+          <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-white/20 blur-3xl" />
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-white/10">
+        <div className="container mx-auto px-4 py-8 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-neutral-400">
+          <div className="flex items-center gap-3">
+            <div className="h-6 w-6 rounded-lg bg-gradient-to-tr from-indigo-500 to-fuchsia-500" />
+            <span>© 2025 Bazi AI</span>
+          </div>
+          <nav className="flex items-center gap-6">
+            <a href="/privacy" className="hover:text-white">隐私政策</a>
+            <a href="/terms" className="hover:text-white">使用条款</a>
+            <a href="/contact" className="hover:text-white">联系我们</a>
+          </nav>
+        </div>
+      </footer>
     </main>
   );
 }
+
+/* =================== 子组件 =================== */
+
+function ChatBubble({ role, text }: { role: 'user' | 'ai'; text: string }) {
+  const isUser = role === 'user';
+  return (
+    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
+      <div
+        className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed shadow/30 ${
+          isUser
+            ? 'bg-gradient-to-r from-indigo-600 to-cyan-600 text-white rounded-br-sm'
+            : 'bg-white/8 text-neutral-100 border border-white/10 rounded-bl-sm'
+        }`}
+      >
+        {text}
+      </div>
+    </div>
+  );
+}
+
+function Step({ title, desc }: { title: string; desc: string }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/5 p-5 text-center backdrop-blur-md">
+      <div className="mx-auto mb-3 h-10 w-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-cyan-500" />
+      <div className="text-lg font-semibold">{title}</div>
+      <div className="mt-1 text-sm text-neutral-300">{desc}</div>
+    </div>
+  );
+}
+
+function FeatureCard({ title, desc }: { title: string; desc: string }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-md">
+      <div className="mb-3 h-10 w-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-cyan-500" />
+      <div className="text-base font-semibold">{title}</div>
+      <div className="mt-1 text-sm text-neutral-300">{desc}</div>
+    </div>
+  );
+}
+
+function DemoCard({ q, a }: { q: string; a: string }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-neutral-900/60 p-5">
+      <div className="text-neutral-200"><span className="text-emerald-300">用户：</span>{q}</div>
+      <div className="mt-2 rounded-xl border border-white/10 bg-white/5 p-3 text-neutral-100">
+        <span className="text-indigo-300">AI：</span>{a}
+      </div>
+    </div>
+  );
+}
+
+function Badge({ text }: { text: string }) {
+  return (
+    <div className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-neutral-300">
+      <div className="h-4 w-4 rounded-full bg-gradient-to-tr from-indigo-500 to-cyan-500" />
+      <span>{text}</span>
+    </div>
+  );
+}
+
+function TestiCard({ name, text }: { name: string; text: string }) {
+    return (
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-md shadow-lg">
+        <div className="mb-3 flex items-center gap-3">
+          <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-indigo-500 to-cyan-500 flex items-center justify-center text-white font-bold">
+            {name[0]}
+          </div>
+          <div className="text-base font-semibold text-white">{name}</div>
+        </div>
+        <p className="text-sm text-neutral-300 leading-relaxed">{text}</p>
+        <div className="mt-3 flex">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <svg
+              key={i}
+              className="h-4 w-4 text-yellow-400"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.073 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.073 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.785.57-1.84-.197-1.54-1.118l1.073-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.462a1 1 0 00.95-.69l1.073-3.292z" />
+            </svg>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  
