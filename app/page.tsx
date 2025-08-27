@@ -2,22 +2,31 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import type { Gender } from '@/app/api';
 
 export default function LandingPage() {
   const router = useRouter();
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
-  const [place, setPlace] = useState('');
+  // const [place, setPlace] = useState('');
+  const [birthplace, setBirthplace] = useState('');
+  const [gender, setGender] = useState<Gender>('男');
 
+  
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const params = new URLSearchParams({
+      gender,                      // ✅ 新增
+      calendar: 'gregorian',       // ✅ 新增
       birth_date: date || '',
       birth_time: time || '12:00',
-      birth_place: place || '',
-      timezone: '+08:00',
+      birthplace: birthplace || '',// ✅ 改名
+      use_true_solar: 'true',      // ✅ 新增（布尔用字符串传递到URL）
+      lat: '0',                    // 先给默认值，后续接地理定位再替换
+      lng: '0',
+      longitude: '0',
     });
-    router.push(`/paipan?${params.toString()}`);
+    router.push(`/chat?${params.toString()}`);
   };
 
   return (
@@ -57,6 +66,23 @@ export default function LandingPage() {
 
             {/* 表单 */}
             <form onSubmit={onSubmit} className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-md shadow-2xl">
+
+              <div className="mb-3">
+                <span className="mb-1 block text-sm text-neutral-300">性别</span>
+                <div className="flex gap-3">
+                  <label className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 cursor-pointer
+                    ${gender==='男' ? 'border-indigo-400 bg-white/10' : 'border-white/10 bg-neutral-900/60'}`}>
+                    <input type="radio" name="gender" value="男" checked={gender==='男'} onChange={() => setGender('男')} className="accent-indigo-500" />
+                    男
+                  </label>
+                  <label className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 cursor-pointer
+                    ${gender==='女' ? 'border-indigo-400 bg-white/10' : 'border-white/10 bg-neutral-900/60'}`}>
+                    <input type="radio" name="gender" value="女" checked={gender==='女'} onChange={() => setGender('女')} className="accent-indigo-500" />
+                    女
+                  </label>
+                </div>
+              </div>
+
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="sm:col-span-1">
                   <label className="mb-1 block text-sm text-neutral-300">出生日期</label>
@@ -78,14 +104,16 @@ export default function LandingPage() {
                     onChange={(e) => setTime(e.target.value)}
                   />
                 </div>
+                {/* 出生地点 -> birthplace */}
                 <div className="sm:col-span-2">
-                  <label className="mb-1 block text-sm text-neutral-300">出生地点（可选）</label>
+                  <label className="mb-1 block text-sm text-neutral-300">出生地点</label>
                   <input
                     type="text"
-                    placeholder="深圳 / 上海 / 北京 …"
+                    placeholder="广东阳春 / 深圳 / 上海 …"
                     className="w-full rounded-xl border border-white/10 bg-neutral-900/60 px-3 py-2.5 outline-none ring-0 focus:border-indigo-400"
-                    value={place}
-                    onChange={(e) => setPlace(e.target.value)}
+                    value={birthplace}
+                    onChange={(e) => setBirthplace(e.target.value)}
+                    required
                   />
                 </div>
               </div>
