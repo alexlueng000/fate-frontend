@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Pill, Bar, DayunChip } from '../components/chat';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
 type FourPillars = { year: string[]; month: string[]; day: string[]; hour: string[] };
@@ -22,6 +23,36 @@ function pickReply(d: unknown): string {
   if (typeof obj.content === 'string') return obj.content;
   if (obj.data && typeof (obj.data as any).reply === 'string') return (obj.data as any).reply;
   return '';
+}
+
+// ==== 从 URL 读取排盘参数（用于首次进入时计算命盘）====
+function readPaipanParamsFromURL(): Record<string, string> | null {
+  if (typeof window === 'undefined') return null;
+  const sp = new URLSearchParams(window.location.search);
+
+  const gender = sp.get('gender') || '';
+  const calendar = sp.get('calendar') || 'gregorian';
+  const birth_date = sp.get('birth_date') || '';
+  const birth_time = sp.get('birth_time') || '12:00';
+  const birthplace = sp.get('birthplace') || '';
+  const use_true_solar = sp.get('use_true_solar') || 'true';
+  const lat = sp.get('lat') || '0';
+  const lng = sp.get('lng') || '0';
+  const longitude = sp.get('longitude') || '0';
+
+  if (!birth_date) return null;
+
+  return {
+    gender,
+    calendar,
+    birth_date,
+    birth_time,
+    birthplace,
+    use_true_solar,
+    lat,
+    lng,
+    longitude,
+  };
 }
 
 // ==== 五行占位比例（真实数据后端提供时替换）====
@@ -48,12 +79,13 @@ export default function ChatPage() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [msgs, loading, booting]);
 
-  // 初始化：取 paipan / 启动会话
+  // 初始化：先尝试读取缓存；没有则用 URL 参数计算命盘，再启动会话
   useEffect(() => {
     let alive = true;
     (async () => {
       setBooting(true);
 
+      // 处理从首页携带的“引导语（首条回复）”缓存
       const bootSaved = sessionStorage.getItem('bootstrap_reply');
       const cidSaved = sessionStorage.getItem('conversation_id');
       if (bootSaved && bootSaved.trim()) {
@@ -65,23 +97,48 @@ export default function ChatPage() {
         return;
       }
 
-      const paipanRaw = sessionStorage.getItem('paipan');
-      if (!paipanRaw) {
-        if (alive) {
-          setErr('缺少排盘数据，请返回首页重新创建会话。');
-          setBooting(false);
-        }
-        return;
-      }
-
       try {
-        const parsed: Paipan = JSON.parse(paipanRaw);
-        setPaipan(parsed);
+        // 1) 先从 sessionStorage 取命盘
+        const paipanRaw = sessionStorage.getItem('paipan');
+        let paipanObj: Paipan | null = null;
 
+        if (paipanRaw) {
+          paipanObj = JSON.parse(paipanRaw) as Paipan;
+        } else {
+          // 2) 首次进入，无缓存：从 URL 读参数并计算命盘
+          const payload = readPaipanParamsFromURL();
+          if (!payload) {
+            if (alive) {
+              setErr('缺少排盘参数，请返回首页重新创建会话。');
+              setBooting(false);
+            }
+            return;
+          }
+
+          const calcRes = await fetch(api('/bazi/calc_paipan'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          if (!calcRes.ok) throw new Error(await calcRes.text());
+          const calcData = await calcRes.json();
+
+          // 约定返回：{ mingpan: { four_pillars, dayun } }
+          const mingpan = calcData?.mingpan as Paipan | undefined;
+          if (!mingpan) throw new Error('后端未返回命盘（mingpan）。');
+
+          sessionStorage.setItem('paipan', JSON.stringify(mingpan));
+          paipanObj = mingpan;
+        }
+
+        // 3) 此时一定有命盘，展示顶部信息
+        setPaipan(paipanObj!);
+
+        // 4) 启动聊天会话
         const res = await fetch(api('/chat/start'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ paipan: parsed }),
+          body: JSON.stringify({ paipan: paipanObj }),
         });
         if (!res.ok) throw new Error(await res.text());
         const data = await res.json();
@@ -201,12 +258,7 @@ export default function ChatPage() {
               <h4 className="text-sm font-semibold text-neutral-200">大运</h4>
               <div className="mt-3 flex gap-3 overflow-x-auto pb-2">
                 {paipan.dayun.map((d, i) => (
-                  <DayunChip
-                    key={i}
-                    age={d.age}
-                    year={d.start_year}
-                    pillar={d.pillar.join('')}
-                  />
+                  <DayunChip key={i} age={d.age} year={d.start_year} pillar={d.pillar.join('')} />
                 ))}
               </div>
             </div>
@@ -259,6 +311,7 @@ export default function ChatPage() {
           <button
             onClick={() => void send()}
             disabled={!canSend}
+            title={!conversationId ? '正在建立会话，请稍候…' : undefined}
             className="h-20 w-28 rounded-2xl bg-gradient-to-r from-indigo-500 to-cyan-500 text-sm font-semibold text-white disabled:opacity-50"
           >
             {loading ? '发送中…' : '发送'}
@@ -266,42 +319,5 @@ export default function ChatPage() {
         </div>
       </div>
     </main>
-  );
-}
-
-/* ===== 子组件 ===== */
-function Pill({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2">
-      <div className="text-[11px] text-neutral-400">{label}</div>
-      <div className="mt-0.5 text-sm font-semibold text-white">{value || '—'}</div>
-    </div>
-  );
-}
-
-function Bar({ name, percent }: { name: string; percent: number }) {
-  return (
-    <div>
-      <div className="flex items-center justify-between text-xs text-neutral-300">
-        <span>{name}</span>
-        <span>{percent}%</span>
-      </div>
-      <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-white/10">
-        <div
-          className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-cyan-500"
-          style={{ width: `${percent}%` }}
-        />
-      </div>
-    </div>
-  );
-}
-
-function DayunChip({ age, year, pillar }: { age: number; year: number; pillar: string }) {
-  return (
-    <div className="shrink-0 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-neutral-200">
-      <div>起运年龄：<span className="text-white font-medium">{age}</span></div>
-      <div>起运年份：<span className="text-white font-medium">{year}</span></div>
-      <div className="mt-1">大运：<span className="font-semibold">{pillar || '—'}</span></div>
-    </div>
   );
 }
