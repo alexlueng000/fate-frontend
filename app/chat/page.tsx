@@ -30,7 +30,6 @@ function pickReply(d: unknown): string {
 function readPaipanParamsFromURL(): Record<string, string> | null {
   if (typeof window === 'undefined') return null;
   const sp = new URLSearchParams(window.location.search);
-
   const gender = sp.get('gender') || '';
   const calendar = sp.get('calendar') || 'gregorian';
   const birth_date = sp.get('birth_date') || '';
@@ -40,20 +39,8 @@ function readPaipanParamsFromURL(): Record<string, string> | null {
   const lat = sp.get('lat') || '0';
   const lng = sp.get('lng') || '0';
   const longitude = sp.get('longitude') || '0';
-
   if (!birth_date) return null;
-
-  return {
-    gender,
-    calendar,
-    birth_date,
-    birth_time,
-    birthplace,
-    use_true_solar,
-    lat,
-    lng,
-    longitude,
-  };
+  return { gender, calendar, birth_date, birth_time, birthplace, use_true_solar, lat, lng, longitude };
 }
 
 // ==== 五行占位比例（真实数据后端提供时替换）====
@@ -80,13 +67,13 @@ export default function ChatPage() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [msgs, loading, booting]);
 
-// 初始化：只从 URL 取参数并计算命盘，再启动会话
+  // 初始化：只从 URL 取参数并计算命盘，再启动会话
   useEffect(() => {
     let alive = true;
     (async () => {
       setBooting(true);
-  
-      // 处理从首页携带的“引导语（首条回复）”缓存
+
+      // 首页带来的首条回复
       const bootSaved = sessionStorage.getItem('bootstrap_reply');
       const cidSaved = sessionStorage.getItem('conversation_id');
       if (bootSaved && bootSaved.trim()) {
@@ -97,9 +84,8 @@ export default function ChatPage() {
         setBooting(false);
         return;
       }
-  
+
       try {
-        // 只从 URL 读参数
         const payload = readPaipanParamsFromURL();
         if (!payload) {
           if (alive) {
@@ -108,8 +94,7 @@ export default function ChatPage() {
           }
           return;
         }
-  
-        // 请求后端计算命盘
+
         const calcRes = await fetch(api('/bazi/calc_paipan'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -117,15 +102,12 @@ export default function ChatPage() {
         });
         if (!calcRes.ok) throw new Error(await calcRes.text());
         const calcData = await calcRes.json();
-  
-        // 约定返回：{ mingpan: { four_pillars, dayun } }
+
         const mingpan = calcData?.mingpan as Paipan | undefined;
         if (!mingpan) throw new Error('后端未返回命盘（mingpan）。');
-  
-        // 设置命盘（不再保存到 sessionStorage）
+
         setPaipan(mingpan);
-  
-        // 启动聊天会话
+
         const res = await fetch(api('/chat/start'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -133,7 +115,7 @@ export default function ChatPage() {
         });
         if (!res.ok) throw new Error(await res.text());
         const data = await res.json();
-  
+
         if (!alive) return;
         const cid = String(data.conversation_id || '');
         if (cid) {
@@ -153,7 +135,6 @@ export default function ChatPage() {
       alive = false;
     };
   }, []);
-  
 
   const canSend = useMemo(() => {
     return !!conversationId && !!input.trim() && !loading && !booting;
@@ -204,17 +185,17 @@ export default function ChatPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-neutral-950 via-neutral-900 to-neutral-950 text-neutral-50 p-6 sm:p-10">
+    <main className="min-h-screen bg-[#fef3c7] text-neutral-800 p-6 sm:p-10">
       <div className="mx-auto w-full max-w-5xl space-y-6">
         {/* 头部 */}
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-white">对话解读</h1>
-          <div className="flex items-center gap-3 text-xs text-neutral-400">
+          <h1 className="text-xl font-semibold text-red-900">对话解读</h1>
+          <div className="flex items-center gap-3 text-xs text-neutral-700">
             {conversationId ? <span>ID: {conversationId}</span> : <span>正在建立会话…</span>}
             <button
               type="button"
               onClick={() => router.push('/')}
-              className="rounded-full bg-white/10 px-3 py-1 hover:bg-white/20"
+              className="rounded-full border border-red-200 bg-white/90 px-3 py-1 text-red-800 hover:bg-red-50 transition"
             >
               返回首页
             </button>
@@ -223,10 +204,10 @@ export default function ChatPage() {
 
         {/* 命盘卡片 */}
         {paipan && (
-          <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur p-6 space-y-6">
+          <div className="rounded-3xl border border-red-200 bg-white/90 p-6 space-y-6 shadow-sm">
             {/* 四柱 */}
             <div>
-              <h4 className="text-sm font-semibold text-neutral-200">四柱</h4>
+              <h4 className="text-sm font-semibold text-red-900">四柱</h4>
               <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <Pill label="年柱" value={paipan.four_pillars.year.join('')} />
                 <Pill label="月柱" value={paipan.four_pillars.month.join('')} />
@@ -237,7 +218,7 @@ export default function ChatPage() {
 
             {/* 五行 */}
             <div>
-              <h4 className="text-sm font-semibold text-neutral-200">五行概览</h4>
+              <h4 className="text-sm font-semibold text-red-900">五行概览</h4>
               <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {(['木', '火', '土', '金', '水'] as const).map((el) => (
                   <Bar key={el} name={el} percent={guessElementPercent(el)} />
@@ -247,7 +228,7 @@ export default function ChatPage() {
 
             {/* 大运 */}
             <div>
-              <h4 className="text-sm font-semibold text-neutral-200">大运</h4>
+              <h4 className="text-sm font-semibold text-red-900">大运</h4>
               <div className="mt-3 flex gap-3 overflow-x-auto pb-2">
                 {paipan.dayun.map((d, i) => (
                   <DayunChip key={i} age={d.age} year={d.start_year} pillar={d.pillar.join('')} />
@@ -259,13 +240,13 @@ export default function ChatPage() {
 
         {/* Loading / 错误 */}
         {(booting || loading) && (
-          <div className="flex items-center gap-2 rounded-2xl bg-white/10 p-3 text-sm text-neutral-200">
-            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-neutral-400 border-t-white" />
+          <div className="flex items-center gap-2 rounded-2xl bg-white/90 border border-red-200 p-3 text-sm text-neutral-800">
+            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-red-300 border-t-red-600" />
             {booting ? '正在解读中…' : '发送中…'}
           </div>
         )}
         {err && (
-          <div className="rounded-2xl bg-red-500/10 p-3 text-sm text-red-300 border border-red-500/30">
+          <div className="rounded-2xl bg-red-50 p-3 text-sm text-red-700 border border-red-200">
             错误：{err}
           </div>
         )}
@@ -273,26 +254,18 @@ export default function ChatPage() {
         {/* 聊天区 */}
         <div
           ref={scrollRef}
-          className="h-[50vh] overflow-y-auto rounded-3xl border border-white/10 bg-white/5 p-4 space-y-3"
+          className="h-[50vh] overflow-y-auto rounded-3xl border border-red-200 bg-white/90 p-4 space-y-3"
         >
           {msgs.map((m, i) => (
             <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
               <div
-                className={`max-w-[80%] whitespace-pre-wrap rounded-2xl px-4 py-2 text-sm ${
+                className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm ${
                   m.role === 'user'
-                    ? 'bg-gradient-to-r from-indigo-600 to-cyan-600 text-white'
-                    : 'bg-white/10 text-neutral-100 border border-white/10'
+                    ? 'bg-red-600 text-white rounded-br-sm shadow-md shadow-red-600/25'
+                    : 'bg-white text-neutral-900 border border-red-200 rounded-bl-sm'
                 }`}
               >
-                <div
-                  className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm ${
-                    m.role === 'user'
-                    ? 'bg-gradient-to-r from-indigo-600 to-cyan-600 text-white'
-                    : 'bg-white/10 text-neutral-100 border border-white/10'
-                  }`}
-                >
                 {m.role === 'assistant' ? <Markdown content={m.content} /> : m.content}
-                </div>`
               </div>
             </div>
           ))}
@@ -305,14 +278,14 @@ export default function ChatPage() {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={onKeyDown}
             placeholder="请输入你的问题，Shift+Enter 换行…"
-            className="h-20 flex-1 resize-none rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-neutral-100 outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
+            className="h-20 flex-1 resize-none rounded-2xl border border-red-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:ring-2 focus:ring-red-500/30 disabled:opacity-50"
             disabled={booting || !conversationId}
           />
           <button
             onClick={() => void send()}
             disabled={!canSend}
             title={!conversationId ? '正在建立会话，请稍候…' : undefined}
-            className="h-20 w-28 rounded-2xl bg-gradient-to-r from-indigo-500 to-cyan-500 text-sm font-semibold text-white disabled:opacity-50"
+            className="h-20 w-28 rounded-2xl bg-red-600 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 shadow-lg shadow-red-600/20"
           >
             {loading ? '发送中…' : '发送'}
           </button>
