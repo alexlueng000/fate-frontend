@@ -80,12 +80,12 @@ export default function ChatPage() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [msgs, loading, booting]);
 
-  // 初始化：先尝试读取缓存；没有则用 URL 参数计算命盘，再启动会话
+// 初始化：只从 URL 取参数并计算命盘，再启动会话
   useEffect(() => {
     let alive = true;
     (async () => {
       setBooting(true);
-
+  
       // 处理从首页携带的“引导语（首条回复）”缓存
       const bootSaved = sessionStorage.getItem('bootstrap_reply');
       const cidSaved = sessionStorage.getItem('conversation_id');
@@ -97,53 +97,43 @@ export default function ChatPage() {
         setBooting(false);
         return;
       }
-
+  
       try {
-        // 1) 先从 sessionStorage 取命盘
-        const paipanRaw = sessionStorage.getItem('paipan');
-        let paipanObj: Paipan | null = null;
-
-        if (paipanRaw) {
-          paipanObj = JSON.parse(paipanRaw) as Paipan;
-        } else {
-          // 2) 首次进入，无缓存：从 URL 读参数并计算命盘
-          const payload = readPaipanParamsFromURL();
-          if (!payload) {
-            if (alive) {
-              setErr('缺少排盘参数，请返回首页重新创建会话。');
-              setBooting(false);
-            }
-            return;
+        // 只从 URL 读参数
+        const payload = readPaipanParamsFromURL();
+        if (!payload) {
+          if (alive) {
+            setErr('缺少排盘参数，请返回首页重新创建会话。');
+            setBooting(false);
           }
-
-          const calcRes = await fetch(api('/bazi/calc_paipan'), {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-          });
-          if (!calcRes.ok) throw new Error(await calcRes.text());
-          const calcData = await calcRes.json();
-
-          // 约定返回：{ mingpan: { four_pillars, dayun } }
-          const mingpan = calcData?.mingpan as Paipan | undefined;
-          if (!mingpan) throw new Error('后端未返回命盘（mingpan）。');
-
-          sessionStorage.setItem('paipan', JSON.stringify(mingpan));
-          paipanObj = mingpan;
+          return;
         }
-
-        // 3) 此时一定有命盘，展示顶部信息
-        setPaipan(paipanObj!);
-
-        // 4) 启动聊天会话
+  
+        // 请求后端计算命盘
+        const calcRes = await fetch(api('/bazi/calc_paipan'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (!calcRes.ok) throw new Error(await calcRes.text());
+        const calcData = await calcRes.json();
+  
+        // 约定返回：{ mingpan: { four_pillars, dayun } }
+        const mingpan = calcData?.mingpan as Paipan | undefined;
+        if (!mingpan) throw new Error('后端未返回命盘（mingpan）。');
+  
+        // 设置命盘（不再保存到 sessionStorage）
+        setPaipan(mingpan);
+  
+        // 启动聊天会话
         const res = await fetch(api('/chat/start'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ paipan: paipanObj }),
+          body: JSON.stringify({ paipan: mingpan }),
         });
         if (!res.ok) throw new Error(await res.text());
         const data = await res.json();
-
+  
         if (!alive) return;
         const cid = String(data.conversation_id || '');
         if (cid) {
@@ -163,6 +153,7 @@ export default function ChatPage() {
       alive = false;
     };
   }, []);
+  
 
   const canSend = useMemo(() => {
     return !!conversationId && !!input.trim() && !loading && !booting;
