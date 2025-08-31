@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Pill, Bar, DayunChip } from '../components/chat';
+import Markdown from '../components/Markdown';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
 type FourPillars = { year: string[]; month: string[]; day: string[]; hour: string[] };
@@ -292,7 +293,15 @@ export default function ChatPage() {
                     : 'bg-white/10 text-neutral-100 border border-white/10'
                 }`}
               >
-                {m.content}
+                <div
+                  className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm ${
+                    m.role === 'user'
+                    ? 'bg-gradient-to-r from-indigo-600 to-cyan-600 text-white'
+                    : 'bg-white/10 text-neutral-100 border border-white/10'
+                  }`}
+                >
+                {m.role === 'assistant' ? <Markdown content={m.content} /> : m.content}
+                </div>`
               </div>
             </div>
           ))}
