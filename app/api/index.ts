@@ -54,6 +54,12 @@ export interface ChatSendResp {
   reply: string;
 }
 
+// ✅ 新增：Regenerate 请求（只需会话ID）
+export interface ChatRegenerateReq {
+  conversation_id: string;
+}
+
+
 const API_BASE =
   (process.env.NEXT_PUBLIC_API_BASE ?? 'http://127.0.0.1:8000').replace(/\/+$/, '');
 
@@ -74,9 +80,17 @@ async function req<T>(path: string, init?: RequestInit, bearer?: string): Promis
 export function calcPaipan(payload: unknown, bearer?: string) {
   return req<CalcPaipanResp>('/bazi/calc_paipan', { method: 'POST', body: JSON.stringify(payload) }, bearer);
 }
+
 export function startChat(payload: ChatStartReq, bearer?: string) {
   return req<ChatStartResp>('/chat/start', { method: 'POST', body: JSON.stringify(payload) }, bearer);
 }
+
+// 🔁 路由修正：发送消息使用 POST /chat（而不是 /chat/send）
 export function sendChat(payload: ChatSendReq, bearer?: string) {
-  return req<ChatSendResp>('/chat/send', { method: 'POST', body: JSON.stringify(payload) }, bearer);
+  return req<ChatSendResp>('/chat', { method: 'POST', body: JSON.stringify(payload) }, bearer);
+}
+
+// 🔄 新增：Regenerate 最后一条 assistant 回复
+export function regenerateChat(payload: ChatRegenerateReq, bearer?: string) {
+  return req<ChatSendResp>('/chat/regenerate', { method: 'POST', body: JSON.stringify(payload) }, bearer);
 }
