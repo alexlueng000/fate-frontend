@@ -49,6 +49,69 @@ function guessElementPercent(el: string): number {
   return base[el] ?? 40;
 }
 
+
+// ===== 五行 & 着色工具 =====
+type Wuxing = '木' | '火' | '土' | '金' | '水';
+
+const GAN_WUXING: Record<string, Wuxing> = {
+  甲: '木', 乙: '木',
+  丙: '火', 丁: '火',
+  戊: '土', 己: '土',
+  庚: '金', 辛: '金',
+  壬: '水', 癸: '水',
+};
+
+const ZHI_WUXING: Record<string, Wuxing> = {
+  子: '水', 丑: '土', 寅: '木', 卯: '木', 辰: '土', 巳: '火',
+  午: '火', 未: '土', 申: '金', 酉: '金', 戌: '土', 亥: '水',
+};
+
+function getWuxing(char: string): Wuxing | null {
+  if (!char) return null;
+  return (GAN_WUXING[char] as Wuxing) || (ZHI_WUXING[char] as Wuxing) || null;
+}
+
+function colorClasses(el: Wuxing, variant: 'text' | 'bg' | 'border' = 'text') {
+  const map: Record<Wuxing, { text: string; bg: string; border: string }> = {
+    木: { text: 'text-emerald-800', bg: 'bg-emerald-100', border: 'border-emerald-200' },
+    火: { text: 'text-red-800',     bg: 'bg-red-100',     border: 'border-red-200' },
+    土: { text: 'text-amber-800',   bg: 'bg-amber-100',   border: 'border-amber-200' },
+    金: { text: 'text-yellow-800',  bg: 'bg-yellow-100',  border: 'border-yellow-200' },
+    水: { text: 'text-sky-800',     bg: 'bg-sky-100',     border: 'border-sky-200' },
+  };
+  return map[el][variant];
+}
+
+function WuxingBadge({ char }: { char: string }) {
+  const el = getWuxing(char);
+  if (!el) return <span className="px-2 py-1 rounded-lg border border-red-200 bg-white text-neutral-900">{char || '—'}</span>;
+  return (
+    <span className={`px-2 py-1 rounded-lg border ${colorClasses(el,'border')} ${colorClasses(el,'bg')} ${colorClasses(el,'text')} font-semibold`}>
+      {char}
+      <span className="ml-1 text-xs opacity-80">({el})</span>
+    </span>
+  );
+}
+
+function WuxingBar({ name, percent }: { name: Wuxing; percent: number }) {
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between text-sm font-medium text-neutral-800">
+        <span className={`${colorClasses(name,'text')} font-semibold`}>{name}</span>
+        <span>{percent}%</span>
+      </div>
+      <div className={`h-2 w-full overflow-hidden rounded-full ${colorClasses(name,'bg')} border ${colorClasses(name,'border')}`}>
+        <div
+          className={`h-full ${colorClasses(name,'text').replace('text-','bg-')} transition-all`}
+          style={{ width: `${percent}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+
+
 export default function ChatPage() {
   const router = useRouter();
   const [conversationId, setConversationId] = useState<string | null>(null);
@@ -203,36 +266,93 @@ export default function ChatPage() {
         </div>
 
         {/* 命盘卡片 */}
-        {paipan && (
-          <div className="rounded-3xl border border-red-200 bg-white/90 p-6 space-y-6 shadow-sm">
-            {/* 四柱 */}
-            <div>
-              <h4 className="text-sm font-semibold text-red-900">四柱</h4>
-              <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <Pill label="年柱" value={paipan.four_pillars.year.join('')} />
-                <Pill label="月柱" value={paipan.four_pillars.month.join('')} />
-                <Pill label="日柱" value={paipan.four_pillars.day.join('')} />
-                <Pill label="时柱" value={paipan.four_pillars.hour.join('')} />
+{paipan && (
+  <div className="rounded-3xl border border-red-200 bg-white p-6 space-y-6 shadow-sm">
+    {/* 四柱表格：横-年月日时，纵-天干地支（含五行色） */}
+    <div className="space-y-3">
+      <h4 className="text-sm font-bold text-red-900">四柱</h4>
+
+      {/* 表头 */}
+      <div className="grid grid-cols-5 text-center text-sm font-semibold text-neutral-900">
+        <div className="text-left text-neutral-700">层级</div>
+        <div>年</div>
+        <div>月</div>
+        <div>日</div>
+        <div>时</div>
+      </div>
+
+      <div className="grid grid-cols-5 gap-y-2 rounded-2xl border border-red-200 p-3">
+        {/* 天干行 */}
+        <div className="flex items-center text-sm font-medium text-neutral-700">天干</div>
+        <div className="flex items-center justify-center">
+          <WuxingBadge char={paipan.four_pillars.year?.[0] || ''} />
+        </div>
+        <div className="flex items-center justify-center">
+          <WuxingBadge char={paipan.four_pillars.month?.[0] || ''} />
+        </div>
+        <div className="flex items-center justify-center">
+          <WuxingBadge char={paipan.four_pillars.day?.[0] || ''} />
+        </div>
+        <div className="flex items-center justify-center">
+          <WuxingBadge char={paipan.four_pillars.hour?.[0] || ''} />
+        </div>
+
+        {/* 地支行 */}
+        <div className="flex items-center text-sm font-medium text-neutral-700">地支</div>
+        <div className="flex items-center justify-center">
+          <WuxingBadge char={paipan.four_pillars.year?.[1] || ''} />
+        </div>
+                <div className="flex items-center justify-center">
+                  <WuxingBadge char={paipan.four_pillars.month?.[1] || ''} />
+                </div>
+                <div className="flex items-center justify-center">
+                  <WuxingBadge char={paipan.four_pillars.day?.[1] || ''} />
+                </div>
+                <div className="flex items-center justify-center">
+                  <WuxingBadge char={paipan.four_pillars.hour?.[1] || ''} />
+                </div>
               </div>
+              {/* 小字提示 */}
+              <p className="text-xs text-neutral-600">
+                颜色对应五行：木-绿、火-红、土-棕黄、金-金黄、水-蓝。仅供理性参考，关键在行动与选择。
+              </p>
             </div>
 
-            {/* 五行 */}
-            <div>
-              <h4 className="text-sm font-semibold text-red-900">五行概览</h4>
-              <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {(['木', '火', '土', '金', '水'] as const).map((el) => (
-                  <Bar key={el} name={el} percent={guessElementPercent(el)} />
+            {/* 五行概览（彩色进度条） */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-bold text-red-900">五行概览</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {(['木','火','土','金','水'] as Wuxing[]).map((el) => (
+                  <WuxingBar key={el} name={el} percent={guessElementPercent(el)} />
                 ))}
               </div>
             </div>
 
             {/* 大运 */}
-            <div>
-              <h4 className="text-sm font-semibold text-red-900">大运</h4>
-              <div className="mt-3 flex gap-3 overflow-x-auto pb-2">
-                {paipan.dayun.map((d, i) => (
-                  <DayunChip key={i} age={d.age} year={d.start_year} pillar={d.pillar.join('')} />
-                ))}
+            <div className="space-y-3">
+              <h4 className="text-sm font-bold text-red-900">大运</h4>
+              <div className="mt-1 flex gap-3 overflow-x-auto pb-2">
+                {paipan.dayun.map((d, i) => {
+                  const pillar = d.pillar?.join('') || '';
+                  const gan = pillar?.[0] || '';
+                  const el = getWuxing(gan) || '火'; // 没识别时给个默认
+                  return (
+                    <div
+                      key={i}
+                      className={`shrink-0 rounded-2xl border ${colorClasses(el,'border')} bg-white px-4 py-3 text-xs text-neutral-900 min-w-[180px] shadow-sm`}
+                    >
+                      <div>
+                        起运年龄：<span className={`${colorClasses(el,'text')} font-semibold`}>{d.age}</span>
+                      </div>
+                      <div className="mt-0.5">
+                        起运年份：<span className={`${colorClasses(el,'text')} font-semibold`}>{d.start_year}</span>
+                      </div>
+                      <div className="mt-1">
+                        大运：<span className={`font-bold ${colorClasses(el,'text')}`}>{pillar || '—'}</span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
