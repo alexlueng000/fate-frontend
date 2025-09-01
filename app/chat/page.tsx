@@ -266,7 +266,7 @@ export default function ChatPage() {
         </div>
 
         {/* 命盘卡片 */}
-{paipan && (
+        {paipan && (
   <div className="rounded-3xl border border-red-200 bg-white p-6 space-y-6 shadow-sm">
     {/* 四柱表格：横-年月日时，纵-天干地支（含五行色） */}
     <div className="space-y-3">
