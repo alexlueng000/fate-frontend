@@ -10,7 +10,7 @@ import {
   guessElementPercent,
   getWuxing,
   colorClasses,
-} from '../components/Wuxing';
+} from '../components/WuXing';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
 type FourPillars = { year: string[]; month: string[]; day: string[]; hour: string[] };
