@@ -41,9 +41,10 @@ export default function ChatPage() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [msgs, loading, booting]);
 
-  // Bootstrap：URL参数 → 计算命盘 → chat/start；否则恢复会话
+  // Bootstrap：URL参数 → 计算命盘 → chat/start（流式）；否则恢复会话
   useEffect(() => {
     let alive = true;
+
     (async () => {
       setBooting(true);
 
@@ -53,6 +54,7 @@ export default function ChatPage() {
       const urlPayload = readPaipanParamsFromURL();
       if (urlPayload) {
         try {
+          // 开新会话前清理旧ID
           sessionStorage.removeItem('conversation_id');
 
           // 计算命盘
@@ -69,36 +71,101 @@ export default function ChatPage() {
           setPaipan(mingpan);
           savePaipanLocal(mingpan);
 
-          // 初始化会话
-          const res = await fetch(api('/chat/start'), {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ paipan: mingpan }),
-          });
-          if (!res.ok) throw new Error(await res.text());
-          const data = await res.json();
-          if (!alive) return;
+          // ===== 初始化会话：优先流式，失败回退 =====
+          try {
+            // 先插入一个占位 assistant，边流追加内容
+            let assistantIndex = -1;
+            setMsgs(() => {
+              const next: Msg[] = [{ role: 'assistant', content: '' }];
+              assistantIndex = 0;
+              return next;
+            });
 
-          const cid = String(data.conversation_id || '');
-          if (cid) {
-            sessionStorage.setItem('conversation_id', cid);
-            setConversationId(cid);
+            let cidLocal = '';
+            await trySSE(
+              api('/chat/start'),
+              { paipan: mingpan },
+              // onDelta：追加增量
+              (delta) => {
+                if (!alive) return;
+                setMsgs((prev) => {
+                  const next = [...prev];
+                  if (assistantIndex >= 0 && assistantIndex < next.length) {
+                    next[assistantIndex] = {
+                      ...next[assistantIndex],
+                      content: next[assistantIndex].content + delta,
+                    };
+                  }
+                  return next;
+                });
+              },
+              // onMeta：拿到 conversation_id
+              (meta) => {
+                if (!alive) return;
+                const cid = String(meta?.conversation_id || '');
+                if (cid) {
+                  sessionStorage.setItem('conversation_id', cid);
+                  setConversationId(cid);
+                  cidLocal = cid;
+                }
+              },
+            );
+
+            // 流结束 → 归一化 + 持久化
+            if (!alive) return;
+            let finalText = '';
+            setMsgs((prev) => {
+              const next = [...prev];
+              if (assistantIndex >= 0 && assistantIndex < next.length) {
+                const normalized = normalizeMarkdown(next[assistantIndex].content || '');
+                next[assistantIndex] = { ...next[assistantIndex], content: normalized };
+                finalText = normalized;
+              }
+              return next;
+            });
+
+            if (cidLocal) {
+              saveConversation(cidLocal, [{ role: 'assistant', content: finalText }]);
+            } else {
+              // 如果后端没有通过 meta 下发 conversation_id，
+              // 此时将无法继续对话。建议后端在流中发送一次：
+              // data: {"meta":{"conversation_id":"..."}}
+              // （如需兜底，可在此追加一次非流式 /chat/start 仅获取ID，但会重复生成内容。）
+            }
+          } catch {
+            // 流式不可用 → 回退到一次性
+            const res = await fetch(api('/chat/start'), {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ paipan: mingpan }),
+            });
+            if (!res.ok) throw new Error(await res.text());
+            const data = await res.json();
+            if (!alive) return;
+
+            const cid = String(data.conversation_id || '');
+            if (cid) {
+              sessionStorage.setItem('conversation_id', cid);
+              setConversationId(cid);
+            }
+
+            const first = pickReply(data).trim();
+            const initMsgs: Msg[] = [
+              { role: 'assistant', content: normalizeMarkdown(first || '（后端未返回解读内容）') },
+            ];
+            setMsgs(initMsgs);
+            if (cid) saveConversation(cid, initMsgs);
           }
-
-          const first = pickReply(data).trim();
-          const initMsgs: Msg[] = [{ role: 'assistant', content: normalizeMarkdown(first || '（后端未返回解读内容）') }];
-          setMsgs(initMsgs);
-          if (cid) saveConversation(cid, initMsgs);
         } catch (e: unknown) {
           if (!alive) return;
           setErr(e instanceof Error ? e.message : String(e));
         } finally {
           if (alive) setBooting(false);
         }
-        return;
+        return; // 处理完 URL 分支后返回
       }
 
-      // 恢复旧会话
+      // ===== 无 URL 参数：恢复旧会话 =====
       const active = getActiveConversationId() || sessionStorage.getItem('conversation_id');
       if (active) {
         const cached = loadConversation(active);
@@ -115,7 +182,7 @@ export default function ChatPage() {
         }
       }
 
-      // 兼容老入口
+      // ===== 兼容老入口 =====
       const bootSaved = sessionStorage.getItem('bootstrap_reply');
       const cidSaved = sessionStorage.getItem('conversation_id');
       if (bootSaved?.trim()) {
@@ -133,6 +200,7 @@ export default function ChatPage() {
         return;
       }
 
+      // 没有任何上下文
       setErr('缺少排盘参数，请返回首页重新创建会话。');
       setBooting(false);
     })();
