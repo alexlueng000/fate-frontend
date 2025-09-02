@@ -36,10 +36,7 @@ export function readPaipanParamsFromURL(): Record<string, string> | null {
   const birth_date = sp.get('birth_date') || '';
   const birth_time = sp.get('birth_time') || '12:00';
   const birthplace = sp.get('birthplace') || '';
-  const use_true_solar = sp.get('use_true_solar') || 'true';
-  const lat = sp.get('lat') || '0';
-  const lng = sp.get('lng') || '0';
-  const longitude = sp.get('longitude') || '0';
+  // const use_true_solar = sp.get('use_true_solar') || true;
   if (!birth_date) return null;
-  return { gender, calendar, birth_date, birth_time, birthplace, use_true_solar, lat, lng, longitude };
+  return { gender, calendar, birth_date, birth_time, birthplace };
 }

@@ -10,6 +10,7 @@ export default function LandingPage() {
   const [time, setTime] = useState('');
   const [birthplace, setBirthplace] = useState('');
   const [gender, setGender] = useState<Gender>('男');
+  const [calendar, setCalendar] = useState<'gregorian' | 'lunar'>('gregorian');
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,9 +21,6 @@ export default function LandingPage() {
       birth_time: time || '12:00',
       birthplace: birthplace || '',
       use_true_solar: 'true',
-      lat: '0',
-      lng: '0',
-      longitude: '0',
     });
     router.push(`/chat?${params.toString()}`);
   };
@@ -77,46 +75,91 @@ export default function LandingPage() {
               className="mt-8 rounded-2xl border border-red-200 bg-white/90 p-4 md:p-6 shadow-[0_8px_40px_-20px_rgba(220,38,38,0.35)]"
             >
               <div className="mb-3">
-                <span className="mb-1 block text-sm text-neutral-700">性别</span>
-                <div className="flex gap-3">
-                  <label
-                    className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 cursor-pointer transition
-                    ${
-                      gender === '男'
-                        ? 'border-red-400 bg-red-50 text-red-800'
-                        : 'border-red-200 bg-white/70 text-neutral-700 hover:bg-red-50/60'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="gender"
-                      value="男"
-                      checked={gender === '男'}
-                      onChange={() => setGender('男')}
-                      className="accent-red-600"
-                    />
-                    男
-                  </label>
-                  <label
-                    className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 cursor-pointer transition
-                    ${
-                      gender === '女'
-                        ? 'border-red-400 bg-red-50 text-red-800'
-                        : 'border-red-200 bg-white/70 text-neutral-700 hover:bg-red-50/60'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="gender"
-                      value="女"
-                      checked={gender === '女'}
-                      onChange={() => setGender('女')}
-                      className="accent-red-600"
-                    />
-                    女
-                  </label>
+                <div className="flex items-start gap-8"> {/* 横向排布：左=性别，右=历法 */}
+                  {/* 左：性别 */}
+                  <div className="w-1/2 min-w-0">
+                    <span className="mb-1 block text-sm text-neutral-700">性别</span>
+                    <div className="flex gap-3">
+                      <label
+                        className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 cursor-pointer transition
+                        ${gender === '男'
+                          ? 'border-red-400 bg-red-50 text-red-800'
+                          : 'border-red-200 bg-white/70 text-neutral-700 hover:bg-red-50/60'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="gender"
+                          value="男"
+                          checked={gender === '男'}
+                          onChange={() => setGender('男')}
+                          className="accent-red-600"
+                        />
+                        男
+                      </label>
+                      <label
+                        className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 cursor-pointer transition
+                        ${gender === '女'
+                          ? 'border-red-400 bg-red-50 text-red-800'
+                          : 'border-red-200 bg-white/70 text-neutral-700 hover:bg-red-50/60'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="gender"
+                          value="女"
+                          checked={gender === '女'}
+                          onChange={() => setGender('女')}
+                          className="accent-red-600"
+                        />
+                        女
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* 右：历法 */}
+                  <div className="w-1/2 min-w-0">
+                    <span className="mb-1 block text-sm text-neutral-700">历法</span>
+                    <div className="flex gap-3">
+                      <label
+                        className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 cursor-pointer transition
+                        ${calendar === 'gregorian'
+                          ? 'border-red-400 bg-red-50 text-red-800'
+                          : 'border-red-200 bg-white/70 text-neutral-700 hover:bg-red-50/60'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="calendar"
+                          value="gregorian"
+                          checked={calendar === 'gregorian'}
+                          onChange={() => setCalendar('gregorian')}
+                          className="accent-red-600"
+                        />
+                        公历
+                      </label>
+                      <label
+                        className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 cursor-pointer transition
+                        ${calendar === 'lunar'
+                          ? 'border-red-400 bg-red-50 text-red-800'
+                          : 'border-red-200 bg-white/70 text-neutral-700 hover:bg-red-50/60'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="calendar"
+                          value="lunar"
+                          checked={calendar === 'lunar'}
+                          onChange={() => setCalendar('lunar')}
+                          className="accent-red-600"
+                        />
+                        农历
+                      </label>
+                    </div>
+                  </div>
                 </div>
               </div>
+
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="sm:col-span-1">
@@ -130,7 +173,7 @@ export default function LandingPage() {
                   />
                 </div>
                 <div className="sm:col-span-1">
-                  <label className="mb-1 block text-sm text-neutral-700">出生时间（可选）</label>
+                  <label className="mb-1 block text-sm text-neutral-700">出生时间</label>
                   <input
                     type="time"
                     placeholder="12:00"
@@ -159,12 +202,12 @@ export default function LandingPage() {
                 >
                   立即生成我的命盘
                 </button>
-                <a
+                {/* <a
                   href="/chat"
                   className="inline-flex justify-center rounded-xl border border-red-300 px-6 py-3 text-base font-semibold text-red-700 bg-white/80 hover:bg-red-50 transition"
                 >
                   先看看 AI 对话
-                </a>
+                </a> */}
               </div>
               <p className="mt-3 text-xs text-neutral-600">
                 已服务 12,000+ 用户 · 数据全程加密，安全无忧

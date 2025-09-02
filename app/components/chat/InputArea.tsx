@@ -41,7 +41,7 @@ export function InputArea({
           className="h-24 w-28 rounded-2xl border border-red-200 bg-white text-sm font-semibold text-red-800 hover:bg-red-50 disabled:opacity-50"
           title="重新生成上一条解读"
         >
-          Regenerate
+          重新解读
         </button>
       </div>
     </div>
