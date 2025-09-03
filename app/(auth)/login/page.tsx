@@ -7,7 +7,10 @@ import { loginWeb, saveAuth } from '@/app/lib/auth';
 export default function LoginPage() {
   const router = useRouter();
   const search = useSearchParams();
-  const redirect = search.get('redirect') || '/';
+
+  // ✅ 默认跳到 /panel（如果没传 redirect 或 redirect === '/'）
+  const raw = search.get('redirect');
+  const redirect = !raw || raw === '/' ? '/panel' : raw;
 
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -28,7 +31,7 @@ export default function LoginPage() {
     try {
       const resp = await loginWeb({ email, password });
       saveAuth(resp);
-      router.replace(redirect);
+      router.replace(redirect); // ✅ 登录完成后去 panel
     } catch (e: any) {
       setErr(e?.message || '登录失败');
     } finally {
