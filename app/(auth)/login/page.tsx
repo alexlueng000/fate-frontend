@@ -10,6 +10,7 @@ export default function LoginPage() {
   const redirect = search.get('redirect') || '/';
 
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -18,14 +19,14 @@ export default function LoginPage() {
     e.preventDefault();
     setErr(null);
 
-    if (!username || !password) {
-      setErr('请输入用户名和密码');
+    if (!email || !password) {
+      setErr('请输入邮箱和密码');
       return;
     }
 
     setSubmitting(true);
     try {
-      const resp = await loginWeb({ username, password });
+      const resp = await loginWeb({ email, password });
       saveAuth(resp);
       router.replace(redirect);
     } catch (e: any) {
@@ -42,13 +43,13 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm text-[#7b4b3a] mb-1">用户名</label>
+            <label className="block text-sm text-[#7b4b3a] mb-1">邮箱</label>
             <input
               className="w-full rounded-xl bg-[#fdf6e3] border border-[#e5c07b] px-3 py-2 outline-none focus:ring-2 focus:ring-[#a83232]"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="输入用户名"
-              autoComplete="username"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="输入邮箱"
+              autoComplete="email"
             />
           </div>
 

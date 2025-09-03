@@ -9,7 +9,7 @@ export type User = {
   email?: string | null;
 };
 
-export type LoginReq = { username: string; password: string };
+export type LoginReq = { email: string; password: string };
 export type LoginResp = {
   user: User;
   access_token?: string;
@@ -17,7 +17,7 @@ export type LoginResp = {
 };
 
 export async function loginWeb(payload: LoginReq): Promise<LoginResp> {
-  return postJSON<LoginResp>(api('/auth/login'), payload);
+  return postJSON<LoginResp>(api('/auth/web/login'), payload);
 }
 
 export function saveAuth(resp: LoginResp) {
