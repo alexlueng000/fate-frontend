@@ -14,6 +14,7 @@ export default function Header() {
     // 1) 先从 sessionStorage 读（注册/登录成功后 saveAuth 会写这里）
     const u = currentUser();
     if (u) {
+      console.log('从 sessionStorage 读取用户信息', u);
       setMe(u);
       return;
     }
@@ -31,6 +32,7 @@ export default function Header() {
     const onVisibility = () => {
       if (document.visibilityState === 'visible') void refreshMe();
     };
+
     // 跨标签页登录/退出时同步（storage 事件只在“其他标签页”触发）
     const onStorage = (e: StorageEvent) => {
       if (e.key === 'me' || e.key === 'auth_token') void refreshMe();
@@ -60,7 +62,7 @@ export default function Header() {
     await logout();
     setMe(null);
     setOpen(false);
-    router.refresh();
+    router.push('/');
   }
 
   return (

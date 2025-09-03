@@ -379,6 +379,14 @@ export default function ChatPage() {
           />
         )}
 
+       
+
+        <MessageList
+          scrollRef={scrollRef}
+          messages={msgs}
+          Markdown={Markdown as any}
+        />
+
         {(booting || loading) && (
           <div className="flex items-center gap-2 rounded-2xl bg-white/90 border border-red-200 p-3 text-sm text-neutral-800">
             <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-red-300 border-t-red-600" />
@@ -390,12 +398,6 @@ export default function ChatPage() {
             错误：{err}
           </div>
         )}
-
-        <MessageList
-          scrollRef={scrollRef}
-          messages={msgs}
-          Markdown={Markdown as any}
-        />
 
         <QuickActions
           disabled={loading || booting || !conversationId}

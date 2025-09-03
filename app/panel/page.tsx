@@ -4,7 +4,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import Markdown from '@/app/components/Markdown';
-import { Wuxing, WuxingBadge, WuxingBar, getWuxing, colorClasses, guessElementPercent } from '@/app/components/WuXing';
+import {
+  Wuxing, WuxingBadge, WuxingBar, getWuxing, colorClasses, guessElementPercent
+} from '@/app/components/WuXing';
 import { ChatHeader } from '@/app/components/chat/ChatHeader';
 import { PaipanCard } from '@/app/components/chat/PaipanCard';
 import { QuickActions } from '@/app/components/chat/QuickActions';
@@ -12,9 +14,8 @@ import { MessageList } from '@/app/components/chat/MessageList';
 import { InputArea } from '@/app/components/chat/InputArea';
 
 import {
-  Msg, Paipan, QUICK_BUTTONS,
-  normalizeMarkdown,
-} from '@/app/lib/chat/types'; // 这里不从 URL 读参数，dashboard 由表单输入
+  Msg, Paipan, QUICK_BUTTONS, normalizeMarkdown,
+} from '@/app/lib/chat/types';
 import { api, pickReply } from '@/app/lib/chat/api';
 import { trySSE } from '@/app/lib/chat/sse';
 import {
@@ -22,9 +23,10 @@ import {
   savePaipanLocal, loadPaipanLocal,
 } from '@/app/lib/chat/storage';
 
+import { SYSTEM_INTRO } from '@/app/lib/chat/constants';
 import { currentUser, fetchMe, type User } from '@/app/lib/auth';
 
-export default function DashboardPage() {
+export default function PanelPage() {
   const router = useRouter();
 
   // ===== 用户信息 =====
@@ -44,7 +46,7 @@ export default function DashboardPage() {
   // ===== 表单：快速排盘 =====
   const [birthPlace, setBirthPlace] = useState('');
   const [gender, setGender] = useState<'男' | '女'>('男');
-  const [calendarType, setCalendarType] = useState<'gregorian' | 'lunar'>('gregorian');
+  const [calendarType, setCalendarType] = useState<'gregorian' | 'lunar'>('gregorian'); // 默认阳历
   const [birthDate, setBirthDate] = useState(''); // YYYY-MM-DD
   const [birthTime, setBirthTime] = useState(''); // HH:MM
   const [calcLoading, setCalcLoading] = useState(false);
@@ -60,9 +62,7 @@ export default function DashboardPage() {
   // ===== 登录校验 & 恢复最近一次会话 =====
   useEffect(() => {
     let alive = true;
-
     (async () => {
-      // 用户信息
       const u = currentUser();
       if (u) {
         setMe(u);
@@ -75,7 +75,6 @@ export default function DashboardPage() {
         setMe(fetched);
       }
 
-      // 尝试恢复最近会话与命盘
       const active = getActiveConversationId() || sessionStorage.getItem('conversation_id');
       const cachedPaipan = loadPaipanLocal();
       if (cachedPaipan) setPaipan(cachedPaipan);
@@ -89,7 +88,6 @@ export default function DashboardPage() {
         }
       }
     })();
-
     return () => { alive = false; };
   }, [router]);
 
@@ -98,13 +96,13 @@ export default function DashboardPage() {
     if (conversationId) saveConversation(conversationId, msgs);
   }, [conversationId, msgs]);
 
-  // ===== 发送能力判定 =====
+  // ===== 能否发送 =====
   const canSend = useMemo(
     () => !!conversationId && !!input.trim() && !loading && !booting,
     [conversationId, input, loading, booting],
   );
 
-  // ===== 封装：一次性请求 =====
+  // ===== 一次性请求 =====
   const sendOnce = async (content: string) => {
     const res = await fetch(api('/chat'), {
       method: 'POST',
@@ -116,11 +114,11 @@ export default function DashboardPage() {
     return pickReply(data).trim();
   };
 
-  // ===== 封装：SSE 流式发送 =====
+  // ===== SSE 流式发送 =====
   const sendStream = async (content: string) => {
     if (!conversationId) throw new Error('缺少会话，请先完成排盘并开启解读。');
 
-    // 先插入占位 assistant
+    // 插入占位 assistant
     let assistantIndex = -1;
     setMsgs((prev) => {
       const next = [...prev, { role: 'assistant', content: '' }];
@@ -155,22 +153,28 @@ export default function DashboardPage() {
       setMsgs((prev) => {
         if (assistantIndex < 0 || assistantIndex >= prev.length) return prev;
         const next = [...prev];
-        next[assistantIndex] = { ...next[assistantIndex], content: normalizeMarkdown(next[assistantIndex].content) };
+        next[assistantIndex] = {
+          ...next[assistantIndex],
+          content: normalizeMarkdown(next[assistantIndex].content),
+        };
         return next;
       });
     } catch {
-      // 降级到一次性
+      // 降级一次性
       const full = await sendOnce(content);
       setMsgs((prev) => {
         if (assistantIndex < 0 || assistantIndex >= prev.length) return prev;
         const next = [...prev];
-        next[assistantIndex] = { role: 'assistant', content: normalizeMarkdown(full || '（后端未返回解读内容）') };
+        next[assistantIndex] = {
+          role: 'assistant',
+          content: normalizeMarkdown(full || '（后端未返回解读内容）'),
+        };
         return next;
       });
     }
   };
 
-  // ===== 发送、回车发送、重生、快捷问题 =====
+  // ===== 基本交互 =====
   const send = async () => {
     if (!conversationId) {
       setErr('缺少会话，请先完成排盘并开启解读。');
@@ -178,12 +182,10 @@ export default function DashboardPage() {
     }
     const content = input.trim();
     if (!content) return;
-
     setErr(null);
     setMsgs((m) => [...m, { role: 'user', content }]);
     setInput('');
     setLoading(true);
-
     try {
       await sendStream(content);
     } catch (e: unknown) {
@@ -282,20 +284,23 @@ export default function DashboardPage() {
       setPaipan(mingpan);
       savePaipanLocal(mingpan);
 
-      // 2) 启动会话（SSE 首选）
-      // 先清理旧会话
+      // 2) 启动会话
       sessionStorage.removeItem('conversation_id');
 
-      // 插入占位 assistant
+      // ✅ 先插入单独的“开场白”消息，再插入流式占位消息
       let assistantIndex = -1;
       setMsgs(() => {
-        const next: Msg[] = [{ role: 'assistant', content: '' }];
-        assistantIndex = 0;
+        const next: Msg[] = [
+          { role: 'assistant', content: SYSTEM_INTRO, meta: { kind: 'intro' } },
+          { role: 'assistant', content: '' },
+        ];
+        assistantIndex = 1;
         return next;
       });
 
       let cidLocal = '';
       try {
+        // 首选流式
         await trySSE(
           api('/chat/start'),
           { paipan: mingpan },
@@ -332,9 +337,12 @@ export default function DashboardPage() {
           }
           return next;
         });
-        if (cidLocal) saveConversation(cidLocal, [{ role: 'assistant', content: finalText }]);
+        if (cidLocal) saveConversation(cidLocal, [
+          { role: 'assistant', content: SYSTEM_INTRO, meta: { kind: 'intro' } },
+          { role: 'assistant', content: finalText },
+        ]);
       } catch {
-        // 流式失败 → 降级
+        // 流式失败 → 一次性
         const res = await fetch(api('/chat/start'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -351,6 +359,7 @@ export default function DashboardPage() {
 
         const first = pickReply(data).trim();
         const initMsgs: Msg[] = [
+          { role: 'assistant', content: SYSTEM_INTRO, meta: { kind: 'intro' } },
           { role: 'assistant', content: normalizeMarkdown(first || '（后端未返回解读内容）') },
         ];
         setMsgs(initMsgs);
@@ -369,10 +378,7 @@ export default function DashboardPage() {
       <div className="mx-auto w-full max-w-6xl space-y-6">
         {/* ===== 顶部：页面头 + 用户信息 ===== */}
         <div className="flex items-center justify-between">
-          <ChatHeader
-            conversationId={conversationId}
-            onBack={() => router.push('/')} // 如需回到其它页可改
-          />
+          <ChatHeader conversationId={conversationId} onBack={() => router.push('/')} />
           <div className="flex items-center gap-3 rounded-2xl border border-red-200 bg-white/90 px-3 py-2">
             {me?.avatar_url ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -391,17 +397,15 @@ export default function DashboardPage() {
         <div className="rounded-2xl border border-red-200 bg-white/90 p-4 sm:p-5">
           <div className="text-base font-semibold text-red-700">快速排盘</div>
           <form onSubmit={handleCalcPaipan} className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-
             <div>
               <span className="block text-sm text-neutral-700 mb-1">性别</span>
               <div className="flex gap-3">
-                {(['男','女'] as const).map(g => (
+                {(['男', '女'] as const).map(g => (
                   <label
                     key={g}
                     className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 cursor-pointer transition
-                    ${gender === g
-                      ? 'border-red-400 bg-red-50 text-red-800'
-                      : 'border-red-200 bg-white/70 text-neutral-700 hover:bg-red-50/60'}`}
+                      ${gender === g ? 'border-red-400 bg-red-50 text-red-800'
+                                      : 'border-red-200 bg-white/70 text-neutral-700 hover:bg-red-50/60'}`}
                   >
                     <input
                       type="radio"
@@ -426,9 +430,8 @@ export default function DashboardPage() {
                     <label
                       key={c}
                       className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 cursor-pointer transition
-                        ${calendarType === value
-                          ? 'border-red-400 bg-red-50 text-red-800'
-                          : 'border-red-200 bg-white/70 text-neutral-700 hover:bg-red-50/60'}`}
+                        ${calendarType === value ? 'border-red-400 bg-red-50 text-red-800'
+                                                 : 'border-red-200 bg-white/70 text-neutral-700 hover:bg-red-50/60'}`}
                     >
                       <input
                         type="radio"
@@ -500,6 +503,9 @@ export default function DashboardPage() {
           />
         )}
 
+        {/* ===== 消息区 ===== */}
+        <MessageList scrollRef={scrollRef} messages={msgs} Markdown={Markdown as any} />
+
         {(booting || loading) && (
           <div className="flex items-center gap-2 rounded-2xl bg-white/90 border border-red-200 p-3 text-sm text-neutral-800">
             <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-red-300 border-t-red-600" />
@@ -511,13 +517,6 @@ export default function DashboardPage() {
             错误：{err}
           </div>
         )}
-
-        {/* ===== 消息区 ===== */}
-        <MessageList
-          scrollRef={scrollRef}
-          messages={msgs}
-          Markdown={Markdown as any}
-        />
 
         {/* ===== 快捷问题 ===== */}
         <QuickActions

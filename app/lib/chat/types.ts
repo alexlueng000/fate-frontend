@@ -15,17 +15,57 @@ export const QUICK_BUTTONS: Array<{ label: string; prompt: string }> = [
 ];
 
 /** 轻量 Markdown 归一化 */
-export function normalizeMarkdown(input: string): string {
-  let s = input;
-  s = s.replace(/^(\#{1,6})([^\s#])/gm, (_m, p1, p2) => `${p1} ${p2}`);
-  s = s.replace(/^(\#{2,6})\s*([一二三四五六七八九十]+、)/gm, (_m, p1, p2) => `${p1} ${p2}`);
-  s = s.replace(/([^\n])\n(#{1,6}\s)/g, (_m, p1, p2) => `${p1}\n\n${p2}`);
-  s = s.replace(/：\s*(?=(?:-|\d+\.)\s)/g, '：\n');
-  s = s.replace(/^(\s*[-•])([^\s-])/gm, (_m, p1, p2) => `${p1} ${p2}`);
-  s = s.replace(/\n{3,}/g, '\n\n');
-  s = s.trim();
-  return s;
+// 处理由模型产生的“连在一行的 ###/#### 标题、尾部多余 #、缺空行、列表粘连”等问题
+export function normalizeMarkdown(md: string): string {
+  if (!md) return "";
+
+  // 统一换行
+  md = md.replace(/\r\n?/g, "\n");
+
+  // 按代码块分段，避免误改 ``` 内内容
+  const parts = md.split(/(```[\s\S]*?```)/g);
+
+  const fixed = parts.map((seg) => {
+    // 命中代码块，直接返回
+    if (/^```/.test(seg)) return seg;
+
+    let s = seg;
+
+    // 1) 标题后缺空格：####标题  -> #### 标题
+    s = s.replace(/^(#{3,4})([^\s#])/gm, "$1 $2");
+
+    // 2) 行尾多余 #：### 标题#### -> ### 标题
+    s = s.replace(/^(#{3,4})\s*([^#\n]+?)\s*#+\s*$/gm, "$1 $2");
+
+    // 3) 段内硬插标题：……文本### 标题 ->（前后补空行）
+    // 任何非换行字符后紧跟 ###/#### 的，前面补两个换行
+    s = s.replace(/([^\n])\s*(#{3,4})\s+/g, "$1\n\n$2 ");
+
+    // 4) 标题上下必须空一行：在标题前后补空行（已存在则不重复）
+    s = s
+      // 标题前
+      .replace(/([^\n])\n(#{3,4}\s)/g, "$1\n\n$2")
+      .replace(/(^|\n)(#{3,4}\s[^\n]+)(?!\n{2,})\n(?!\n)/g, "$1$2\n\n")
+      // 标题后（若紧跟非空行）
+      .replace(/(#{3,4}\s[^\n]+)\n(?!\n)/g, "$1\n\n");
+
+    // 5) 列表项必须独立成行，且与上下文隔一行
+    // a) 修复“句中开始列表”：……文本 - 要点 -> 断行并补空行
+    s = s.replace(/([^\n])\s+(- |\d+\.\s)/g, "$1\n\n$2");
+    // b) 标题后紧贴列表：### 标题\n- 要点 -> 标题后补空行
+    s = s.replace(/(#{3,4}\s[^\n]+)\n(- |\d+\.\s)/g, "$1\n\n$2");
+    // c) 规范列表项行首多余空格
+    s = s.replace(/^[ \t]+(- |\d+\.\s)/gm, "$1");
+
+    // 6) 合理压缩空行：最多保留 2 个连续空行
+    s = s.replace(/\n{3,}/g, "\n\n");
+
+    return s.trim();
+  });
+
+  return fixed.join("").trim();
 }
+
 
 /** 从 URL 读取排盘参数（用于首次进入时计算命盘） */
 export function readPaipanParamsFromURL(): Record<string, string> | null {

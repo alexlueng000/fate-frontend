@@ -12,7 +12,6 @@ export default function LoginPage() {
   const raw = search.get('redirect');
   const redirect = !raw || raw === '/' ? '/panel' : raw;
 
-  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -31,6 +30,11 @@ export default function LoginPage() {
     try {
       const resp = await loginWeb({ email, password });
       saveAuth(resp);
+      // ✅ 主动广播 storage 事件，唤醒其他组件（Header）刷新
+      try {
+        window.dispatchEvent(new StorageEvent('storage', { key: 'me' }));
+      } catch { /* 兼容性问题忽略 */ }
+
       router.replace(redirect); // ✅ 登录完成后去 panel
     } catch (e: any) {
       setErr(e?.message || '登录失败');
