@@ -37,11 +37,13 @@ export function MessageList({
             >
               {isAssistant ? (
                 isIntro ? (
-                  <div className="border-l-4 border-red-300 bg-red-50/70 p-3 rounded-lg">
+                  <div className="border-l-4 border-red-300 bg-red-50/70 p-3 rounded-lg msg-mdx">
                     <Markdown content={content} />
                   </div>
                 ) : (
-                  <Markdown content={content} />
+                  <div className="msg-md">
+                    <Markdown content={content} />
+                  </div>
                 )
               ) : (
                 content

@@ -29,6 +29,8 @@ import { currentUser, fetchMe, type User } from '@/app/lib/auth';
 export default function PanelPage() {
   const router = useRouter();
 
+  const aiIndexRef = useRef<number | null>(null);
+
   // ===== 用户信息 =====
   const [me, setMe] = useState<User | null>(null);
 
@@ -117,63 +119,64 @@ export default function PanelPage() {
   // ===== SSE 流式发送 =====
   const sendStream = async (content: string) => {
     if (!conversationId) throw new Error('缺少会话，请先完成排盘并开启解读。');
-
-    // 插入占位 assistant
-    let assistantIndex = -1;
-    setMsgs((prev) => {
-      const next = [...prev, { role: 'assistant', content: '' }];
-      assistantIndex = next.length - 1;
+  
+    // 1) 插入占位 assistant（标记 streaming 以便 UI 显示骨架/光标等）
+    setMsgs(prev => {
+      const next = [...prev, { role: 'assistant', content: '', streaming: true }];
+      aiIndexRef.current = next.length - 1;
       return next;
     });
-
-    const append = (delta: string) => {
-      setMsgs((prev) => {
-        if (assistantIndex < 0 || assistantIndex >= prev.length) return prev;
+  
+    // 2) onDelta：用“替换”而不是“追加”
+    const replace = (fullText: string) => {
+      setMsgs(prev => {
+        const i = aiIndexRef.current;
+        if (i == null || i < 0 || i >= prev.length) return prev;
         const next = [...prev];
-        next[assistantIndex] = { ...next[assistantIndex], content: next[assistantIndex].content + delta };
+        // trySSE 已经做了 normalizeMarkdown，这里直接替换
+        next[i] = { ...next[i], content: fullText };
         return next;
       });
     };
-
+  
     try {
       await trySSE(
         api('/chat'),
         { conversation_id: conversationId, message: content },
-        append,
+        replace, // ✅ 替换整段，不是 +=
         (meta) => {
           const cid = String(meta?.conversation_id || '');
           if (cid) {
             sessionStorage.setItem('conversation_id', cid);
             setConversationId(cid);
           }
-        },
+        }
       );
-
-      // 归一化 Markdown
-      setMsgs((prev) => {
-        if (assistantIndex < 0 || assistantIndex >= prev.length) return prev;
+  
+      // 3) 结束后把 streaming 标记取消
+      setMsgs(prev => {
+        const i = aiIndexRef.current;
+        if (i == null || i < 0 || i >= prev.length) return prev;
         const next = [...prev];
-        next[assistantIndex] = {
-          ...next[assistantIndex],
-          content: normalizeMarkdown(next[assistantIndex].content),
-        };
+        next[i] = { ...next[i], streaming: false };
         return next;
       });
     } catch {
-      // 降级一次性
+      // 4) 降级：一次性请求并做 normalize
       const full = await sendOnce(content);
-      setMsgs((prev) => {
-        if (assistantIndex < 0 || assistantIndex >= prev.length) return prev;
+      setMsgs(prev => {
+        const i = aiIndexRef.current;
+        if (i == null || i < 0 || i >= prev.length) return prev;
         const next = [...prev];
-        next[assistantIndex] = {
+        next[i] = {
           role: 'assistant',
+          streaming: false,
           content: normalizeMarkdown(full || '（后端未返回解读内容）'),
         };
         return next;
       });
     }
   };
-
   // ===== 基本交互 =====
   const send = async () => {
     if (!conversationId) {

@@ -38,3 +38,34 @@ export function loadPaipanLocal(): Paipan | null {
     return null;
   }
 }
+
+
+export const ACTIVE_CONV_KEY = 'conversation_id'; // 如果你用的是别名，改这里
+export const PAIPAN_KEY = 'paipan';                       // 你的 savePaipanLocal 用到的 key
+export const BOOTSTRAP_KEY = 'bootstrap_reply';
+
+export function clearChatStorage() {
+  // sessionStorage
+  try {
+    sessionStorage.removeItem('conversation_id');
+    // sessionStorage.removeItem(BOOTSTRAP_KEY);
+  } catch {}
+
+  // localStorage：删除活跃会话、命盘、以及以 conv:/chat: 前缀存的消息
+  try {
+    const toDel: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i)!;
+      if (
+        k === ACTIVE_CONV_KEY ||
+        k === PAIPAN_KEY ||
+        k === BOOTSTRAP_KEY ||
+        k.startsWith('conv:') ||   // 例如 conv:<conversation_id>
+        k.startsWith('chat:')      // 如果你用了 chat: 前缀
+      ) {
+        toDel.push(k);
+      }
+    }
+    toDel.forEach(k => localStorage.removeItem(k));
+  } catch {}
+}

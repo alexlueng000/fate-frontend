@@ -48,14 +48,14 @@ export function PaipanCard({
       </div>
 
       {/* 五行概览 */}
-      <div className="space-y-3">
+      {/* <div className="space-y-3">
         <h4 className="text-sm font-bold text-red-900">五行概览</h4>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {(['木', '火', '土', '金', '水'] as Wuxing[]).map((el) => (
             <WuxingBar key={el} name={el} percent={guessPercent(el)} />
           ))}
         </div>
-      </div>
+      </div> */}
 
       {/* 大运 */}
       <div className="space-y-3">

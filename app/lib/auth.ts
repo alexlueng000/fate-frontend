@@ -1,5 +1,6 @@
 // lib/auth.ts
 import { api, postJSON } from './api';
+import { clearChatStorage } from './chat/storage';
 
 export type User = {
   id: number;
@@ -8,6 +9,7 @@ export type User = {
   avatar_url?: string | null;
   email?: string | null;
 };
+
 
 export type LoginReq = { email: string; password: string };
 export type LoginResp = {
@@ -57,8 +59,24 @@ export function currentUser(): User | null {
 }
 
 export function clearAuth() {
-  localStorage.removeItem('auth_token');
-  sessionStorage.removeItem('me');
+  // 鉴权相关
+  try {
+    localStorage.removeItem('auth_token'); // 你现在用的这个
+    localStorage.removeItem('auth_user');  // 如果也存了用户对象，一并清掉（有则删，无则忽略）
+  } catch {}
+
+  // 你提到的 sessionStorage['me']
+  try {
+    sessionStorage.removeItem('me');
+  } catch {}
+
+  // 聊天侧缓存（会话ID、命盘、消息等）
+  clearChatStorage();
+
+  // 通知其它组件（Header 等）刷新
+  try {
+    window.dispatchEvent(new StorageEvent('storage', { key: 'auth_user' }));
+  } catch {}
 }
 
 // 读取本地 token

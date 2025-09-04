@@ -26,3 +26,18 @@ body {
 }
 
 @import 'highlight.js/styles/github-dark.css';
+
+
+/* globals.css */
+.msg-md h3, .msg-md h4 {
+  margin: .8em 0 .4em;
+  line-height: 1.35;
+}
+
+.msg-md p, .msg-md ul, .msg-md ol {
+  margin: .5em 0;
+}
+
+.msg-md ul, .msg-md ol {
+  padding-left: 1.2em;
+}
