@@ -1,6 +1,7 @@
 'use client';
 
 import { Paipan, Wuxing } from '@/app/lib/chat/types';
+import { ComponentType } from 'react';
 
 export function PaipanCard({
   paipan,
@@ -8,14 +9,12 @@ export function PaipanCard({
   WuxingBar,
   getWuxing,
   colorClasses,
-  guessPercent,
 }: {
   paipan: Paipan;
-  WuxingBadge: (props: { char: string }) => JSX.Element;
-  WuxingBar: (props: { name: Wuxing; percent: number }) => JSX.Element;
+  WuxingBadge: ComponentType<{ char: string }>;
+  WuxingBar: ComponentType<{ name: Wuxing; percent: number }>;
   getWuxing: (char: string) => Wuxing | null;
   colorClasses: (el: Wuxing, type: 'text' | 'border') => string;
-  guessPercent: (el: Wuxing) => number;
 }) {
   return (
     <div className="rounded-3xl border border-red-200 bg-white p-6 space-y-6 shadow-sm">

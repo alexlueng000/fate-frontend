@@ -375,7 +375,7 @@ export default function ChatPage() {
             WuxingBar={WuxingBar}
             getWuxing={getWuxing}
             colorClasses={colorClasses}
-            guessPercent={(el: Wuxing) => guessElementPercent(el)}
+            // guessPercent={(el: Wuxing) => guessElementPercent(el)}
           />
         )}
 

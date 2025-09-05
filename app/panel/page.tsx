@@ -506,7 +506,7 @@ export default function PanelPage() {
             WuxingBar={WuxingBar}
             getWuxing={getWuxing}
             colorClasses={colorClasses}
-            guessPercent={(el: Wuxing) => guessElementPercent(el)}
+            // guessPercent={(el: Wuxing) => guessElementPercent(el)}
           />
         )}
 
