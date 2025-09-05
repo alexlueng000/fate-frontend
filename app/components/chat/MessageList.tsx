@@ -1,6 +1,7 @@
 // app/components/chat/MessageList.tsx
 'use client';
 import { Msg, normalizeMarkdown } from '@/app/lib/chat/types';
+import { ComponentType } from 'react';
 
 export function MessageList({
   scrollRef,
@@ -9,7 +10,7 @@ export function MessageList({
 }: {
   scrollRef?: React.MutableRefObject<HTMLDivElement | null> | React.RefObject<HTMLDivElement | null>;
   messages: Msg[];
-  Markdown: (props: { content: string }) => JSX.Element;
+  Markdown: ComponentType<{ content: string }>;
 }) {
   return (
     <div
