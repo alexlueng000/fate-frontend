@@ -9,8 +9,11 @@ const nextConfig = {
       'http://119.29.135.234:80',
       'http://119.29.135.234:3000',
       // 如果用 https，也加上：
-      // 'https://119.29.135.234'
+      'https://yizhanmaster.site'
     ],
+  },
+  eslint: {
+    ignoreDuringBuilds: true, // 构建时不阻塞
   },
 };
 

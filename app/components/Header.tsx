@@ -4,6 +4,9 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { currentUser, fetchMe, logout, type User } from '@/app/lib/auth';
 import Link from 'next/link';
+import Image from 'next/image';
+
+import Logo from '@/app/public/fate-logo.png';
 
 export default function Header() {
   const router = useRouter();
@@ -68,8 +71,9 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-40 w-full border-b border-[#e5c07b] bg-[#fff7e8]/90 backdrop-blur">
       <div className="mx-auto flex h-18 max-w-6xl items-center justify-between px-6">
+        <Image src={Logo} alt="一盏大师" width={169} height={160} />
         <Link href="/" className="text-[#a83232] text-xl font-bold">
-          一盏大师（测试中）
+          一盏大师
         </Link>
 
         {!me ? (

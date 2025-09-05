@@ -67,7 +67,10 @@ export async function trySSE(
     // 4.3 数字被拆成“1↵2”时重新黏合（不在行首且后面不是列表标点）
     s = s.replace(/(?<!^)(\d)\s*\n+\s*(\d)(?![\.．、])/gm, "$1$2");
     // 4.4 行首出现“单独一行数字 + 下一行以数字开头文本”也黏合：1↵2项 -> 12项
-    s = s.replace(/(^|\n)(\d)\s*\n\s*(\d)(?=[\p{Script=Han}A-Za-z])/g, (_m, p1, a, b) => `${p1}${a}${b}`);
+    s = s.replace(
+      /(^|\n)(\d)\s*\n\s*(\d)(?=[\p{Script=Han}A-Za-z])/gu,
+      (_m, p1, a, b) => `${p1}${a}${b}`
+    );
     // 4.5 数字与汉字之间意外空格去掉
     s = s.replace(/(\d)\s+([\p{Script=Han}])/gu, "$1$2")
          .replace(/([\p{Script=Han}])\s+(\d)/gu, "$1$2");

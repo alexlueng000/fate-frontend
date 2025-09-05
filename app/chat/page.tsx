@@ -34,7 +34,7 @@ export default function ChatPage() {
   const [booting, setBooting] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [paipan, setPaipan] = useState<Paipan | null>(null);
-  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   // ===== Effects =====
   useEffect(() => {
@@ -236,7 +236,7 @@ export default function ChatPage() {
     // 先插入占位的 assistant
     let assistantIndex = -1;
     setMsgs((prev) => {
-      const next = [...prev, { role: 'assistant', content: '' }];
+      const next: Msg[] = [...prev, { role: 'assistant', content: '' }];
       assistantIndex = next.length - 1;
       return next;
     });

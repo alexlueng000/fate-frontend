@@ -26,6 +26,8 @@ import {
 import { SYSTEM_INTRO } from '@/app/lib/chat/constants';
 import { currentUser, fetchMe, type User } from '@/app/lib/auth';
 
+import { normalizeMarkdown } from '@/app/lib/chat/types';
+
 export default function PanelPage() {
   const router = useRouter();
 
@@ -54,7 +56,7 @@ export default function PanelPage() {
   const [calcLoading, setCalcLoading] = useState(false);
   const [calcErr, setCalcErr] = useState<string | null>(null);
 
-  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   // ===== 滚动到底 =====
   useEffect(() => {
@@ -121,8 +123,9 @@ export default function PanelPage() {
     if (!conversationId) throw new Error('缺少会话，请先完成排盘并开启解读。');
   
     // 1) 插入占位 assistant（标记 streaming 以便 UI 显示骨架/光标等）
-    setMsgs(prev => {
-      const next = [...prev, { role: 'assistant', content: '', streaming: true }];
+    setMsgs((prev) => {
+      const assistantMsg: Msg = { role: 'assistant', content: '' };
+      const next = [...prev, assistantMsg]; // next 的类型就是 Msg[]
       aiIndexRef.current = next.length - 1;
       return next;
     });

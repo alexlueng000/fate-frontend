@@ -1,4 +1,11 @@
-export type Msg = { role: 'user' | 'assistant'; content: string };
+export type Msg = {
+  role: 'user' | 'assistant';
+  content: string;
+  streaming?: boolean; // 新增（可选）
+  meta?: {
+    kind: string;
+  };
+};
 export type FourPillars = { year: string[]; month: string[]; day: string[]; hour: string[] };
 export type DayunItem = { age: number; start_year: number; pillar: string[] };
 export type Paipan = { four_pillars: FourPillars; dayun: DayunItem[] };

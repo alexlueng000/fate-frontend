@@ -7,7 +7,7 @@ export function MessageList({
   messages,
   Markdown,
 }: {
-  scrollRef: React.RefObject<HTMLDivElement>;
+  scrollRef?: React.MutableRefObject<HTMLDivElement | null> | React.RefObject<HTMLDivElement | null>;
   messages: Msg[];
   Markdown: (props: { content: string }) => JSX.Element;
 }) {
