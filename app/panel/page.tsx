@@ -31,7 +31,11 @@ import { normalizeMarkdown } from '@/app/lib/chat/types';
 export default function PanelPage() {
   const router = useRouter();
 
-  const aiIndexRef = useRef<number | null>(null);
+  // 组件内：必要的 ref/state（若你已存在就不要重复声明）
+const aiIndexRef = useRef<number | null>(null);
+const streamingLockRef = useRef(false);
+const lastFullRef = useRef(''); // 防重复 setState（可选）
+
 
   // ===== 用户信息 =====
   const [me, setMe] = useState<User | null>(null);
@@ -119,44 +123,61 @@ export default function PanelPage() {
   };
 
   // ===== SSE 流式发送 =====
+  
   const sendStream = async (content: string) => {
     if (!conversationId) throw new Error('缺少会话，请先完成排盘并开启解读。');
-  
-    // 1) 插入占位 assistant（标记 streaming 以便 UI 显示骨架/光标等）
-    setMsgs((prev) => {
-      const assistantMsg: Msg = { role: 'assistant', content: '' };
-      const next = [...prev, assistantMsg]; // next 的类型就是 Msg[]
+
+    // ✅ 防止首条/首次因为 StrictMode 或双击而重复触发
+    if (streamingLockRef.current) {
+      console.debug('[stream] blocked: already streaming');
+      return;
+    }
+    streamingLockRef.current = true;
+
+    // 1) 插入占位 assistant（标记 streaming）
+    setMsgs(prev => {
+      const next: Msg[] = [...prev, { role: 'assistant', content: '', streaming: true }];
       aiIndexRef.current = next.length - 1;
       return next;
     });
-  
-    // 2) onDelta：用“替换”而不是“追加”
+
+    // 2) 替换：只吃“全文”，避免 +=
     const replace = (fullText: string) => {
+      if (fullText === lastFullRef.current) return; // 去抖：相同内容不刷
+      lastFullRef.current = fullText;
+
       setMsgs(prev => {
         const i = aiIndexRef.current;
         if (i == null || i < 0 || i >= prev.length) return prev;
         const next = [...prev];
-        // trySSE 已经做了 normalizeMarkdown，这里直接替换
         next[i] = { ...next[i], content: fullText };
         return next;
       });
     };
-  
+
+        // 放在组件里任意位置（或 utils）
+function hasConversationId(x: unknown): x is { conversation_id: string } {
+  return typeof x === 'object'
+    && x !== null
+    && 'conversation_id' in x
+    && typeof (x as { conversation_id: string }).conversation_id === 'string';
+}
+
     try {
       await trySSE(
         api('/chat'),
         { conversation_id: conversationId, message: content },
-        replace, // ✅ 替换整段，不是 +=
-        (meta) => {
-          const cid = String(meta?.conversation_id || '');
+        replace, // ✅ 每次都是“整段最新文本”
+        (meta) => {                        // 注意：这里参数类型是 unknown（由 trySSE 决定）
+          const cid = hasConversationId(meta) ? meta.conversation_id : '';
           if (cid) {
             sessionStorage.setItem('conversation_id', cid);
             setConversationId(cid);
           }
         }
       );
-  
-      // 3) 结束后把 streaming 标记取消
+
+      // 3) 结束后取消 streaming
       setMsgs(prev => {
         const i = aiIndexRef.current;
         if (i == null || i < 0 || i >= prev.length) return prev;
@@ -164,7 +185,8 @@ export default function PanelPage() {
         next[i] = { ...next[i], streaming: false };
         return next;
       });
-    } catch {
+    } catch (e) {
+      console.warn('[stream] SSE failed, fallback once:', e);
       // 4) 降级：一次性请求并做 normalize
       const full = await sendOnce(content);
       setMsgs(prev => {
@@ -178,6 +200,10 @@ export default function PanelPage() {
         };
         return next;
       });
+    } finally {
+      // ✅ 确保释放锁
+      streamingLockRef.current = false;
+      lastFullRef.current = ''; // 重置去抖缓存，避免影响下一轮
     }
   };
 
@@ -259,23 +285,23 @@ export default function PanelPage() {
   const handleCalcPaipan = async (e: React.FormEvent) => {
     e.preventDefault();
     setCalcErr(null);
-
+  
     if (!birthDate || !birthTime) {
       setCalcErr('请完整选择出生日期与时间');
       return;
     }
-
+  
     setCalcLoading(true);
     setBooting(true);
     setErr(null);
-
+  
     try {
       // 1) 计算命盘
       const body = {
         gender,
-        calendar: calendarType, // 'gregorian' | 'lunar'
-        birth_date: birthDate,  // 'YYYY-MM-DD'
-        birth_time: birthTime,  // 'HH:MM'
+        calendar: calendarType,  // 'gregorian' | 'lunar'
+        birth_date: birthDate,   // 'YYYY-MM-DD'
+        birth_time: birthTime,   // 'HH:MM'
         birthplace: birthPlace,
       };
       const calcRes = await fetch(api('/bazi/calc_paipan'), {
@@ -287,91 +313,35 @@ export default function PanelPage() {
       const calcData = await calcRes.json();
       const mingpan = calcData?.mingpan as Paipan | undefined;
       if (!mingpan) throw new Error('后端未返回命盘（mingpan）。');
-
+  
       setPaipan(mingpan);
       savePaipanLocal(mingpan);
-
-      // 2) 启动会话
+  
+      // 2) 清空旧会话 & 放入开场白
       sessionStorage.removeItem('conversation_id');
-
-      // ✅ 先插入单独的“开场白”消息，再插入流式占位消息
-      let assistantIndex = -1;
-      setMsgs(() => {
-        const next: Msg[] = [
-          { role: 'assistant', content: SYSTEM_INTRO, meta: { kind: 'intro' } },
-          { role: 'assistant', content: '' },
-        ];
-        assistantIndex = 1;
-        return next;
+      setConversationId(null);
+      setMsgs([
+        { role: 'assistant', content: SYSTEM_INTRO, meta: { kind: 'intro' } },
+      ]);
+  
+      // 3) 用“非流式”的 /chat/start 只创建会话（忽略它的回复）
+      const startRes = await fetch(api('/chat/start'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }, // 不要 Accept: text/event-stream
+        body: JSON.stringify({ paipan: mingpan }),
       });
-
-      let cidLocal = '';
-      try {
-        // 首选流式
-        await trySSE(
-          api('/chat/start'),
-          { paipan: mingpan },
-          (delta) => {
-            setMsgs((prev) => {
-              const next = [...prev];
-              if (assistantIndex >= 0 && assistantIndex < next.length) {
-                next[assistantIndex] = {
-                  ...next[assistantIndex],
-                  content: next[assistantIndex].content + delta,
-                };
-              }
-              return next;
-            });
-          },
-          (meta) => {
-            const cid = String(meta?.conversation_id || '');
-            if (cid) {
-              sessionStorage.setItem('conversation_id', cid);
-              setConversationId(cid);
-              cidLocal = cid;
-            }
-          },
-        );
-
-        // 归一化 & 持久化
-        let finalText = '';
-        setMsgs((prev) => {
-          const next = [...prev];
-          if (assistantIndex >= 0 && assistantIndex < next.length) {
-            const normalized = normalizeMarkdown(next[assistantIndex].content || '');
-            next[assistantIndex] = { ...next[assistantIndex], content: normalized };
-            finalText = normalized;
-          }
-          return next;
-        });
-        if (cidLocal) saveConversation(cidLocal, [
-          { role: 'assistant', content: SYSTEM_INTRO, meta: { kind: 'intro' } },
-          { role: 'assistant', content: finalText },
-        ]);
-      } catch {
-        // 流式失败 → 一次性
-        const res = await fetch(api('/chat/start'), {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ paipan: mingpan }),
-        });
-        if (!res.ok) throw new Error(await res.text());
-        const data = await res.json();
-
-        const cid = String(data.conversation_id || '');
-        if (cid) {
-          sessionStorage.setItem('conversation_id', cid);
-          setConversationId(cid);
-        }
-
-        const first = pickReply(data).trim();
-        const initMsgs: Msg[] = [
-          { role: 'assistant', content: SYSTEM_INTRO, meta: { kind: 'intro' } },
-          { role: 'assistant', content: normalizeMarkdown(first || '（后端未返回解读内容）') },
-        ];
-        setMsgs(initMsgs);
-        if (cid) saveConversation(cid, initMsgs);
-      }
+      if (!startRes.ok) throw new Error(await startRes.text());
+      const startData = await startRes.json();
+      const cid = String(startData?.conversation_id || '');
+      if (!cid) throw new Error('后端未返回会话 ID。');
+      sessionStorage.setItem('conversation_id', cid);
+      setConversationId(cid);
+  
+      // 4) 首条正式解读也走 sendStream（与后续路径完全一致）
+      //    你可以自定义这里的提示词；给个通用“总览解读”示例：
+      const OPENING_PROMPT =
+        '请基于刚才的命盘给出结构化的【总览解读】，使用###和####作为标题，先概要后分点，不要逐字输出。';
+      await sendStream(OPENING_PROMPT);
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
@@ -379,7 +349,7 @@ export default function PanelPage() {
       setBooting(false);
     }
   };
-
+  
   return (
     <main className="min-h-screen bg-[#fef3c7] text-neutral-800 p-6 sm:p-10">
       <div className="mx-auto w-full max-w-6xl space-y-6">
@@ -511,7 +481,7 @@ export default function PanelPage() {
         )}
 
         {/* ===== 消息区 ===== */}
-        <MessageList scrollRef={scrollRef} messages={msgs} Markdown={Markdown as any} />
+        <MessageList scrollRef={scrollRef} messages={msgs} Markdown={Markdown} />
 
         {(booting || loading) && (
           <div className="flex items-center gap-2 rounded-2xl bg-white/90 border border-red-200 p-3 text-sm text-neutral-800">

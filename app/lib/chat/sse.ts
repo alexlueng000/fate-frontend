@@ -1,9 +1,12 @@
+// trySSE.ts
 export async function trySSE(
   url: string,
-  body: any,
-  onDelta: (text: string) => void,   // 每次回调“整段最新文本”（已规范化）
-  onMeta?: (meta: any) => void,
+  body: unknown,
+  onDelta: (text: string) => void,   // 回调“当前整段最新文本”（已规范化）
+  onMeta?: (meta: unknown) => void,
 ): Promise<void> {
+  const log = (...args: unknown[]) => console.log('[SSE]', ...args);
+
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
@@ -18,110 +21,91 @@ export async function trySSE(
   const reader = res.body.getReader();
   const decoder = new TextDecoder("utf-8");
 
-  let rawBuf = "";  // SSE 原始缓冲（以 \n\n 切块）
-  let text = "";    // 聚合后的“整段文本”
+  let rawBuf = "";        // 以 \n\n 切块的原始缓冲
+  let text = "";          // 聚合后的全文
+  let lastEmitted = "";   // 避免重复回调
+  let rafId: number | null = null;
 
-  // —— 统一/清理 —— //
   const normalize = (s: string): string => {
-    // 0) 不可见空白
+    // 去不可见空白
     s = s.replace(/[\u200b\u200c\u200d\uFEFF\u202f]/g, "");
-
-    // 1) 去粗体/斜体残留
+    // 简化粗体/斜体残留
     s = s.replace(/\*\*([^*\n]+)\*\*/g, "$1")
          .replace(/\*([^*\n]+)\*/g, "$1")
          .replace(/__([^_\n]+)__/g, "$1")
          .replace(/(\*\*|__)/g, "");
-
-    // 2) 标题（只保留 h3/h4）
-    s = s.replace(/＃/g, "#");
-    s = s.replace(/^[ \t]*#(?:[ \t]*#){1,5}[ \t]*/gm, "### ");      // "# ## 标题" -> "### "
-    s = s.replace(/^[ \t]+(#{1,6})(?=\S|\s)/gm, "$1");              // 去前导空格
-    s = s.replace(/^(#{5,6})[ \t]*/gm, "#### ");                    // 5/6 -> 4
-    s = s.replace(/^(#{1,2})[ \t]*/gm, "### ");                     // 1/2 -> 3
-    s = s.replace(/^(#{3,4})[ \t]+#{1,6}[ \t]*/gm, "$1 ");          // "###  ## 标题" -> "### "
-    s = s.replace(/^(#{3,4})([^\s#])/gm, "$1 $2");                  // 标题后补空格
-    s = s.replace(/^(#{3,4})\s*([^#\n]+?)\s*#+\s*$/gm, "$1 $2");    // 去标题尾部多余 #
-    // 段内硬插标题：无空格或有空格的场景都断行
-    s = s.replace(/([^\n])(#{3,4})(?=\S)/g, "$1\n\n$2 ");
-    s = s.replace(/([^\n])\s+(#{3,4})\s+(?=\S)/g, "$1\n\n$2 ");
-    // 标题前后空行
-    s = s.replace(/([^\n])\n[ \t]*(#{3,4}\s)/g, "$1\n\n$2");
-    s = s.replace(/(^|\n)[ \t]*(#{3,4}\s[^\n]+)\n(?!\n)/g, "$1$2\n\n");
-
-    // 3) 列表 & 横线
-    s = s.replace(/^[ \t]*[—–－][ \t]*/gm, "- ");                   // 行首全角横线 -> 列表
-    s = s.replace(/([^ \n])\s+([\-—–－])\s+(?=\S)/g, "$1\n\n- ");    // 句中起列表 -> 换行
-    s = s.replace(/^-\s+[—–－-]{2,}\s*/gm, "- ");                   // "- --- 文本" -> "- 文本"
-    s = s.replace(/^[ \t]*-([^\s])/gm, "- $1");                     // "-一、" -> "- 一、"
-    // 有序列表：只认行首 "1. / 1、 / 1．"
-    s = s.replace(/^\s*(\d+)[\.．、]\s*/gm, (_m, n: string) => `${n}. `);
-    // 删除整行分割线
-    s = s.replace(/(^|\n)\s*[—–－-]{3,}\s*(\n|$)/g, "$1$2");
-
-    // 4) CJK & 数字拆分修复
-    // 4.1 汉字与汉字之间的任意空白（含换行）去掉
-    s = s.replace(/([\p{Script=Han}])\s+([\p{Script=Han}])/gu, "$1$2");
-    // 4.2 汉字与标点间的多余空白
-    s = s.replace(/([\p{Script=Han}])\s+([，。、《》？！：；）】])/gu, "$1$2")
-         .replace(/([（【《])\s+([\p{Script=Han}])/gu, "$1$2");
-    // 4.3 数字被拆成“1↵2”时重新黏合（不在行首且后面不是列表标点）
-    s = s.replace(/(?<!^)(\d)\s*\n+\s*(\d)(?![\.．、])/gm, "$1$2");
-    // 4.4 行首出现“单独一行数字 + 下一行以数字开头文本”也黏合：1↵2项 -> 12项
-    s = s.replace(
-      /(^|\n)(\d)\s*\n\s*(\d)(?=[\p{Script=Han}A-Za-z])/gu,
-      (_m, p1, a, b) => `${p1}${a}${b}`
-    );
-    // 4.5 数字与汉字之间意外空格去掉
-    s = s.replace(/(\d)\s+([\p{Script=Han}])/gu, "$1$2")
+    // 标题统一到 h3/h4，并保证空行
+    s = s.replace(/＃/g, "#")
+         .replace(/^[ \t]*#(?:[ \t]*#){1,5}[ \t]*/gm, "### ")
+         .replace(/^[ \t]+(#{1,6})(?=\S|\s)/gm, "$1")
+         .replace(/^(#{5,6})[ \t]*/gm, "#### ")
+         .replace(/^(#{1,2})[ \t]*/gm, "### ")
+         .replace(/^(#{3,4})[ \t]+#{1,6}[ \t]*/gm, "$1 ")
+         .replace(/^(#{3,4})([^\s#])/gm, "$1 $2")
+         .replace(/^(#{3,4})\s*([^#\n]+?)\s*#+\s*$/gm, "$1 $2")
+         .replace(/([^\n])(#{3,4})(?=\S)/g, "$1\n\n$2 ")
+         .replace(/([^\n])\s+(#{3,4})\s+(?=\S)/g, "$1\n\n$2 ")
+         .replace(/([^\n])\n[ \t]*(#{3,4}\s)/g, "$1\n\n$2")
+         .replace(/(^|\n)[ \t]*(#{3,4}\s[^\n]+)\n(?!\n)/g, "$1$2\n\n");
+    // 列表 & 横线
+    s = s.replace(/^[ \t]*[—–－][ \t]*/gm, "- ")
+         .replace(/([^ \n])\s+([\-—–－])\s+(?=\S)/g, "$1\n\n- ")
+         .replace(/^-\s+[—–－-]{2,}\s*/gm, "- ")
+         .replace(/^[ \t]*-([^\s])/gm, "- $1")
+         .replace(/^\s*(\d+)[\.．、]\s*/gm, (_m, n: string) => `${n}. `)
+         .replace(/(^|\n)\s*[—–－-]{3,}\s*(\n|$)/g, "$1$2");
+    // CJK/数字黏合
+    s = s.replace(/([\p{Script=Han}])\s+([\p{Script=Han}])/gu, "$1$2")
+         .replace(/([\p{Script=Han}])\s+([，。、《》？！：；）】])/gu, "$1$2")
+         .replace(/([（【《])\s+([\p{Script=Han}])/gu, "$1$2")
+         .replace(/(?<!^)(\d)\s*\n+\s*(\d)(?![\.．、])/gm, "$1$2")
+         .replace(
+          /(^|\n)(\d)\s*\n\s*(\d)(?=[\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFFA-Za-z])/g,
+          (_m, p1, a, b) => `${p1}${a}${b}`)
+         .replace(/(\d)\s+([\p{Script=Han}])/gu, "$1$2")
          .replace(/([\p{Script=Han}])\s+(\d)/gu, "$1$2");
-
-    // 5) 免责声明（允许任意空格），前后强制空行
-    const claim = /以\s*上\s*内\s*容\s*由\s*传\s*统\s*文\s*化\s*AI\s*生\s*成[^\n]*/g;
-    s = s.replace(claim, (m) => `\n\n${m.replace(/\s+/g, " ")}\n\n`);
-
-    // 6) 压缩空行 + 结尾两行
+    // 压空行
     s = s.replace(/\n{3,}/g, "\n\n");
     return s.trimEnd() + "\n\n";
   };
 
-  // —— 单个 data 负载 -> 聚合 —— //
-  const append = (payload: string) => {
-    const trimmed = payload.trim();
-
-    // ⚠️ 不要把“空白包”当换行（会拆中文/数字）
-    if (trimmed === "" || payload === "  ") {
-      return;
+  const emitIfChanged = () => {
+    const normalized = normalize(text);
+    if (normalized !== lastEmitted) {
+      lastEmitted = normalized;
+      onDelta(normalized);
+      log('emit len=', normalized.length, 'tail=', normalized.slice(-30).replace(/\n/g, '\\n'));
     }
+  };
 
-    if (trimmed === "[DONE]") {
-      // 结束信号；调用方自行收尾
-    } else if (trimmed === "###" || trimmed === "####") {
-      // 标题 token：保证标题独占一行（先补两个换行，再写 "#### "）
-      if (!text.endsWith("\n\n")) {
-        if (!text.endsWith("\n")) text += "\n";
-        text += "\n";
-      }
+  const appendRaw = (payload: string) => {
+    const trimmed = payload.trim();
+    if (trimmed === "" || payload === "  ") { log('skip blank'); return; }
+    if (trimmed === "[DONE]") { log('DONE'); return; }
+
+    if (trimmed === "###" || trimmed === "####") {
+      if (!text.endsWith("\n\n")) { if (!text.endsWith("\n")) text += "\n"; text += "\n"; }
       text += trimmed + " ";
     } else if (/^[-—–－]$/.test(trimmed)) {
-      // 列表 token：若不在行首则先换行
       if (!text.endsWith("\n")) text += "\n";
       text += "- ";
     } else if (/^[—–－-]{3,}\s*$/.test(trimmed)) {
-      // 分割线整包 -> 丢弃
+      log('drop hr');
     } else {
-      // 普通文本
       text += payload;
     }
 
-    onDelta(normalize(text)); // 返回“当前整段”的规范化文本
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(emitIfChanged);
   };
 
-  // —— 读取 & 解析事件块 —— //
   while (true) {
     const { value, done } = await reader.read();
     if (done) break;
 
-    rawBuf += decoder.decode(value, { stream: true });
+    const chunk = decoder.decode(value, { stream: true });
+    rawBuf += chunk;
+    log('chunk bytes=', chunk.length);
 
     let idx: number;
     while ((idx = rawBuf.indexOf("\n\n")) !== -1) {
@@ -131,23 +115,57 @@ export async function trySSE(
       for (const line of block.split("\n")) {
         if (!line.startsWith("data:")) continue;
 
-        // 保留 data: 后原样内容（不要 trim 头部空格）
-        const payload = line.slice(5);
-
-        // meta（如果是 JSON）
+        const payload = line.slice(5); // 不 trim 头部空格
         const t = payload.trim();
+
+        // 兼容 data: {"meta":..., "delta":"..."} 或 {"text":"..."}
         if (t && t[0] === "{") {
           try {
             const obj = JSON.parse(t);
-            if (obj && obj.meta && onMeta) {
-              onMeta(obj.meta);
-              continue;
-            }
-          } catch { /* 非 JSON，继续当普通增量 */ }
+            let used = false;
+
+            if (obj?.meta && onMeta) { onMeta(obj.meta); log('meta=', obj.meta); used = true; }
+
+            const seg =
+              typeof obj?.delta === 'string' ? obj.delta :
+              (typeof obj?.text === 'string' ? obj.text : '');
+
+            if (seg) { log('json seg len=', seg.length, 'tail=', String(seg).slice(-20)); appendRaw(seg); used = true; }
+
+            if (used) continue;
+          } catch {
+            log('json parse failed -> raw');
+          }
         }
 
-        append(payload);
+        log('raw len=', payload.length, 'tail=', payload.slice(-20));
+        appendRaw(payload);
       }
     }
   }
+
+  if (rawBuf.trim()) {
+    log('flush tail');
+    for (const line of rawBuf.split("\n")) {
+      if (!line.startsWith("data:")) continue;
+      const payload = line.slice(5);
+      const t = payload.trim();
+      if (t && t[0] === "{") {
+        try {
+          const obj = JSON.parse(t);
+          if (obj?.meta && onMeta) { onMeta(obj.meta); log('meta=', obj.meta); }
+          const seg =
+            typeof obj?.delta === 'string' ? obj.delta :
+            (typeof obj?.text === 'string' ? obj.text : '');
+          if (seg) appendRaw(seg);
+        } catch {
+          appendRaw(payload);
+        }
+      } else {
+        appendRaw(payload);
+      }
+    }
+  }
+
+  emitIfChanged();
 }

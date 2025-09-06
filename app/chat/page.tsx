@@ -36,6 +36,19 @@ export default function ChatPage() {
   const [paipan, setPaipan] = useState<Paipan | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  const mountedRef = useRef(true);
+useEffect(() => {
+  mountedRef.current = true;
+  return () => { mountedRef.current = false; };
+}, []);
+
+  // 安全读取 conversation_id（不依赖 any）
+  function readConversationId(meta: unknown): string {
+    if (typeof meta !== 'object' || meta === null) return '';
+    const v = (meta as Record<string, unknown>)['conversation_id'];
+    return typeof v === 'string' ? v : '';
+  }
+
   // ===== Effects =====
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
@@ -81,7 +94,7 @@ export default function ChatPage() {
               return next;
             });
 
-            let cidLocal = '';
+            const cidLocal = '';
             await trySSE(
               api('/chat/start'),
               { paipan: mingpan },
@@ -102,13 +115,12 @@ export default function ChatPage() {
               // onMeta：拿到 conversation_id
               (meta) => {
                 if (!alive) return;
-                const cid = String(meta?.conversation_id || '');
+                const cid = readConversationId(meta);  // ✅ 不再直接访问 meta.xxx
                 if (cid) {
                   sessionStorage.setItem('conversation_id', cid);
                   setConversationId(cid);
-                  cidLocal = cid;
                 }
-              },
+              }
             );
 
             // 流结束 → 归一化 + 持久化
@@ -230,6 +242,8 @@ export default function ChatPage() {
     return pickReply(data).trim();
   };
 
+
+
   const sendStream = async (content: string) => {
     if (!conversationId) throw new Error('缺少会话，请返回首页重新创建。');
 
@@ -257,12 +271,13 @@ export default function ChatPage() {
         { conversation_id: conversationId, message: content },
         append,
         (meta) => {
-          const cid = String(meta?.conversation_id || '');
+          if (!mountedRef.current) return;          // ✅ 防卸载后 setState
+          const cid = readConversationId(meta);     // 你已实现的安全取值函数
           if (cid) {
             sessionStorage.setItem('conversation_id', cid);
             setConversationId(cid);
           }
-        },
+        }
       );
 
       // 归一化 Markdown
@@ -384,7 +399,7 @@ export default function ChatPage() {
         <MessageList
           scrollRef={scrollRef}
           messages={msgs}
-          Markdown={Markdown as any}
+          Markdown={Markdown}
         />
 
         {(booting || loading) && (
