@@ -28,6 +28,9 @@ import { currentUser, fetchMe, type User } from '@/app/lib/auth';
 
 import { normalizeMarkdown } from '@/app/lib/chat/types';
 
+
+
+
 export default function PanelPage() {
   const router = useRouter();
 
@@ -61,6 +64,72 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
   const [calcErr, setCalcErr] = useState<string | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
+
+         // 放在组件里任意位置（或 utils）
+  function hasConversationId(x: unknown): x is { conversation_id: string } {
+    return typeof x === 'object'
+      && x !== null
+      && 'conversation_id' in x
+      && typeof (x as { conversation_id: string }).conversation_id === 'string';
+  }
+
+  // 类型守卫：是普通对象（非 null）
+  const isRecord = (v: unknown): v is Record<string, unknown> =>
+    typeof v === 'object' && v !== null;
+
+  // 从一个对象里读取会话 id（支持两种命名）
+  const readCid = (obj: Record<string, unknown>): string | null => {
+    const id1 = obj['conversation_id'];
+    if (typeof id1 === 'string') return id1;
+
+    const id2 = obj['conversationId'];
+    if (typeof id2 === 'string') return id2;
+
+    return null;
+  };
+
+
+  // 放在组件文件里（或 util）
+  /** 从多种形状的 meta 中提取 conversation_id（无则返回空字符串） */
+  function pickCid(meta: unknown): string {
+    // 支持字符串 JSON
+    if (typeof meta === 'string') {
+      try { return pickCid(JSON.parse(meta)); } catch { return ''; }
+    }
+
+    if (!isRecord(meta)) return '';
+
+    // 1) 顶层
+    const top = readCid(meta);
+    if (top) return top;
+
+    // 2) meta 内层
+    if ('meta' in meta) {
+      const inner = (meta as Record<'meta', unknown>).meta;
+      if (isRecord(inner)) {
+        const v = readCid(inner);
+        if (v) return v;
+      }
+    }
+
+    // 3) data 内层（有些后端用 data 包一层）
+    if ('data' in meta) {
+      const inner = (meta as Record<'data', unknown>).data;
+      if (isRecord(inner)) {
+        const v = readCid(inner);
+        if (v) return v;
+      }
+    }
+
+    return '';
+  }
+
+  const saveCid = (cid: string | null | undefined, setConversationId: (v: string) => void) => {
+    if (!cid) return;
+    sessionStorage.setItem('conversation_id', cid);
+    setConversationId(cid);
+  };
+  
 
   // ===== 滚动到底 =====
   useEffect(() => {
@@ -155,14 +224,7 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
       });
     };
 
-        // 放在组件里任意位置（或 utils）
-function hasConversationId(x: unknown): x is { conversation_id: string } {
-  return typeof x === 'object'
-    && x !== null
-    && 'conversation_id' in x
-    && typeof (x as { conversation_id: string }).conversation_id === 'string';
-}
-
+ 
     try {
       await trySSE(
         api('/chat'),
@@ -304,6 +366,7 @@ function hasConversationId(x: unknown): x is { conversation_id: string } {
         birth_time: birthTime,   // 'HH:MM'
         birthplace: birthPlace,
       };
+  
       const calcRes = await fetch(api('/bazi/calc_paipan'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -317,31 +380,95 @@ function hasConversationId(x: unknown): x is { conversation_id: string } {
       setPaipan(mingpan);
       savePaipanLocal(mingpan);
   
-      // 2) 清空旧会话 & 放入开场白
+      // 2) 清理旧会话 & 插入开场白 + 流式占位
       sessionStorage.removeItem('conversation_id');
       setConversationId(null);
+  
+      const assistantIndex = 1;
       setMsgs([
         { role: 'assistant', content: SYSTEM_INTRO, meta: { kind: 'intro' } },
+        { role: 'assistant', content: '', streaming: true },
       ]);
   
-      // 3) 用“非流式”的 /chat/start 只创建会话（忽略它的回复）
-      const startRes = await fetch(api('/chat/start'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }, // 不要 Accept: text/event-stream
-        body: JSON.stringify({ paipan: mingpan }),
-      });
-      if (!startRes.ok) throw new Error(await startRes.text());
-      const startData = await startRes.json();
-      const cid = String(startData?.conversation_id || '');
-      if (!cid) throw new Error('后端未返回会话 ID。');
-      sessionStorage.setItem('conversation_id', cid);
-      setConversationId(cid);
+      // 3) 首条流式解读（/chat/start）
+      let cidLocal = '';
+      let finalTextLocal = '';
   
-      // 4) 首条正式解读也走 sendStream（与后续路径完全一致）
-      //    你可以自定义这里的提示词；给个通用“总览解读”示例：
-      const OPENING_PROMPT =
-        '请基于刚才的命盘给出结构化的【总览解读】，使用###和####作为标题，先概要后分点，不要逐字输出。';
-      await sendStream(OPENING_PROMPT);
+      try {
+        await trySSE(
+          api('/chat/start'),
+          { paipan: mingpan },
+          // onDelta：始终“替换整段”
+          (full) => {
+            finalTextLocal = full;
+            setMsgs((prev) => {
+              const next = [...prev];
+              if (assistantIndex >= 0 && assistantIndex < next.length) {
+                next[assistantIndex] = { ...next[assistantIndex], content: full };
+              }
+              return next;
+            });
+          },
+          // onMeta：宽松提取会话 id，首次就保存
+          (metaAny) => {
+            const cid = pickCid(metaAny);
+            if (cid) {
+              cidLocal = cid;
+              sessionStorage.setItem('conversation_id', cid);
+              setConversationId(cid);
+            }
+          }
+        );
+      } catch (err) {
+        // 4) 流式失败 → 一次性兜底
+        const res = await fetch(api('/chat/start'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ paipan: mingpan }),
+        });
+        if (!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+  
+        const cid = String(data?.conversation_id || '');
+        if (cid) {
+          cidLocal = cid;
+          sessionStorage.setItem('conversation_id', cid);
+          setConversationId(cid);
+        }
+  
+        const firstText = normalizeMarkdown(
+          (data?.text || data?.content || '').trim() || '（后端未返回解读内容）'
+        );
+        finalTextLocal = firstText;
+        setMsgs((prev) => {
+          const next = [...prev];
+          if (assistantIndex >= 0 && assistantIndex < next.length) {
+            next[assistantIndex] = { role: 'assistant', streaming: false, content: firstText };
+          }
+          return next;
+        });
+      }
+  
+      // 5) 收尾：去掉 streaming
+      setMsgs((prev) => {
+        const next = [...prev];
+        if (assistantIndex >= 0 && assistantIndex < next.length) {
+          next[assistantIndex] = { ...next[assistantIndex], streaming: false };
+        }
+        return next;
+      });
+  
+      // 6)（可选）持久化到你的对话存档
+      if (cidLocal && typeof saveConversation === 'function') {
+        try {
+          saveConversation(cidLocal, [
+            { role: 'assistant', content: SYSTEM_INTRO, meta: { kind: 'intro' } },
+            { role: 'assistant', content: finalTextLocal || '' },
+          ]);
+        } catch {
+          /* 忽略存档异常 */
+        }
+      }
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : String(e));
     } finally {

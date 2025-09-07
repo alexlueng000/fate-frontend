@@ -71,10 +71,19 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-40 w-full border-b border-[#e5c07b] bg-[#fff7e8]/90 backdrop-blur">
       <div className="mx-auto flex h-18 max-w-6xl items-center justify-between px-6">
-        <Image src={Logo} alt="一盏大师" width={169} height={160} />
-        <Link href="/" className="text-[#a83232] text-xl font-bold">
+      <Link href="/" className="flex items-center gap-3 group">
+        <Image
+          src={Logo}
+          alt="一盏大师 Logo"
+          width={160}
+          height={160}
+          className="w-auto h-20"
+          priority
+        />
+        <span className="text-[#a83232] text-xl font-bold group-hover:opacity-80">
           一盏大师
-        </Link>
+        </span>
+      </Link>
 
         {!me ? (
           <div className="flex gap-3">
