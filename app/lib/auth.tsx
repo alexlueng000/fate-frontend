@@ -6,6 +6,7 @@ import {
   useEffect,
   useState,
   type ReactNode,
+  type ReactElement,   // ✅ 新增
 } from 'react';
 import { api } from './api';
 
@@ -33,7 +34,7 @@ const UserCtx = createContext<UserContextType | undefined>(undefined);
 
 let setUserRef: (u: User | null) => void = () => {};
 
-export function UserProvider({ children }: { children: ReactNode }): JSX.Element {
+export function UserProvider({ children }: { children: ReactNode }): ReactElement {
   const [user, setUser] = useState<User | null>(currentUser());
 
   useEffect(() => { setUserRef = setUser; }, []);
