@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { postJSON, api } from '@/app/lib/api';
-import { saveAuth } from '@/app/lib/auth';
+import { saveAuth, setUserCache } from '@/app/lib/auth';
 
 type RegisterReq = {
   email?: string;
@@ -95,9 +95,9 @@ export default function RegisterPage() {
 
       // 4) 把 user 放入会话（即便没有 token，也至少保证首页能显示昵称/头像）
       if (me) {
-        sessionStorage.setItem('me', JSON.stringify(me));
+        setUserCache(me);
       } else if ('user' in resp && resp.user) {
-        sessionStorage.setItem('me', JSON.stringify(resp.user));
+        setUserCache(resp.user);
       } else {
         // 最保守：用注册返回的基础字段凑一个
         const fallbackUser: User = {
@@ -107,7 +107,7 @@ export default function RegisterPage() {
           avatar_url: (resp as any).avatar_url ?? null,
           email: (resp as any).email ?? (email || null),
         };
-        sessionStorage.setItem('me', JSON.stringify(fallbackUser));
+        setUserCache(fallbackUser);
       }
 
       // 5) 成功 → 直接回首页（而不是去登录页）

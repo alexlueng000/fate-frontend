@@ -1,10 +1,10 @@
 // app/account/page.tsx
 'use client';
 
-import { currentUser } from '@/app/lib/auth';
+import { useUser } from '@/app/lib/auth';
 
 export default function AccountPage() {
-  const me = currentUser();
+  const { user: me } = useUser();
   return (
     <div className="mx-auto max-w-3xl p-6">
       <h1 className="mb-4 text-2xl font-semibold text-[#a83232]">我的账户</h1>

@@ -24,7 +24,7 @@ import {
 } from '@/app/lib/chat/storage';
 
 import { SYSTEM_INTRO } from '@/app/lib/chat/constants';
-import { currentUser, fetchMe, type User } from '@/app/lib/auth';
+import { useUser, fetchMe } from '@/app/lib/auth';
 
 import { normalizeMarkdown } from '@/app/lib/chat/types';
 
@@ -41,7 +41,7 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
 
 
   // ===== 用户信息 =====
-  const [me, setMe] = useState<User | null>(null);
+  const { user: me, setUser } = useUser();
 
   // ===== 会话/消息 =====
   const [conversationId, setConversationId] = useState<string | null>(null);
@@ -140,16 +140,13 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
   useEffect(() => {
     let alive = true;
     (async () => {
-      const u = currentUser();
-      if (u) {
-        setMe(u);
-      } else {
+      if (!me) {
         const fetched = await fetchMe();
         if (!fetched) {
           router.replace('/login?redirect=/panel');
           return;
         }
-        setMe(fetched);
+        setUser(fetched);
       }
 
       const active = getActiveConversationId() || sessionStorage.getItem('conversation_id');
@@ -166,7 +163,7 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
       }
     })();
     return () => { alive = false; };
-  }, [router]);
+  }, [me, router, setUser]);
 
   // ===== 消息持久化 =====
   useEffect(() => {

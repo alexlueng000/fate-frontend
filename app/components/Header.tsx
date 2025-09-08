@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { currentUser, fetchMe, logout, type User } from '@/app/lib/auth';
+import { useUser, fetchMe, logout } from '@/app/lib/auth';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -10,47 +10,16 @@ import Logo from '@/app/public/fate-logo.png';
 
 export default function Header() {
   const router = useRouter();
-  const [me, setMe] = useState<User | null>(null);
+  const { user: me, setUser } = useUser();
   const [open, setOpen] = useState(false);
 
-  const refreshMe = useCallback(async () => {
-    // 1) 先从 sessionStorage 读（注册/登录成功后 saveAuth 会写这里）
-    const u = currentUser();
-    if (u) {
-      console.log('从 sessionStorage 读取用户信息', u);
-      setMe(u);
-      return;
-    }
-    // 2) 兼容 Cookie 会话：尝试 /me
-    const serverUser = await fetchMe();
-    if (serverUser) setMe(serverUser);
-  }, []);
-
   useEffect(() => {
-    // 初次挂载：拉取用户
-    void refreshMe();
-
-    // 页面回到前台/可见时，再同步一次（从注册/登录页跳回后能立刻更新）
-    const onFocus = () => void refreshMe();
-    const onVisibility = () => {
-      if (document.visibilityState === 'visible') void refreshMe();
-    };
-
-    // 跨标签页登录/退出时同步（storage 事件只在“其他标签页”触发）
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === 'me' || e.key === 'auth_token') void refreshMe();
-    };
-
-    window.addEventListener('focus', onFocus);
-    document.addEventListener('visibilitychange', onVisibility);
-    window.addEventListener('storage', onStorage);
-
-    return () => {
-      window.removeEventListener('focus', onFocus);
-      document.removeEventListener('visibilitychange', onVisibility);
-      window.removeEventListener('storage', onStorage);
-    };
-  }, [refreshMe]);
+    if (!me) {
+      void fetchMe().then((u) => {
+        if (u) setUser(u);
+      });
+    }
+  }, [me, setUser]);
 
   function goLogin() {
     const to = `/login?redirect=${encodeURIComponent(window.location.pathname || '/')}`;
@@ -63,7 +32,6 @@ export default function Header() {
 
   async function doLogout() {
     await logout();
-    setMe(null);
     setOpen(false);
     router.push('/');
   }

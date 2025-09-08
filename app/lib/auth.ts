@@ -1,4 +1,6 @@
 // lib/auth.ts
+'use client';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { api, postJSON } from './api';
 
 export type User = {
@@ -15,6 +17,56 @@ export type LoginResp = {
   access_token?: string;
   token_type?: string;
 };
+
+// === 全局用户缓存 ===
+type UserContextType = {
+  user: User | null;
+  setUser: (u: User | null) => void;
+};
+
+const UserContext = createContext<UserContextType>({ user: null, setUser: () => {} });
+
+let setUserRef: (u: User | null) => void = () => {};
+
+export function UserProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<User | null>(currentUser());
+
+  // 供外部函数（saveAuth/clearAuth 等）更新
+  useEffect(() => {
+    setUserRef = setUser;
+  }, []);
+
+  // 跨标签页同步
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'me' || e.key === 'auth_token') {
+        setUser(currentUser());
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
+
+  return (
+    <UserContext.Provider value={{ user, setUser }}>{children}</UserContext.Provider>
+  );
+}
+
+export function useUser() {
+  return useContext(UserContext);
+}
+
+// 外部手动更新缓存
+export function setUserCache(u: User | null) {
+  if (u) {
+    try {
+      sessionStorage.setItem('me', JSON.stringify(u));
+    } catch {}
+  } else {
+    sessionStorage.removeItem('me');
+  }
+  setUserRef(u);
+}
 
 export async function loginWeb(payload: { email: string; password: string }) {
   let resp: Response;
@@ -44,7 +96,7 @@ export async function loginWeb(payload: { email: string; password: string }) {
 }
 export function saveAuth(resp: LoginResp) {
   if (resp.access_token) localStorage.setItem('auth_token', resp.access_token);
-  sessionStorage.setItem('me', JSON.stringify(resp.user));
+  setUserCache(resp.user);
 }
 
 export function currentUser(): User | null {
@@ -58,7 +110,7 @@ export function currentUser(): User | null {
 
 export function clearAuth() {
   localStorage.removeItem('auth_token');
-  sessionStorage.removeItem('me');
+  setUserCache(null);
 }
 
 // 读取本地 token
