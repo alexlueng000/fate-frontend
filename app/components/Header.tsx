@@ -53,22 +53,32 @@ export default function Header() {
         </span>
       </Link>
 
-        {!me ? (
-          <div className="flex gap-3">
-            <button
-              onClick={goLogin}
-              className="rounded-xl bg-[#a83232] px-4 py-2 text-[#fdf6e3] hover:bg-[#8c2b2b]"
-            >
-              登录
-            </button>
-            <button
-              onClick={goRegister}
-              className="rounded-xl border border-[#a83232] px-4 py-2 text-[#a83232] hover:bg-[#fdeecf]"
-            >
-              注册
-            </button>
-          </div>
-        ) : (
+      {!me ? (
+  <div className="flex gap-3">
+    <button
+      onClick={goLogin}
+      className="rounded-xl bg-[#a83232] px-4 py-2 text-[#fdf6e3] hover:bg-[#8c2b2b]"
+    >
+      登录
+    </button>
+    <button
+      onClick={goRegister}
+      className="rounded-xl border border-[#a83232] px-4 py-2 text-[#a83232] hover:bg-[#fdeecf]"
+    >
+      注册
+    </button>
+  </div>
+      ) : (
+        <div className="flex items-center gap-3">
+          {/* 新增个人中心按钮 */}
+          <Link
+            href="/panel"
+            className="rounded-xl bg-[#a83232] px-4 py-2 text-[#fdf6e3] hover:bg-[#8c2b2b]"
+          >
+            个人中心
+          </Link>
+
+          {/* 原来的用户菜单 */}
           <div className="relative">
             <button
               onClick={() => setOpen((v) => !v)}
@@ -106,7 +116,8 @@ export default function Header() {
               </div>
             )}
           </div>
-        )}
+        </div>
+      )}
       </div>
     </header>
   );
