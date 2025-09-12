@@ -1,8 +1,6 @@
 // lib/api.ts
 const RAW_API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
 const API_BASE = RAW_API_BASE.replace(/\/+$/, '');
-
-// 这里改：没有 API_BASE 时，直接用原始 path（不再加 `/api`）
 export const api = (path: string) => (API_BASE ? `${API_BASE}${path}` : path);
 
 export async function postJSON<T>(url: string, body: unknown): Promise<T> {
