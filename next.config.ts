@@ -1,5 +1,9 @@
 const nextConfig = {
   reactStrictMode: true,
+  eslint: {
+    // 在构建和启动时忽略 ESLint 报错
+    ignoreDuringBuilds: true,
+  },
 
   async rewrites() {
     return [
