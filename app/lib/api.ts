@@ -1,13 +1,15 @@
 // lib/api.ts
 const RAW_API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
 const API_BASE = RAW_API_BASE.replace(/\/+$/, '');
-export const api = (path: string) => (API_BASE ? `${API_BASE}${path}` : `/api${path}`);
+
+// 这里改：没有 API_BASE 时，直接用原始 path（不再加 `/api`）
+export const api = (path: string) => (API_BASE ? `${API_BASE}${path}` : path);
 
 export async function postJSON<T>(url: string, body: unknown): Promise<T> {
   const r = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    credentials: 'include', // 若你走cookie会话，这行保留；若走纯token也不影响
+    credentials: 'include',
     body: JSON.stringify(body),
   });
   if (!r.ok) {
