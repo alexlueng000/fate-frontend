@@ -71,8 +71,8 @@ export async function loginWeb(payload: { email: string; password: string }) {
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
     body: JSON.stringify(payload),
-  }).catch((err: any) => {
-    throw new Error(`网络错误：${err?.message || '可能是 CORS/域名/协议问题'}`);
+  }).catch((err: unknown) => {
+    throw new Error(`网络错误：${(err as Error)?.message || '可能是 CORS/域名/协议问题'}`);
   });
 
   if (!resp.ok) {
@@ -102,6 +102,7 @@ export function currentUser(): User | null {
 
 export function clearAuth() {
   localStorage.removeItem('auth_token');
+  // localStorage.removeItem('me');
   setUserCache(null);
 }
 

@@ -4,6 +4,7 @@ export async function trySSE(
   body: unknown,
   onDelta: (text: string) => void,   // 回调“当前整段最新文本”（已规范化）
   onMeta?: (meta: unknown) => void,
+  opts?: { signal?: AbortSignal }    // ✅ 支持中止旧流
 ): Promise<void> {
   const log = (...a: unknown[]) => console.log('[SSE]', ...a);
 
@@ -11,6 +12,7 @@ export async function trySSE(
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
     body: JSON.stringify(body),
+    signal: opts?.signal,            // ✅ 透传 signal
   });
 
   const ct = res.headers.get('content-type') || '';
@@ -26,42 +28,67 @@ export async function trySSE(
   let lastEmitted = '';
   let rafId: number | null = null;
 
-  // —— 你的 normalize（原样保留）——
+  // —— FINAL & STABLE —— //
   const normalize = (s: string): string => {
-    s = s.replace(/[\u200b\u200c\u200d\uFEFF\u202f]/g, '');
-    s = s.replace(/\*\*([^*\n]+)\*\*/g, '$1')
-         .replace(/\*([^*\n]+)\*/g, '$1')
-         .replace(/__([^_\n]+)__/g, '$1')
-         .replace(/(\*\*|__)/g, '');
+    s = s.replace(/\r\n?/g, '\n');
+
+    // 统一空白/去零宽/行尾空格
+    s = s.replace(/\p{Zs}/gu, ' ').replace(/[\u200B-\u200D\uFEFF]/g, '')
+         .replace(/[ \t]+\n/g, '\n');
+
+    // ===== 0) 先把全角#替为半角#，并确保“# + 空格”=====
     s = s.replace(/＃/g, '#')
-         .replace(/^[ \t]*#(?:[ \t]*#){1,5}[ \t]*/gm, '### ')
-         .replace(/^[ \t]+(#{1,6})(?=\S|\s)/gm, '$1')
-         .replace(/^(#{5,6})[ \t]*/gm, '#### ')
-         .replace(/^(#{1,2})[ \t]*/gm, '### ')
-         .replace(/^(#{3,4})[ \t]+#{1,6}[ \t]*/gm, '$1 ')
-         .replace(/^(#{3,4})([^\s#])/gm, '$1 $2')
-         .replace(/^(#{3,4})\s*([^#\n]+?)\s*#+\s*$/gm, '$1 $2')
-         .replace(/([^\n])(#{3,4})(?=\S)/g, '$1\n\n$2 ')
-         .replace(/([^\n])\s+(#{3,4})\s+(?=\S)/g, '$1\n\n$2 ')
-         .replace(/([^\n])\n[ \t]*(#{3,4}\s)/g, '$1\n\n$2')
-         .replace(/(^|\n)[ \t]*(#{3,4}\s[^\n]+)\n(?!\n)/g, '$1$2\n\n');
-    s = s.replace(/^[ \t]*[—–－][ \t]*/gm, '- ')
-         .replace(/([^ \n])\s+([\-—–－])\s+(?=\S)/g, '$1\n\n- ')
-         .replace(/^-\s+[—–－-]{2,}\s*/gm, '- ')
-         .replace(/^[ \t]*-([^\s])/gm, '- $1')
-         .replace(/^\s*(\d+)[\.．、]\s*/gm, (_m, n: string) => `${n}. `)
-         .replace(/(^|\n)\s*[—–－-]{3,}\s*(\n|$)/g, '$1$2');
-    s = s.replace(/([\p{Script=Han}])\s+([\p{Script=Han}])/gu, '$1$2')
-         .replace(/([\p{Script=Han}])\s+([，。、《》？！：；）】])/gu, '$1$2')
-         .replace(/([（【《])\s+([\p{Script=Han}])/gu, '$1$2')
-         .replace(/(?<!^)(\d)\s*\n+\s*(\d)(?![\.．、])/gm, '$1$2')
-         .replace(
-           /(^|\n)(\d)\s*\n\s*(\d)(?=[\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFFA-Za-z])/g,
-           (_m, p1, a, b) => `${p1}${a}${b}`
-         )
-         .replace(/(\d)\s+([\p{Script=Han}])/gu, '$1$2')
-         .replace(/([\p{Script=Han}])\s+(\d)/gu, '$1$2');
+         .replace(/^[ \t]*(#{1,6})([ \t]*)/gm, (_m, h: string) => `${h} `); // 不改级别，只补空格
+
+    // ===== 1) 合并“行内断行”（但不碰标题/列表/空行）=====
+    // 只合并单换行，且两侧是正文字符
+    s = s
+      .replace(/(?<!^|[\n#>\-*\d])[ \t]*\n(?!\n)/g, ' ') // 保险：避免行首（标题/列表）和空行
+      // 上面过于保守的话，再对中英文/数字作一次显式合并
+      .replace(/([A-Za-z0-9])[ \t]*\n(?!\n)[ \t]*(?=[A-Za-z0-9])/g, '$1 ')
+      .replace(/([\u3400-\u9FFF])[ \t]*\n(?!\n)[ \t]*(?=[\u3400-\u9FFF])/g, '$1');
+
+    // ===== 2) 标题粘连修复 & 空行 =====
+    // 把被拆开的标题两段合回同一行
+    for (let i = 0; i < 4; i++) {
+      const before = s;
+      s = s.replace(
+        /^(#{1,6}\s+[^\n]*?)\n(?!\n|#{1,6}\s|[-*•●◦]|[ \t]*\d+[\.．、])[ \t]*([^\n]+)$/gm,
+        '$1$2'
+      );
+      if (s === before) break;
+    }
+    // 标题前后留空行（防止“不起头”）
+    s = s.replace(/([^\n])\n(#{1,6}\s[^\n]+)/g, '$1\n\n$2')
+         .replace(/(#{1,6}\s[^\n]+)(?!\n\n)/gm, '$1\n\n');
+
+    // ===== 3) 列表规范 =====
+    // 3.1 项目符号 → 连成 "- "，并保证行首
+    s = s.replace(/([^\n])\s*[•●◦▪▫]\s+/g, '$1\n- ')
+         .replace(/^[ \t]*[•●◦▪▫][ \t]*/gm, '- ')
+         // 仅“行首的”横线才当列表标记；行内的横线保留（保护 25-27）
+         .replace(/^[ \t]*[—–－-][ \t]+/gm, '- ');
+
+    // 3.2 有序列表：标准化成 "n. "，并确保行首
+    s = s.replace(/^[ \t]*(\d+)[\.．、][ \t]*/gm, (_m, n: string) => `${n}. `)
+         // 若段落中出现了 " 1. " 开头但不在行首，补换行（不影响小数 1.23，因为它不在行首）
+         .replace(/([^\n])\s+(?=\d+\. [^\n])/g, '$1\n');
+
+    // ===== 4) 中文“行内空格”清理 =====
+    const CJK = '\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF';
+    const SP  = ' \\t\\u00A0\\u1680\\u2000-\\u200A\\u202F\\u205F\\u3000';
+    s = s
+      .replace(new RegExp(`([${CJK}])[${SP}]+([${CJK}])`, 'g'), '$1$2')
+      .replace(new RegExp(`([${CJK}])[${SP}]+([，。、《》？！：；）】])`, 'g'), '$1$2')
+      .replace(new RegExp(`([（【《])[${SP}]+([${CJK}])`, 'g'), '$1$2')
+      .replace(new RegExp(`(\\d)[${SP}]+([${CJK}])`, 'g'), '$1$2')
+      .replace(new RegExp(`([${CJK}])[${SP}]+(\\d)`, 'g'), '$1$2')
+      .replace(/[ \t]*：[ \t]*/g, '：')
+      .replace(/(\d)[ \t]*[．.][ \t]*(\d)/g, '$1.$2'); // 小数点/编号点归一
+
+    // 段落空行收敛
     s = s.replace(/\n{3,}/g, '\n\n');
+
     return s.trimEnd() + '\n\n';
   };
 
@@ -77,41 +104,52 @@ export async function trySSE(
     });
   };
 
+  // 判断当前是否在“行首”（用于把孤立符号识别成标题/列表）
+  const atLineStart = () => /\n\s*$/.test(text) || text === '';
+
   const appendRawToken = (payload: string) => {
     const trimmed = payload.trim();
     if (trimmed === '' || payload === '  ') return;
     if (trimmed === '[DONE]') return;
 
-    if (trimmed === '###' || trimmed === '####') {
+    // 行首 + 孤立 # → 标题起始
+    if ((trimmed === '#' || trimmed === '##' || trimmed === '###' || trimmed === '＃') && atLineStart()) {
       if (!text.endsWith('\n\n')) { if (!text.endsWith('\n')) text += '\n'; text += '\n'; }
-      text += trimmed + ' ';
-    } else if (/^[-—–－]$/.test(trimmed)) {
+      text += (trimmed === '＃' ? '# ' : trimmed + ' ');
+      scheduleEmit();
+      return;
+    }
+
+    // 行首 + 孤立列表标记 → 新起一行的 "- "
+    if (/^[-—–－•●◦▪▫]$/.test(trimmed) && atLineStart()) {
       if (!text.endsWith('\n')) text += '\n';
       text += '- ';
-    } else if (/^[—–－-]{3,}\s*$/.test(trimmed)) {
-      // drop hr
-    } else {
-      text += payload;
+      scheduleEmit();
+      return;
     }
+
+    // 其它情况：原样追加（保护 25-27 这种区间，不误判列表）
+    text += payload;
     scheduleEmit();
   };
 
+  // “整段替换 vs 片段追加”的智能选择
   const appendSegmentSmart = (seg: string) => {
     if (!seg) return;
     const looksFull =
       seg.length >= text.length &&
       (text === '' || seg.startsWith(text.slice(0, Math.min(text.length, 16))));
     if (looksFull) {
-      text = seg;
+      text = seg;                      // 替换整段
       log('replace(full) len=', seg.length);
     } else {
-      text += seg;
+      text += seg;                     // 追加片段
       log('append(seg) len=', seg.length);
     }
     scheduleEmit();
   };
 
-  // 逐条处理 data 行（修复 meta 被拼进正文的问题）
+  // 逐条处理 data 行
   const handleDataLine = (line: string, eventName: string | null) => {
     const payload = line;             // 不去掉头部空格
     const t = payload.trim();
@@ -132,54 +170,51 @@ export async function trySSE(
 
     // 尝试 JSON
     if (t[0] === '{' || t[0] === '[') {
-    try {
-      const obj: Record<string, unknown> = JSON.parse(t);
+      try {
+        const obj: Record<string, unknown> = JSON.parse(t);
 
-      const looksLikeMeta =
-        typeof obj?.conversation_id === 'string' ||
-        typeof obj?.conversationId === 'string' ||
-        typeof obj?.meta === 'object';
+        const looksLikeMeta =
+          typeof (obj as any)?.conversation_id === 'string' ||
+          typeof (obj as any)?.conversationId === 'string' ||
+          typeof (obj as any)?.meta === 'object';
 
-      const seg: string =
-        (typeof obj?.delta   === 'string' && obj.delta)   ||
-        (typeof obj?.text    === 'string' && obj.text)    ||
-        (typeof obj?.content === 'string' && obj.content) ||
-        (typeof obj?.message === 'string' && obj.message) || '';
+        const seg: string =
+          (typeof (obj as any)?.delta   === 'string' && (obj as any).delta)   ||
+          (typeof (obj as any)?.text    === 'string' && (obj as any).text)    ||
+          (typeof (obj as any)?.content === 'string' && (obj as any).content) ||
+          (typeof (obj as any)?.message === 'string' && (obj as any).message) || '';
 
-      // ① 如果是 meta，就先抛给 onMeta
-      if (looksLikeMeta) {
-        onMeta?.(obj.meta ?? obj);
-        log('meta(obj)=', obj.meta ?? obj);
-        // 只有 meta、没有文本段：直接丢弃，不并入正文
-        if (!seg) return;
-      }
-
-      // ② 有文本段再写入
-      if (seg) {
-        if ((obj as any)?.replace === true) {
-          text = seg;
-          log('replace(flag) len=', seg.length);
-          scheduleEmit();
-        } else {
-          appendSegmentSmart(seg);
+        if (looksLikeMeta) {
+          onMeta?.((obj as any).meta ?? obj);
+          log('meta(obj)=', (obj as any).meta ?? obj);
+          if (!seg) return; // 纯 meta 不落正文
         }
+
+        if (seg) {
+          if ((obj as { replace?: boolean })?.replace === true) {
+            text = seg;
+            log('replace(flag) len=', seg.length);
+            scheduleEmit();
+          } else {
+            appendSegmentSmart(seg);
+          }
+          return;
+        }
+
+        // 非 meta 且无 seg，则当作纯文本
+        appendRawToken(payload);
+        return;
+      } catch {
+        appendRawToken(payload);
         return;
       }
-
-      // ③ 既不是纯 meta，也没 seg，就当纯文本
-      appendRawToken(payload);
-      return;
-    } catch {
-      appendRawToken(payload);
-      return;
     }
-  }
 
     // 纯文本
     appendRawToken(payload);
   };
 
-  // 处理一个 \n\n 分隔的事件块：逐条 data 行处理（而不是 join）
+  // 处理一个 \n\n 分隔的事件块：逐条 data 行处理
   const processBlock = (block: string) => {
     let eventName: string | null = null;
     const dataLines: string[] = [];

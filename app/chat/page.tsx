@@ -37,10 +37,6 @@ export default function ChatPage() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const mountedRef = useRef(true);
-useEffect(() => {
-  mountedRef.current = true;
-  return () => { mountedRef.current = false; };
-}, []);
 
   // 安全读取 conversation_id（不依赖 any）
   function readConversationId(meta: unknown): string {
@@ -48,6 +44,12 @@ useEffect(() => {
     const v = (meta as Record<string, unknown>)['conversation_id'];
     return typeof v === 'string' ? v : '';
   }
+  
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+
 
   // ===== Effects =====
   useEffect(() => {

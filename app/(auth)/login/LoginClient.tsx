@@ -37,8 +37,8 @@ export default function LoginClient() {
       } catch { /* 兼容性问题忽略 */ }
 
       router.replace(redirect); // ✅ 登录完成后去 panel
-    } catch (e: any) {
-      setErr(e?.message || '登录失败');
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : String(e));
     } finally {
       setSubmitting(false);
     }
