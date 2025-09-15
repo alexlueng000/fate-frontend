@@ -4,14 +4,15 @@ import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { postJSON, api } from '@/app/lib/api';
 import { saveAuth, setUserCache } from '@/app/lib/auth';
-import { Mail, User as UserIcon, Lock, Eye, EyeOff, Loader2, ShieldCheck } from 'lucide-react';
+import { Mail, User as UserIcon, Lock, Eye, EyeOff, Loader2, ShieldCheck, Phone, Hash } from 'lucide-react';
 
-// ===== Types kept compatible with your backend contracts =====
 export type RegisterReq = {
-  email?: string;
-  username: string;
-  password: string;
+  email: string;
+  username?: string;
+  password?: string;
   nickname?: string;
+  phone?: string;
+  code?: string;
 };
 
 export type User = {
@@ -19,30 +20,28 @@ export type User = {
   username: string;
   nickname?: string | null;
   avatar_url?: string | null;
-  email?: string | null;
+  email: string;
 };
 
 export type RegisterResp =
   | { user: User; access_token?: string; token_type?: string }
-  | { id: number; username: string; nickname?: string | null; avatar_url?: string | null; email?: string | null };
+  | { id: number; username: string; nickname?: string | null; avatar_url?: string | null; email: string };
 
-// ===== Small helpers =====
 function validateEmail(v: string): boolean {
-  if (!v) return true; // optional
+  if (!v) return false;
   const re = /^(?:[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+)@(?:[a-zA-Z0-9.-]+)\.[a-zA-Z]{2,}$/;
   return re.test(v);
 }
 
-type Strength = { score: 0 | 1 | 2 | 3 | 4; label: string };
-function passwordStrength(pw: string): Strength {
-  let score: Strength['score'] = 0;
+function passwordStrength(pw: string): { score: number; label: string } {
+  let score = 0;
   if (!pw) return { score: 0, label: '空密码' };
   if (pw.length >= 8) score++;
   if (/[A-Z]/.test(pw)) score++;
   if (/[a-z]/.test(pw)) score++;
   if (/[0-9]|[^A-Za-z0-9]/.test(pw)) score++;
   const labels = ['很弱', '较弱', '一般', '较强', '很强'];
-  return { score, label: labels[score] };
+  return { score, label: labels[Math.min(score, labels.length - 1)] };
 }
 
 const brand = {
@@ -60,6 +59,11 @@ export default function RegisterPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [nickname, setNickname] = useState('');
+  const [phone, setPhone] = useState('');
+  const [code, setCode] = useState('');
+
+  const [mode, setMode] = useState<'account' | 'phone'>('account');
+
   const [agree, setAgree] = useState(true);
   const [showPw, setShowPw] = useState(false);
 
@@ -71,53 +75,51 @@ export default function RegisterPage() {
   const unameOk = useMemo(() => username.trim().length >= 3, [username]);
   const pwStrength = useMemo(() => passwordStrength(password), [password]);
   const pwOk = useMemo(() => password.length >= 8 && pwStrength.score >= 2, [password, pwStrength]);
-  const canSubmit = useMemo(() => agree && unameOk && pwOk && emailOk && !submitting, [agree, unameOk, pwOk, emailOk, submitting]);
+  const phoneOk = useMemo(() => /^\d{11}$/.test(phone), [phone]);
+  const codeOk = useMemo(() => code.length >= 4, [code]);
+
+  const canSubmit = useMemo(() => {
+    if (!emailOk) return false;
+    if (mode === 'account') return unameOk && pwOk && agree && !submitting;
+    if (mode === 'phone') return phoneOk && codeOk && agree && !submitting;
+    return false;
+  }, [mode, emailOk, unameOk, pwOk, phoneOk, codeOk, agree, submitting]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErr(null);
     setOk(null);
 
-    if (!unameOk) { setErr('用户名至少 3 个字符'); return; }
-    if (!pwOk) { setErr('密码至少 8 位，并包含大小写与数字/符号中的至少两类'); return; }
-    if (!emailOk) { setErr('邮箱格式不正确'); return; }
+    if (!emailOk) { setErr('请输入正确的邮箱'); return; }
+    if (mode === 'account' && !unameOk) { setErr('用户名至少 3 个字符'); return; }
+    if (mode === 'account' && !pwOk) { setErr('密码至少 8 位，且强度需达到一般以上'); return; }
+    if (mode === 'phone' && !phoneOk) { setErr('请输入正确的手机号'); return; }
+    if (mode === 'phone' && !codeOk) { setErr('请输入验证码'); return; }
     if (!agree) { setErr('请先同意服务条款与隐私政策'); return; }
 
     setSubmitting(true);
     try {
-      // 1) 调用注册
-      const resp = await postJSON<RegisterResp>(api('/auth/web/register'), {
-        email: email || undefined,
-        username: username.trim(),
-        password,
-        nickname: nickname || undefined,
-      } as RegisterReq);
+      const body: RegisterReq = { email };
+      if (mode === 'account') {
+        body.username = username.trim();
+        body.password = password;
+        body.nickname = nickname || undefined;
+      } else {
+        body.phone = phone;
+        body.code = code;
+      }
 
-      // 2) 若注册返回里自带 user/token，尝试保存
+      const resp = await postJSON<RegisterResp>(api('/auth/web/register'), body);
+
       if ('user' in resp && resp.user) {
         saveAuth(resp as any);
       }
 
-      // 3) 确保会话：优先 /me（Cookie），否则尝试登录接口
       let me: User | null = null;
       try {
         const r = await fetch(api('/me'), { credentials: 'include' });
         if (r.ok) me = (await r.json()) as User | null;
       } catch {}
-
-      if (!me) {
-        try {
-          const loginBody: Record<string, string> = { password };
-          if (username) loginBody.username = username;
-          if (email) loginBody.email = email;
-          const loginResp = await postJSON<any>(api('/auth/web/login'), loginBody);
-          saveAuth(loginResp);
-        } catch {}
-        try {
-          const r2 = await fetch(api('/me'), { credentials: 'include' });
-          if (r2.ok) me = (await r2.json()) as User | null;
-        } catch {}
-      }
 
       if (me) setUserCache(me);
       else if ('user' in resp && resp.user) setUserCache(resp.user);
@@ -127,7 +129,7 @@ export default function RegisterPage() {
           username: (resp as any).username ?? username,
           nickname: (resp as any).nickname ?? nickname,
           avatar_url: (resp as any).avatar_url ?? null,
-          email: (resp as any).email ?? (email || null),
+          email: (resp as any).email ?? email,
         };
         setUserCache(fallbackUser);
       }
@@ -143,35 +145,27 @@ export default function RegisterPage() {
 
   return (
     <div className={`min-h-screen bg-gradient-to-br ${brand.bg} text-[${brand.textMain}] flex items-center justify-center p-4`}>
-      <div className={`w-full max-w-md rounded-3xl border ${brand.cardBorder} bg-[#fffdfa]/95 shadow-[0_10px_30px_rgba(168,50,50,0.12)] backdrop-blur`}>        
-        {/* Header */}
+      <div className={`w-full max-w-md rounded-3xl border ${brand.cardBorder} bg-white shadow-[0_10px_30px_rgba(168,50,50,0.12)] backdrop-blur`}>
         <div className="px-6 pt-6 pb-4 flex items-center gap-3">
           <div className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[#fff0e8] border border-[#f2c7a1]">
             <ShieldCheck className="h-5 w-5" aria-hidden />
           </div>
           <div>
             <h1 className="text-2xl font-semibold leading-tight" style={{color: brand.primary}}>创建账户</h1>
-            <p className="text-sm" style={{color: brand.textSub}}>欢迎加入，一步开启你的专属体验</p>
+            <p className="text-sm" style={{color: brand.textSub}}>请选择注册方式</p>
           </div>
         </div>
 
-        {/* Alert Bars */}
         {err && (
-          <div role="alert" className="mx-6 mb-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-            {err}
-          </div>
+          <div role="alert" className="mx-6 mb-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{err}</div>
         )}
         {ok && (
-          <div role="status" className="mx-6 mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-            {ok}
-          </div>
+          <div role="status" className="mx-6 mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">{ok}</div>
         )}
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-4">
-          {/* Email */}
           <div>
-            <label className="block text-sm mb-1" style={{color: brand.textSub}}>邮箱（可选）</label>
+            <label className="block text-sm mb-1" style={{color: brand.textSub}}>邮箱</label>
             <div className={`flex items-center gap-2 rounded-2xl border ${brand.cardBorder} bg-[#fff7ec] px-3 py-2 focus-within:ring-2`} style={{['--tw-ring-color' as any]: brand.primary}}>
               <Mail className="h-4 w-4 opacity-80" />
               <input
@@ -180,109 +174,83 @@ export default function RegisterPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 type="email"
-                inputMode="email"
                 autoComplete="email"
+                required
               />
             </div>
-            {!emailOk && (
-              <div className="mt-1 text-xs text-red-600">邮箱格式不正确</div>
-            )}
           </div>
 
-          {/* Username */}
-          <div>
-            <label className="block text-sm mb-1" style={{color: brand.textSub}}>用户名</label>
-            <div className={`flex items-center gap-2 rounded-2xl border ${brand.cardBorder} bg-[#fff7ec] px-3 py-2 focus-within:ring-2`} style={{['--tw-ring-color' as any]: brand.primary}}>
-              <UserIcon className="h-4 w-4 opacity-80" />
-              <input
-                className="w-full bg-transparent outline-none placeholder:text-[#b5856f]"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="至少 3 个字符"
-                autoComplete="username"
-              />
-            </div>
-            {!unameOk && (
-              <div className="mt-1 text-xs text-red-600">用户名至少 3 个字符</div>
-            )}
+          <div className="flex gap-2 text-sm" style={{color: brand.textSub}}>
+            <button type="button" onClick={() => setMode('account')} className={`px-3 py-1 rounded-full border ${mode==='account'?'bg-[#a83232] text-white':'bg-[#fff7ec]'}`}>账号注册</button>
+            <button type="button" onClick={() => setMode('phone')} className={`px-3 py-1 rounded-full border ${mode==='phone'?'bg-[#a83232] text-white':'bg-[#fff7ec]'}`}>手机注册</button>
           </div>
 
-          {/* Password */}
-          <div>
-            <label className="block text-sm mb-1" style={{color: brand.textSub}}>密码</label>
-            <div className={`flex items-center gap-2 rounded-2xl border ${brand.cardBorder} bg-[#fff7ec] px-3 py-2 focus-within:ring-2`} style={{['--tw-ring-color' as any]: brand.primary}}>
-              <Lock className="h-4 w-4 opacity-80" />
-              <input
-                className="w-full bg-transparent outline-none placeholder:text-[#b5856f]"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                type={showPw ? 'text' : 'password'}
-                placeholder="至少 8 位，建议包含大小写与数字/符号"
-                autoComplete="new-password"
-              />
-              <button
-                type="button"
-                aria-label={showPw ? '隐藏密码' : '显示密码'}
-                className="p-1 rounded-lg hover:bg-[#ffeede]"
-                onClick={() => setShowPw(v => !v)}
-              >
-                {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
-            </div>
-            {/* Strength meter */}
-            <div className="mt-2">
-              <div className="h-2 w-full rounded-full bg-[#f5e6d6] overflow-hidden">
-                <div
-                  className="h-full transition-all"
-                  style={{
-                    width: `${(pwStrength.score / 4) * 100}%`,
-                    backgroundColor: pwStrength.score >= 3 ? '#22c55e' : pwStrength.score === 2 ? '#f59e0b' : '#ef4444',
-                  }}
-                />
+          {mode==='account' && (
+            <>
+              <div>
+                <label className="block text-sm mb-1" style={{color: brand.textSub}}>用户名</label>
+                <div className={`flex items-center gap-2 rounded-2xl border ${brand.cardBorder} bg-[#fff7ec] px-3 py-2`}>
+                  <UserIcon className="h-4 w-4 opacity-80" />
+                  <input className="w-full bg-transparent outline-none" value={username} onChange={(e)=>setUsername(e.target.value)} placeholder="至少3个字符" autoComplete="username" />
+                </div>
               </div>
-              <div className="mt-1 text-xs" style={{color: brand.textSub}}>密码强度：{pwStrength.label}</div>
-            </div>
-          </div>
+              <div>
+                <label className="block text-sm mb-1" style={{color: brand.textSub}}>密码</label>
+                <div className={`flex items-center gap-2 rounded-2xl border ${brand.cardBorder} bg-[#fff7ec] px-3 py-2`}>
+                  <Lock className="h-4 w-4 opacity-80" />
+                  <input className="w-full bg-transparent outline-none" value={password} onChange={(e)=>setPassword(e.target.value)} type={showPw?'text':'password'} placeholder="至少8位" autoComplete="new-password" />
+                  <button type="button" onClick={()=>setShowPw(v=>!v)}>{showPw?<EyeOff className="h-4 w-4"/>:<Eye className="h-4 w-4"/>}</button>
+                </div>
+                <div className="mt-2">
+                  <div className="h-2 w-full rounded-full bg-[#f5e6d6] overflow-hidden">
+                    <div className="h-full transition-all" style={{ width: `${(pwStrength.score / 4) * 100}%`, backgroundColor: pwStrength.score >= 3 ? '#22c55e' : pwStrength.score === 2 ? '#f59e0b' : '#ef4444' }} />
+                  </div>
+                  <div className="mt-1 text-xs" style={{ color: brand.textSub }}>密码强度：{pwStrength.label}</div>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm mb-1" style={{color: brand.textSub}}>昵称（可选）</label>
+                <input className={`w-full rounded-2xl border ${brand.cardBorder} bg-[#fff7ec] px-3 py-2 outline-none`} value={nickname} onChange={(e)=>setNickname(e.target.value)} placeholder="展示给其他用户的称呼" />
+              </div>
+            </>
+          )}
 
-          {/* Nickname */}
-          <div>
-            <label className="block text-sm mb-1" style={{color: brand.textSub}}>昵称（可选）</label>
-            <input
-              className={`w-full rounded-2xl border ${brand.cardBorder} bg-[#fff7ec] px-3 py-2 outline-none focus:ring-2`}
-              style={{['--tw-ring-color' as any]: brand.primary}}
-              value={nickname}
-              onChange={(e) => setNickname(e.target.value)}
-              placeholder="展示给其他用户的称呼"
-            />
-          </div>
+          {mode==='phone' && (
+            <>
+              <div>
+                <label className="block text-sm mb-1" style={{color: brand.textSub}}>手机号</label>
+                <div className={`flex items-center gap-2 rounded-2xl border ${brand.cardBorder} bg-[#fff7ec] px-3 py-2`}>
+                  <Phone className="h-4 w-4 opacity-80" />
+                  <input className="w-full bg-transparent outline-none" value={phone} onChange={(e)=>setPhone(e.target.value)} placeholder="11位手机号" inputMode="numeric" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm mb-1" style={{color: brand.textSub}}>验证码</label>
+                <div className={`flex items-center gap-2 rounded-2xl border ${brand.cardBorder} bg-[#fff7ec] px-3 py-2`}>
+                  <Hash className="h-4 w-4 opacity-80" />
+                  <input className="w-full bg-transparent outline-none" value={code} onChange={(e)=>setCode(e.target.value)} placeholder="输入短信验证码" />
+                  <button type="button" className="text-xs text-[#a83232]">获取验证码</button>
+                </div>
+              </div>
+            </>
+          )}
 
-          {/* Terms */}
           <label className="flex items-center gap-2 text-sm select-none">
-            <input type="checkbox" className="accent-[#a83232] h-4 w-4" checked={agree} onChange={(e) => setAgree(e.target.checked)} />
+            <input type="checkbox" className="accent-[#a83232] h-4 w-4" checked={agree} onChange={(e)=>setAgree(e.target.checked)} />
             <span style={{color: brand.textSub}}>
               我已阅读并同意
-              <a href="/terms" className="mx-1 underline underline-offset-4 text-[#a83232] hover:opacity-80">服务条款</a>
+              <a href="/terms" className="mx-1 underline underline-offset-4 text-[#a83232]">服务条款</a>
               与
-              <a href="/privacy" className="ml-1 underline underline-offset-4 text-[#a83232] hover:opacity-80">隐私政策</a>
+              <a href="/privacy" className="ml-1 underline underline-offset-4 text-[#a83232]">隐私政策</a>
             </span>
           </label>
 
-          {/* Submit */}
-          <button
-            type="submit"
-            disabled={!canSubmit}
-            className="w-full inline-flex items-center justify-center rounded-2xl px-4 py-2 font-medium text-[#fff7ec] shadow-sm transition disabled:opacity-60"
-            style={{ backgroundColor: brand.primary }}
-            onMouseEnter={(e) => ((e.currentTarget.style.backgroundColor = brand.primaryHover))}
-            onMouseLeave={(e) => ((e.currentTarget.style.backgroundColor = brand.primary))}
-          >
-            {submitting ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" /> 注册中…</>) : '注册'}
+          <button type="submit" disabled={!canSubmit} className="w-full inline-flex items-center justify-center rounded-2xl px-4 py-2 font-medium text-white shadow-sm transition disabled:opacity-60" style={{backgroundColor:brand.primary}}>
+            {submitting?(<><Loader2 className="mr-2 h-4 w-4 animate-spin"/>注册中…</>):'注册'}
           </button>
 
-          {/* Footer */}
-          <div className="text-sm text-center" style={{color: brand.textSub}}>
-            已有账号？
-            <a className="ml-1 underline underline-offset-4 text-[#a83232] hover:opacity-80" href="/login">去登录</a>
+          <div className="text-sm text-center" style={{color:brand.textSub}}>
+            已有账号？<a href="/login" className="ml-1 underline underline-offset-4 text-[#a83232]">去登录</a>
           </div>
         </form>
       </div>
