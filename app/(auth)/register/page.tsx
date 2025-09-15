@@ -164,22 +164,6 @@ export default function RegisterPage() {
         )}
 
         <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-4">
-          <div>
-            <label className="block text-sm mb-1" style={{color: brand.textSub}}>邮箱</label>
-            <div className={`flex items-center gap-2 rounded-2xl border ${brand.cardBorder} bg-[#fff7ec] px-3 py-2 focus-within:ring-2`} style={{['--tw-ring-color' as any]: brand.primary}}>
-              <Mail className="h-4 w-4 opacity-80" />
-              <input
-                className="w-full bg-transparent outline-none placeholder:text-[#b5856f]"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                type="email"
-                autoComplete="email"
-                required
-              />
-            </div>
-          </div>
-
           <div className="flex gap-2 text-sm" style={{color: brand.textSub}}>
             <button type="button" onClick={() => setMode('account')} className={`px-3 py-1 rounded-full border ${mode==='account'?'bg-[#a83232] text-white':'bg-[#fff7ec]'}`}>账号注册</button>
             <button type="button" onClick={() => setMode('phone')} className={`px-3 py-1 rounded-full border ${mode==='phone'?'bg-[#a83232] text-white':'bg-[#fff7ec]'}`}>手机注册</button>
@@ -187,6 +171,21 @@ export default function RegisterPage() {
 
           {mode==='account' && (
             <>
+              <div>
+                <label className="block text-sm mb-1" style={{color: brand.textSub}}>邮箱</label>
+                <div className={`flex items-center gap-2 rounded-2xl border ${brand.cardBorder} bg-[#fff7ec] px-3 py-2 focus-within:ring-2`} style={{['--tw-ring-color' as any]: brand.primary}}>
+                  <Mail className="h-4 w-4 opacity-80" />
+                  <input
+                    className="w-full bg-transparent outline-none placeholder:text-[#b5856f]"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    type="email"
+                    autoComplete="email"
+                    required
+                  />
+                </div>
+              </div>
               <div>
                 <label className="block text-sm mb-1" style={{color: brand.textSub}}>用户名</label>
                 <div className={`flex items-center gap-2 rounded-2xl border ${brand.cardBorder} bg-[#fff7ec] px-3 py-2`}>
