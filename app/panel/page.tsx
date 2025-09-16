@@ -12,6 +12,7 @@ import { PaipanCard } from '@/app/components/chat/PaipanCard';
 import { QuickActions } from '@/app/components/chat/QuickActions';
 import { MessageList } from '@/app/components/chat/MessageList';
 import { InputArea } from '@/app/components/chat/InputArea';
+import { BirthDateTimeFields } from '@/app/components/chat/BirthDateTime';
 
 import {
   Msg, Paipan, QUICK_BUTTONS,
@@ -540,24 +541,12 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
                 </div>
 
                 {/* 日期/时间/地点 */}
-                <div>
-                  <label className="mb-1 block text-sm text-neutral-700">出生日期</label>
-                  <input
-                    type="date"
-                    className="w-full rounded-xl border border-[#f0d9a6] bg-[#fff7ed] px-3 py-2 outline-none focus:ring-2 focus:ring-red-400"
-                    value={birthDate}
-                    onChange={(e) => setBirthDate(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm text-neutral-700">出生时间</label>
-                  <input
-                    type="time"
-                    className="w-full rounded-xl border border-[#f0d9a6] bg-[#fff7ed] px-3 py-2 outline-none focus:ring-2 focus:ring-red-400"
-                    value={birthTime}
-                    onChange={(e) => setBirthTime(e.target.value)}
-                  />
-                </div>
+                <BirthDateTimeFields
+                  birthDate={birthDate}
+                  setBirthDate={setBirthDate}
+                  birthTime={birthTime}
+                  setBirthTime={setBirthTime}
+                />
                 <div>
                   <label className="mb-1 block text-sm text-neutral-700">出生地点</label>
                   <input

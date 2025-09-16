@@ -1,5 +1,7 @@
 // app/page.tsx
 import Link from 'next/link';
+import Image from 'next/image';
+
 import {
   Spark,
   Brain,
@@ -8,6 +10,8 @@ import {
   Clock,
   CheckCircleSolid,
 } from 'iconoir-react';
+
+import Logo from '@/app/public/fate-logo.png';
 
 export default function LandingPage() {
   return (
@@ -100,14 +104,14 @@ export default function LandingPage() {
             href="/chat"
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#a83232] px-6 py-3 text-base font-semibold text-[#fff7e8] shadow hover:bg-[#8c2b2b] transition"
           >
-            <ChatBubble width={22} height={22} />
+            <ChatBubble width={24} height={24} />
             进入对话
           </Link>
           <Link
             href="/register"
             className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#a83232] px-6 py-3 text-base font-semibold text-[#a83232] bg-white/70 hover:bg-[#fdeecf] transition"
           >
-            <CheckCircleSolid width={22} height={22} />
+            <CheckCircleSolid width={24} height={24} />
             创建账户
           </Link>
         </div>
@@ -117,7 +121,7 @@ export default function LandingPage() {
       <footer className="border-t border-[#f0d9a6] bg-[#fffdf6]">
         <div className="container mx-auto px-4 py-8 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-[#4a2c2a]">
           <div className="flex items-center gap-3">
-            <div className="h-6 w-6 rounded-lg bg-gradient-to-tr from-[#a83232] to-[#e5c07b]" />
+            <Image src={Logo} alt="Logo" className="h-6 w-6" />
             <span>© 2025 一盏大师</span>
           </div>
           <nav className="flex items-center gap-6">
