@@ -1,12 +1,13 @@
-import type { Configuration } from 'webpack';
+// next.config.ts
+import type { NextConfig } from 'next';
 
-const nextConfig = {
+const nextConfig: NextConfig = {
   reactStrictMode: true,
   eslint: {
     // 在构建和启动时忽略 ESLint 报错
     ignoreDuringBuilds: true,
   },
-  webpack: (config: Configuration) => {
+  webpack: (config) => {
     // Add path aliases
     if (!config.resolve) {
       config.resolve = {};
@@ -14,7 +15,7 @@ const nextConfig = {
     if (!config.resolve.alias) {
       config.resolve.alias = {};
     }
-    
+
     config.resolve.alias = {
       ...config.resolve.alias,
       '@': __dirname + '/app',
