@@ -16,6 +16,7 @@ export type User = {
   nickname?: string | null;
   avatar_url?: string | null;
   email?: string | null;
+  is_admin?: boolean;
 };
 
 export type LoginResp = {

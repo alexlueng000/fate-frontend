@@ -66,6 +66,61 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
+   // ====== 快捷按钮（从 DB 取，失败回退到本地 7 条）=====
+  type QuickBtn = { label: string; prompt: string; order?: number; active?: boolean };
+  const [qbLoading, setQbLoading] = useState(true);
+  const [quickButtons, setQuickButtons] = useState<Array<{ label: string; prompt: string }>>(QUICK_BUTTONS);
+
+
+  function parseValue(v: any): { items?: QuickBtn[]; maxCount?: number } {
+    if (!v) return {};
+    if (typeof v === 'string') {
+      try { return JSON.parse(v); } catch { return {}; }
+    }
+    return v;
+  }
+
+  async function loadQuickButtonsFromAdmin() {
+    setQbLoading(true);
+    try {
+      const resp = await fetch(api('/admin/config?key=quick_buttons'), {
+        method: 'GET',
+        credentials: 'include',
+        cache: 'no-store',
+      }).catch((err: unknown) => {
+        throw new Error(`网络错误：${(err as Error)?.message || '可能是 CORS/域名/协议问题'}`);
+      });
+      if (!resp.ok) {
+        const text = await resp.text().catch(() => '');
+        throw new Error(`加载失败（HTTP ${resp.status}）：${text || '服务器返回错误'}`);
+      }
+      const data = await resp.json().catch(() => null);
+      if (!data) throw new Error('服务器返回了无效的 JSON');
+
+      const parsed = parseValue(data.value_json);
+      const list: QuickBtn[] = Array.isArray(parsed.items) ? parsed.items : [];
+      const filtered = list.filter(it => it && (it.active !== false) && it.label && it.prompt);
+      const sorted = filtered.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+      const maxCount = Math.max(1, parsed.maxCount ?? 12);
+      const sliced = sorted.slice(0, maxCount);
+      if (sliced.length > 0) {
+        setQuickButtons(sliced.map(({ label, prompt }) => ({ label, prompt })));
+      } else {
+        // 兜底
+        setQuickButtons(QUICK_BUTTONS);
+      }
+    } catch {
+      // 兜底
+      setQuickButtons(QUICK_BUTTONS);
+    } finally {
+      setQbLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadQuickButtonsFromAdmin();
+  }, []);
+
          // 放在组件里任意位置（或 utils）
   function hasConversationId(x: unknown): x is { conversation_id: string } {
     return typeof x === 'object'
@@ -469,6 +524,8 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
       setBooting(false);
     }
   };
+
+  const canUseQuick = !qbLoading && !loading && !booting && !!conversationId;
   
   return (
     <main className="min-h-screen bg-[#fff7e8] text-neutral-800 pt-20 sm:pt-24">
@@ -613,12 +670,12 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
             </div>
           )}
 
-          {/* 小号快捷按钮 */}
+          {/* 小号快捷按钮（从 DB 加载） */}
           <QuickActions
-          disabled={loading || booting || !conversationId}
-          buttons={QUICK_BUTTONS}
-          onClick={sendQuick}
-        />
+            disabled={!canUseQuick}
+            buttons={quickButtons}
+            onClick={sendQuick}
+          />
 
           {/* 输入区 */}
           <InputArea

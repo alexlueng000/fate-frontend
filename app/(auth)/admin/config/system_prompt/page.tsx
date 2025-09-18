@@ -2,11 +2,12 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { api } from '@/app/lib/api'; // ← 改成你项目里的路径
+import { api } from '@/app/lib/api'; // ← 调整为你的实际路径
 
 type Me = { id: number; username?: string; is_admin?: boolean };
 type ConfigResp = { key: string; version: number; value_json: any };
 type Revision = { version: number; created_at: string; comment?: string | null };
+type SaveResp = { ok: boolean; key: string; version: number };
 
 function parseValue(v: any): any {
   if (!v) return {};
@@ -62,7 +63,7 @@ async function saveConfig(key: string, value_json: any, comment?: string) {
   }
   const data = await resp.json().catch(() => null);
   if (!data) throw new Error('服务器返回了无效的 JSON');
-  return data as { ok: boolean; key: string; version: number };
+  return data as SaveResp; // 后端返回 { ok, key, version }
 }
 
 async function rollbackConfig(key: string, version: number, comment?: string) {
@@ -81,7 +82,7 @@ async function rollbackConfig(key: string, version: number, comment?: string) {
   }
   const data = await resp.json().catch(() => null);
   if (!data) throw new Error('服务器返回了无效的 JSON');
-  return data as { ok: boolean; key: string; version: number };
+  return data as SaveResp;
 }
 
 export default function SystemPromptPage() {
@@ -91,7 +92,7 @@ export default function SystemPromptPage() {
   const [me, setMe] = useState<Me | null>(null);
 
   // 优先 system_prompt，不存在则尝试 rprompt
-  const [cfgKey, setCfgKey] = useState<'system_prompt' | 'rprompt'>('system_prompt');
+  const [cfgKey, setCfgKey] = useState<'system_prompt' | 'prompt'>('system_prompt');
 
   const [version, setVersion] = useState(1);
   const [content, setContent] = useState('');
@@ -99,6 +100,10 @@ export default function SystemPromptPage() {
   const [msg, setMsg] = useState('');
   const [revs, setRevs] = useState<Revision[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+
+  // 成功弹窗
+  const [okOpen, setOkOpen] = useState(false);
+  const [okInfo, setOkInfo] = useState<SaveResp | null>(null);
 
   useEffect(() => {
     // 1) sessionStorage 鉴权
@@ -126,13 +131,13 @@ export default function SystemPromptPage() {
           setNotes(parsed.notes ?? '');
           setRevs(await getRevisions('system_prompt'));
         } catch {
-          const cfg = await getConfig('rprompt');
-          setCfgKey('rprompt');
+          const cfg = await getConfig('prompt');
+          setCfgKey('prompt');
           setVersion(cfg.version);
           const parsed = parseValue(cfg.value_json);
           setContent(parsed.content ?? '');
           setNotes(parsed.notes ?? '');
-          setRevs(await getRevisions('rprompt'));
+          setRevs(await getRevisions('prompt'));
         }
       } catch (e: any) {
         setMsg(e?.message || '加载失败');
@@ -149,13 +154,16 @@ export default function SystemPromptPage() {
     try {
       const res = await saveConfig(cfgKey, { content, notes }, `update ${cfgKey}`);
       setVersion(res.version);
-      // 保存后强制拉新，避免显示旧值
+      // 保存后强制拉新
       const fresh = await getConfig(cfgKey);
       const parsed = parseValue(fresh.value_json);
       setContent(parsed.content ?? '');
       setNotes(parsed.notes ?? '');
       setRevs(await getRevisions(cfgKey));
-      setMsg('已保存 ✅');
+      // 弹窗
+      setOkInfo(res);
+      setOkOpen(true);
+      setTimeout(() => setOkOpen(false), 2500);
     } catch (e: any) {
       setMsg(e?.message || '保存失败');
     } finally { setBusy(false); }
@@ -165,14 +173,17 @@ export default function SystemPromptPage() {
     if (!confirm(`回滚到 v${v} ?`)) return;
     setBusy(true); setMsg('');
     try {
-      await rollbackConfig(cfgKey, v, `rollback to v${v}`);
+      const res = await rollbackConfig(cfgKey, v, `rollback to v${v}`);
       const fresh = await getConfig(cfgKey);
       setVersion(fresh.version);
       const parsed = parseValue(fresh.value_json);
       setContent(parsed.content ?? '');
       setNotes(parsed.notes ?? '');
       setRevs(await getRevisions(cfgKey));
-      setMsg(`已回滚到 v${v} ✅`);
+      // 弹窗
+      setOkInfo(res);
+      setOkOpen(true);
+      setTimeout(() => setOkOpen(false), 2500);
     } catch (e: any) {
       setMsg(e?.message || '回滚失败');
     } finally { setBusy(false); }
@@ -231,12 +242,10 @@ export default function SystemPromptPage() {
           </div>
         </div>
 
-        {/* 预览（修复溢出：外层限定高度，内层滚动） */}
+        {/* 预览（限制高度 + 内部滚动） */}
         <div className="rounded-2xl border border-[#f0d9a6] bg-white/90 p-3 flex flex-col">
           <div className="mb-2 text-[#4a2c2a] text-sm">预览（原样显示 / 可改为 Markdown 渲染）</div>
-          {/* 固定高度容器 */}
           <div className="relative flex-1 min-h-[60vh] md:min-h-[70vh] max-h-[75vh]">
-            {/* 滚动层 */}
             <div className="absolute inset-0 overflow-y-auto overflow-x-hidden rounded-xl bg-[#fff9f0] border border-[#f7e4c6] p-4">
               <pre className="whitespace-pre-wrap break-words break-all font-mono text-[14px]">
 {content}
@@ -272,6 +281,27 @@ export default function SystemPromptPage() {
             {revs.length === 0 && <div className="px-4 py-6 text-center text-neutral-500">暂无历史</div>}
           </div>
         </aside>
+      )}
+
+      {/* 成功弹窗 */}
+      {okOpen && okInfo && (
+        <div className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white shadow-xl border border-[#f0d9a6]">
+            <div className="px-5 py-4 border-b border-[#f0d9a6] flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-[#4a2c2a]">保存成功</h3>
+              <button onClick={() => setOkOpen(false)} className="px-2 py-1 rounded hover:bg-neutral-100">✕</button>
+            </div>
+            <div className="px-5 py-4 text-sm text-[#4a2c2a] space-y-2">
+              <p>配置已更新（key: <span className="font-mono">{okInfo.key}</span>，version: <span className="font-mono">v{okInfo.version}</span>）。</p>
+              <p>已触发缓存失效，配置将在数秒内生效。</p>
+            </div>
+            <div className="px-5 py-3 border-t border-[#f0d9a6] flex justify-end">
+              <button onClick={() => setOkOpen(false)} className="px-4 py-2 rounded-xl bg-[#a83232] text-white hover:bg-[#822727]">
+                我知道了
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </main>
   );
