@@ -2,11 +2,19 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { api } from '@/app/lib/api';
+import { api } from '@/app/lib/api'; // ← 改成你项目里的路径
 
 type Me = { id: number; username?: string; is_admin?: boolean };
-type ConfigResp = { key: string; version: number; value_json: { content: string; notes?: string } };
+type ConfigResp = { key: string; version: number; value_json: any };
 type Revision = { version: number; created_at: string; comment?: string | null };
+
+function parseValue(v: any): any {
+  if (!v) return {};
+  if (typeof v === 'string') {
+    try { return JSON.parse(v); } catch { return {}; }
+  }
+  return v;
+}
 
 async function getConfig(key: string): Promise<ConfigResp> {
   const resp = await fetch(api(`/admin/config?key=${encodeURIComponent(key)}`), {
@@ -88,12 +96,12 @@ export default function SystemPromptPage() {
   const [version, setVersion] = useState(1);
   const [content, setContent] = useState('');
   const [notes, setNotes] = useState('');
-  const [revs, setRevs] = useState<Revision[]>([]);
   const [msg, setMsg] = useState('');
+  const [revs, setRevs] = useState<Revision[]>([]);
   const [showHistory, setShowHistory] = useState(false);
 
   useEffect(() => {
-    // 1) 鉴权：sessionStorage
+    // 1) sessionStorage 鉴权
     try {
       const raw = sessionStorage.getItem('me');
       if (!raw) { router.push('/login?redirect=/admin/config/system_prompt'); return; }
@@ -113,16 +121,18 @@ export default function SystemPromptPage() {
           const cfg = await getConfig('system_prompt');
           setCfgKey('system_prompt');
           setVersion(cfg.version);
-          setContent(cfg.value_json?.content ?? '');
-          setNotes(cfg.value_json?.notes ?? '');
+          const parsed = parseValue(cfg.value_json);
+          setContent(parsed.content ?? '');
+          setNotes(parsed.notes ?? '');
           setRevs(await getRevisions('system_prompt'));
         } catch {
-          const cfg = await getConfig('prompt');
+          const cfg = await getConfig('rprompt');
           setCfgKey('rprompt');
           setVersion(cfg.version);
-          setContent(cfg.value_json?.content ?? '');
-          setNotes(cfg.value_json?.notes ?? '');
-          setRevs(await getRevisions('prompt'));
+          const parsed = parseValue(cfg.value_json);
+          setContent(parsed.content ?? '');
+          setNotes(parsed.notes ?? '');
+          setRevs(await getRevisions('rprompt'));
         }
       } catch (e: any) {
         setMsg(e?.message || '加载失败');
@@ -139,9 +149,11 @@ export default function SystemPromptPage() {
     try {
       const res = await saveConfig(cfgKey, { content, notes }, `update ${cfgKey}`);
       setVersion(res.version);
-      const fresh = await getConfig(cfgKey);           // 保存后强制拉新
-      setContent(fresh.value_json?.content ?? '');
-      setNotes(fresh.value_json?.notes ?? '');
+      // 保存后强制拉新，避免显示旧值
+      const fresh = await getConfig(cfgKey);
+      const parsed = parseValue(fresh.value_json);
+      setContent(parsed.content ?? '');
+      setNotes(parsed.notes ?? '');
       setRevs(await getRevisions(cfgKey));
       setMsg('已保存 ✅');
     } catch (e: any) {
@@ -154,10 +166,11 @@ export default function SystemPromptPage() {
     setBusy(true); setMsg('');
     try {
       await rollbackConfig(cfgKey, v, `rollback to v${v}`);
-      const fresh = await getConfig(cfgKey);           // 回滚后强制拉新
+      const fresh = await getConfig(cfgKey);
       setVersion(fresh.version);
-      setContent(fresh.value_json?.content ?? '');
-      setNotes(fresh.value_json?.notes ?? '');
+      const parsed = parseValue(fresh.value_json);
+      setContent(parsed.content ?? '');
+      setNotes(parsed.notes ?? '');
       setRevs(await getRevisions(cfgKey));
       setMsg(`已回滚到 v${v} ✅`);
     } catch (e: any) {
@@ -183,13 +196,6 @@ export default function SystemPromptPage() {
           >
             历史版本
           </button>
-          <button
-            onClick={onSave}
-            disabled={busy}
-            className="px-4 py-2 rounded-xl bg-[#a83232] text-white font-semibold hover:bg-[#822727] disabled:opacity-60"
-          >
-            {busy ? '保存中…' : '保存为新版本'}
-          </button>
         </div>
         {msg && <div className="max-w-6xl mx-auto px-4 pb-3 text-sm text-[#4a2c2a]">{msg}</div>}
       </header>
@@ -197,31 +203,46 @@ export default function SystemPromptPage() {
       {/* 主体：左右分栏 */}
       <section className="max-w-6xl mx-auto px-4 py-6 grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* 编辑器 */}
-        <div className="rounded-2xl border border-[#f0d9a6] bg-white/90 p-3">
-          <div className="flex items-center justify-between mb-2">
+        <div className="rounded-2xl border border-[#f0d9a6] bg-white/90 p-3 flex flex-col">
+          <div className="flex items-center justify-between mb-2 gap-2">
             <div className="text-[#4a2c2a] text-sm">编辑（{cfgKey}） · 字数 {charCount}</div>
             <input
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="ml-2 flex-1 md:max-w-[50%] rounded-lg border border-[#f0d9a6] p-2"
+              className="ml-2 w-full md:max-w-[50%] rounded-lg border border-[#f0d9a6] p-2"
               placeholder="备注（可选）"
             />
           </div>
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            className="w-full h-[75vh] leading-relaxed font-mono text-[14px] rounded-xl border border-[#f0d9a6] p-4 focus:outline-none focus:ring-2 focus:ring-[#a83232]"
+            className="flex-1 min-h-[60vh] md:min-h-[70vh] max-h-[75vh] leading-relaxed font-mono text-[14px] rounded-xl border border-[#f0d9a6] p-4 focus:outline-none focus:ring-2 focus:ring-[#a83232]"
             placeholder="# 角色\n..."
             spellCheck={false}
           />
+          <div className="mt-3 flex justify-end">
+            <button
+              onClick={onSave}
+              disabled={busy}
+              className="px-5 py-2 rounded-xl bg-[#a83232] text-white font-semibold hover:bg-[#822727] disabled:opacity-60"
+            >
+              {busy ? '保存中…' : '保存为新版本'}
+            </button>
+          </div>
         </div>
 
-        {/* 预览 */}
-        <div className="rounded-2xl border border-[#f0d9a6] bg-white/90 p-3">
+        {/* 预览（修复溢出：外层限定高度，内层滚动） */}
+        <div className="rounded-2xl border border-[#f0d9a6] bg-white/90 p-3 flex flex-col">
           <div className="mb-2 text-[#4a2c2a] text-sm">预览（原样显示 / 可改为 Markdown 渲染）</div>
-          <pre className="w-full h-[75vh] overflow-auto whitespace-pre-wrap break-words rounded-xl bg-[#fff9f0] border border-[#f7e4c6] p-4">
+          {/* 固定高度容器 */}
+          <div className="relative flex-1 min-h-[60vh] md:min-h-[70vh] max-h-[75vh]">
+            {/* 滚动层 */}
+            <div className="absolute inset-0 overflow-y-auto overflow-x-hidden rounded-xl bg-[#fff9f0] border border-[#f7e4c6] p-4">
+              <pre className="whitespace-pre-wrap break-words break-all font-mono text-[14px]">
 {content}
-          </pre>
+              </pre>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -242,7 +263,7 @@ export default function SystemPromptPage() {
                 </div>
                 <button
                   onClick={() => onRollback(r.version)}
-                  className="px-3 py-1.5 rounded-lg bg白 border border-[#f0d9a6] hover:bg-[#fff2d9]"
+                  className="px-3 py-1.5 rounded-lg bg-white border border-[#f0d9a6] hover:bg-[#fff2d9]"
                 >
                   回滚
                 </button>

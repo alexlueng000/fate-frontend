@@ -62,8 +62,7 @@ export default function Header() {
   }
 
   // === 样式（国风暖色调）===
-  const headerWrap =
-    'fixed top-0 z-50 w-full backdrop-blur border-b transition-all';
+  const headerWrap = 'fixed top-0 z-50 w-full backdrop-blur border-b transition-all';
   const headerState = scrolled
     ? 'bg-[#fff7e8]/95 shadow-md border-[#f0d9a6]'
     : 'bg-[#fff7e8]/80 border-transparent';
@@ -110,67 +109,74 @@ export default function Header() {
           </div>
         ) : (
           <div className="flex items-center gap-3">
-  {/* 个人中心按钮 */}
-  <Link
-    href="/panel"
-    className="inline-flex h-10 items-center justify-center rounded-xl bg-[#a83232] px-5 text-sm font-medium text-[#fff7e8] hover:bg-[#8c2b2b] transition"
-  >
-    个人中心
-  </Link>
+            {/* 个人中心按钮 */}
+            <Link
+              href="/panel"
+              className="inline-flex h-10 items-center justify-center rounded-xl bg-[#a83232] px-5 text-sm font-medium text-[#fff7e8] hover:bg-[#8c2b2b] transition"
+            >
+              个人中心
+            </Link>
 
-  {/* 用户菜单 */}
-  <div className="relative" ref={menuRef}>
-    <button
-      onClick={() => setMenuOpen((v) => !v)}
-      aria-haspopup="menu"
-      aria-expanded={menuOpen}
-      className="flex h-10 items-center gap-2 rounded-xl border border-[#e5c07b] bg-[#fffdf6] px-3 hover:bg-[#fdeecf] transition"
-    >
-      {/* 突出头像：加渐变描边 */}
-      <span className="p-[2px] rounded-full bg-gradient-to-tr from-[#a83232] to-[#e5c07b]">
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#a83232] text-[#fff7e8] text-sm font-semibold">
-          {(me.nickname || me.username || 'U').slice(0, 1).toUpperCase()}
-        </span>
-      </span>
-      {/* 用户名，颜色弱一点 */}
-      <span className="text-[#4a2c2a] text-sm">{me.nickname || me.username}</span>
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        className="opacity-70"
-        aria-hidden="true"
-      >
-        <path fill="currentColor" d="M7 10l5 5 5-5z" />
-      </svg>
-    </button>
+            {/* 如果是管理员，显示管理后台 */}
+            {me.is_admin && (
+              <Link
+                href="/admin"
+                className="inline-flex h-10 items-center justify-center rounded-xl bg-[#4a2c2a] px-5 text-sm font-medium text-white hover:bg-[#2c1b19] transition"
+              >
+                管理后台
+              </Link>
+            )}
 
-    {menuOpen && (
-      <div
-        role="menu"
-        aria-label="用户菜单"
-        className="absolute right-0 mt-2 w-48 overflow-hidden rounded-xl border border-[#e5c07b] bg-[#fffdf6] shadow-lg"
-      >
-        <Link
-          href="/account"
-          role="menuitem"
-          className="block px-4 py-2 text-sm text-[#4a2c2a] hover:bg-[#fdeecf]"
-          onClick={() => setMenuOpen(false)}
-        >
-          我的账户
-        </Link>
-        <button
-          role="menuitem"
-          onClick={doLogout}
-          className="block w-full px-4 py-2 text-left text-sm text-[#a83232] hover:bg-[#fdeecf]"
-        >
-          退出登录
-        </button>
-      </div>
-    )}
-  </div>
-</div>
+            {/* 用户菜单 */}
+            <div className="relative" ref={menuRef}>
+              <button
+                onClick={() => setMenuOpen((v) => !v)}
+                aria-haspopup="menu"
+                aria-expanded={menuOpen}
+                className="flex h-10 items-center gap-2 rounded-xl border border-[#e5c07b] bg-[#fffdf6] px-3 hover:bg-[#fdeecf] transition"
+              >
+                <span className="p-[2px] rounded-full bg-gradient-to-tr from-[#a83232] to-[#e5c07b]">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#a83232] text-[#fff7e8] text-sm font-semibold">
+                    {(me.nickname || me.username || 'U').slice(0, 1).toUpperCase()}
+                  </span>
+                </span>
+                <span className="text-[#4a2c2a] text-sm">{me.nickname || me.username}</span>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  className="opacity-70"
+                  aria-hidden="true"
+                >
+                  <path fill="currentColor" d="M7 10l5 5 5-5z" />
+                </svg>
+              </button>
 
+              {menuOpen && (
+                <div
+                  role="menu"
+                  aria-label="用户菜单"
+                  className="absolute right-0 mt-2 w-48 overflow-hidden rounded-xl border border-[#e5c07b] bg-[#fffdf6] shadow-lg"
+                >
+                  <Link
+                    href="/account"
+                    role="menuitem"
+                    className="block px-4 py-2 text-sm text-[#4a2c2a] hover:bg-[#fdeecf]"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    我的账户
+                  </Link>
+                  <button
+                    role="menuitem"
+                    onClick={doLogout}
+                    className="block w-full px-4 py-2 text-left text-sm text-[#a83232] hover:bg-[#fdeecf]"
+                  >
+                    退出登录
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         )}
       </div>
 
