@@ -15,7 +15,7 @@ export function MessageList({
   return (
     <div
       ref={scrollRef}
-      className="h-[46vh] overflow-y-auto rounded-3xl border border-red-200 bg-white/90 p-4 space-y-3"
+      className="h-[100vh] overflow-y-auto rounded-3xl border border-red-200 bg-white/90 p-4 space-y-3"
     >
       {messages.map((m, i) => {
         const isAssistant = m.role === 'assistant';
