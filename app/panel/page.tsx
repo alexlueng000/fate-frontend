@@ -374,6 +374,40 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
     }
   };
 
+  const clearChat = async () => {
+    if (!conversationId) return;
+  
+    setLoading(true);
+    setErr(null);
+    try {
+      const res = await fetch(api('/chat/clear'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ conversation_id: conversationId }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+  
+      const data = await res.json().catch(() => null);
+      if (!data || data.ok !== true) {
+        throw new Error(data?.error || '清空失败（服务器未返回 ok:true）');
+      }
+  
+      // 1) 清空页面消息
+      setMsgs([]);
+  
+      // 2) 同步清空本地存档（如果你有本地持久化）
+      try {
+        saveConversation(conversationId, []);
+      } catch {
+        /* 忽略本地存档异常 */
+      }
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const sendQuick = async (label: string, fullPrompt: string) => {
     if (!conversationId) {
       setErr('缺少会话，请先完成排盘并开启解读。');
@@ -687,6 +721,11 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
             disabled={booting || !conversationId}
             onSend={send}
             onRegenerate={regenerate}
+            onStop={() => {/* 如果你有中断流式的逻辑，这里触发 */}}
+
+            // 新增：
+            onClear={clearChat}
+            confirmClear={true}
           />
         </section>
       </div>
