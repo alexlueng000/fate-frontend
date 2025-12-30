@@ -375,6 +375,7 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
   };
 
   const sendQuick = async (label: string, fullPrompt: string) => {
+    console.log("sendQuick: ", label, fullPrompt);
     if (!conversationId) {
       setErr('缺少会话，请先完成排盘并开启解读。');
       return;

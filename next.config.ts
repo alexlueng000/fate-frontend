@@ -26,7 +26,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'http://127.0.0.1:8000/api/:path*', // 转发到 FastAPI
+        destination: 'https://api.fateinsight.site/api/:path*', // 转发到 FastAPI
       },
     ];
   },
