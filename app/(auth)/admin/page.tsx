@@ -63,6 +63,12 @@ export default function AdminPage() {
             >
               管理快捷按钮
             </a>
+            <a
+              href="/admin/config/knowledge_base"
+              className="px-6 py-3 rounded-xl bg-[#2b2828] text-white font-semibold hover:bg-[#2c1b19] transition"
+            >
+              知识库管理
+            </a>
           </div>
         </div>
       </section>
