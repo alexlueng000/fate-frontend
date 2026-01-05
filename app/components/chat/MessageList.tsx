@@ -9,7 +9,7 @@ export function MessageList({
   Markdown,
 }: {
   scrollRef?: React.MutableRefObject<HTMLDivElement | null> | React.RefObject<HTMLDivElement | null>;
-  messages: Msg[];
+  messages: Msg[];  
   Markdown: ComponentType<{ content: string }>;
 }) {
   return (
