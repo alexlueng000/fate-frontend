@@ -41,12 +41,12 @@ export function InputArea({
 }: InputAreaProps) {
   const ref = useRef<HTMLTextAreaElement | null>(null);
 
-  // 品牌色（集中管理）
+  // 品牌色（与微信小程序一致）
   const color = {
-    primary: '#a83232',
-    primaryHover: '#8c2b2b',
-    surface: '#fff7e8',
-    border: '#f0d9a6',
+    primary: '#c93b3a',
+    primaryHover: '#e45c5c',
+    surface: '#f7f3ed',
+    border: 'rgba(142,129,116,0.15)',
   };
 
   // 自动高度
@@ -115,7 +115,7 @@ export function InputArea({
               onClick={() =>
                 onChange(value ? value.trimEnd() + (value.endsWith('\n') ? '' : '\n') + s : s)
               }
-              className="rounded-xl border border-red-200 bg-white px-3 py-1 text-xs text-red-800 hover:bg-red-50 transition shadow-sm"
+              className="rounded-xl border border-[rgba(142,129,116,0.15)] bg-white px-3 py-1 text-xs text-[#c93b3a] hover:bg-[#fbf7f2] transition shadow-sm"
               title="点击将短语加入输入框"
             >
               {s}
@@ -125,7 +125,7 @@ export function InputArea({
       )}
 
       {/* 外层容器：柔和卡片 */}
-      <div className="rounded-2xl border border-[#f5e6c7] bg-white/80 shadow-sm ring-1 ring-black/0 p-3 sm:p-4">
+      <div className="rounded-2xl border border-[rgba(142,129,116,0.15)] bg-white/80 shadow-sm ring-1 ring-black/0 p-3 sm:p-4">
         {/* 输入区 + 操作按钮 */}
         <div className="flex flex-col sm:flex-row sm:items-end gap-4">
           {/* 输入框：带内阴影与聚焦环 */}
@@ -136,7 +136,7 @@ export function InputArea({
               onChange={(e) => onChange(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={placeholder}
-              className="min-h-[3.25rem] max-h-[40svh] w-full resize-none rounded-2xl border border-red-200 bg-white px-4 py-3 text-sm text-neutral-900 outline-none shadow-inner focus:border-transparent focus:ring-4 focus:ring-red-500/20 disabled:opacity-50"
+              className="min-h-[3.25rem] max-h-[40svh] w-full resize-none rounded-2xl border border-[rgba(142,129,116,0.15)] bg-[#fbf7f2] px-4 py-3 text-sm text-[#1a1816] outline-none shadow-inner focus:border-[#c93b3a] focus:ring-4 focus:ring-[#c93b3a]/20 disabled:opacity-50"
               disabled={disabled}
               rows={3}
               aria-label="对话输入框"
@@ -168,8 +168,7 @@ export function InputArea({
                   <button
                     onClick={onSend}
                     disabled={!canSend || disabled}
-                    className="h-12 w-full rounded-xl text-sm font-semibold text-[#fff7e8] transition shadow-sm"
-                    style={{ backgroundColor: color.primary }}
+                    className="h-12 w-full rounded-xl bg-gradient-to-r from-[#c93b3a] to-[#e45c5c] text-sm font-semibold text-white shadow-[0_12px_32px_rgba(201,59,58,0.35),0_0_0_1px_rgba(255,255,255,0.1)_inset] hover:shadow-lg hover:-translate-y-px active:scale-[0.98] transition-all disabled:opacity-50"
                   >
                     发送
                   </button>
@@ -177,8 +176,8 @@ export function InputArea({
                   <button
                     onClick={() => onStop?.()}
                     disabled={disabled}
-                    className="h-12 w-full rounded-xl border text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50 transition shadow-sm"
-                    style={{ borderColor: '#f3b6b6', backgroundColor: '#fff' }}
+                    className="h-12 w-full rounded-xl border text-sm font-semibold text-[#c93b3a] hover:bg-[#fbf7f2] disabled:opacity-50 transition shadow-sm"
+                    style={{ borderColor: 'rgba(142,129,116,0.15)', backgroundColor: '#fff' }}
                   >
                     停止
                   </button>
@@ -187,8 +186,8 @@ export function InputArea({
                 <button
                   onClick={onRegenerate}
                   disabled={sending || disabled}
-                  className="h-12 w-full rounded-xl border text-sm font-medium hover:bg-red-50 disabled:opacity-50 transition shadow-sm"
-                  style={{ borderColor: color.border, color: color.primary, backgroundColor: '#fff' }}
+                  className="h-12 w-full rounded-xl border text-sm font-medium hover:bg-[#fbf7f2] disabled:opacity-50 transition shadow-sm"
+                  style={{ borderColor: 'rgba(142,129,116,0.15)', color: '#c93b3a', backgroundColor: '#fff' }}
                 >
                   重新解读
                 </button>
@@ -200,8 +199,8 @@ export function InputArea({
                   <button
                     onClick={handleClear}
                     disabled={sending || disabled}
-                    className="h-12 col-span-1 w-full rounded-xl border text-sm font-medium hover:bg-red-50 disabled:opacity-50 transition shadow-sm"
-                    style={{ borderColor: color.border, color: color.primary, backgroundColor: '#fff' }}
+                    className="h-12 col-span-1 w-full rounded-xl border text-sm font-medium hover:bg-[#fbf7f2] disabled:opacity-50 transition shadow-sm"
+                    style={{ borderColor: 'rgba(142,129,116,0.15)', color: '#c93b3a', backgroundColor: '#fff' }}
                   >
                     清空对话
                   </button>

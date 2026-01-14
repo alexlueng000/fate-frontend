@@ -61,23 +61,23 @@ export default function Header() {
     router.push('/');
   }
 
-  // === 样式（国风暖色调）===
+  // === 样式（国风暖色调 - 与微信小程序配色一致）===
   const headerWrap = 'fixed top-0 z-50 w-full backdrop-blur border-b transition-all';
   const headerState = scrolled
-    ? 'bg-[#fff7e8]/95 shadow-md border-[#f0d9a6]'
-    : 'bg-[#fff7e8]/80 border-transparent';
+    ? 'bg-[#f7f3ed]/95 shadow-md border-[rgba(142,129,116,0.15)]'
+    : 'bg-[#f7f3ed]/80 border-transparent';
 
   const mainBtn =
     'inline-flex items-center justify-center rounded-xl px-5 py-2 text-sm font-medium min-w-[96px]' +
-    ' transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#e5c07b]';
+    ' transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C4A574]';
 
   const primaryBtn =
     mainBtn +
-    ' bg-[#a83232] text-[#fff7e8] hover:bg-[#8c2b2b] active:scale-[0.98]';
+    ' bg-gradient-to-r from-[#c93b3a] to-[#e45c5c] text-white hover:shadow-lg hover:-translate-y-px active:scale-[0.98]';
 
   const ghostBtn =
     mainBtn +
-    ' border border-[#a83232] text-[#a83232] bg-white/70 hover:bg-[#fdeecf] active:scale-[0.98]';
+    ' border border-[#c93b3a] text-[#c93b3a] bg-white/70 hover:bg-[#fdeecf] active:scale-[0.98]';
 
   return (
     <header className={`${headerWrap} ${headerState}`}>
@@ -92,7 +92,7 @@ export default function Header() {
             className="h-16 w-auto sm:h-18"
             priority
           />
-          <span className="text-xl sm:text-2xl font-bold tracking-wide text-[#a83232] group-hover:opacity-90">
+          <span className="text-xl sm:text-2xl font-bold tracking-wide text-[#c93b3a] group-hover:opacity-90">
             一盏大师
           </span>
         </Link>
@@ -112,7 +112,7 @@ export default function Header() {
             {/* 个人中心按钮 */}
             <Link
               href="/panel"
-              className="inline-flex h-10 items-center justify-center rounded-xl bg-[#a83232] px-5 text-sm font-medium text-[#fff7e8] hover:bg-[#8c2b2b] transition"
+              className="inline-flex h-10 items-center justify-center rounded-xl bg-gradient-to-r from-[#c93b3a] to-[#e45c5c] px-5 text-sm font-medium text-white hover:shadow-lg hover:-translate-y-px transition"
             >
               个人中心
             </Link>
@@ -121,7 +121,7 @@ export default function Header() {
             {me.is_admin && (
               <Link
                 href="/admin"
-                className="inline-flex h-10 items-center justify-center rounded-xl bg-[#4a2c2a] px-5 text-sm font-medium text-white hover:bg-[#2c1b19] transition"
+                className="inline-flex h-10 items-center justify-center rounded-xl bg-[#1a1816] px-5 text-sm font-medium text-white hover:bg-[#3a332d] transition"
               >
                 管理后台
               </Link>
@@ -133,14 +133,14 @@ export default function Header() {
                 onClick={() => setMenuOpen((v) => !v)}
                 aria-haspopup="menu"
                 aria-expanded={menuOpen}
-                className="flex h-10 items-center gap-2 rounded-xl border border-[#e5c07b] bg-[#fffdf6] px-3 hover:bg-[#fdeecf] transition"
+                className="flex h-10 items-center gap-2 rounded-xl border border-[rgba(142,129,116,0.15)] bg-[#fffbf7] px-3 hover:bg-[#fdeecf] transition"
               >
-                <span className="p-[2px] rounded-full bg-gradient-to-tr from-[#a83232] to-[#e5c07b]">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#a83232] text-[#fff7e8] text-sm font-semibold">
+                <span className="p-[2px] rounded-full bg-gradient-to-tr from-[#c93b3a] to-[#C4A574]">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#c93b3a] text-white text-sm font-semibold">
                     {(me.nickname || me.username || 'U').slice(0, 1).toUpperCase()}
                   </span>
                 </span>
-                <span className="text-[#4a2c2a] text-sm">{me.nickname || me.username}</span>
+                <span className="text-[#1a1816] text-sm">{me.nickname || me.username}</span>
                 <svg
                   width="16"
                   height="16"
@@ -156,12 +156,12 @@ export default function Header() {
                 <div
                   role="menu"
                   aria-label="用户菜单"
-                  className="absolute right-0 mt-2 w-48 overflow-hidden rounded-xl border border-[#e5c07b] bg-[#fffdf6] shadow-lg"
+                  className="absolute right-0 mt-2 w-48 overflow-hidden rounded-xl border border-[rgba(142,129,116,0.15)] bg-[#fffbf7] shadow-lg"
                 >
                   <Link
                     href="/account"
                     role="menuitem"
-                    className="block px-4 py-2 text-sm text-[#4a2c2a] hover:bg-[#fdeecf]"
+                    className="block px-4 py-2 text-sm text-[#1a1816] hover:bg-[#fdeecf]"
                     onClick={() => setMenuOpen(false)}
                   >
                     我的账户
@@ -169,7 +169,7 @@ export default function Header() {
                   <button
                     role="menuitem"
                     onClick={doLogout}
-                    className="block w-full px-4 py-2 text-left text-sm text-[#a83232] hover:bg-[#fdeecf]"
+                    className="block w-full px-4 py-2 text-left text-sm text-[#c93b3a] hover:bg-[#fdeecf]"
                   >
                     退出登录
                   </button>
@@ -181,7 +181,7 @@ export default function Header() {
       </div>
 
       {/* 顶部细饰条 */}
-      <div className="pointer-events-none h-[2px] w-full bg-gradient-to-r from-[#f7e6bf] via-[#e5c07b] to-[#f7e6bf]" />
+      <div className="pointer-events-none h-[2px] w-full bg-gradient-to-r from-[#C4A574]/50 via-[#C4A574] to-[#C4A574]/50" />
     </header>
   );
 }

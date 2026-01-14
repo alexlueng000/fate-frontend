@@ -43,7 +43,7 @@ export function WuxingBadge({ char }: { char: string }) {
   const el = getWuxing(char);
   if (!el) {
     return (
-      <span className="px-2 py-1 rounded-lg border border-red-200 bg-white text-neutral-900">
+      <span className="px-2 py-1 rounded-lg border border-[rgba(142,129,116,0.15)] bg-[#fffbf7] text-[#1a1816]">
         {char || '—'}
       </span>
     );

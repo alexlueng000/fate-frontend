@@ -30,12 +30,12 @@ export default function LoginClient() {
 
   // ===== brand =====
   const brand = {
-    bg: 'from-[#fffaf1] via-[#fff5e6] to-[#ffe9d6]',
-    cardBorder: 'border-[#e5c07b]',
-    primary: '#a83232',
-    primaryHover: '#8c2b2b',
-    textMain: '#4a2c2a',
-    textSub: '#7b4b3a',
+    bg: 'from-[#f7f3ed] via-[#f7f3ed] to-[#f5ede1]',
+    cardBorder: 'border-[rgba(142,129,116,0.15)]',
+    primary: '#c93b3a',
+    primaryHover: '#e45c5c',
+    textMain: '#1a1816',
+    textSub: '#3a332d',
   } as const;
 
   // ===== validations =====

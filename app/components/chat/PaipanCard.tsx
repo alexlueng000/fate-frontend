@@ -17,10 +17,10 @@ export function PaipanCard({
   colorClasses: (el: Wuxing, type: 'text' | 'border') => string;
 }) {
   return (
-    <div className="rounded-3xl border border-red-200 bg-white p-6 space-y-6 shadow-sm">
+    <div className="rounded-3xl border border-[rgba(142,129,116,0.15)] bg-[#fffbf7] p-6 space-y-6 shadow-sm">
       {/* 四柱表格 */}
       <div className="space-y-3">
-        <h4 className="text-sm font-bold text-red-900">四柱</h4>
+        <h4 className="text-sm font-bold text-[#c93b3a]">四柱</h4>
         <div className="grid grid-cols-5 text-center text-sm font-semibold text-neutral-900">
           <div className="text-left text-neutral-700">层级</div>
           <div>年</div>
@@ -28,7 +28,7 @@ export function PaipanCard({
           <div>日</div>
           <div>时</div>
         </div>
-        <div className="grid grid-cols-5 gap-y-2 rounded-2xl border border-red-200 p-3">
+        <div className="grid grid-cols-5 gap-y-2 rounded-2xl border border-[rgba(142,129,116,0.15)] p-3">
           <div className="flex items-center text-sm font-medium text-neutral-700">天干</div>
           <div className="flex items-center justify-center"><WuxingBadge char={paipan.four_pillars.year?.[0] || ''} /></div>
           <div className="flex items-center justify-center"><WuxingBadge char={paipan.four_pillars.month?.[0] || ''} /></div>
@@ -58,7 +58,7 @@ export function PaipanCard({
 
       {/* 大运 */}
       <div className="space-y-3">
-        <h4 className="text-sm font-bold text-red-900">大运</h4>
+        <h4 className="text-sm font-bold text-[#c93b3a]">大运</h4>
         <div className="mt-1 flex gap-3 overflow-x-auto pb-2">
           {paipan.dayun.map((d, i) => {
             const pillar = d.pillar?.join('') || '';

@@ -45,12 +45,12 @@ function passwordStrength(pw: string): { score: number; label: string } {
 }
 
 const brand = {
-  bg: 'from-[#fffaf1] via-[#fff5e6] to-[#ffe9d6]',
-  cardBorder: 'border-[#e5c07b]',
-  primary: '#a83232',
-  primaryHover: '#8c2b2b',
-  textMain: '#4a2c2a',
-  textSub: '#7b4b3a',
+  bg: 'from-[#f7f3ed] via-[#f7f3ed] to-[#f5ede1]',
+  cardBorder: 'border-[rgba(142,129,116,0.15)]',
+  primary: '#c93b3a',
+  primaryHover: '#e45c5c',
+  textMain: '#1a1816',
+  textSub: '#3a332d',
 };
 
 export default function RegisterPage() {
@@ -165,8 +165,8 @@ export default function RegisterPage() {
 
         <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-4">
           <div className="flex gap-2 text-sm" style={{color: brand.textSub}}>
-            <button type="button" onClick={() => setMode('account')} className={`px-3 py-1 rounded-full border ${mode==='account'?'bg-[#a83232] text-white':'bg-[#fff7ec]'}`}>账号注册</button>
-            <button type="button" onClick={() => setMode('phone')} className={`px-3 py-1 rounded-full border ${mode==='phone'?'bg-[#a83232] text-white':'bg-[#fff7ec]'}`}>手机注册</button>
+            <button type="button" onClick={() => setMode('account')} className={`px-3 py-1 rounded-full border ${mode==='account'?'bg-[#c93b3a] text-white':'bg-[#fbf7f2]'}`}>账号注册</button>
+            <button type="button" onClick={() => setMode('phone')} className={`px-3 py-1 rounded-full border ${mode==='phone'?'bg-[#c93b3a] text-white':'bg-[#fbf7f2]'}`}>手机注册</button>
           </div>
 
           {mode==='account' && (
@@ -228,19 +228,19 @@ export default function RegisterPage() {
                 <div className={`flex items-center gap-2 rounded-2xl border ${brand.cardBorder} bg-[#fff7ec] px-3 py-2`}>
                   <Hash className="h-4 w-4 opacity-80" />
                   <input className="w-full bg-transparent outline-none" value={code} onChange={(e)=>setCode(e.target.value)} placeholder="输入短信验证码" />
-                  <button type="button" className="text-xs text-[#a83232]">获取验证码</button>
+                  <button type="button" className="text-xs text-[#c93b3a]">获取验证码</button>
                 </div>
               </div>
             </>
           )}
 
           <label className="flex items-center gap-2 text-sm select-none">
-            <input type="checkbox" className="accent-[#a83232] h-4 w-4" checked={agree} onChange={(e)=>setAgree(e.target.checked)} />
+            <input type="checkbox" className="accent-[#c93b3a] h-4 w-4" checked={agree} onChange={(e)=>setAgree(e.target.checked)} />
             <span style={{color: brand.textSub}}>
               我已阅读并同意
-              <a href="/terms" className="mx-1 underline underline-offset-4 text-[#a83232]">服务条款</a>
+              <a href="/terms" className="mx-1 underline underline-offset-4 text-[#c93b3a]">服务条款</a>
               与
-              <a href="/privacy" className="ml-1 underline underline-offset-4 text-[#a83232]">隐私政策</a>
+              <a href="/privacy" className="ml-1 underline underline-offset-4 text-[#c93b3a]">隐私政策</a>
             </span>
           </label>
 
@@ -249,7 +249,7 @@ export default function RegisterPage() {
           </button>
 
           <div className="text-sm text-center" style={{color:brand.textSub}}>
-            已有账号？<a href="/login" className="ml-1 underline underline-offset-4 text-[#a83232]">去登录</a>
+            已有账号？<a href="/login" className="ml-1 underline underline-offset-4 text-[#c93b3a]">去登录</a>
           </div>
         </form>
       </div>
