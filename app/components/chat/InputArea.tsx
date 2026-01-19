@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef } from 'react';
+import { Send, RotateCcw, Square, Trash2 } from 'lucide-react';
 
 type InputAreaProps = {
   value: string;
@@ -11,8 +12,6 @@ type InputAreaProps = {
   disabled: boolean;
   onSend: () => void;
   onRegenerate: () => void;
-
-  /** 可选 */
   onStop?: () => void;
   onClear?: () => void;
   confirmClear?: boolean;
@@ -28,28 +27,17 @@ export function InputArea({
   value, onChange, onKeyDown,
   canSend, sending, disabled,
   onSend, onRegenerate,
-
   onStop,
   onClear,
   confirmClear = false,
-  placeholder = '请输入你的问题，Shift+Enter 换行；Ctrl/Cmd+Enter 发送…',
+  placeholder = '请输入你的问题，Enter 发送，Shift+Enter 换行…',
   autoFocus = false,
   allowEnterToSend = true,
-  maxRows = 8,
-  suggestions = [],
+  maxRows = 6,
   maxLength,
 }: InputAreaProps) {
   const ref = useRef<HTMLTextAreaElement | null>(null);
 
-  // 品牌色（与微信小程序一致）
-  const color = {
-    primary: '#c93b3a',
-    primaryHover: '#e45c5c',
-    surface: '#f7f3ed',
-    border: 'rgba(142,129,116,0.15)',
-  };
-
-  // 自动高度
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -59,12 +47,10 @@ export function InputArea({
     el.style.height = `${next}px`;
   }, [value, maxRows]);
 
-  // 自动聚焦
   useEffect(() => {
     if (autoFocus) ref.current?.focus();
   }, [autoFocus]);
 
-  // 键盘：Enter 发送 / Shift+Enter 换行 / Cmd/Ctrl+Enter 发送 / Esc 失焦
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     onKeyDown?.(e);
     if (e.defaultPrevented) return;
@@ -87,14 +73,12 @@ export function InputArea({
     if (e.key === 'Escape') (e.target as HTMLTextAreaElement).blur();
   }
 
-  // 字数提示
   const countInfo = useMemo(() => {
     if (typeof maxLength !== 'number') return null;
     const len = value.length;
     return { len, warn: len > maxLength };
   }, [value, maxLength]);
 
-  // 统一触发清空
   const handleClear = () => {
     if (!onClear) return;
     if (confirmClear) {
@@ -104,117 +88,85 @@ export function InputArea({
   };
 
   return (
-    <div className="flex flex-col gap-3">
-      {/* 快捷短语 chips（可选） */}
-      {suggestions.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {suggestions.map((s, i) => (
-            <button
-              key={`${s}-${i}`}
-              type="button"
-              onClick={() =>
-                onChange(value ? value.trimEnd() + (value.endsWith('\n') ? '' : '\n') + s : s)
-              }
-              className="rounded-xl border border-[rgba(142,129,116,0.15)] bg-white px-3 py-1 text-xs text-[#c93b3a] hover:bg-[#fbf7f2] transition shadow-sm"
-              title="点击将短语加入输入框"
+    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
+      <div className="flex gap-3">
+        {/* Input */}
+        <div className="flex-1 relative">
+          <textarea
+            ref={ref}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={placeholder}
+            className="w-full min-h-[52px] max-h-[200px] resize-none rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-4 py-3 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-hint)] outline-none focus:border-[var(--color-gold-dark)] focus:ring-2 focus:ring-[var(--color-gold)]/20 disabled:opacity-50 transition-all"
+            disabled={disabled}
+            rows={2}
+            aria-label="对话输入框"
+          />
+          {countInfo && (
+            <div
+              className={`absolute bottom-2 right-3 text-xs ${
+                countInfo.warn ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-hint)]'
+              }`}
             >
-              {s}
-            </button>
-          ))}
+              {countInfo.len}{typeof maxLength === 'number' ? ` / ${maxLength}` : ''}
+            </div>
+          )}
         </div>
-      )}
 
-      {/* 外层容器：柔和卡片 */}
-      <div className="rounded-2xl border border-[rgba(142,129,116,0.15)] bg-white/80 shadow-sm ring-1 ring-black/0 p-3 sm:p-4">
-        {/* 输入区 + 操作按钮 */}
-        <div className="flex flex-col sm:flex-row sm:items-end gap-4">
-          {/* 输入框：带内阴影与聚焦环 */}
-          <div className="relative flex-1">
-            <textarea
-              ref={ref}
-              value={value}
-              onChange={(e) => onChange(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={placeholder}
-              className="min-h-[3.25rem] max-h-[40svh] w-full resize-none rounded-2xl border border-[rgba(142,129,116,0.15)] bg-[#fbf7f2] px-4 py-3 text-sm text-[#1a1816] outline-none shadow-inner focus:border-[#c93b3a] focus:ring-4 focus:ring-[#c93b3a]/20 disabled:opacity-50"
+        {/* Buttons */}
+        <div className="flex flex-col gap-2">
+          {!sending ? (
+            <button
+              onClick={onSend}
+              disabled={!canSend || disabled}
+              className="h-[52px] px-5 rounded-xl bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-light)] text-white font-medium flex items-center gap-2 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-[var(--color-primary)]/20"
+            >
+              <Send className="w-4 h-4" />
+              发送
+            </button>
+          ) : (
+            <button
+              onClick={() => onStop?.()}
               disabled={disabled}
-              rows={3}
-              aria-label="对话输入框"
-            />
+              className="h-[52px] px-5 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] text-[var(--color-text-secondary)] font-medium flex items-center gap-2 hover:bg-[var(--color-bg-hover)] disabled:opacity-50 transition-all"
+            >
+              <Square className="w-4 h-4" />
+              停止
+            </button>
+          )}
 
-            {/* 字数提示徽标 */}
-            {countInfo && (
-              <div
-                className={`pointer-events-none absolute -bottom-2 right-2 translate-y-full rounded-full px-2 py-0.5 text-[11px] shadow-sm ${
-                  countInfo.warn ? 'bg-red-100 text-red-700' : 'bg-neutral-100 text-neutral-500'
-                }`}
+          <div className="flex gap-2">
+            <button
+              onClick={onRegenerate}
+              disabled={sending || disabled}
+              className="flex-1 h-10 px-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] text-[var(--color-text-muted)] text-sm flex items-center justify-center gap-1.5 hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-secondary)] disabled:opacity-50 transition-all"
+              title="重新解读"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+            </button>
+
+            {onClear && (
+              <button
+                onClick={handleClear}
+                disabled={sending || disabled}
+                className="flex-1 h-10 px-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] text-[var(--color-text-muted)] text-sm flex items-center justify-center gap-1.5 hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-primary)] disabled:opacity-50 transition-all"
+                title="清空对话"
               >
-                {countInfo.len}{typeof maxLength === 'number' ? ` / ${maxLength}` : ''}
-              </div>
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
             )}
-
-            {/* 快捷键提示（小而不打扰） */}
-            <div className="mt-2 text-[11px] text-neutral-500">
-              回车发送（Shift+Enter 换行，Ctrl/Cmd+Enter 发送）
-            </div>
-          </div>
-
-          {/* 按钮区（响应式）：小屏整列；≥sm 固定宽度竖排，三按钮等宽 */}
-          <div className="sm:w-44">
-            <div className="flex flex-col gap-2">
-              {/* 上排：两列等宽 */}
-              <div className="grid grid-cols-2 gap-2">
-                {!sending ? (
-                  <button
-                    onClick={onSend}
-                    disabled={!canSend || disabled}
-                    className="h-12 w-full rounded-xl bg-gradient-to-r from-[#c93b3a] to-[#e45c5c] text-sm font-semibold text-white shadow-[0_12px_32px_rgba(201,59,58,0.35),0_0_0_1px_rgba(255,255,255,0.1)_inset] hover:shadow-lg hover:-translate-y-px active:scale-[0.98] transition-all disabled:opacity-50"
-                  >
-                    发送
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => onStop?.()}
-                    disabled={disabled}
-                    className="h-12 w-full rounded-xl border text-sm font-semibold text-[#c93b3a] hover:bg-[#fbf7f2] disabled:opacity-50 transition shadow-sm"
-                    style={{ borderColor: 'rgba(142,129,116,0.15)', backgroundColor: '#fff' }}
-                  >
-                    停止
-                  </button>
-                )}
-
-                <button
-                  onClick={onRegenerate}
-                  disabled={sending || disabled}
-                  className="h-12 w-full rounded-xl border text-sm font-medium hover:bg-[#fbf7f2] disabled:opacity-50 transition shadow-sm"
-                  style={{ borderColor: 'rgba(142,129,116,0.15)', color: '#c93b3a', backgroundColor: '#fff' }}
-                >
-                  重新解读
-                </button>
-              </div>
-
-              {/* 下排：清空对话 → 宽度跟上排保持一致 */}
-              {onClear && (
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={handleClear}
-                    disabled={sending || disabled}
-                    className="h-12 col-span-1 w-full rounded-xl border text-sm font-medium hover:bg-[#fbf7f2] disabled:opacity-50 transition shadow-sm"
-                    style={{ borderColor: 'rgba(142,129,116,0.15)', color: '#c93b3a', backgroundColor: '#fff' }}
-                  >
-                    清空对话
-                  </button>
-                </div>
-              )}
-            </div>
           </div>
         </div>
       </div>
+
+      <p className="mt-2 text-xs text-[var(--color-text-hint)]">
+        Enter 发送 · Shift+Enter 换行
+      </p>
     </div>
   );
 }
 
-/** 读取 textarea 的行高（用于计算最大高度） */
 function getLineHeight(el: HTMLTextAreaElement): number {
   const computed = window.getComputedStyle(el);
   const lh = computed.lineHeight;

@@ -2,15 +2,18 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { loginWeb, saveAuth } from '@/app/lib/auth';
 import { postJSON, api } from '@/app/lib/api';
-import { Mail, Lock, Eye, EyeOff, Loader2, ShieldCheck, Phone, Hash } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Loader2, Phone, Hash, Sparkles } from 'lucide-react';
+
+// 八卦符号
+const BAGUA = ['☰', '☱', '☲', '☳', '☴', '☵', '☶', '☷'];
 
 export default function LoginClient() {
   const router = useRouter();
   const search = useSearchParams();
 
-  // ✅ 默认跳到 /panel（如果没传 redirect 或 redirect === '/'）
   const raw = search.get('redirect');
   const redirect = !raw || raw === '/' ? '/panel' : raw;
 
@@ -23,29 +26,23 @@ export default function LoginClient() {
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
   const [sendingCode, setSendingCode] = useState(false);
-  const [cooldown, setCooldown] = useState(0); // 秒
+  const [cooldown, setCooldown] = useState(0);
 
   const [submitting, setSubmitting] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  // ===== brand =====
-  const brand = {
-    bg: 'from-[#f7f3ed] via-[#f7f3ed] to-[#f5ede1]',
-    cardBorder: 'border-[rgba(142,129,116,0.15)]',
-    primary: '#c93b3a',
-    primaryHover: '#e45c5c',
-    textMain: '#1a1816',
-    textSub: '#3a332d',
-  } as const;
-
-  // ===== validations =====
+  // Validations
   function validateEmail(v: string): boolean {
     const re = /^(?:[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+)@(?:[a-zA-Z0-9.-]+)\.[a-zA-Z]{2,}$/;
     return re.test(v);
   }
   const emailOk = useMemo(() => validateEmail(email), [email]);
   const pwOk = useMemo(() => password.length >= 1, [password]);
-  const phoneOk = useMemo(() => { const e164 = /^\+?\d{6,15}$/; const cn = /^1\d{10}$/; return e164.test(phone) || cn.test(phone); }, [phone]);
+  const phoneOk = useMemo(() => {
+    const e164 = /^\+?\d{6,15}$/;
+    const cn = /^1\d{10}$/;
+    return e164.test(phone) || cn.test(phone);
+  }, [phone]);
   const codeOk = useMemo(() => code.trim().length >= 4, [code]);
 
   const canSubmit = useMemo(() => {
@@ -53,7 +50,7 @@ export default function LoginClient() {
     return phoneOk && codeOk && !submitting;
   }, [mode, emailOk, pwOk, phoneOk, codeOk, submitting]);
 
-  // ===== send SMS code =====
+  // Send SMS code
   async function sendCode() {
     setErr(null);
     if (!phoneOk || sendingCode || cooldown > 0) return;
@@ -62,10 +59,16 @@ export default function LoginClient() {
       await postJSON(api('/auth/web/send_sms'), { phone, scene: 'login' });
       setCooldown(60);
       const timer = setInterval(() => {
-        setCooldown((s) => { if (s <= 1) { clearInterval(timer); return 0; } return s - 1; });
+        setCooldown((s) => {
+          if (s <= 1) {
+            clearInterval(timer);
+            return 0;
+          }
+          return s - 1;
+        });
       }, 1000);
-    } catch (e: any) {
-      setErr(e?.message || '验证码发送失败');
+    } catch (e: unknown) {
+      setErr((e as Error)?.message || '验证码发送失败');
     } finally {
       setSendingCode(false);
     }
@@ -85,13 +88,16 @@ export default function LoginClient() {
       } else {
         if (!phoneOk) throw new Error('请填写正确的手机号');
         if (!codeOk) throw new Error('请输入验证码');
-        // 直接调用短信登录接口（后端需提供）
-        const resp = await postJSON<any>(api('/auth/web/login_sms'), { phone, sms_code: code });
+        const resp = await postJSON<{ access_token: string; user: unknown }>(
+          api('/auth/web/login_sms'),
+          { phone, sms_code: code }
+        );
         saveAuth(resp);
       }
 
-      // ✅ 主动广播 storage 事件，唤醒其他组件（Header）刷新
-      try { window.dispatchEvent(new StorageEvent('storage', { key: 'me' })); } catch {}
+      try {
+        window.dispatchEvent(new StorageEvent('storage', { key: 'me' }));
+      } catch {}
 
       router.replace(redirect);
     } catch (e: unknown) {
@@ -102,80 +108,193 @@ export default function LoginClient() {
   }
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br ${brand.bg} text-[${brand.textMain}] flex items-center justify-center p-4`}>
-      <div className={`w-full max-w-md rounded-3xl border ${brand.cardBorder} bg-white shadow-[0_10px_30px_rgba(168,50,50,0.12)] backdrop-blur`}>
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Background Elements */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[var(--color-primary)] rounded-full opacity-10 blur-[100px] animate-pulse-glow" />
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-[var(--color-gold)] rounded-full opacity-10 blur-[80px] animate-pulse-glow delay-500" />
+
+        {/* Rotating Bagua */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] opacity-[0.02] animate-rotate-slow">
+          {BAGUA.map((symbol, i) => (
+            <span
+              key={i}
+              className="absolute text-5xl text-[var(--color-gold)]"
+              style={{
+                left: '50%',
+                top: '50%',
+                transform: `rotate(${i * 45}deg) translateY(-250px) rotate(-${i * 45}deg)`,
+              }}
+            >
+              {symbol}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Login Card */}
+      <div className="relative w-full max-w-md card p-8 animate-scale-in">
         {/* Header */}
-        <div className="px-6 pt-6 pb-3 flex items-center gap-3">
-          <div className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[#fff0e8] border border-[#f2c7a1]">
-            <ShieldCheck className="h-5 w-5" aria-hidden />
-          </div>
-          <div>
-            <h1 className="text-2xl font-semibold leading-tight" style={{ color: brand.primary }}>登录</h1>
-            <p className="text-sm" style={{ color: brand.textSub }}>选择登录方式并填写信息</p>
-          </div>
+        <div className="text-center mb-8">
+          <Link href="/" className="inline-flex items-center gap-3 mb-6">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-gold)] flex items-center justify-center shadow-lg">
+              <span className="text-white text-xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
+                盏
+              </span>
+            </div>
+          </Link>
+          <h1
+            className="text-2xl font-bold text-[var(--color-text-primary)] mb-2"
+            style={{ fontFamily: 'var(--font-display)' }}
+          >
+            欢迎回来
+          </h1>
+          <p className="text-sm text-[var(--color-text-muted)]">
+            登录以继续使用一盏大师
+          </p>
         </div>
 
         {/* Tabs */}
-        <div className="px-6 pb-4">
-          <div className="grid grid-cols-2 rounded-2xl bg-[#fff3e3] p-1">
-            <button type="button" onClick={() => setMode('password')} className={`rounded-xl py-2 text-sm font-medium transition ${mode==='password' ? 'bg-white shadow' : 'opacity-70 hover:opacity-100'}`}>邮箱密码</button>
-            <button type="button" onClick={() => setMode('sms')} className={`rounded-xl py-2 text-sm font-medium transition ${mode==='sms' ? 'bg-white shadow' : 'opacity-70 hover:opacity-100'}`}>手机验证码</button>
-          </div>
+        <div className="flex gap-2 p-1 rounded-xl bg-[var(--color-bg-elevated)] mb-6">
+          <button
+            type="button"
+            onClick={() => setMode('password')}
+            className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${
+              mode === 'password'
+                ? 'bg-[var(--color-bg-card)] text-[var(--color-text-primary)] shadow-sm'
+                : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]'
+            }`}
+          >
+            邮箱密码
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode('sms')}
+            className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${
+              mode === 'sms'
+                ? 'bg-[var(--color-bg-card)] text-[var(--color-text-primary)] shadow-sm'
+                : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]'
+            }`}
+          >
+            手机验证码
+          </button>
         </div>
 
-        {/* Alerts */}
-        {err && <div role="alert" className="mx-6 mb-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{err}</div>}
+        {/* Error Alert */}
+        {err && (
+          <div className="mb-4 rounded-xl border border-[var(--color-primary)]/30 bg-[var(--color-primary)]/10 px-4 py-3 text-sm text-[var(--color-primary)]">
+            {err}
+          </div>
+        )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-4">
-          {mode==='password' ? (
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {mode === 'password' ? (
             <>
               {/* Email */}
               <div>
-                <label className="block text-sm mb-1" style={{ color: brand.textSub }}>邮箱</label>
-                <div className={`flex items-center gap-2 rounded-2xl border ${brand.cardBorder} bg-[#fff7ec] px-3 py-2 focus-within:ring-2`} style={{ ['--tw-ring-color' as any]: brand.primary }}>
-                  <Mail className="h-4 w-4 opacity-80" />
-                  <input className="w-full bg-transparent outline-none placeholder:text-[#b5856f]" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" type="email" inputMode="email" autoComplete="email" />
+                <label className="block text-sm text-[var(--color-text-secondary)] mb-2">
+                  邮箱
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
+                  <input
+                    className="input pl-12"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    type="email"
+                    inputMode="email"
+                    autoComplete="email"
+                  />
                 </div>
-                {!emailOk && email.length>0 && (<div className="mt-1 text-xs text-red-600">邮箱格式不正确</div>)}
+                {!emailOk && email.length > 0 && (
+                  <p className="mt-1 text-xs text-[var(--color-primary)]">邮箱格式不正确</p>
+                )}
               </div>
 
               {/* Password */}
               <div>
-                <label className="block text-sm mb-1" style={{ color: brand.textSub }}>密码</label>
-                <div className={`flex items-center gap-2 rounded-2xl border ${brand.cardBorder} bg-[#fff7ec] px-3 py-2 focus-within:ring-2`} style={{ ['--tw-ring-color' as any]: brand.primary }}>
-                  <Lock className="h-4 w-4 opacity-80" />
-                  <input className="w-full bg-transparent outline-none placeholder:text-[#b5856f]" value={password} onChange={(e) => setPassword(e.target.value)} type={showPw ? 'text' : 'password'} placeholder="输入密码" autoComplete="current-password" />
-                  <button type="button" aria-label={showPw ? '隐藏密码' : '显示密码'} className="p-1 rounded-lg hover:bg-[#ffeede]" onClick={() => setShowPw(v => !v)}>{showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button>
+                <label className="block text-sm text-[var(--color-text-secondary)] mb-2">
+                  密码
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
+                  <input
+                    className="input pl-12 pr-12"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    type={showPw ? 'text' : 'password'}
+                    placeholder="输入密码"
+                    autoComplete="current-password"
+                  />
+                  <button
+                    type="button"
+                    aria-label={showPw ? '隐藏密码' : '显示密码'}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--color-text-hint)] hover:text-[var(--color-text-secondary)] transition-colors"
+                    onClick={() => setShowPw((v) => !v)}
+                  >
+                    {showPw ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between text-sm"><a href="/forgot" className="underline underline-offset-4" style={{ color: brand.primary }}>忘记密码？</a></div>
+              <div className="flex justify-end">
+                <Link
+                  href="/forgot"
+                  className="text-sm text-[var(--color-gold)] hover:text-[var(--color-gold-light)] transition-colors"
+                >
+                  忘记密码？
+                </Link>
+              </div>
             </>
           ) : (
             <>
               {/* Phone */}
               <div>
-                <label className="block text-sm mb-1" style={{ color: brand.textSub }}>手机号</label>
-                <div className={`flex items-center gap-2 rounded-2xl border ${brand.cardBorder} bg-[#fff7ec] px-3 py-2 focus-within:ring-2`} style={{ ['--tw-ring-color' as any]: brand.primary }}>
-                  <Phone className="h-4 w-4 opacity-80" />
-                  <input className="w-full bg-transparent outline-none placeholder:text-[#b5856f]" value={phone} onChange={(e)=>setPhone(e.target.value.trim())} placeholder="支持 +区号 或 11位大陆号码" inputMode="tel" autoComplete="tel" />
+                <label className="block text-sm text-[var(--color-text-secondary)] mb-2">
+                  手机号
+                </label>
+                <div className="relative">
+                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
+                  <input
+                    className="input pl-12"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value.trim())}
+                    placeholder="支持 +区号 或 11位大陆号码"
+                    inputMode="tel"
+                    autoComplete="tel"
+                  />
                 </div>
-                {!phoneOk && phone.length>0 && (<div className="mt-1 text-xs text-red-600">手机号格式不正确</div>)}
+                {!phoneOk && phone.length > 0 && (
+                  <p className="mt-1 text-xs text-[var(--color-primary)]">手机号格式不正确</p>
+                )}
               </div>
 
               {/* Code */}
               <div>
-                <label className="block text-sm mb-1" style={{ color: brand.textSub }}>验证码</label>
-                <div className="flex gap-2">
-                  <div className={`flex-1 rounded-2xl border ${brand.cardBorder} bg-[#fff7ec] px-3 py-2 focus-within:ring-2`} style={{ ['--tw-ring-color' as any]: brand.primary }}>
-                    <div className="flex items-center gap-2">
-                      <Hash className="h-4 w-4 opacity-80" />
-                      <input className="w-full bg-transparent outline-none placeholder:text-[#b5856f]" value={code} onChange={(e)=>setCode(e.target.value.trim())} placeholder="输入短信验证码" inputMode="numeric" pattern="\\d*" />
-                    </div>
+                <label className="block text-sm text-[var(--color-text-secondary)] mb-2">
+                  验证码
+                </label>
+                <div className="flex gap-3">
+                  <div className="relative flex-1">
+                    <Hash className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
+                    <input
+                      className="input pl-12"
+                      value={code}
+                      onChange={(e) => setCode(e.target.value.trim())}
+                      placeholder="输入验证码"
+                      inputMode="numeric"
+                      pattern="\d*"
+                    />
                   </div>
-                  <button type="button" onClick={sendCode} disabled={!phoneOk || sendingCode || cooldown > 0} className="shrink-0 rounded-2xl px-3 py-2 text-sm font-medium text-white disabled:opacity-60" style={{ backgroundColor: brand.primary }}>
-                    {cooldown > 0 ? `${cooldown}s` : (sendingCode ? '发送中…' : '发送验证码')}
+                  <button
+                    type="button"
+                    onClick={sendCode}
+                    disabled={!phoneOk || sendingCode || cooldown > 0}
+                    className="btn btn-secondary shrink-0 px-4"
+                  >
+                    {cooldown > 0 ? `${cooldown}s` : sendingCode ? '发送中…' : '发送验证码'}
                   </button>
                 </div>
               </div>
@@ -183,15 +302,34 @@ export default function LoginClient() {
           )}
 
           {/* Submit */}
-          <button type="submit" disabled={!canSubmit} className="w-full inline-flex items-center justify-center rounded-2xl px-4 py-2 font-medium text-white shadow-sm transition disabled:opacity-60" style={{ backgroundColor: brand.primary }} onMouseEnter={(e) => ((e.currentTarget.style.backgroundColor = brand.primaryHover))} onMouseLeave={(e) => ((e.currentTarget.style.backgroundColor = brand.primary))}>
-            {submitting ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" /> 登录中…</>) : '登录'}
+          <button
+            type="submit"
+            disabled={!canSubmit}
+            className="w-full btn btn-primary py-3 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {submitting ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                登录中…
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-5 h-5" />
+                登录
+              </>
+            )}
           </button>
 
           {/* Footer */}
-          <div className="text-sm text-center" style={{ color: brand.textSub }}>
+          <p className="text-sm text-center text-[var(--color-text-muted)]">
             还没有账号？
-            <a className="ml-1 underline underline-offset-4" style={{ color: brand.primary }} href="/register">去注册</a>
-          </div>
+            <Link
+              href="/register"
+              className="ml-1 text-[var(--color-gold)] hover:text-[var(--color-gold-light)] transition-colors"
+            >
+              去注册
+            </Link>
+          </p>
         </form>
       </div>
     </div>

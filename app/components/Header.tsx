@@ -3,9 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useUser, fetchMe, logout } from '@/app/lib/auth';
-import Logo from '@/app/public/fate-logo.png';
+import { ChevronDown, LogOut, User, Settings, LayoutDashboard } from 'lucide-react';
 
 export default function Header() {
   const router = useRouter();
@@ -20,7 +19,7 @@ export default function Header() {
       void fetchMe().then((u) => {
         if (u) {
           setUser(u);
-          router.push('/panel'); // 登录成功后跳转
+          router.push('/panel');
         }
       });
     }
@@ -61,116 +60,100 @@ export default function Header() {
     router.push('/');
   }
 
-  // === 样式（国风暖色调 - 与微信小程序配色一致）===
-  const headerWrap = 'fixed top-0 z-50 w-full backdrop-blur border-b transition-all';
-  const headerState = scrolled
-    ? 'bg-[#f7f3ed]/95 shadow-md border-[rgba(142,129,116,0.15)]'
-    : 'bg-[#f7f3ed]/80 border-transparent';
-
-  const mainBtn =
-    'inline-flex items-center justify-center rounded-xl px-5 py-2 text-sm font-medium min-w-[96px]' +
-    ' transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C4A574]';
-
-  const primaryBtn =
-    mainBtn +
-    ' bg-gradient-to-r from-[#c93b3a] to-[#e45c5c] text-white hover:shadow-lg hover:-translate-y-px active:scale-[0.98]';
-
-  const ghostBtn =
-    mainBtn +
-    ' border border-[#c93b3a] text-[#c93b3a] bg-white/70 hover:bg-[#fdeecf] active:scale-[0.98]';
-
   return (
-    <header className={`${headerWrap} ${headerState}`}>
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:h-18">
-        {/* 左侧 Logo */}
-        <Link href="/" className="group flex items-center gap-2 sm:gap-3">
-          <Image
-            src={Logo}
-            alt="一盏大师 Logo"
-            width={240}
-            height={240}
-            className="h-16 w-auto sm:h-18"
-            priority
-          />
-          <span className="text-xl sm:text-2xl font-bold tracking-wide text-[#c93b3a] group-hover:opacity-90">
+    <header
+      className={`fixed top-0 z-50 w-full transition-all duration-300 ${
+        scrolled
+          ? 'glass border-b border-[var(--color-border)]'
+          : 'bg-transparent'
+      }`}
+    >
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
+        {/* Logo */}
+        <Link href="/" className="group flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-gold)] flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
+            <span className="text-white text-lg font-bold" style={{ fontFamily: 'var(--font-display)' }}>
+              盏
+            </span>
+          </div>
+          <span
+            className="text-xl font-bold text-gradient-gold group-hover:opacity-80 transition-opacity"
+            style={{ fontFamily: 'var(--font-display)' }}
+          >
             一盏大师
           </span>
         </Link>
 
-        {/* 右侧操作区 */}
+        {/* Right Actions */}
         {!me ? (
           <div className="flex items-center gap-3">
-            <button onClick={goLogin} className={primaryBtn}>
+            <button onClick={goLogin} className="btn btn-ghost text-sm">
               登录
             </button>
-            <button onClick={goRegister} className={ghostBtn}>
+            <button onClick={goRegister} className="btn btn-primary text-sm">
               注册
             </button>
           </div>
         ) : (
           <div className="flex items-center gap-3">
-            {/* 个人中心按钮 */}
-            <Link
-              href="/panel"
-              className="inline-flex h-10 items-center justify-center rounded-xl bg-gradient-to-r from-[#c93b3a] to-[#e45c5c] px-5 text-sm font-medium text-white hover:shadow-lg hover:-translate-y-px transition"
-            >
+            {/* Panel Button */}
+            <Link href="/panel" className="btn btn-primary text-sm">
+              <LayoutDashboard className="w-4 h-4" />
               个人中心
             </Link>
 
-            {/* 如果是管理员，显示管理后台 */}
+            {/* Admin Button */}
             {me.is_admin && (
               <Link
                 href="/admin"
-                className="inline-flex h-10 items-center justify-center rounded-xl bg-[#1a1816] px-5 text-sm font-medium text-white hover:bg-[#3a332d] transition"
+                className="btn text-sm bg-[var(--color-bg-elevated)] text-[var(--color-text-secondary)] border border-[var(--color-border)] hover:border-[var(--color-border-accent)] hover:text-[var(--color-gold)]"
               >
+                <Settings className="w-4 h-4" />
                 管理后台
               </Link>
             )}
 
-            {/* 用户菜单 */}
+            {/* User Menu */}
             <div className="relative" ref={menuRef}>
               <button
                 onClick={() => setMenuOpen((v) => !v)}
                 aria-haspopup="menu"
                 aria-expanded={menuOpen}
-                className="flex h-10 items-center gap-2 rounded-xl border border-[rgba(142,129,116,0.15)] bg-[#fffbf7] px-3 hover:bg-[#fdeecf] transition"
+                className="flex h-10 items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-3 hover:border-[var(--color-border-accent)] transition-colors"
               >
-                <span className="p-[2px] rounded-full bg-gradient-to-tr from-[#c93b3a] to-[#C4A574]">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#c93b3a] text-white text-sm font-semibold">
-                    {(me.nickname || me.username || 'U').slice(0, 1).toUpperCase()}
-                  </span>
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-gold)] text-white text-sm font-semibold">
+                  {(me.nickname || me.username || 'U').slice(0, 1).toUpperCase()}
                 </span>
-                <span className="text-[#1a1816] text-sm">{me.nickname || me.username}</span>
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  className="opacity-70"
-                  aria-hidden="true"
-                >
-                  <path fill="currentColor" d="M7 10l5 5 5-5z" />
-                </svg>
+                <span className="text-[var(--color-text-primary)] text-sm hidden sm:inline">
+                  {me.nickname || me.username}
+                </span>
+                <ChevronDown
+                  className={`w-4 h-4 text-[var(--color-text-muted)] transition-transform ${menuOpen ? 'rotate-180' : ''}`}
+                />
               </button>
 
               {menuOpen && (
                 <div
                   role="menu"
                   aria-label="用户菜单"
-                  className="absolute right-0 mt-2 w-48 overflow-hidden rounded-xl border border-[rgba(142,129,116,0.15)] bg-[#fffbf7] shadow-lg"
+                  className="absolute right-0 mt-2 w-48 overflow-hidden rounded-xl card animate-scale-in"
                 >
                   <Link
                     href="/account"
                     role="menuitem"
-                    className="block px-4 py-2 text-sm text-[#1a1816] hover:bg-[#fdeecf]"
+                    className="flex items-center gap-3 px-4 py-3 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors"
                     onClick={() => setMenuOpen(false)}
                   >
+                    <User className="w-4 h-4" />
                     我的账户
                   </Link>
+                  <div className="h-px bg-[var(--color-border)]" />
                   <button
                     role="menuitem"
                     onClick={doLogout}
-                    className="block w-full px-4 py-2 text-left text-sm text-[#c93b3a] hover:bg-[#fdeecf]"
+                    className="flex items-center gap-3 w-full px-4 py-3 text-left text-sm text-[var(--color-primary)] hover:bg-[var(--color-bg-hover)] transition-colors"
                   >
+                    <LogOut className="w-4 h-4" />
                     退出登录
                   </button>
                 </div>
@@ -180,8 +163,8 @@ export default function Header() {
         )}
       </div>
 
-      {/* 顶部细饰条 */}
-      <div className="pointer-events-none h-[2px] w-full bg-gradient-to-r from-[#C4A574]/50 via-[#C4A574] to-[#C4A574]/50" />
+      {/* Top Accent Line */}
+      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[var(--color-gold-dark)] to-transparent opacity-30" />
     </header>
   );
 }
