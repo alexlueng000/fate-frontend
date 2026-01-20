@@ -26,7 +26,7 @@ const components: Components = {
     <h2 className="text-lg font-bold mt-3 mb-2 text-[var(--color-text-primary)]" {...props} />
   ),
   h3: ({ node, ...props }) => (
-    <h3 className="text-base font-bold mt-3 mb-2 text-[#D4380D] font-[var(--font-display)] border-b border-[rgba(212,56,13,0.2)] pb-1 whitespace-nowrap overflow-hidden text-ellipsis" {...props} />
+    <h3 className="text-base font-bold mt-3 mb-2 text-[#D4380D] font-[var(--font-display)] border-b border-[rgba(212,56,13,0.2)] pb-1" {...props} />
   ),
   h4: ({ node, ...props }) => (
     <h4 className="text-sm font-bold mt-2 mb-1 text-[#D4380D] font-[var(--font-display)]" {...props} />
