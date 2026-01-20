@@ -200,7 +200,7 @@ export default function LoginClient() {
                 <div className="relative">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
                   <input
-                    className="input pl-12"
+                    className="input !pl-12"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
@@ -222,7 +222,7 @@ export default function LoginClient() {
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
                   <input
-                    className="input pl-12 pr-12"
+                    className="input !pl-12 pr-12"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     type={showPw ? 'text' : 'password'}
@@ -259,7 +259,7 @@ export default function LoginClient() {
                 <div className="relative">
                   <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
                   <input
-                    className="input pl-12"
+                    className="input !pl-12"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value.trim())}
                     placeholder="支持 +区号 或 11位大陆号码"
@@ -281,7 +281,7 @@ export default function LoginClient() {
                   <div className="relative flex-1">
                     <Hash className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
                     <input
-                      className="input pl-12"
+                      className="input !pl-12"
                       value={code}
                       onChange={(e) => setCode(e.target.value.trim())}
                       placeholder="输入验证码"

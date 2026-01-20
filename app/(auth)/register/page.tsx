@@ -230,7 +230,7 @@ export default function RegisterPage() {
                 <div className="relative">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
                   <input
-                    className="input pl-12"
+                    className="input !pl-12"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
@@ -249,7 +249,7 @@ export default function RegisterPage() {
                 <div className="relative">
                   <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
                   <input
-                    className="input pl-12"
+                    className="input !pl-12"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     placeholder="至少3个字符"
@@ -264,7 +264,7 @@ export default function RegisterPage() {
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
                   <input
-                    className="input pl-12 pr-12"
+                    className="input !pl-12 pr-12"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     type={showPw ? 'text' : 'password'}
@@ -312,7 +312,7 @@ export default function RegisterPage() {
                 <div className="relative">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
                   <input
-                    className="input pl-12"
+                    className="input !pl-12"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
@@ -327,7 +327,7 @@ export default function RegisterPage() {
                 <div className="relative">
                   <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
                   <input
-                    className="input pl-12"
+                    className="input !pl-12"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="11位手机号"
@@ -343,7 +343,7 @@ export default function RegisterPage() {
                   <div className="relative flex-1">
                     <Hash className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
                     <input
-                      className="input pl-12"
+                      className="input !pl-12"
                       value={code}
                       onChange={(e) => setCode(e.target.value)}
                       placeholder="输入验证码"
