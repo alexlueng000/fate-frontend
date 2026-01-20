@@ -14,7 +14,6 @@ import {
 import { api, postJSON } from '@/app/lib/api';
 import { trySSE } from '@/app/lib/chat/sse';
 import Markdown from '@/app/components/Markdown';
-import WuxingRadar from '@/app/components/charts/WuxingRadar';
 
 // Types
 interface FourPillars {
@@ -48,32 +47,6 @@ const WUXING_MAP: Record<string, string> = {
   '申': '金', '酉': '金',
   '亥': '水', '子': '水',
 };
-
-function getWuxingFromPaipan(paipan: Paipan | null) {
-  if (!paipan) return undefined;
-
-  const counts: Record<string, number> = { '木': 0, '火': 0, '土': 0, '金': 0, '水': 0 };
-  const pillars = [
-    paipan.four_pillars.year,
-    paipan.four_pillars.month,
-    paipan.four_pillars.day,
-    paipan.four_pillars.hour,
-  ];
-
-  pillars.forEach(pillar => {
-    pillar.forEach(char => {
-      const wx = WUXING_MAP[char];
-      if (wx) counts[wx]++;
-    });
-  });
-
-  const total = Object.values(counts).reduce((a, b) => a + b, 0);
-  return Object.entries(counts).map(([element, count]) => ({
-    element,
-    value: Math.round((count / total) * 100),
-    fullMark: 100,
-  }));
-}
 
 function TryPageContent() {
   const searchParams = useSearchParams();
@@ -159,8 +132,6 @@ function TryPageContent() {
     };
   }, [startAnalysis]);
 
-  const wuxingData = getWuxingFromPaipan(paipan);
-
   if (error) {
     return (
       <main className="min-h-screen flex items-center justify-center px-4">
@@ -212,81 +183,63 @@ function TryPageContent() {
       <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
         {/* Dashboard Section */}
         <section className="mb-6 sm:mb-8">
-          <div className="grid lg:grid-cols-3 gap-4 sm:gap-6">
-            {/* Four Pillars Card */}
-            <div className="lg:col-span-2 card p-4 sm:p-6">
-              <h2 className="text-base sm:text-lg font-semibold text-[var(--color-gold)] mb-3 sm:mb-4 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
-                <span className="w-1 h-5 bg-[var(--color-gold)] rounded-full" />
-                四柱命盘
-              </h2>
+          {/* Four Pillars Card */}
+          <div className="card p-3 sm:p-6">
+            <h2 className="text-base sm:text-lg font-semibold text-[var(--color-gold)] mb-3 sm:mb-4 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
+              <span className="w-1 h-5 bg-[var(--color-gold)] rounded-full" />
+              四柱命盘
+            </h2>
 
-              {paipan ? (
-                <div className="grid grid-cols-4 gap-2 sm:gap-4">
-                  {(['year', 'month', 'day', 'hour'] as const).map((key, idx) => {
-                    const labels = ['年柱', '月柱', '日柱', '时柱'];
-                    const pillar = paipan.four_pillars[key];
-                    return (
-                      <div key={key} className="text-center">
-                        <div className="text-xs text-[var(--color-text-muted)] mb-1 sm:mb-2">{labels[idx]}</div>
-                        <div className="space-y-1 sm:space-y-2">
-                          <PillarChar char={pillar[0]} />
-                          <PillarChar char={pillar[1]} />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="grid grid-cols-4 gap-2 sm:gap-4">
-                  {[0, 1, 2, 3].map(i => (
-                    <div key={i} className="text-center">
-                      <div className="h-4 w-8 mx-auto mb-1 sm:mb-2 bg-[var(--color-bg-hover)] rounded animate-pulse" />
+            {paipan ? (
+              <div className="grid grid-cols-4 gap-1 sm:gap-4">
+                {(['year', 'month', 'day', 'hour'] as const).map((key, idx) => {
+                  const labels = ['年柱', '月柱', '日柱', '时柱'];
+                  const pillar = paipan.four_pillars[key];
+                  return (
+                    <div key={key} className="text-center">
+                      <div className="text-[10px] sm:text-xs text-[var(--color-text-muted)] mb-1 sm:mb-2">{labels[idx]}</div>
                       <div className="space-y-1 sm:space-y-2">
-                        <div className="h-12 w-12 sm:h-16 sm:w-16 mx-auto bg-[var(--color-bg-hover)] rounded-xl animate-pulse" />
-                        <div className="h-12 w-12 sm:h-16 sm:w-16 mx-auto bg-[var(--color-bg-hover)] rounded-xl animate-pulse" />
+                        <PillarChar char={pillar[0]} />
+                        <PillarChar char={pillar[1]} />
                       </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="grid grid-cols-4 gap-1 sm:gap-4">
+                {[0, 1, 2, 3].map(i => (
+                  <div key={i} className="text-center">
+                    <div className="h-3 w-6 sm:h-4 sm:w-8 mx-auto mb-1 sm:mb-2 bg-[var(--color-bg-hover)] rounded animate-pulse" />
+                    <div className="space-y-1 sm:space-y-2">
+                      <div className="h-10 w-10 sm:h-16 sm:w-16 mx-auto bg-[var(--color-bg-hover)] rounded-lg sm:rounded-xl animate-pulse" />
+                      <div className="h-10 w-10 sm:h-16 sm:w-16 mx-auto bg-[var(--color-bg-hover)] rounded-lg sm:rounded-xl animate-pulse" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Dayun Timeline */}
+            {paipan && paipan.dayun && paipan.dayun.length > 0 && (
+              <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-[var(--color-border)]">
+                <h3 className="text-xs sm:text-sm font-medium text-[var(--color-text-secondary)] mb-2 sm:mb-4">大运流年</h3>
+                <div className="flex gap-1.5 sm:gap-3 overflow-x-auto pb-2 -mx-1 px-1">
+                  {paipan.dayun.slice(0, 8).map((dy, idx) => (
+                    <div
+                      key={idx}
+                      className="flex-shrink-0 text-center p-1.5 sm:p-3 rounded-lg sm:rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)] min-w-[50px] sm:min-w-[80px]"
+                    >
+                      <div className="text-[10px] sm:text-xs text-[var(--color-text-hint)] mb-0.5 sm:mb-1">{dy.age}岁起</div>
+                      <div className="text-sm sm:text-lg font-semibold text-[var(--color-text-primary)]">
+                        {dy.pillar[0]}{dy.pillar[1]}
+                      </div>
+                      <div className="text-[10px] sm:text-xs text-[var(--color-text-muted)] mt-0.5 sm:mt-1">{dy.start_year}年</div>
                     </div>
                   ))}
                 </div>
-              )}
-
-              {/* Dayun Timeline */}
-              {paipan && paipan.dayun && paipan.dayun.length > 0 && (
-                <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-[var(--color-border)]">
-                  <h3 className="text-sm font-medium text-[var(--color-text-secondary)] mb-3 sm:mb-4">大运流年</h3>
-                  <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-2">
-                    {paipan.dayun.slice(0, 8).map((dy, idx) => (
-                      <div
-                        key={idx}
-                        className="flex-shrink-0 text-center p-2 sm:p-3 rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)] min-w-[60px] sm:min-w-[80px]"
-                      >
-                        <div className="text-xs text-[var(--color-text-hint)] mb-1">{dy.age}岁起</div>
-                        <div className="text-base sm:text-lg font-semibold text-[var(--color-text-primary)]">
-                          {dy.pillar[0]}{dy.pillar[1]}
-                        </div>
-                        <div className="text-xs text-[var(--color-text-muted)] mt-1">{dy.start_year}年</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Wuxing Radar Card */}
-            <div className="card p-4 sm:p-6">
-              <h2 className="text-base sm:text-lg font-semibold text-[var(--color-gold)] mb-3 sm:mb-4 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
-                <span className="w-1 h-5 bg-[var(--color-gold)] rounded-full" />
-                五行分布
-              </h2>
-              <WuxingRadar data={wuxingData} />
-              <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mt-3 sm:mt-4">
-                {['木', '火', '土', '金', '水'].map(wx => (
-                  <span key={wx} className={`wuxing-badge wuxing-${wx === '木' ? 'wood' : wx === '火' ? 'fire' : wx === '土' ? 'earth' : wx === '金' ? 'metal' : 'water'}`}>
-                    {wx}
-                  </span>
-                ))}
               </div>
-            </div>
+            )}
           </div>
         </section>
 
@@ -396,12 +349,12 @@ function PillarChar({ char }: { char: string }) {
     : '';
 
   return (
-    <div className={`w-12 h-12 sm:w-16 sm:h-16 mx-auto rounded-xl flex flex-col items-center justify-center ${colorClass}`}>
-      <span className="text-xl sm:text-2xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
+    <div className={`w-10 h-10 sm:w-16 sm:h-16 mx-auto rounded-lg sm:rounded-xl flex flex-col items-center justify-center ${colorClass}`}>
+      <span className="text-lg sm:text-2xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
         {char}
       </span>
       {wuxing && (
-        <span className="text-xs opacity-70">{wuxing}</span>
+        <span className="text-[10px] sm:text-xs opacity-70">{wuxing}</span>
       )}
     </div>
   );

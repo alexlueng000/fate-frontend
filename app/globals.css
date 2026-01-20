@@ -447,28 +447,34 @@ body {
 
 .msg-md {
   color: var(--color-text-primary);
+  line-height: 1.8;
+  font-size: 0.95rem;
 }
 
 .msg-md h3,
 .msg-md h4 {
-  margin: 1em 0 0.5em;
-  line-height: 1.4;
-  color: var(--color-primary);
+  margin: 1.2em 0 0.6em;
+  line-height: 1.5;
+  color: var(--color-gold);
   font-family: var(--font-display);
+  font-weight: 600;
 }
 
 .msg-md h3 {
-  font-size: 1.25rem;
+  font-size: 1.15rem;
+  padding-bottom: 0.4em;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .msg-md h4 {
-  font-size: 1.1rem;
+  font-size: 1.05rem;
+  color: var(--color-text-primary);
 }
 
 .msg-md p,
 .msg-md ul,
 .msg-md ol {
-  margin: 0.6em 0;
+  margin: 0.8em 0;
   color: var(--color-text-secondary);
 }
 
@@ -478,7 +484,12 @@ body {
 }
 
 .msg-md li {
-  margin: 0.3em 0;
+  margin: 0.5em 0;
+  padding-left: 0.3em;
+}
+
+.msg-md li::marker {
+  color: var(--color-gold);
 }
 
 .msg-md strong {
@@ -502,11 +513,14 @@ body {
 }
 
 .msg-md blockquote {
-  border-left: 3px solid var(--color-primary);
+  border-left: 3px solid var(--color-gold);
   padding-left: 1rem;
   margin: 1em 0;
   color: var(--color-text-muted);
   font-style: italic;
+  background: var(--color-bg-elevated);
+  padding: 0.8em 1em;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
 }
 
 /* ==================== Bagua Pattern Background ==================== */
