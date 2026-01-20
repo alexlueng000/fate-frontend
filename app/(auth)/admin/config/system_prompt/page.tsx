@@ -8,6 +8,14 @@ type Me = { id: number; username?: string; is_admin?: boolean };
 type ConfigResp = { key: string; version: number; value_json: any };
 type Revision = { version: number; created_at: string; comment?: string | null };
 type SaveResp = { ok: boolean; key: string; version: number };
+type RevisionDetail = {
+  key: string;
+  value_json: { content?: string; notes?: string };
+  version: number;
+  created_at: string;
+  editor_id?: number | null;
+  comment?: string | null;
+};
 
 function parseValue(v: any): any {
   if (!v) return {};
@@ -45,6 +53,23 @@ async function getRevisions(key: string, limit = 50): Promise<Revision[]> {
   if (!resp.ok) return [];
   const data = await resp.json().catch(() => null);
   return (data || []) as Revision[];
+}
+
+async function getRevisionDetail(key: string, version: number): Promise<RevisionDetail> {
+  const resp = await fetch(api(`/admin/config/revision?key=${encodeURIComponent(key)}&version=${version}`), {
+    method: 'GET',
+    credentials: 'include',
+    cache: 'no-store',
+  }).catch((err: unknown) => {
+    throw new Error(`网络错误：${(err as Error)?.message || '可能是 CORS/域名/协议问题'}`);
+  });
+  if (!resp.ok) {
+    const text = await resp.text().catch(() => '');
+    throw new Error(`加载失败（HTTP ${resp.status}）：${text || '服务器返回错误'}`);
+  }
+  const data = await resp.json().catch(() => null);
+  if (!data) throw new Error('服务器返回了无效的 JSON');
+  return data as RevisionDetail;
 }
 
 async function saveConfig(key: string, value_json: any, comment?: string) {
@@ -104,6 +129,11 @@ export default function SystemPromptPage() {
   // 成功弹窗
   const [okOpen, setOkOpen] = useState(false);
   const [okInfo, setOkInfo] = useState<SaveResp | null>(null);
+
+  // 历史版本详情弹窗
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [detailRev, setDetailRev] = useState<RevisionDetail | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   useEffect(() => {
     // 1) sessionStorage 鉴权
@@ -189,6 +219,25 @@ export default function SystemPromptPage() {
     } finally { setBusy(false); }
   }
 
+  async function onViewDetail(v: number) {
+    setDetailLoading(true);
+    setDetailOpen(true);
+    try {
+      const detail = await getRevisionDetail(cfgKey, v);
+      setDetailRev(detail);
+    } catch (e: any) {
+      setMsg(e?.message || '加载版本详情失败');
+      setDetailOpen(false);
+    } finally {
+      setDetailLoading(false);
+    }
+  }
+
+  function closeDetail() {
+    setDetailOpen(false);
+    setDetailRev(null);
+  }
+
   if (loading) {
     return <main className="min-h-screen flex items-center justify-center bg-[#fff7e8] text-[#4a2c2a]">加载中…</main>;
   }
@@ -264,23 +313,108 @@ export default function SystemPromptPage() {
           </div>
           <div className="max-h-[75vh] overflow-y-auto divide-y divide-[#f7e4c6]">
             {revs.map(r => (
-              <div key={r.version} className="px-4 py-3 text-sm flex items-center justify-between">
-                <div>
-                  <div className="font-medium text-[#4a2c2a]">v{r.version}</div>
-                  <div className="text-xs text-neutral-500">{new Date(r.created_at).toLocaleString()}</div>
-                  {r.comment && <div className="text-xs text-neutral-600 mt-1">备注：{r.comment}</div>}
+              <div key={r.version} className="px-4 py-3 text-sm">
+                <div className="flex items-center justify-between mb-1">
+                  <div>
+                    <div className="font-medium text-[#4a2c2a]">v{r.version}</div>
+                    <div className="text-xs text-neutral-500">{new Date(r.created_at).toLocaleString()}</div>
+                    {r.comment && <div className="text-xs text-neutral-600 mt-1">备注：{r.comment}</div>}
+                  </div>
                 </div>
-                <button
-                  onClick={() => onRollback(r.version)}
-                  className="px-3 py-1.5 rounded-lg bg-white border border-[#f0d9a6] hover:bg-[#fff2d9]"
-                >
-                  回滚
-                </button>
+                <div className="flex gap-2 mt-2">
+                  <button
+                    onClick={() => onViewDetail(r.version)}
+                    className="px-3 py-1.5 rounded-lg bg-[#a83232] text-white border border-[#a83232] hover:bg-[#822727]"
+                  >
+                    查看
+                  </button>
+                  <button
+                    onClick={() => onRollback(r.version)}
+                    className="px-3 py-1.5 rounded-lg bg-white border border-[#f0d9a6] hover:bg-[#fff2d9]"
+                  >
+                    回滚
+                  </button>
+                </div>
               </div>
             ))}
             {revs.length === 0 && <div className="px-4 py-6 text-center text-neutral-500">暂无历史</div>}
           </div>
         </aside>
+      )}
+
+      {/* 历史版本详情弹窗 */}
+      {detailOpen && (
+        <div className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-4xl max-h-[85vh] rounded-2xl bg-white shadow-xl border border-[#f0d9a6] flex flex-col">
+            <div className="px-5 py-4 border-b border-[#f0d9a6] flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-[#4a2c2a]">
+                历史版本详情
+                {detailRev && <span className="ml-2 text-sm font-normal text-neutral-500">v{detailRev.version}</span>}
+              </h3>
+              <button onClick={closeDetail} className="text-sm px-3 py-1.5 rounded-lg border border-[#f0d9a6] hover:bg-[#fff2d9]">关闭</button>
+            </div>
+            <div className="flex-1 overflow-y-auto px-5 py-4">
+              {detailLoading ? (
+                <div className="flex items-center justify-center py-12 text-[#4a2c2a]">加载中…</div>
+              ) : detailRev ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="rounded-xl bg-[#fff9f0] p-3 border border-[#f7e4c6]">
+                      <div className="text-neutral-500 text-xs mb-1">版本号</div>
+                      <div className="font-medium text-[#4a2c2a]">v{detailRev.version}</div>
+                    </div>
+                    <div className="rounded-xl bg-[#fff9f0] p-3 border border-[#f7e4c6]">
+                      <div className="text-neutral-500 text-xs mb-1">创建时间</div>
+                      <div className="font-medium text-[#4a2c2a]">{new Date(detailRev.created_at).toLocaleString()}</div>
+                    </div>
+                  </div>
+                  {detailRev.comment && (
+                    <div className="rounded-xl bg-[#fff9f0] p-3 border border-[#f7e4c6]">
+                      <div className="text-neutral-500 text-xs mb-1">操作备注</div>
+                      <div className="text-sm text-[#4a2c2a]">{detailRev.comment}</div>
+                    </div>
+                  )}
+                  {detailRev.value_json.notes && (
+                    <div className="rounded-xl bg-[#fff9f0] p-3 border border-[#f7e4c6]">
+                      <div className="text-neutral-500 text-xs mb-1">内容备注</div>
+                      <div className="text-sm text-[#4a2c2a]">{detailRev.value_json.notes}</div>
+                    </div>
+                  )}
+                  <div className="rounded-xl border border-[#f0d9a6] bg-[#fff9f0] p-4">
+                    <div className="text-[#4a2c2a] text-sm font-medium mb-2">提示词内容</div>
+                    <div className="max-h-[50vh] overflow-y-auto rounded-xl bg-white border border-[#f7e4c6] p-4">
+                      <pre className="whitespace-pre-wrap break-words font-mono text-[13px] text-[#4a2c2a]">
+                        {detailRev.value_json.content || '(空)'}
+                      </pre>
+                    </div>
+                    <div className="mt-3 text-xs text-neutral-500 text-right">
+                      字数：{detailRev.value_json.content?.length || 0}
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+            <div className="px-5 py-3 border-t border-[#f0d9a6] flex justify-between">
+              <button
+                onClick={closeDetail}
+                className="px-4 py-2 rounded-xl border border-[#f0d9a6] hover:bg-[#fff2d9] text-[#4a2c2a]"
+              >
+                关闭
+              </button>
+              {detailRev && (
+                <button
+                  onClick={() => {
+                    closeDetail();
+                    onRollback(detailRev.version);
+                  }}
+                  className="px-4 py-2 rounded-xl bg-[#a83232] text-white hover:bg-[#822727]"
+                >
+                  回滚到此版本
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
       )}
 
       {/* 成功弹窗 */}
