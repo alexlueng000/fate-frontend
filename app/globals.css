@@ -445,82 +445,32 @@ body {
 /* ==================== Markdown Override ==================== */
 @import 'highlight.js/styles/github.css';
 
+/* Markdown 容器基础样式 - 与 Markdown.tsx 组件配合使用 */
 .msg-md {
   color: #1A1A1A;
   line-height: 1.7;
-  font-size: 0.85rem;
+  font-size: 0.875rem;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
-.msg-md h3,
-.msg-md h4 {
-  margin: 1em 0 0.5em;
-  line-height: 1.4;
-  color: #D4380D;
-  font-family: var(--font-display);
-  font-weight: 600;
+/* 确保列表标记正确显示 */
+.msg-md ul {
+  list-style: disc;
 }
 
-.msg-md h3 {
-  font-size: 1rem;
-  padding-bottom: 0.3em;
-  border-bottom: 1px solid rgba(212, 56, 13, 0.2);
-}
-
-.msg-md h4 {
-  font-size: 0.95rem;
-}
-
-.msg-md p,
-.msg-md ul,
 .msg-md ol {
-  margin: 0.6em 0;
-  color: #1A1A1A;
+  list-style: decimal;
 }
 
-.msg-md ul,
-.msg-md ol {
-  padding-left: 1.2em;
-}
-
-.msg-md li {
-  margin: 0.4em 0;
-  padding-left: 0.2em;
-}
-
-.msg-md li::marker {
-  color: #D4380D;
+/* 强制覆盖 Tailwind 的 reset 样式 */
+.msg-md * {
+  box-sizing: border-box;
 }
 
 .msg-md strong {
   color: #D4380D;
   font-weight: 600;
-}
-
-.msg-md code {
-  background: var(--color-bg-deep);
-  padding: 0.15em 0.35em;
-  border-radius: 3px;
-  font-family: var(--font-mono);
-  font-size: 0.85em;
-}
-
-.msg-md pre {
-  background: var(--color-bg-deep);
-  padding: 0.8rem;
-  border-radius: var(--radius-md);
-  overflow-x: auto;
-  font-size: 0.8rem;
-}
-
-.msg-md blockquote {
-  border-left: 3px solid #D4380D;
-  padding-left: 0.8rem;
-  margin: 0.8em 0;
-  color: #4A4A4A;
-  font-style: italic;
-  background: rgba(212, 56, 13, 0.05);
-  padding: 0.6em 0.8em;
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
 }
 
 /* ==================== Bagua Pattern Background ==================== */
