@@ -22,7 +22,7 @@ export const QUICK_BUTTONS: Array<{ label: string; prompt: string }> = [
 ];
 
 /** 轻量 Markdown 归一化 */
-// 处理由模型产生的“连在一行的 ###/#### 标题、尾部多余 #、缺空行、列表粘连”等问题
+// 处理由模型产生的"连在一行的 ###/#### 标题、尾部多余 #、缺空行、列表粘连"等问题
 export function normalizeMarkdown(md: string): string {
   if (!md) return "";
   md = md.replace(/\r\n?/g, "\n").replace(/\u00A0|\u3000/g, " ");
@@ -45,6 +45,17 @@ export function normalizeMarkdown(md: string): string {
          .replace(/(\*\*|__)/g, "");
 
     // —— 标题规范化 —— //
+    // 0) 优先处理：标题后直接跟内容的情况
+    //    如：### 八字命盘总览 年柱：乙巳... -> ### 八字命盘总览\n\n年柱：乙巳...
+    //    匹配：标题 + 空格 + 包含八字术语的长内容
+    s = s.replace(/^(#{3,4})\s+([^\n]{4,20}?)\s+(?=[^\n]{15,}.*?(?:年柱|月柱|日柱|时柱|正印|食神|正财|七杀|日主|伤官|偏印|劫财|比肩))/gm, "$1 $2\n\n");
+    // 处理冒号结尾的标题
+    s = s.replace(/^(#{3,4})\s+([^\n]{1,30}?[：:：])\s*/gm, "$1 $2\n\n");
+    // 处理标题后跟您是一位/当前/因此等开头的内容
+    s = s.replace(/^(#{3,4})\s+([^\n]{1,25}?)(?=\s*(您是一位|当前|因此|命局|您能|这代表|意味着|您的))/gm, "$1 $2\n\n");
+    // 处理标题后跟数字开头的内容（如 1. xxx）
+    s = s.replace(/^(#{3,4})\s+([^\n]+?)\s+(\d+\.\s)/gm, "$1 $2\n\n$3");
+
     // A) 去除标题行前导空格：  "   ### 标题" -> "### 标题"
     s = s.replace(/^[ \t]+(#{1,6})(?=\s|\S)/gm, "$1");
 
@@ -72,6 +83,11 @@ export function normalizeMarkdown(md: string): string {
     s = s.replace(/([^\n])\s+(- |\d+\.\s)/g, "$1\n\n$2");
     // 标题后紧贴列表
     s = s.replace(/(#{3,4}\s[^\n]+)\n(- |\d+\.\s)/g, "$1\n\n$2");
+    // 段落中数字开头（如 "1.  **xxx**"）转为列表项
+    s = s.replace(/([^\n])\s+(\d+\.\s+\*\*[^*]+\*\*)/g, "$1\n\n$2");
+    s = s.replace(/^[^\n#].*?(\d+\.\s+\*\*[^*]+\*\*)/gm, "\n\n$1");
+    // 处理行内粗体列表项：**1. xxx** -> 1. **xxx**（normalizeMarkdown会去掉粗体）
+    s = s.replace(/^\*\*(\d+\.\s+[^*]+)\*\*/gm, "$1");
     // 去掉行首多余缩进
     s = s.replace(/^[ \t]+(- |\d+\.\s)/gm, "$1");
 
