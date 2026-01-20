@@ -86,30 +86,30 @@ export default function Header() {
 
         {/* Right Actions */}
         {!me ? (
-          <div className="flex items-center gap-3">
-            <button onClick={goLogin} className="btn btn-ghost text-sm">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <button onClick={goLogin} className="btn btn-ghost text-sm px-2 sm:px-4">
               登录
             </button>
-            <button onClick={goRegister} className="btn btn-primary text-sm">
+            <button onClick={goRegister} className="btn btn-primary text-sm px-3 sm:px-4">
               注册
             </button>
           </div>
         ) : (
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {/* Panel Button */}
-            <Link href="/panel" className="btn btn-primary text-sm">
+            <Link href="/panel" className="btn btn-primary text-sm px-2 sm:px-4">
               <LayoutDashboard className="w-4 h-4" />
-              个人中心
+              <span className="hidden sm:inline">个人中心</span>
             </Link>
 
             {/* Admin Button */}
             {me.is_admin && (
               <Link
                 href="/admin"
-                className="btn text-sm bg-[var(--color-bg-elevated)] text-[var(--color-text-secondary)] border border-[var(--color-border)] hover:border-[var(--color-border-accent)] hover:text-[var(--color-gold)]"
+                className="btn text-sm px-2 sm:px-4 bg-[var(--color-bg-elevated)] text-[var(--color-text-secondary)] border border-[var(--color-border)] hover:border-[var(--color-border-accent)] hover:text-[var(--color-primary)]"
               >
                 <Settings className="w-4 h-4" />
-                管理后台
+                <span className="hidden sm:inline">管理后台</span>
               </Link>
             )}
 
