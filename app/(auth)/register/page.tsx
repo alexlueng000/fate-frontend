@@ -2,9 +2,12 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { postJSON, api } from '@/app/lib/api';
 import { saveAuth, setUserCache } from '@/app/lib/auth';
-import { Mail, User as UserIcon, Lock, Eye, EyeOff, Loader2, ShieldCheck, Phone, Hash } from 'lucide-react';
+import { Mail, User as UserIcon, Lock, Eye, EyeOff, Loader2, Phone, Hash, Sparkles } from 'lucide-react';
+
+const BAGUA = ['☰', '☱', '☲', '☳', '☴', '☵', '☶', '☷'];
 
 export type RegisterReq = {
   email: string;
@@ -44,15 +47,6 @@ function passwordStrength(pw: string): { score: number; label: string } {
   return { score, label: labels[Math.min(score, labels.length - 1)] };
 }
 
-const brand = {
-  bg: 'from-[#f7f3ed] via-[#f7f3ed] to-[#f5ede1]',
-  cardBorder: 'border-[rgba(142,129,116,0.15)]',
-  primary: '#c93b3a',
-  primaryHover: '#e45c5c',
-  textMain: '#1a1816',
-  textSub: '#3a332d',
-};
-
 export default function RegisterPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
@@ -63,7 +57,6 @@ export default function RegisterPage() {
   const [code, setCode] = useState('');
 
   const [mode, setMode] = useState<'account' | 'phone'>('account');
-
   const [agree, setAgree] = useState(true);
   const [showPw, setShowPw] = useState(false);
 
@@ -112,7 +105,7 @@ export default function RegisterPage() {
       const resp = await postJSON<RegisterResp>(api('/auth/web/register'), body);
 
       if ('user' in resp && resp.user) {
-        saveAuth(resp as any);
+        saveAuth(resp as { access_token: string; user: User });
       }
 
       let me: User | null = null;
@@ -125,132 +118,288 @@ export default function RegisterPage() {
       else if ('user' in resp && resp.user) setUserCache(resp.user);
       else {
         const fallbackUser: User = {
-          id: (resp as any).id ?? 0,
-          username: (resp as any).username ?? username,
-          nickname: (resp as any).nickname ?? nickname,
-          avatar_url: (resp as any).avatar_url ?? null,
-          email: (resp as any).email ?? email,
+          id: (resp as { id?: number }).id ?? 0,
+          username: (resp as { username?: string }).username ?? username,
+          nickname: (resp as { nickname?: string }).nickname ?? nickname,
+          avatar_url: (resp as { avatar_url?: string }).avatar_url ?? null,
+          email: (resp as { email?: string }).email ?? email,
         };
         setUserCache(fallbackUser);
       }
 
       setOk('注册成功，正在为你跳转…');
       router.replace('/');
-    } catch (e: any) {
-      setErr(e?.message || '注册失败');
+    } catch (e: unknown) {
+      setErr((e as Error)?.message || '注册失败');
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br ${brand.bg} text-[${brand.textMain}] flex items-center justify-center p-4`}>
-      <div className={`w-full max-w-md rounded-3xl border ${brand.cardBorder} bg-white shadow-[0_10px_30px_rgba(168,50,50,0.12)] backdrop-blur`}>
-        <div className="px-6 pt-6 pb-4 flex items-center gap-3">
-          <div className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[#fff0e8] border border-[#f2c7a1]">
-            <ShieldCheck className="h-5 w-5" aria-hidden />
-          </div>
-          <div>
-            <h1 className="text-2xl font-semibold leading-tight" style={{color: brand.primary}}>创建账户</h1>
-            <p className="text-sm" style={{color: brand.textSub}}>请选择注册方式</p>
-          </div>
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Background Elements */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[var(--color-primary)] rounded-full opacity-5 blur-[100px] animate-pulse-glow" />
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-[var(--color-gold)] rounded-full opacity-5 blur-[80px] animate-pulse-glow delay-500" />
+
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] opacity-[0.03] animate-rotate-slow">
+          {BAGUA.map((symbol, i) => (
+            <span
+              key={i}
+              className="absolute text-5xl text-[var(--color-primary)]"
+              style={{
+                left: '50%',
+                top: '50%',
+                transform: `rotate(${i * 45}deg) translateY(-250px) rotate(-${i * 45}deg)`,
+              }}
+            >
+              {symbol}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Register Card */}
+      <div className="relative w-full max-w-md card p-8 animate-scale-in">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <Link href="/" className="inline-flex items-center gap-3 mb-6">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-gold)] flex items-center justify-center shadow-lg">
+              <span className="text-white text-xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
+                盏
+              </span>
+            </div>
+          </Link>
+          <h1
+            className="text-2xl font-bold text-[var(--color-text-primary)] mb-2"
+            style={{ fontFamily: 'var(--font-display)' }}
+          >
+            创建账户
+          </h1>
+          <p className="text-sm text-[var(--color-text-muted)]">
+            注册以解锁完整功能
+          </p>
         </div>
 
+        {/* Tabs */}
+        <div className="flex gap-2 p-1 rounded-xl bg-[var(--color-bg-elevated)] mb-6">
+          <button
+            type="button"
+            onClick={() => setMode('account')}
+            className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${
+              mode === 'account'
+                ? 'bg-[var(--color-bg-card)] text-[var(--color-text-primary)] shadow-sm'
+                : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]'
+            }`}
+          >
+            邮箱注册
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode('phone')}
+            className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${
+              mode === 'phone'
+                ? 'bg-[var(--color-bg-card)] text-[var(--color-text-primary)] shadow-sm'
+                : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]'
+            }`}
+          >
+            手机注册
+          </button>
+        </div>
+
+        {/* Error/Success Alert */}
         {err && (
-          <div role="alert" className="mx-6 mb-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{err}</div>
+          <div className="mb-4 rounded-xl border border-[var(--color-primary)]/30 bg-[var(--color-primary)]/10 px-4 py-3 text-sm text-[var(--color-primary)]">
+            {err}
+          </div>
         )}
         {ok && (
-          <div role="status" className="mx-6 mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">{ok}</div>
+          <div className="mb-4 rounded-xl border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-400">
+            {ok}
+          </div>
         )}
 
-        <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-4">
-          <div className="flex gap-2 text-sm" style={{color: brand.textSub}}>
-            <button type="button" onClick={() => setMode('account')} className={`px-3 py-1 rounded-full border ${mode==='account'?'bg-[#c93b3a] text-white':'bg-[#fbf7f2]'}`}>账号注册</button>
-            <button type="button" onClick={() => setMode('phone')} className={`px-3 py-1 rounded-full border ${mode==='phone'?'bg-[#c93b3a] text-white':'bg-[#fbf7f2]'}`}>手机注册</button>
-          </div>
-
-          {mode==='account' && (
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {mode === 'account' ? (
             <>
+              {/* Email */}
               <div>
-                <label className="block text-sm mb-1" style={{color: brand.textSub}}>邮箱</label>
-                <div className={`flex items-center gap-2 rounded-2xl border ${brand.cardBorder} bg-[#fff7ec] px-3 py-2 focus-within:ring-2`} style={{['--tw-ring-color' as any]: brand.primary}}>
-                  <Mail className="h-4 w-4 opacity-80" />
+                <label className="block text-sm text-[var(--color-text-secondary)] mb-2">邮箱</label>
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
                   <input
-                    className="w-full bg-transparent outline-none placeholder:text-[#b5856f]"
+                    className="input pl-12"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
                     type="email"
                     autoComplete="email"
-                    required
+                  />
+                </div>
+                {!emailOk && email.length > 0 && (
+                  <p className="mt-1 text-xs text-[var(--color-primary)]">邮箱格式不正确</p>
+                )}
+              </div>
+
+              {/* Username */}
+              <div>
+                <label className="block text-sm text-[var(--color-text-secondary)] mb-2">用户名</label>
+                <div className="relative">
+                  <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
+                  <input
+                    className="input pl-12"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="至少3个字符"
+                    autoComplete="username"
                   />
                 </div>
               </div>
+
+              {/* Password */}
               <div>
-                <label className="block text-sm mb-1" style={{color: brand.textSub}}>用户名</label>
-                <div className={`flex items-center gap-2 rounded-2xl border ${brand.cardBorder} bg-[#fff7ec] px-3 py-2`}>
-                  <UserIcon className="h-4 w-4 opacity-80" />
-                  <input className="w-full bg-transparent outline-none" value={username} onChange={(e)=>setUsername(e.target.value)} placeholder="至少3个字符" autoComplete="username" />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm mb-1" style={{color: brand.textSub}}>密码</label>
-                <div className={`flex items-center gap-2 rounded-2xl border ${brand.cardBorder} bg-[#fff7ec] px-3 py-2`}>
-                  <Lock className="h-4 w-4 opacity-80" />
-                  <input className="w-full bg-transparent outline-none" value={password} onChange={(e)=>setPassword(e.target.value)} type={showPw?'text':'password'} placeholder="至少8位" autoComplete="new-password" />
-                  <button type="button" onClick={()=>setShowPw(v=>!v)}>{showPw?<EyeOff className="h-4 w-4"/>:<Eye className="h-4 w-4"/>}</button>
+                <label className="block text-sm text-[var(--color-text-secondary)] mb-2">密码</label>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
+                  <input
+                    className="input pl-12 pr-12"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    type={showPw ? 'text' : 'password'}
+                    placeholder="至少8位"
+                    autoComplete="new-password"
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--color-text-hint)] hover:text-[var(--color-text-secondary)]"
+                    onClick={() => setShowPw((v) => !v)}
+                  >
+                    {showPw ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
                 </div>
                 <div className="mt-2">
-                  <div className="h-2 w-full rounded-full bg-[#f5e6d6] overflow-hidden">
-                    <div className="h-full transition-all" style={{ width: `${(pwStrength.score / 4) * 100}%`, backgroundColor: pwStrength.score >= 3 ? '#22c55e' : pwStrength.score === 2 ? '#f59e0b' : '#ef4444' }} />
+                  <div className="h-1.5 w-full rounded-full bg-[var(--color-bg-elevated)] overflow-hidden">
+                    <div
+                      className="h-full transition-all"
+                      style={{
+                        width: `${(pwStrength.score / 4) * 100}%`,
+                        backgroundColor: pwStrength.score >= 3 ? '#22c55e' : pwStrength.score === 2 ? '#f59e0b' : '#ef4444',
+                      }}
+                    />
                   </div>
-                  <div className="mt-1 text-xs" style={{ color: brand.textSub }}>密码强度：{pwStrength.label}</div>
+                  <div className="mt-1 text-xs text-[var(--color-text-muted)]">密码强度：{pwStrength.label}</div>
                 </div>
               </div>
+
+              {/* Nickname */}
               <div>
-                <label className="block text-sm mb-1" style={{color: brand.textSub}}>昵称（可选）</label>
-                <input className={`w-full rounded-2xl border ${brand.cardBorder} bg-[#fff7ec] px-3 py-2 outline-none`} value={nickname} onChange={(e)=>setNickname(e.target.value)} placeholder="展示给其他用户的称呼" />
+                <label className="block text-sm text-[var(--color-text-secondary)] mb-2">昵称（可选）</label>
+                <input
+                  className="input"
+                  value={nickname}
+                  onChange={(e) => setNickname(e.target.value)}
+                  placeholder="展示给其他用户的称呼"
+                />
               </div>
             </>
-          )}
-
-          {mode==='phone' && (
+          ) : (
             <>
+              {/* Email for phone mode */}
               <div>
-                <label className="block text-sm mb-1" style={{color: brand.textSub}}>手机号</label>
-                <div className={`flex items-center gap-2 rounded-2xl border ${brand.cardBorder} bg-[#fff7ec] px-3 py-2`}>
-                  <Phone className="h-4 w-4 opacity-80" />
-                  <input className="w-full bg-transparent outline-none" value={phone} onChange={(e)=>setPhone(e.target.value)} placeholder="11位手机号" inputMode="numeric" />
+                <label className="block text-sm text-[var(--color-text-secondary)] mb-2">邮箱</label>
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
+                  <input
+                    className="input pl-12"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    type="email"
+                  />
                 </div>
               </div>
+
+              {/* Phone */}
               <div>
-                <label className="block text-sm mb-1" style={{color: brand.textSub}}>验证码</label>
-                <div className={`flex items-center gap-2 rounded-2xl border ${brand.cardBorder} bg-[#fff7ec] px-3 py-2`}>
-                  <Hash className="h-4 w-4 opacity-80" />
-                  <input className="w-full bg-transparent outline-none" value={code} onChange={(e)=>setCode(e.target.value)} placeholder="输入短信验证码" />
-                  <button type="button" className="text-xs text-[#c93b3a]">获取验证码</button>
+                <label className="block text-sm text-[var(--color-text-secondary)] mb-2">手机号</label>
+                <div className="relative">
+                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
+                  <input
+                    className="input pl-12"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="11位手机号"
+                    inputMode="numeric"
+                  />
+                </div>
+              </div>
+
+              {/* Code */}
+              <div>
+                <label className="block text-sm text-[var(--color-text-secondary)] mb-2">验证码</label>
+                <div className="flex gap-3">
+                  <div className="relative flex-1">
+                    <Hash className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
+                    <input
+                      className="input pl-12"
+                      value={code}
+                      onChange={(e) => setCode(e.target.value)}
+                      placeholder="输入验证码"
+                      inputMode="numeric"
+                    />
+                  </div>
+                  <button type="button" className="btn btn-secondary shrink-0 px-4">
+                    获取验证码
+                  </button>
                 </div>
               </div>
             </>
           )}
 
-          <label className="flex items-center gap-2 text-sm select-none">
-            <input type="checkbox" className="accent-[#c93b3a] h-4 w-4" checked={agree} onChange={(e)=>setAgree(e.target.checked)} />
-            <span style={{color: brand.textSub}}>
+          {/* Agreement */}
+          <label className="flex items-start gap-3 text-sm cursor-pointer">
+            <input
+              type="checkbox"
+              className="mt-0.5 w-4 h-4 rounded border-[var(--color-border)] bg-[var(--color-bg-elevated)] accent-[var(--color-primary)]"
+              checked={agree}
+              onChange={(e) => setAgree(e.target.checked)}
+            />
+            <span className="text-[var(--color-text-muted)]">
               我已阅读并同意
-              <a href="/terms" className="mx-1 underline underline-offset-4 text-[#c93b3a]">服务条款</a>
+              <Link href="/terms" className="mx-1 text-[var(--color-gold)] hover:underline">服务条款</Link>
               与
-              <a href="/privacy" className="ml-1 underline underline-offset-4 text-[#c93b3a]">隐私政策</a>
+              <Link href="/privacy" className="ml-1 text-[var(--color-gold)] hover:underline">隐私政策</Link>
             </span>
           </label>
 
-          <button type="submit" disabled={!canSubmit} className="w-full inline-flex items-center justify-center rounded-2xl px-4 py-2 font-medium text-white shadow-sm transition disabled:opacity-60" style={{backgroundColor:brand.primary}}>
-            {submitting?(<><Loader2 className="mr-2 h-4 w-4 animate-spin"/>注册中…</>):'注册'}
+          {/* Submit */}
+          <button
+            type="submit"
+            disabled={!canSubmit}
+            className="w-full btn btn-primary py-3 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {submitting ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                注册中…
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-5 h-5" />
+                注册
+              </>
+            )}
           </button>
 
-          <div className="text-sm text-center" style={{color:brand.textSub}}>
-            已有账号？<a href="/login" className="ml-1 underline underline-offset-4 text-[#c93b3a]">去登录</a>
-          </div>
+          {/* Footer */}
+          <p className="text-sm text-center text-[var(--color-text-muted)]">
+            已有账号？
+            <Link href="/login" className="ml-1 text-[var(--color-gold)] hover:text-[var(--color-gold-light)] transition-colors">
+              去登录
+            </Link>
+          </p>
         </form>
       </div>
     </div>

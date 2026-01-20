@@ -2,21 +2,22 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { Settings, MessageSquare, Zap, BookOpen, ChevronRight, ArrowLeft } from 'lucide-react';
 
 export default function AdminPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [me, setMe] = useState<any>(null);
+  const [me, setMe] = useState<{ username?: string; is_admin?: boolean } | null>(null);
 
   useEffect(() => {
     try {
       const raw = sessionStorage.getItem('me');
-      console.log(raw);
       if (!raw) {
         router.push('/login?redirect=/admin');
         return;
       }
-      const user = JSON.parse(raw as string);
+      const user = JSON.parse(raw);
       if (!user || !user.is_admin) {
         router.push('/login?redirect=/admin');
         return;
@@ -32,46 +33,98 @@ export default function AdminPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-[#fff7e8] text-[#4a2c2a]">
-        <p>正在加载...</p>
+      <main className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 rounded-full border-2 border-[var(--color-gold)] border-t-transparent animate-spin" />
       </main>
     );
   }
 
-  return (
-    <main className="min-h-screen bg-[#fff7e8] text-neutral-800 antialiased flex flex-col">
-      {/* Hero 首屏 */}
-      <section className="flex flex-1 items-center justify-center px-4 py-20 mt-20 text-center">
-        <div className="max-w-3xl mx-auto">
-          <h1 className="text-4xl md:text-6xl font-bold leading-tight text-[#a83232]">
-            一盏大师 · 八字 AI 解读（管理员）
-          </h1>
-          <p className="mt-4 text-lg text-[#4a2c2a]">
-            欢迎，{me?.username}！您已登录管理员后台。
-          </p>
+  const menuItems = [
+    {
+      href: '/admin/config/system_prompt',
+      icon: <MessageSquare className="w-6 h-6" />,
+      title: '系统提示词',
+      description: '编辑 AI 解读的系统提示词配置',
+      color: 'var(--color-primary)',
+    },
+    {
+      href: '/admin/config/quick_buttons',
+      icon: <Zap className="w-6 h-6" />,
+      title: '快捷按钮',
+      description: '管理用户界面的快捷操作按钮',
+      color: 'var(--color-gold)',
+    },
+    {
+      href: '/admin/config/knowledge_base',
+      icon: <BookOpen className="w-6 h-6" />,
+      title: '知识库管理',
+      description: '管理 RAG 知识库内容',
+      color: 'var(--color-tech)',
+    },
+  ];
 
-          <div className="mt-8 flex flex-col gap-4">
-            <a
-              href="/admin/config/system_prompt"
-              className="px-6 py-3 rounded-xl bg-[#a83232] text-white font-semibold hover:bg-[#822727] transition"
-            >
-              编辑系统提示词
-            </a>
-            <a
-              href="/admin/config/quick_buttons"
-              className="px-6 py-3 rounded-xl bg-[#4a2c2a] text-white font-semibold hover:bg-[#2c1b19] transition"
-            >
-              管理快捷按钮
-            </a>
-            <a
-              href="/admin/config/knowledge_base"
-              className="px-6 py-3 rounded-xl bg-[#2b2828] text-white font-semibold hover:bg-[#2c1b19] transition"
-            >
-              知识库管理
-            </a>
+  return (
+    <main className="min-h-screen py-12 px-4">
+      <div className="max-w-3xl mx-auto">
+        {/* Back Link */}
+        <Link
+          href="/account"
+          className="inline-flex items-center gap-2 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors mb-8"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          返回账户
+        </Link>
+
+        {/* Header */}
+        <div className="text-center mb-12">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-gold)] flex items-center justify-center mx-auto mb-4">
+            <Settings className="w-8 h-8 text-white" />
           </div>
+          <h1
+            className="text-3xl font-bold text-[var(--color-text-primary)] mb-2"
+            style={{ fontFamily: 'var(--font-display)' }}
+          >
+            管理后台
+          </h1>
+          <p className="text-[var(--color-text-muted)]">
+            欢迎，{me?.username}！管理系统配置和内容
+          </p>
         </div>
-      </section>
+
+        {/* Menu Items */}
+        <div className="space-y-4">
+          {menuItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="card card-hover p-6 flex items-center gap-4 group"
+            >
+              <div
+                className="w-12 h-12 rounded-xl flex items-center justify-center text-white transition-transform group-hover:scale-110"
+                style={{ backgroundColor: item.color }}
+              >
+                {item.icon}
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
+                  {item.title}
+                </h3>
+                <p className="text-sm text-[var(--color-text-muted)]">
+                  {item.description}
+                </p>
+              </div>
+              <ChevronRight className="w-5 h-5 text-[var(--color-text-hint)] group-hover:text-[var(--color-gold)] transition-colors" />
+            </Link>
+          ))}
+        </div>
+
+        {/* Footer */}
+        <div className="mt-12 text-center">
+          <p className="text-sm text-[var(--color-text-hint)]">
+            一盏大师 · 管理控制台
+          </p>
+        </div>
+      </div>
     </main>
   );
 }

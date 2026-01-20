@@ -25,6 +25,7 @@ const BAGUA = ['☰', '☱', '☲', '☳', '☴', '☵', '☶', '☷'];
 export default function LandingPage() {
   const router = useRouter();
   const [gender, setGender] = useState<'男' | '女'>('男');
+  const [calendar, setCalendar] = useState<'gregorian' | 'lunar'>('gregorian');
   const [birthDate, setBirthDate] = useState('');
   const [birthTime, setBirthTime] = useState('');
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -41,7 +42,7 @@ export default function LandingPage() {
     }
     const params = new URLSearchParams({
       gender,
-      calendar: 'gregorian',
+      calendar,
       birth_date: birthDate,
       birth_time: birthTime,
     });
@@ -55,16 +56,16 @@ export default function LandingPage() {
 
       {/* Animated Background Elements */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        {/* Glowing orbs */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[var(--color-primary)] rounded-full opacity-10 blur-[100px] animate-pulse-glow" />
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-[var(--color-gold)] rounded-full opacity-10 blur-[80px] animate-pulse-glow delay-500" />
+        {/* Soft gradient orbs */}
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[var(--color-primary)] rounded-full opacity-5 blur-[100px] animate-pulse-glow" />
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-[var(--color-gold)] rounded-full opacity-5 blur-[80px] animate-pulse-glow delay-500" />
 
         {/* Rotating Bagua Ring */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] opacity-[0.03] animate-rotate-slow">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] opacity-[0.05] animate-rotate-slow">
           {BAGUA.map((symbol, i) => (
             <span
               key={i}
-              className="absolute text-6xl text-[var(--color-gold)]"
+              className="absolute text-6xl text-[var(--color-primary)]"
               style={{
                 left: '50%',
                 top: '50%',
@@ -95,7 +96,7 @@ export default function LandingPage() {
             className={`text-5xl md:text-7xl lg:text-8xl font-bold mb-6 opacity-0 ${mounted ? 'animate-slide-up delay-100' : ''}`}
             style={{ fontFamily: 'var(--font-display)' }}
           >
-            <span className="text-gradient-gold">解读命理智慧</span>
+            <span className="text-gradient-primary">解读命理智慧</span>
             <br />
             <span className="text-[var(--color-text-primary)]">洞察人生趋势</span>
           </h1>
@@ -105,7 +106,7 @@ export default function LandingPage() {
             className={`text-lg md:text-xl text-[var(--color-text-secondary)] max-w-2xl mx-auto mb-12 opacity-0 ${mounted ? 'animate-fade-in delay-200' : ''}`}
           >
             基于传统八字理论与现代概率模型，为你提供
-            <span className="text-[var(--color-gold)]">科学、客观</span>
+            <span className="text-[var(--color-primary)]">科学、客观</span>
             的命理分析与趋势预测
           </p>
 
@@ -145,6 +146,32 @@ export default function LandingPage() {
                 </button>
               </div>
 
+              {/* Calendar Selection */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setCalendar('gregorian')}
+                  className={`flex-1 py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all ${
+                    calendar === 'gregorian'
+                      ? 'bg-[var(--color-bg-hover)] border border-[var(--color-gold-dark)] text-[var(--color-gold)]'
+                      : 'bg-[var(--color-bg-elevated)] border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-accent)]'
+                  }`}
+                >
+                  <Calendar className="w-4 h-4" />
+                  <span>阳历</span>
+                </button>
+                <button
+                  onClick={() => setCalendar('lunar')}
+                  className={`flex-1 py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all ${
+                    calendar === 'lunar'
+                      ? 'bg-[var(--color-bg-hover)] border border-[var(--color-gold-dark)] text-[var(--color-gold)]'
+                      : 'bg-[var(--color-bg-elevated)] border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-accent)]'
+                  }`}
+                >
+                  <Calendar className="w-4 h-4" />
+                  <span>农历</span>
+                </button>
+              </div>
+
               {/* Birth Date */}
               <div className="relative">
                 <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
@@ -152,7 +179,8 @@ export default function LandingPage() {
                   type="date"
                   value={birthDate}
                   onChange={(e) => setBirthDate(e.target.value)}
-                  className="input pl-12"
+                  className="input"
+                  style={{ paddingLeft: '3rem' }}
                   placeholder="出生日期"
                 />
               </div>
@@ -164,7 +192,8 @@ export default function LandingPage() {
                   type="time"
                   value={birthTime}
                   onChange={(e) => setBirthTime(e.target.value)}
-                  className="input pl-12"
+                  className="input"
+                  style={{ paddingLeft: '3rem' }}
                   placeholder="出生时间"
                 />
               </div>
