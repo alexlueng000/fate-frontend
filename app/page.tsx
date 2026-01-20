@@ -38,8 +38,8 @@ export default function LandingPage() {
   }, []);
 
   const handleStartReading = () => {
-    if (!birthDate || !birthTime) {
-      alert('请填写出生日期和时间');
+    if (!birthDate || !birthTime || !birthPlace) {
+      alert('请填写完整的出生信息：日期、时间和地点');
       return;
     }
     const params = new URLSearchParams({
@@ -82,8 +82,8 @@ export default function LandingPage() {
       </div>
 
       {/* Hero Section */}
-      <section className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-20">
-        <div className="max-w-5xl mx-auto text-center">
+      <section className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 py-20">
+        <div className="max-w-5xl mx-auto text-center w-full">
           {/* Badge */}
           <div
             className={`inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-8 opacity-0 ${mounted ? 'animate-fade-in' : ''}`}
@@ -96,7 +96,7 @@ export default function LandingPage() {
 
           {/* Main Title */}
           <h1
-            className={`text-5xl md:text-7xl lg:text-8xl font-bold mb-6 opacity-0 ${mounted ? 'animate-slide-up delay-100' : ''}`}
+            className={`text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold mb-6 opacity-0 ${mounted ? 'animate-slide-up delay-100' : ''}`}
             style={{ fontFamily: 'var(--font-display)' }}
           >
             <span className="text-gradient-primary">解读命理智慧</span>
@@ -106,7 +106,7 @@ export default function LandingPage() {
 
           {/* Subtitle */}
           <p
-            className={`text-lg md:text-xl text-[var(--color-text-secondary)] max-w-2xl mx-auto mb-12 opacity-0 ${mounted ? 'animate-fade-in delay-200' : ''}`}
+            className={`text-base md:text-lg lg:text-xl text-[var(--color-text-secondary)] max-w-2xl mx-auto mb-12 px-2 opacity-0 ${mounted ? 'animate-fade-in delay-200' : ''}`}
           >
             基于传统八字理论与现代概率模型，为你提供
             <span className="text-[var(--color-primary)]">科学、客观</span>
@@ -115,19 +115,19 @@ export default function LandingPage() {
 
           {/* Quick Try Form */}
           <div
-            className={`max-w-xl mx-auto card p-8 opacity-0 ${mounted ? 'animate-scale-in delay-300' : ''}`}
+            className={`max-w-xl mx-auto w-full card p-6 sm:p-8 opacity-0 ${mounted ? 'animate-scale-in delay-300' : ''}`}
           >
             <div className="flex items-center gap-2 mb-6">
               <div className="w-2 h-2 rounded-full bg-[var(--color-primary)]" />
               <span className="text-sm text-[var(--color-text-muted)]">免费体验一次完整解读</span>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {/* Gender Selection */}
               <div className="flex gap-3">
                 <button
                   onClick={() => setGender('男')}
-                  className={`flex-1 py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all ${
+                  className={`flex-1 py-3 px-3 sm:px-4 rounded-xl flex items-center justify-center gap-2 transition-all text-sm sm:text-base ${
                     gender === '男'
                       ? 'bg-[var(--color-bg-hover)] border border-[var(--color-gold-dark)] text-[var(--color-gold)]'
                       : 'bg-[var(--color-bg-elevated)] border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-accent)]'
@@ -138,7 +138,7 @@ export default function LandingPage() {
                 </button>
                 <button
                   onClick={() => setGender('女')}
-                  className={`flex-1 py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all ${
+                  className={`flex-1 py-3 px-3 sm:px-4 rounded-xl flex items-center justify-center gap-2 transition-all text-sm sm:text-base ${
                     gender === '女'
                       ? 'bg-[var(--color-bg-hover)] border border-[var(--color-gold-dark)] text-[var(--color-gold)]'
                       : 'bg-[var(--color-bg-elevated)] border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-accent)]'
@@ -153,7 +153,7 @@ export default function LandingPage() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setCalendar('gregorian')}
-                  className={`flex-1 py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all ${
+                  className={`flex-1 py-3 px-3 sm:px-4 rounded-xl flex items-center justify-center gap-2 transition-all text-sm sm:text-base ${
                     calendar === 'gregorian'
                       ? 'bg-[var(--color-bg-hover)] border border-[var(--color-gold-dark)] text-[var(--color-gold)]'
                       : 'bg-[var(--color-bg-elevated)] border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-accent)]'
@@ -164,7 +164,7 @@ export default function LandingPage() {
                 </button>
                 <button
                   onClick={() => setCalendar('lunar')}
-                  className={`flex-1 py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all ${
+                  className={`flex-1 py-3 px-3 sm:px-4 rounded-xl flex items-center justify-center gap-2 transition-all text-sm sm:text-base ${
                     calendar === 'lunar'
                       ? 'bg-[var(--color-bg-hover)] border border-[var(--color-gold-dark)] text-[var(--color-gold)]'
                       : 'bg-[var(--color-bg-elevated)] border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-accent)]'
@@ -177,47 +177,44 @@ export default function LandingPage() {
 
               {/* Birth Date */}
               <div className="relative">
-                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
+                <Calendar className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
                 <input
                   type="date"
                   value={birthDate}
                   onChange={(e) => setBirthDate(e.target.value)}
-                  className="input"
-                  style={{ paddingLeft: '3rem' }}
+                  className="input !pl-10 sm:!pl-12"
                   placeholder="出生日期"
                 />
               </div>
 
               {/* Birth Time */}
               <div className="relative">
-                <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
+                <Clock className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
                 <input
                   type="time"
                   value={birthTime}
                   onChange={(e) => setBirthTime(e.target.value)}
-                  className="input"
-                  style={{ paddingLeft: '3rem' }}
+                  className="input !pl-10 sm:!pl-12"
                   placeholder="出生时间"
                 />
               </div>
 
-              {/* Birth Place */}
+              {/* Birth Place - 必填 */}
               <div className="relative">
-                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
+                <MapPin className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
                 <input
                   type="text"
                   value={birthPlace}
                   onChange={(e) => setBirthPlace(e.target.value)}
-                  className="input"
-                  style={{ paddingLeft: '3rem' }}
-                  placeholder="出生地点（可选）"
+                  className="input !pl-10 sm:!pl-12"
+                  placeholder="出生地点（必填）"
                 />
               </div>
 
               {/* Submit Button */}
               <button
                 onClick={handleStartReading}
-                className="w-full btn btn-primary py-4 text-lg font-semibold group"
+                className="w-full btn btn-primary py-3 sm:py-4 text-base sm:text-lg font-semibold group"
               >
                 <Sparkles className="w-5 h-5" />
                 立即免费解读
@@ -225,7 +222,7 @@ export default function LandingPage() {
               </button>
             </div>
 
-            <p className="text-xs text-[var(--color-text-hint)] mt-4 text-center">
+            <p className="text-xs text-[var(--color-text-hint)] mt-4 text-center px-2">
               无需注册，立即体验 · 数据加密存储
             </p>
           </div>
