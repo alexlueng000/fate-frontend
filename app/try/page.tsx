@@ -13,7 +13,6 @@ import {
 } from 'lucide-react';
 import { api, postJSON } from '@/app/lib/api';
 import { trySSE } from '@/app/lib/chat/sse';
-import { normalizeMarkdown } from '@/app/lib/chat/types';
 import Markdown from '@/app/components/Markdown';
 import WuxingRadar from '@/app/components/charts/WuxingRadar';
 
@@ -135,7 +134,7 @@ function TryPageContent() {
           },
         },
         (text) => {
-          setAiContent(normalizeMarkdown(text));
+          setAiContent(text);
         },
         undefined,
         { signal: abortRef.current.signal }
@@ -304,7 +303,7 @@ function TryPageContent() {
             )}
           </h2>
 
-          <div className="msg-md min-h-[200px]">
+          <div className="msg-md min-h-[150px] sm:min-h-[200px]">
             {aiContent ? (
               <Markdown>{aiContent}</Markdown>
             ) : (
@@ -319,22 +318,22 @@ function TryPageContent() {
 
           {/* CTA after content */}
           {!isStreaming && aiContent && (
-            <div className="mt-8 pt-6 border-t border-[var(--color-border)]">
+            <div className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-[var(--color-border)]">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="text-center sm:text-left">
-                  <p className="text-[var(--color-text-secondary)]">
+                  <p className="text-sm sm:text-base text-[var(--color-text-secondary)]">
                     想要继续提问或保存解读记录？
                   </p>
-                  <p className="text-sm text-[var(--color-text-muted)]">
+                  <p className="text-xs sm:text-sm text-[var(--color-text-muted)]">
                     注册账号解锁完整功能
                   </p>
                 </div>
-                <div className="flex gap-3">
-                  <Link href="/register" className="btn btn-primary">
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
+                  <Link href="/register" className="btn btn-primary text-sm sm:text-base">
                     <UserPlus className="w-4 h-4" />
                     注册账号
                   </Link>
-                  <Link href="/login" className="btn btn-secondary">
+                  <Link href="/login" className="btn btn-secondary text-sm sm:text-base">
                     已有账号？登录
                   </Link>
                 </div>
@@ -346,34 +345,34 @@ function TryPageContent() {
 
       {/* Register Modal */}
       {showRegisterModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
           <div
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setShowRegisterModal(false)}
           />
-          <div className="relative card p-8 max-w-md w-full animate-scale-in">
+          <div className="relative card p-6 sm:p-8 max-w-md w-full animate-scale-in">
             <div className="text-center">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-gold)] flex items-center justify-center mx-auto mb-4">
-                <Sparkles className="w-8 h-8 text-white" />
+              <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-gold)] flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </div>
-              <h3 className="text-2xl font-bold text-[var(--color-text-primary)] mb-2" style={{ fontFamily: 'var(--font-display)' }}>
+              <h3 className="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)] mb-2" style={{ fontFamily: 'var(--font-display)' }}>
                 解读完成
               </h3>
-              <p className="text-[var(--color-text-secondary)] mb-6">
+              <p className="text-sm sm:text-base text-[var(--color-text-secondary)] mb-4 sm:mb-6">
                 注册账号即可保存记录、继续提问、获取更多深度分析
               </p>
-              <div className="space-y-3">
-                <Link href="/register" className="btn btn-primary w-full py-3">
-                  <UserPlus className="w-5 h-5" />
+              <div className="space-y-2 sm:space-y-3">
+                <Link href="/register" className="btn btn-primary w-full py-2.5 sm:py-3 text-sm sm:text-base">
+                  <UserPlus className="w-4 h-4 sm:w-5 sm:h-5" />
                   免费注册
-                  <ChevronRight className="w-5 h-5" />
+                  <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
                 </Link>
-                <Link href="/login" className="btn btn-ghost w-full py-3">
+                <Link href="/login" className="btn btn-ghost w-full py-2.5 sm:py-3 text-sm sm:text-base">
                   已有账号？立即登录
                 </Link>
                 <button
                   onClick={() => setShowRegisterModal(false)}
-                  className="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] transition-colors"
+                  className="text-xs sm:text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] transition-colors"
                 >
                   稍后再说
                 </button>
