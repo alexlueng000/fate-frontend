@@ -17,6 +17,7 @@ import {
   Brain,
   ChevronDown,
   ChevronUp,
+  MapPin,
 } from 'lucide-react';
 
 // 八卦符号
@@ -28,6 +29,7 @@ export default function LandingPage() {
   const [calendar, setCalendar] = useState<'gregorian' | 'lunar'>('gregorian');
   const [birthDate, setBirthDate] = useState('');
   const [birthTime, setBirthTime] = useState('');
+  const [birthPlace, setBirthPlace] = useState('');
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [mounted, setMounted] = useState(false);
 
@@ -45,6 +47,7 @@ export default function LandingPage() {
       calendar,
       birth_date: birthDate,
       birth_time: birthTime,
+      birthplace: birthPlace,
     });
     router.push(`/try?${params.toString()}`);
   };
@@ -195,6 +198,19 @@ export default function LandingPage() {
                   className="input"
                   style={{ paddingLeft: '3rem' }}
                   placeholder="出生时间"
+                />
+              </div>
+
+              {/* Birth Place */}
+              <div className="relative">
+                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
+                <input
+                  type="text"
+                  value={birthPlace}
+                  onChange={(e) => setBirthPlace(e.target.value)}
+                  className="input"
+                  style={{ paddingLeft: '3rem' }}
+                  placeholder="出生地点（可选）"
                 />
               </div>
 
