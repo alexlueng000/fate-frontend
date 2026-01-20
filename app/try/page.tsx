@@ -128,11 +128,11 @@ function TryPageContent() {
       await trySSE(
         api('/chat/start'),
         {
-          mingpan: paipanRes.mingpan,
-          gender,
-          calendar,
-          birth_date: birthDate,
-          birth_time: birthTime,
+          paipan: {
+            gender,
+            four_pillars: paipanRes.mingpan.four_pillars,
+            dayun: paipanRes.mingpan.dayun,
+          },
         },
         (text) => {
           setAiContent(normalizeMarkdown(text));
