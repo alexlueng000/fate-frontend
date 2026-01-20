@@ -58,6 +58,10 @@ export function useUser(): UserContextType {
 }
 
 export function setUserCache(u: User | null) {
+  // SSR 安全检查
+  if (typeof window === 'undefined' || typeof sessionStorage === 'undefined') {
+    return;
+  }
   if (u) {
     try { sessionStorage.setItem('me', JSON.stringify(u)); } catch {}
   } else {
@@ -88,11 +92,18 @@ export async function loginWeb(payload: { email: string; password: string }) {
 }
 
 export function saveAuth(resp: LoginResp) {
-  if (resp.access_token) localStorage.setItem('auth_token', resp.access_token);
+  // SSR 安全检查
+  if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+    if (resp.access_token) localStorage.setItem('auth_token', resp.access_token);
+  }
   setUserCache(resp.user);
 }
 
 export function currentUser(): User | null {
+  // SSR 安全检查
+  if (typeof window === 'undefined' || typeof sessionStorage === 'undefined') {
+    return null;
+  }
   try {
     const raw = sessionStorage.getItem('me');
     return raw ? (JSON.parse(raw) as User) : null;
@@ -102,12 +113,18 @@ export function currentUser(): User | null {
 }
 
 export function clearAuth() {
-  localStorage.removeItem('auth_token');
-  // localStorage.removeItem('me');
+  // SSR 安全检查
+  if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+    localStorage.removeItem('auth_token');
+  }
   setUserCache(null);
 }
 
 export function getAuthToken(): string | null {
+  // SSR 安全检查
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+    return null;
+  }
   return localStorage.getItem('auth_token');
 }
 
