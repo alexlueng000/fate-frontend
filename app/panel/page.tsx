@@ -448,8 +448,9 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
         birth_date: birthDate,   // 'YYYY-MM-DD'
         birth_time: birthTime,   // 'HH:MM'
         birthplace: birthPlace,
+        birthplace_provided: !!birthPlace.trim(),
       };
-  
+
       const calcRes = await fetch(api('/bazi/calc_paipan'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

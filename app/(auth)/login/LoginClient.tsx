@@ -15,7 +15,8 @@ export default function LoginClient() {
   const search = useSearchParams();
 
   const raw = search.get('redirect');
-  const redirect = !raw || raw === '/' ? '/panel' : raw;
+  // 过滤掉登录/注册页面，避免循环跳转
+  const redirect = !raw || raw === '/' || raw === '/login' || raw === '/register' ? '/panel' : raw;
 
   const [mode, setMode] = useState<'password' | 'sms'>('password');
 
