@@ -97,6 +97,7 @@ function TryPageContent() {
     const calendar = searchParams.get('calendar') || 'gregorian';
     const birthDate = searchParams.get('birth_date');
     const birthTime = searchParams.get('birth_time');
+    const birthplace = searchParams.get('birthplace') || '';
 
     if (!birthDate || !birthTime) {
       setError('缺少出生日期或时间参数');
@@ -110,6 +111,8 @@ function TryPageContent() {
         calendar,
         birth_date: birthDate,
         birth_time: birthTime,
+        birthplace,
+        birthplace_provided: !!birthplace.trim(),
       });
 
       if (!paipanRes?.mingpan) {
