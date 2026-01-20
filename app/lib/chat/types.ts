@@ -75,6 +75,9 @@ export function normalizeMarkdown(md: string): string {
     // 去掉行首多余缩进
     s = s.replace(/^[ \t]+(- |\d+\.\s)/gm, "$1");
 
+    // 移除水平分隔符（---、***、___）
+    s = s.replace(/^\s*[-_*]{3,}\s*$/gm, "");
+
     // 压缩空行
     s = s.replace(/\n{3,}/g, "\n\n");
 

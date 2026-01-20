@@ -20,16 +20,16 @@ type MarkdownViewProps = {
 
 const components: Components = {
   h1: ({ node, ...props }) => (
-    <h1 className="text-2xl font-bold my-3" {...props} />
+    <h1 className="text-xl font-bold mt-4 mb-3 text-[var(--color-text-primary)]" {...props} />
   ),
   h2: ({ node, ...props }) => (
-    <h2 className="text-xl font-semibold my-3" {...props} />
+    <h2 className="text-lg font-bold mt-3 mb-2 text-[var(--color-text-primary)]" {...props} />
   ),
   h3: ({ node, ...props }) => (
-    <h3 className="text-lg font-semibold my-2" {...props} />
+    <h3 className="text-base font-bold mt-3 mb-2 text-[var(--color-text-primary)]" {...props} />
   ),
   h4: ({ node, ...props }) => (
-    <h4 className="text-base font-semibold my-2" {...props} />
+    <h4 className="text-sm font-bold mt-2 mb-1 text-[var(--color-text-primary)]" {...props} />
   ),
   h5: ({ node, ...props }) => (
     <h5 className="text-base font-medium my-1" {...props} />
@@ -39,7 +39,7 @@ const components: Components = {
   ),
 
   p: ({ node, ...props }) => (
-    <p className="break-words" {...props} />
+    <p className="break-words text-justify hyphens-none" {...props} />
   ),
   li: ({ node, ...props }) => (
     <li className="break-words" {...props} />
