@@ -305,7 +305,7 @@ function TryPageContent() {
 
           <div className="msg-md min-h-[150px] sm:min-h-[200px]">
             {aiContent ? (
-              <Markdown>{aiContent}</Markdown>
+              <Markdown content={aiContent} />
             ) : (
               <div className="space-y-3">
                 <div className="h-4 bg-[var(--color-bg-hover)] rounded w-3/4 animate-pulse" />
