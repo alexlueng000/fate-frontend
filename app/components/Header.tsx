@@ -77,7 +77,7 @@ export default function Header() {
             </span>
           </div>
           <span
-            className="text-xl font-bold text-gradient-gold group-hover:opacity-80 transition-opacity"
+            className="text-xl font-bold text-gradient-gold group-hover:opacity-80 transition-opacity hidden sm:inline"
             style={{ fontFamily: 'var(--font-display)' }}
           >
             一盏大师

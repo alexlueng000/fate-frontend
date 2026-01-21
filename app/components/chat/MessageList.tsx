@@ -1,5 +1,5 @@
 'use client';
-import { Msg, normalizeMarkdown } from '@/app/lib/chat/types';
+import { Msg } from '@/app/lib/chat/types';
 import { ComponentType } from 'react';
 import { Bot, User } from 'lucide-react';
 
@@ -40,7 +40,7 @@ export function MessageList({
       {messages.map((m, i) => {
         const isAssistant = m.role === 'assistant';
         const isIntro = m.meta?.kind === 'intro';
-        const content = normalizeMarkdown(m.content || '');
+        const content = m.content || '';
 
         return (
           <div key={i} className={`flex gap-3 ${isAssistant ? '' : 'flex-row-reverse'}`}>
