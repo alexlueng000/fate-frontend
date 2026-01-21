@@ -565,20 +565,20 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
       <div className="mx-auto w-full max-w-2xl px-4 sm:px-6 pb-10 space-y-4">
 
         {/* ===== 快速排盘表单 ===== */}
-        <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4 sm:p-5 shadow-sm">
-          <h2 className="text-base font-semibold text-[var(--color-primary)]">快速排盘</h2>
+        <section className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-3 sm:p-4 shadow-sm">
+          <h2 className="text-sm font-semibold text-[var(--color-primary)]">快速排盘</h2>
 
-          <form onSubmit={handleCalcPaipan} className="mt-4 space-y-4">
+          <form onSubmit={handleCalcPaipan} className="mt-3 space-y-3">
             {/* 性别 + 历法（并排） */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-2">
               {/* 性别 */}
               <div>
-                <span className="mb-2 block text-sm text-[var(--color-text-secondary)]">性别</span>
-                <div className="flex gap-2">
+                <span className="mb-1.5 block text-xs text-[var(--color-text-secondary)]">性别</span>
+                <div className="flex gap-1.5">
                   {(['男', '女'] as const).map((g) => (
                     <label
                       key={g}
-                      className={`flex-1 inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 cursor-pointer transition
+                      className={`flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border px-2 py-1.5 cursor-pointer transition text-xs
                         ${gender === g
                           ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/10 text-[var(--color-primary)]'
                           : 'border-[var(--color-border)] bg-[var(--color-bg-elevated)] text-[var(--color-text-secondary)] hover:border-[var(--color-primary)]/30'}`}
@@ -599,14 +599,14 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
 
               {/* 历法 */}
               <div>
-                <span className="mb-2 block text-sm text-[var(--color-text-secondary)]">历法</span>
-                <div className="flex gap-2">
+                <span className="mb-1.5 block text-xs text-[var(--color-text-secondary)]">历法</span>
+                <div className="flex gap-1.5">
                   {(['阳历', '农历'] as const).map((c) => {
                     const value = c === '阳历' ? 'gregorian' : 'lunar';
                     return (
                       <label
                         key={c}
-                        className={`flex-1 inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 cursor-pointer transition
+                        className={`flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border px-2 py-1.5 cursor-pointer transition text-xs
                           ${calendarType === value
                             ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/10 text-[var(--color-primary)]'
                             : 'border-[var(--color-border)] bg-[var(--color-bg-elevated)] text-[var(--color-text-secondary)] hover:border-[var(--color-primary)]/30'}`}
@@ -635,9 +635,9 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
               setBirthTime={setBirthTime}
             />
             <div>
-              <label className="mb-2 block text-sm text-[var(--color-text-secondary)]">出生地点</label>
+              <label className="mb-1.5 block text-xs text-[var(--color-text-secondary)]">出生地点</label>
               <input
-                className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-4 py-2.5 outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/10 transition-all text-sm"
+                className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-3 py-2 outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/10 transition-all text-xs"
                 value={birthPlace}
                 onChange={(e) => setBirthPlace(e.target.value)}
                 placeholder="如：深圳"
@@ -645,26 +645,26 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
             </div>
 
             {/* 提交 */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <button
                 type="submit"
                 disabled={calcLoading}
-                className="flex-1 rounded-2xl bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-light)] px-4 py-3 font-medium text-white hover:opacity-90 disabled:opacity-60 transition-all shadow-lg shadow-[var(--color-primary)]/20 flex items-center justify-center gap-2"
+                className="flex-1 rounded-xl bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-light)] px-3 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-60 transition-all shadow-md shadow-[var(--color-primary)]/20 flex items-center justify-center gap-1.5"
               >
                 {calcLoading ? (
                   <>
-                    <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                    <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-white/30 border-t-white" />
                     排盘中…
                   </>
                 ) : (
                   <>
-                    <span>🔮</span>
-                    生成命盘并开始解读
+                    <span className="text-sm">🔮</span>
+                    生成命盘
                   </>
                 )}
               </button>
             </div>
-            {calcErr && <div className="text-sm text-[var(--color-primary)] mt-2">{calcErr}</div>}
+            {calcErr && <div className="text-xs text-[var(--color-primary)] mt-1.5">{calcErr}</div>}
           </form>
         </section>
 

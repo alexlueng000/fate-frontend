@@ -21,45 +21,31 @@ export function BirthDateTimeFields({
   const today = useMemo(() => new Date().toISOString().split('T')[0], []);
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2">
+    <div className="grid gap-2 sm:grid-cols-2">
       {/* 出生日期 */}
       <div className="relative">
-        <label className="mb-1 block text-sm text-neutral-700">出生日期</label>
+        <label className="mb-1 block text-xs text-[var(--color-text-secondary)]">出生日期</label>
         <div className="relative">
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-red-600/70">
-            <Calendar className="h-4 w-4" />
+          <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--color-primary)]/60">
+            <Calendar className="h-3.5 w-3.5" />
           </span>
           <PrettyDateField
             value={birthDate}
             onChange={setBirthDate}
             max={today}
-            // aria-label="出生日期"
           />
-          {/* {birthDate && (
-            <button
-              type="button"
-              onClick={() => setBirthDate('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-neutral-500 hover:bg-red-100/60"
-              aria-label="清除出生日期"
-              title="清除"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          )} */}
         </div>
-        {/* <p className="mt-1 text-xs text-neutral-600">不确定日期？先留空也可以，稍后仍可补充。</p> */}
       </div>
 
       {/* 出生时间 */}
       <div className="relative">
-        <label className="mb-1 block text-sm text-neutral-700">出生时间</label>
+        <label className="mb-1 block text-xs text-[var(--color-text-secondary)]">出生时间</label>
         <div className="relative">
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-red-600/70">
-            <Clock className="h-4 w-4" />
+          <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--color-primary)]/60">
+            <Clock className="h-3.5 w-3.5" />
           </span>
           <TimePicker value={birthTime} onChange={setBirthTime} attachToBody />
         </div>
-
       </div>
     </div>
   );
