@@ -44,8 +44,8 @@ export function MessageList({
 
         return (
           <div key={i} className={`flex gap-3 ${isAssistant ? '' : 'flex-row-reverse'}`}>
-            {/* Avatar */}
-            <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${
+            {/* Avatar - 桌面端显示，移动端隐藏 */}
+            <div className={`hidden sm:flex flex-shrink-0 w-8 h-8 rounded-lg items-center justify-center ${
               isAssistant
                 ? 'bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-gold)]'
                 : 'bg-[var(--color-bg-hover)] border border-[var(--color-border)]'
@@ -59,7 +59,7 @@ export function MessageList({
 
             {/* Message Bubble */}
             <div
-              className={`max-w-[85%] rounded-xl px-4 py-3 ${
+              className={`max-w-[95%] sm:max-w-[85%] rounded-xl px-4 py-3 ${
                 isAssistant
                   ? 'bg-[var(--color-bg-card)] border border-[var(--color-border)] text-[var(--color-text-primary)]'
                   : 'bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-light)] text-white'

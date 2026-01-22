@@ -561,8 +561,8 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
 
   return (
     <main className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text-primary)] pt-20 sm:pt-24">
-      {/* 单列居中布局，移动端优先 */}
-      <div className="mx-auto w-full max-w-2xl px-4 sm:px-6 pb-10 space-y-4">
+      {/* 单列居中布局，桌面端占 80% 宽度 */}
+      <div className="mx-auto w-full max-w-2xl lg:max-w-[80%] px-4 sm:px-6 pb-10 space-y-4">
 
         {/* ===== 快速排盘表单 ===== */}
         <section className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-3 sm:p-4 shadow-sm">

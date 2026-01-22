@@ -38,3 +38,20 @@ export function loadPaipanLocal(): Paipan | null {
     return null;
   }
 }
+
+export function clearAllChatData() {
+  try {
+    // 清理活跃会话 ID
+    localStorage.removeItem(LS_ACTIVE);
+    // 清理排盘数据
+    localStorage.removeItem(LS_LAST_PAIPAN);
+    // 清理所有会话数据
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith(LS_CONV_PREFIX)) {
+        localStorage.removeItem(key);
+      }
+    });
+    // 清理 sessionStorage 中的会话 ID
+    sessionStorage.removeItem('conversation_id');
+  } catch {}
+}

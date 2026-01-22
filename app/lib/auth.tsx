@@ -9,6 +9,7 @@ import {
   type ReactElement,   // ✅ 新增
 } from 'react';
 import { api } from './api';
+import { clearAllChatData } from './chat/storage';
 
 export type User = {
   id: number;
@@ -117,6 +118,8 @@ export function clearAuth() {
   if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
     localStorage.removeItem('auth_token');
   }
+  // 清理所有聊天相关数据
+  clearAllChatData();
   setUserCache(null);
 }
 
