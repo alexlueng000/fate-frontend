@@ -567,10 +567,10 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
         {/* ===== 桌面端：排盘表单和结果并排 ===== */}
         <div className="lg:grid lg:grid-cols-2 lg:gap-4 space-y-4 lg:space-y-0">
           {/* 快速排盘表单 */}
-          <section className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-3 sm:p-4 shadow-sm">
+          <section className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-3 sm:p-4 shadow-sm lg:min-h-[400px] flex flex-col">
             <h2 className="text-sm font-semibold text-[var(--color-primary)]">快速排盘</h2>
 
-            <form onSubmit={handleCalcPaipan} className="mt-3 space-y-3">
+            <form onSubmit={handleCalcPaipan} className="mt-3 space-y-3 flex-1 flex flex-col">
             {/* 性别 + 历法（并排） */}
             <div className="grid grid-cols-2 gap-2">
               {/* 性别 */}
@@ -671,11 +671,11 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
         </section>
 
         {/* 四柱八字展示区域 */}
-        <div>
+        <div className="lg:min-h-[400px]">
           {paipan ? (
             <SimplifiedPaipanCard paipan={paipan} />
           ) : (
-            <div className="hidden lg:flex rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-6 shadow-sm items-center justify-center min-h-[300px]">
+            <div className="hidden lg:flex rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-6 shadow-sm items-center justify-center h-full">
               <div className="text-center">
                 <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-gold)] flex items-center justify-center mx-auto mb-4 opacity-50">
                   <span className="text-white text-2xl">盘</span>
