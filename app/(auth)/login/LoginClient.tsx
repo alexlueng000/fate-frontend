@@ -134,29 +134,29 @@ export default function LoginClient() {
       </div>
 
       {/* Login Card */}
-      <div className="relative w-full max-w-md card p-8 animate-scale-in">
+      <div className="relative w-full max-w-md card p-6 animate-scale-in">
         {/* Header */}
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-gold)] flex items-center justify-center shadow-lg">
-              <span className="text-white text-xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
+        <div className="text-center mb-4">
+          <Link href="/" className="inline-flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-gold)] flex items-center justify-center shadow-lg">
+              <span className="text-white text-lg font-bold" style={{ fontFamily: 'var(--font-display)' }}>
                 盏
               </span>
             </div>
           </Link>
           <h1
-            className="text-2xl font-bold text-[var(--color-text-primary)] mb-2"
+            className="text-xl font-bold text-[var(--color-text-primary)] mb-1"
             style={{ fontFamily: 'var(--font-display)' }}
           >
             欢迎回来
           </h1>
-          <p className="text-sm text-[var(--color-text-muted)]">
+          <p className="text-xs text-[var(--color-text-muted)]">
             登录以继续使用一盏大师
           </p>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-2 p-1 rounded-xl bg-[var(--color-bg-elevated)] mb-6">
+        <div className="flex gap-2 p-1 rounded-xl bg-[var(--color-bg-elevated)] mb-4">
           <button
             type="button"
             onClick={() => setMode('password')}
@@ -183,18 +183,18 @@ export default function LoginClient() {
 
         {/* Error Alert */}
         {err && (
-          <div className="mb-4 rounded-xl border border-[var(--color-primary)]/30 bg-[var(--color-primary)]/10 px-4 py-3 text-sm text-[var(--color-primary)]">
+          <div className="mb-3 rounded-xl border border-[var(--color-primary)]/30 bg-[var(--color-primary)]/10 px-4 py-2.5 text-sm text-[var(--color-primary)]">
             {err}
           </div>
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3">
           {mode === 'password' ? (
             <>
               {/* Email */}
               <div>
-                <label className="block text-sm text-[var(--color-text-secondary)] mb-2">
+                <label className="block text-xs text-[var(--color-text-secondary)] mb-1.5">
                   邮箱
                 </label>
                 <div className="relative">
@@ -216,7 +216,7 @@ export default function LoginClient() {
 
               {/* Password */}
               <div>
-                <label className="block text-sm text-[var(--color-text-secondary)] mb-2">
+                <label className="block text-xs text-[var(--color-text-secondary)] mb-1.5">
                   密码
                 </label>
                 <div className="relative">
@@ -253,7 +253,7 @@ export default function LoginClient() {
             <>
               {/* Phone */}
               <div>
-                <label className="block text-sm text-[var(--color-text-secondary)] mb-2">
+                <label className="block text-xs text-[var(--color-text-secondary)] mb-1.5">
                   手机号
                 </label>
                 <div className="relative">
@@ -274,7 +274,7 @@ export default function LoginClient() {
 
               {/* Code */}
               <div>
-                <label className="block text-sm text-[var(--color-text-secondary)] mb-2">
+                <label className="block text-xs text-[var(--color-text-secondary)] mb-1.5">
                   验证码
                 </label>
                 <div className="flex gap-3">

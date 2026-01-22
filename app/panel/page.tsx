@@ -564,11 +564,13 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
       {/* 单列居中布局，桌面端占 80% 宽度 */}
       <div className="mx-auto w-full max-w-2xl lg:max-w-[80%] px-4 sm:px-6 pb-10 space-y-4">
 
-        {/* ===== 快速排盘表单 ===== */}
-        <section className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-3 sm:p-4 shadow-sm">
-          <h2 className="text-sm font-semibold text-[var(--color-primary)]">快速排盘</h2>
+        {/* ===== 桌面端：排盘表单和结果并排 ===== */}
+        <div className="lg:grid lg:grid-cols-2 lg:gap-4 space-y-4 lg:space-y-0">
+          {/* 快速排盘表单 */}
+          <section className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-3 sm:p-4 shadow-sm">
+            <h2 className="text-sm font-semibold text-[var(--color-primary)]">快速排盘</h2>
 
-          <form onSubmit={handleCalcPaipan} className="mt-3 space-y-3">
+            <form onSubmit={handleCalcPaipan} className="mt-3 space-y-3">
             {/* 性别 + 历法（并排） */}
             <div className="grid grid-cols-2 gap-2">
               {/* 性别 */}
@@ -668,8 +670,24 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
           </form>
         </section>
 
-        {/* ===== 四柱八字展示（生成后显示）===== */}
-        {paipan && <SimplifiedPaipanCard paipan={paipan} />}
+        {/* 四柱八字展示区域 */}
+        <div>
+          {paipan ? (
+            <SimplifiedPaipanCard paipan={paipan} />
+          ) : (
+            <div className="hidden lg:flex rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-6 shadow-sm items-center justify-center min-h-[300px]">
+              <div className="text-center">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-gold)] flex items-center justify-center mx-auto mb-4 opacity-50">
+                  <span className="text-white text-2xl">盘</span>
+                </div>
+                <p className="text-sm text-[var(--color-text-muted)]">
+                  完成排盘后，命盘将显示在此处
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
 
         {/* ===== 聊天区域 ===== */}
         <section className="space-y-4">

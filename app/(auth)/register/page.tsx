@@ -161,29 +161,29 @@ export default function RegisterPage() {
       </div>
 
       {/* Register Card */}
-      <div className="relative w-full max-w-md card p-8 animate-scale-in">
+      <div className="relative w-full max-w-md card p-6 animate-scale-in">
         {/* Header */}
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-gold)] flex items-center justify-center shadow-lg">
-              <span className="text-white text-xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
+        <div className="text-center mb-4">
+          <Link href="/" className="inline-flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-gold)] flex items-center justify-center shadow-lg">
+              <span className="text-white text-lg font-bold" style={{ fontFamily: 'var(--font-display)' }}>
                 盏
               </span>
             </div>
           </Link>
           <h1
-            className="text-2xl font-bold text-[var(--color-text-primary)] mb-2"
+            className="text-xl font-bold text-[var(--color-text-primary)] mb-1"
             style={{ fontFamily: 'var(--font-display)' }}
           >
             创建账户
           </h1>
-          <p className="text-sm text-[var(--color-text-muted)]">
+          <p className="text-xs text-[var(--color-text-muted)]">
             注册以解锁完整功能
           </p>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-2 p-1 rounded-xl bg-[var(--color-bg-elevated)] mb-6">
+        <div className="flex gap-2 p-1 rounded-xl bg-[var(--color-bg-elevated)] mb-4">
           <button
             type="button"
             onClick={() => setMode('account')}
@@ -210,23 +210,23 @@ export default function RegisterPage() {
 
         {/* Error/Success Alert */}
         {err && (
-          <div className="mb-4 rounded-xl border border-[var(--color-primary)]/30 bg-[var(--color-primary)]/10 px-4 py-3 text-sm text-[var(--color-primary)]">
+          <div className="mb-3 rounded-xl border border-[var(--color-primary)]/30 bg-[var(--color-primary)]/10 px-4 py-2.5 text-sm text-[var(--color-primary)]">
             {err}
           </div>
         )}
         {ok && (
-          <div className="mb-4 rounded-xl border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-400">
+          <div className="mb-3 rounded-xl border border-green-500/30 bg-green-500/10 px-4 py-2.5 text-sm text-green-400">
             {ok}
           </div>
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3">
           {mode === 'account' ? (
             <>
               {/* Email */}
               <div>
-                <label className="block text-sm text-[var(--color-text-secondary)] mb-2">邮箱</label>
+                <label className="block text-xs text-[var(--color-text-secondary)] mb-1.5">邮箱</label>
                 <div className="relative">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
                   <input
@@ -245,7 +245,7 @@ export default function RegisterPage() {
 
               {/* Username */}
               <div>
-                <label className="block text-sm text-[var(--color-text-secondary)] mb-2">用户名</label>
+                <label className="block text-xs text-[var(--color-text-secondary)] mb-1.5">用户名</label>
                 <div className="relative">
                   <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
                   <input
@@ -260,7 +260,7 @@ export default function RegisterPage() {
 
               {/* Password */}
               <div>
-                <label className="block text-sm text-[var(--color-text-secondary)] mb-2">密码</label>
+                <label className="block text-xs text-[var(--color-text-secondary)] mb-1.5">密码</label>
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
                   <input
@@ -295,7 +295,7 @@ export default function RegisterPage() {
 
               {/* Nickname */}
               <div>
-                <label className="block text-sm text-[var(--color-text-secondary)] mb-2">昵称（可选）</label>
+                <label className="block text-xs text-[var(--color-text-secondary)] mb-1.5">昵称（可选）</label>
                 <input
                   className="input"
                   value={nickname}
@@ -323,7 +323,7 @@ export default function RegisterPage() {
 
               {/* Phone */}
               <div>
-                <label className="block text-sm text-[var(--color-text-secondary)] mb-2">手机号</label>
+                <label className="block text-xs text-[var(--color-text-secondary)] mb-1.5">手机号</label>
                 <div className="relative">
                   <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
                   <input
@@ -338,7 +338,7 @@ export default function RegisterPage() {
 
               {/* Code */}
               <div>
-                <label className="block text-sm text-[var(--color-text-secondary)] mb-2">验证码</label>
+                <label className="block text-xs text-[var(--color-text-secondary)] mb-1.5">验证码</label>
                 <div className="flex gap-3">
                   <div className="relative flex-1">
                     <Hash className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
