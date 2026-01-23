@@ -439,7 +439,7 @@ export default function LandingPage() {
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-gold)] flex items-center justify-center">
               <span className="text-white text-sm font-bold">盏</span>
             </div>
-            <span className="text-[var(--color-text-secondary)]">© 2025 一盏大师</span>
+            <span className="text-[var(--color-text-secondary)]">© 2026 广州乐与学文化旅游有限公司</span>
           </div>
           <nav className="flex items-center gap-6 text-sm text-[var(--color-text-muted)]">
             <Link href="/privacy" className="hover:text-[var(--color-gold)] transition-colors">
