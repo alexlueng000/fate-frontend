@@ -128,7 +128,7 @@ export default function RegisterPage() {
       }
 
       setOk('注册成功，正在为你跳转…');
-      router.replace('/');
+      router.replace('/panel');
     } catch (e: unknown) {
       setErr((e as Error)?.message || '注册失败');
     } finally {

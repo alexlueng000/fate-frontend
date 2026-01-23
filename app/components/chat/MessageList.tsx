@@ -68,10 +68,14 @@ export function MessageList({
               {isAssistant ? (
                 isIntro ? (
                   <div className="border-l-2 border-[var(--color-gold)] pl-3">
-                    <Markdown content={content} />
+                    <div className="msg-md">
+                      <Markdown content={content} />
+                    </div>
                   </div>
                 ) : (
-                  <Markdown content={content} />
+                  <div className="msg-md">
+                    <Markdown content={content} />
+                  </div>
                 )
               ) : (
                 <p className="text-sm">{content}</p>
