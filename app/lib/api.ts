@@ -29,3 +29,24 @@ export async function postJSON<T>(
   }
   return r.json() as Promise<T>;
 }
+
+export async function putJSON<T>(
+  url: string,
+  body: unknown,
+  options?: { headers?: Record<string, string> }
+): Promise<T> {
+  const r = await fetch(url, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      ...options?.headers,
+    },
+    credentials: 'include',
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) {
+    const msg = await r.text().catch(() => '');
+    throw new Error(msg || `HTTP ${r.status}`);
+  }
+  return r.json() as Promise<T>;
+}

@@ -1,6 +1,18 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { api } from '@/app/lib/api';
+import {
+  ArrowLeft,
+  BookOpen,
+  RefreshCw,
+  Upload,
+  Trash2,
+  Search,
+  Loader2,
+} from 'lucide-react';
 
 type KBFile = {
   filename: string;
@@ -29,10 +41,8 @@ type QueryResult = {
   text: string;
 };
 
-const BASE = (process.env.NEXT_PUBLIC_API_BASE ?? '').replace(/\/+$/, '');
-const u = (p: string) => `${BASE}${p}`;
-
 export default function KBAdminPage() {
+  const router = useRouter();
   const [files, setFiles] = useState<KBFile[]>([]);
   const [loadingFiles, setLoadingFiles] = useState(false);
 
@@ -54,9 +64,10 @@ export default function KBAdminPage() {
   const [querying, setQuerying] = useState(false);
   const [results, setResults] = useState<QueryResult[]>([]);
   const [errMsg, setErrMsg] = useState<string | null>(null);
+  const [toast, setToast] = useState<string>('');
 
   const fetchJSON = async <T,>(path: string, init?: RequestInit): Promise<T> => {
-    const res = await fetch(u(path), {
+    const res = await fetch(api(path), {
       credentials: 'include',
       ...init,
       headers: {
@@ -64,10 +75,12 @@ export default function KBAdminPage() {
       },
     });
     const txt = await res.text();
-    let data: any = null;
+    let data: unknown = null;
     try { data = txt ? JSON.parse(txt) : {}; } catch { /* fallthrough */ }
     if (!res.ok) {
-      const msg = (data && (data.detail || data.message)) || txt || `HTTP ${res.status}`;
+      const msg = (data && typeof data === 'object' && ('detail' in data || 'message' in data))
+        ? ((data as Record<string, string>).detail || (data as Record<string, string>).message)
+        : txt || `HTTP ${res.status}`;
       throw new Error(msg);
     }
     return data as T;
@@ -79,8 +92,8 @@ export default function KBAdminPage() {
     try {
       const data = await fetchJSON<{ files: KBFile[] }>('/kb/files');
       setFiles(data.files || []);
-    } catch (e: any) {
-      setErrMsg(e.message ?? String(e));
+    } catch (e) {
+      setErrMsg((e as Error).message ?? String(e));
     } finally {
       setLoadingFiles(false);
     }
@@ -92,10 +105,10 @@ export default function KBAdminPage() {
     try {
       const data = await fetchJSON<{ ok?: boolean; meta: IndexMeta }>('/kb/index/meta');
       setMeta(data.meta);
-    } catch (e: any) {
+    } catch (e) {
       // 索引可能不存在
       setMeta(null);
-      const msg = e.message ?? String(e);
+      const msg = (e as Error).message ?? String(e);
       // 404 不当成致命错误，仅提示
       if (!/404/.test(msg)) setErrMsg(msg);
     } finally {
@@ -104,9 +117,24 @@ export default function KBAdminPage() {
   };
 
   useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem('me');
+      if (!raw) {
+        router.push('/login?redirect=/admin/config/knowledge_base');
+        return;
+      }
+      const user = JSON.parse(raw);
+      if (!user || !user.is_admin) {
+        router.push('/login?redirect=/admin/config/knowledge_base');
+        return;
+      }
+    } catch {
+      router.push('/login?redirect=/admin/config/knowledge_base');
+      return;
+    }
     void loadFiles();
     void loadMeta();
-  }, []);
+  }, [router]);
 
   const humanSize = (n: number) => {
     if (n < 1024) return `${n} B`;
@@ -199,6 +227,15 @@ export default function KBAdminPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 space-y-8">
+      {/* Back Link */}
+      <Link
+        href="/admin"
+        className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-colors"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        返回管理后台
+      </Link>
+
       <h1 className="text-2xl font-bold">知识库管理</h1>
 
       {errMsg && (

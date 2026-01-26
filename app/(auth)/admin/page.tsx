@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Settings, MessageSquare, Zap, BookOpen, Ticket, ChevronRight, ArrowLeft } from 'lucide-react';
+import { Settings, MessageSquare, Zap, BookOpen, Ticket, ChevronRight, ArrowLeft, Shield } from 'lucide-react';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -46,6 +46,13 @@ export default function AdminPage() {
       title: '邀请码管理',
       description: '创建和管理用户注册邀请码',
       color: '#22c55e',
+    },
+    {
+      href: '/admin/sensitive-words',
+      icon: <Shield className="w-6 h-6" />,
+      title: '敏感词管理',
+      description: '管理 AI 响应的敏感词过滤规则',
+      color: '#f59e0b',
     },
     {
       href: '/admin/config/system_prompt',

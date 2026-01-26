@@ -1,418 +1,378 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { api } from '@/app/lib/api'; // 按你的项目路径
+import Link from 'next/link';
+import { api, postJSON } from '@/app/lib/api';
+import {
+  ArrowLeft,
+  Plus,
+  X,
+  Loader2,
+  Zap,
+  RefreshCw,
+  GripVertical,
+  ToggleLeft,
+  ToggleRight,
+  Trash2,
+  Edit3,
+  Save,
+} from 'lucide-react';
 
-type KBFile = {
-  filename: string;
-  size: number;
-  mtime: number;     // epoch seconds
-  md5?: string;
+type QuickButton = {
+  label: string;
+  prompt: string;
+  order: number;
+  active: boolean;
 };
 
-type IndexMeta = {
-  backend: 'st' | 'tfidf' | string;
-  model?: string;
-  chunk_size: number;
-  overlap: number;
-  num_chunks: number;
-  num_files: number;
-  files: string[];
-  last_build?: string;
-  mode?: string;
+type ConfigData = {
+  key: string;
+  version: number;
+  value_json: {
+    items: QuickButton[];
+  };
+  updated_at?: string;
 };
 
-type QueryResult = {
-  rank: number;
-  file: string;
-  chunk_id: number;
-  score: number;
-  text: string;
-};
-
-export default function KBAdminPage() {
+export default function QuickButtonsPage() {
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [buttons, setButtons] = useState<QuickButton[]>([]);
+  const [version, setVersion] = useState(0);
+  const [err, setErr] = useState<string | null>(null);
+  const [hasChanges, setHasChanges] = useState(false);
 
-  // 文件
-  const [files, setFiles] = useState<KBFile[]>([]);
-  const [loadingFiles, setLoadingFiles] = useState(false);
+  // 编辑状态
+  const [showForm, setShowForm] = useState(false);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [formData, setFormData] = useState({ label: '', prompt: '' });
 
-  // 索引 meta
-  const [meta, setMeta] = useState<IndexMeta | null>(null);
-  const [loadingMeta, setLoadingMeta] = useState(false);
-
-  // 交互状态
-  const [uploading, setUploading] = useState(false);
-  const [reindexing, setReindexing] = useState(false);
-  const [errMsg, setErrMsg] = useState<string | null>(null);
-  const [toast, setToast] = useState<string>('');
-
-  // 重建参数
-  const [mode, setMode] = useState<'auto' | 'full'>('auto');
-  const [backend, setBackend] = useState<'st' | 'tfidf' | ''>(''); // '' 表示自动
-  const [chunkSize, setChunkSize] = useState(700);
-  const [overlap, setOverlap] = useState(120);
-
-  // 检索测试
-  const [q, setQ] = useState('');
-  const [k, setK] = useState(5);
-  const [querying, setQuerying] = useState(false);
-  const [results, setResults] = useState<QueryResult[]>([]);
-
-  // ----------- 通用 fetch（走你项目的 api() 前缀）-----------
-  const fetchJSON = async <T,>(path: string, init?: RequestInit): Promise<T> => {
-    const res = await fetch(api(path), {
-      credentials: 'include',
-      cache: 'no-store',
-      ...init,
-    });
-    const text = await res.text();
-    let data: any = null;
-    try { data = text ? JSON.parse(text) : {}; } catch {}
-    if (!res.ok) {
-      const msg = (data && (data.detail || data.message)) || text || `HTTP ${res.status}`;
-      throw new Error(msg);
-    }
-    return data as T;
-  };
-
-  // ----------- 加载数据 -----------
-  const loadFiles = async () => {
-    setLoadingFiles(true);
-    setErrMsg(null);
-    try {
-      const data = await fetchJSON<{ files: KBFile[] }>('/kb/files');
-      setFiles(data.files || []);
-    } catch (e: any) {
-      setErrMsg(e.message ?? String(e));
-    } finally {
-      setLoadingFiles(false);
-    }
-  };
-
-  const loadMeta = async () => {
-    setLoadingMeta(true);
-    try {
-      const data = await fetchJSON<{ ok?: boolean; meta: IndexMeta }>('/kb/index/meta');
-      setMeta(data.meta);
-    } catch (e: any) {
-      // 索引不存在不算致命
-      setMeta(null);
-      if (!String(e.message).includes('404')) setErrMsg(e.message ?? String(e));
-    } finally {
-      setLoadingMeta(false);
-    }
-  };
-
-  useEffect(() => {
-    void loadFiles();
-    void loadMeta();
+  const getToken = useCallback(() => {
+    return localStorage.getItem('auth_token');
   }, []);
 
-  // ----------- 工具 -----------
-  const humanSize = (n: number) => {
-    if (n < 1024) return `${n} B`;
-    if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
-    if (n < 1024 * 1024 * 1024) return `${(n / 1024 / 1024).toFixed(1)} MB`;
-    return `${(n / 1024 / 1024 / 1024).toFixed(1)} GB`;
-  };
-  const timeStr = (t: number) => {
-    try { return new Date(t * 1000).toLocaleString(); } catch { return String(t); }
-  };
-
-  // ----------- 上传 -----------
-  const onUpload = async (ev: React.ChangeEvent<HTMLInputElement>) => {
-    const file = ev.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    setErrMsg(null);
-    setToast('');
+  // 加载配置
+  const loadConfig = useCallback(async () => {
+    setLoading(true);
+    setErr(null);
     try {
-      const fd = new FormData();
-      fd.append('f', file); // 后端接收字段名为 f
-      await fetchJSON('/kb/files/upload', { method: 'POST', body: fd });
-      await loadFiles();
-      setToast('上传成功 ✅');
-    } catch (e: any) {
-      setErrMsg(e.message ?? String(e));
+      const token = getToken();
+      const resp = await fetch(api('/admin/config?key=quick_buttons'), {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!resp.ok) {
+        if (resp.status === 404) {
+          // 配置不存在，使用默认值
+          setButtons([]);
+          setVersion(0);
+          return;
+        }
+        throw new Error('加载失败');
+      }
+      const data: ConfigData = await resp.json();
+      setButtons(data.value_json?.items || []);
+      setVersion(data.version);
+      setHasChanges(false);
+    } catch (e) {
+      setErr((e as Error).message);
     } finally {
-      setUploading(false);
-      ev.target.value = '';
+      setLoading(false);
     }
-  };
+  }, [getToken]);
 
-  // ----------- 删除 -----------
-  const onDelete = async (name: string) => {
-    if (!confirm(`确认删除 ${name} ？`)) return;
-    setErrMsg(null);
-    setToast('');
+  useEffect(() => {
     try {
-      await fetchJSON(`/kb/files/${encodeURIComponent(name)}`, { method: 'DELETE' });
-      await loadFiles();
-      setToast('已删除 ✅');
-    } catch (e: any) {
-      setErrMsg(e.message ?? String(e));
+      const raw = sessionStorage.getItem('me');
+      if (!raw) {
+        router.push('/login?redirect=/admin/config/quick_buttons');
+        return;
+      }
+      const user = JSON.parse(raw);
+      if (!user || !user.is_admin) {
+        router.push('/login?redirect=/admin/config/quick_buttons');
+        return;
+      }
+    } catch {
+      router.push('/login?redirect=/admin/config/quick_buttons');
+      return;
     }
-  };
+    loadConfig();
+  }, [router, loadConfig]);
 
-  // ----------- 重建索引 -----------
-  const onReindex = async () => {
-    setReindexing(true);
-    setErrMsg(null);
-    setToast('');
+  // 保存配置
+  async function saveConfig() {
+    setSaving(true);
+    setErr(null);
     try {
-      const body = {
-        mode,
-        backend: backend || null,
-        chunk_size: Number(chunkSize) || 700,
-        overlap: Number(overlap) || 120,
+      const token = getToken();
+      await postJSON(api('/admin/config/save'), {
+        key: 'quick_buttons',
+        value_json: { items: buttons },
+        comment: '更新快捷按钮配置',
+      }, { headers: { Authorization: `Bearer ${token}` } });
+      setHasChanges(false);
+      await loadConfig();
+    } catch (e) {
+      setErr((e as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  // 打开添加表单
+  function openAddForm() {
+    setEditingIndex(null);
+    setFormData({ label: '', prompt: '' });
+    setShowForm(true);
+  }
+
+  // 打开编辑表单
+  function openEditForm(index: number) {
+    const btn = buttons[index];
+    setEditingIndex(index);
+    setFormData({ label: btn.label, prompt: btn.prompt });
+    setShowForm(true);
+  }
+
+  // 保存按钮
+  function handleSaveButton() {
+    if (!formData.label.trim() || !formData.prompt.trim()) {
+      setErr('标签和提示词不能为空');
+      return;
+    }
+
+    const newButtons = [...buttons];
+    if (editingIndex !== null) {
+      newButtons[editingIndex] = {
+        ...newButtons[editingIndex],
+        label: formData.label,
+        prompt: formData.prompt,
       };
-      await fetchJSON('/kb/reindex', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+    } else {
+      newButtons.push({
+        label: formData.label,
+        prompt: formData.prompt,
+        order: newButtons.length,
+        active: true,
       });
-      await loadMeta();
-      setToast('索引已重建 ✅');
-    } catch (e: any) {
-      setErrMsg(e.message ?? String(e));
-    } finally {
-      setReindexing(false);
     }
-  };
+    setButtons(newButtons);
+    setHasChanges(true);
+    setShowForm(false);
+  }
 
-  // ----------- 查询 -----------
-  const onQuery = async () => {
-    if (!q.trim()) return;
-    setQuerying(true);
-    setErrMsg(null);
-    setToast('');
-    setResults([]);
-    try {
-      const data = await fetchJSON<{ ok?: boolean; results: QueryResult[] }>('/kb/query', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ q, k: Math.max(1, Number(k) || 5) }),
-      });
-      setResults(data.results || []);
-    } catch (e: any) {
-      setErrMsg(e.message ?? String(e));
-    } finally {
-      setQuerying(false);
-    }
-  };
+  // 切换启用状态
+  function toggleActive(index: number) {
+    const newButtons = [...buttons];
+    newButtons[index] = { ...newButtons[index], active: !newButtons[index].active };
+    setButtons(newButtons);
+    setHasChanges(true);
+  }
+
+  // 删除按钮
+  function deleteButton(index: number) {
+    if (!confirm('确定要删除这个快捷按钮吗？')) return;
+    const newButtons = buttons.filter((_, i) => i !== index);
+    // 重新排序
+    newButtons.forEach((btn, i) => { btn.order = i; });
+    setButtons(newButtons);
+    setHasChanges(true);
+  }
+
+  // 移动按钮
+  function moveButton(index: number, direction: 'up' | 'down') {
+    if (direction === 'up' && index === 0) return;
+    if (direction === 'down' && index === buttons.length - 1) return;
+
+    const newButtons = [...buttons];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    [newButtons[index], newButtons[targetIndex]] = [newButtons[targetIndex], newButtons[index]];
+    // 重新排序
+    newButtons.forEach((btn, i) => { btn.order = i; });
+    setButtons(newButtons);
+    setHasChanges(true);
+  }
+
+  // 加载中
+  if (loading) {
+    return (
+      <main className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 rounded-full border-2 border-[var(--color-gold)] border-t-transparent animate-spin" />
+      </main>
+    );
+  }
 
   return (
-    <main className="min-h-screen flex flex-col bg-[#fff7e8] text-neutral-800">
-      {/* Header */}
-      <header className="p-4 border-b border-[#f0d9a6]">
-        <h1 className="text-xl font-bold text-[#a83232]">知识库管理</h1>
-      </header>
+    <main className="min-h-screen pt-20 pb-8 px-4">
+      <div className="max-w-4xl mx-auto">
+        {/* Back Link */}
+        <Link
+          href="/admin"
+          className="inline-flex items-center gap-2 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors mb-6"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          返回管理后台
+        </Link>
 
-      {/* 轻提示 & 错误 */}
-      {toast && <div className="p-3 text-sm text-[#4a2c2a]">{toast}</div>}
-      {errMsg && (
-        <div className="mx-4 rounded-md border border-[#f0d9a6] bg-white/80 px-3 py-2 text-[#a83232]">
-          {errMsg}
-        </div>
-      )}
-
-      <section className="flex-1 p-4 space-y-8 overflow-y-auto">
-        {/* 文件列表 */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-[#a83232]">文件列表</h2>
-            <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-[#f0d9a6] bg-white px-3 py-2 text-sm shadow-sm hover:bg-[#fff2cf]">
-              <input type="file" className="hidden" onChange={onUpload} accept=".txt,.doc,.docx" />
-              {uploading ? '上传中…' : '上传文件'}
-            </label>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-[var(--color-gold)] flex items-center justify-center">
+              <Zap className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-[var(--color-text-primary)]" style={{ fontFamily: 'var(--font-display)' }}>
+                快捷按钮管理
+              </h1>
+              <p className="text-sm text-[var(--color-text-muted)]">
+                版本 {version} · {buttons.length} 个按钮
+              </p>
+            </div>
           </div>
-
-          <div className="overflow-hidden rounded-xl border border-[#f0d9a6] bg-white">
-            <table className="min-w-full text-sm">
-              <thead className="bg-[#fff2cf]">
-                <tr>
-                  <th className="px-3 py-2 text-left">文件名</th>
-                  <th className="px-3 py-2 text-left">大小</th>
-                  <th className="px-3 py-2 text-left">修改时间</th>
-                  <th className="px-3 py-2 text-left">MD5</th>
-                  <th className="px-3 py-2 text-right">操作</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loadingFiles ? (
-                  <tr><td className="px-3 py-4" colSpan={5}>加载中...</td></tr>
-                ) : files.length === 0 ? (
-                  <tr><td className="px-3 py-6 text-gray-600" colSpan={5}>暂无文件</td></tr>
-                ) : (
-                  files.map(f => (
-                    <tr key={f.filename} className="border-t border-[#f0d9a6]">
-                      <td className="px-3 py-2 font-medium">{f.filename}</td>
-                      <td className="px-3 py-2">{humanSize(f.size)}</td>
-                      <td className="px-3 py-2">{timeStr(f.mtime)}</td>
-                      <td className="px-3 py-2 font-mono text-xs break-all">{f.md5 || '-'}</td>
-                      <td className="px-3 py-2">
-                        <div className="flex justify-end">
-                          <button
-                            className="rounded-lg border border-[#a83232] px-3 py-1 text-[#a83232] hover:bg-[#f0d9a6]"
-                            onClick={() => onDelete(f.filename)}
-                          >
-                            删除
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+          <div className="flex items-center gap-2">
+            <button onClick={() => loadConfig()} className="btn btn-secondary p-2" title="刷新">
+              <RefreshCw className="w-5 h-5" />
+            </button>
+            <button onClick={openAddForm} className="btn btn-secondary">
+              <Plus className="w-5 h-5" />
+              添加按钮
+            </button>
+            <button
+              onClick={saveConfig}
+              disabled={saving || !hasChanges}
+              className="btn btn-primary"
+            >
+              {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+              保存
+            </button>
           </div>
         </div>
 
-        {/* 索引控制 */}
-        <div className="space-y-3">
-          <h2 className="text-lg font-semibold text-[#a83232]">索引控制</h2>
+        {/* Error */}
+        {err && (
+          <div className="mb-4 rounded-xl border border-[var(--color-primary)]/30 bg-[var(--color-primary)]/10 px-4 py-3 text-sm text-[var(--color-primary)]">
+            {err}
+          </div>
+        )}
 
-          <div className="grid grid-cols-1 gap-4 rounded-xl border border-[#f0d9a6] bg-white p-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <label className="block text-sm font-medium">重建模式</label>
-              <div className="flex gap-4">
-                <label className="inline-flex items-center gap-2">
-                  <input type="radio" name="mode" checked={mode === 'auto'} onChange={() => setMode('auto')} />
-                  <span>auto（增量）</span>
-                </label>
-                <label className="inline-flex items-center gap-2">
-                  <input type="radio" name="mode" checked={mode === 'full'} onChange={() => setMode('full')} />
-                  <span>full（全量）</span>
-                </label>
+        {/* Unsaved Changes Warning */}
+        {hasChanges && (
+          <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-600">
+            有未保存的更改，请点击"保存"按钮保存配置
+          </div>
+        )}
+
+        {/* Form Modal */}
+        {showForm && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="card p-6 w-full max-w-md animate-scale-in">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
+                  {editingIndex !== null ? '编辑按钮' : '添加按钮'}
+                </h2>
+                <button onClick={() => setShowForm(false)} className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs text-[var(--color-text-secondary)] mb-1.5">按钮标签 *</label>
+                  <input
+                    className="input"
+                    value={formData.label}
+                    onChange={(e) => setFormData({ ...formData, label: e.target.value })}
+                    placeholder="例如：分析事业"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs text-[var(--color-text-secondary)] mb-1.5">提示词 *</label>
+                  <textarea
+                    className="input min-h-[120px]"
+                    value={formData.prompt}
+                    onChange={(e) => setFormData({ ...formData, prompt: e.target.value })}
+                    placeholder="点击按钮后发送给 AI 的提示词"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button onClick={() => setShowForm(false)} className="flex-1 btn btn-secondary">
+                  取消
+                </button>
+                <button onClick={handleSaveButton} className="flex-1 btn btn-primary">
+                  确定
+                </button>
               </div>
             </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-medium">向量后端</label>
-              <select
-                className="w-full rounded-lg border border-[#f0d9a6] bg-white px-3 py-2"
-                value={backend}
-                onChange={(e) => setBackend(e.target.value as any)}
-              >
-                <option value="">自动（沿用/优先 ST）</option>
-                <option value="st">Sentence-Transformers</option>
-                <option value="tfidf">TF-IDF</option>
-              </select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-medium">chunk_size</label>
-              <input
-                type="number"
-                className="w-full rounded-lg border border-[#f0d9a6] bg-white px-3 py-2"
-                value={chunkSize}
-                min={100}
-                onChange={(e) => setChunkSize(Number(e.target.value))}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-medium">overlap</label>
-              <input
-                type="number"
-                className="w-full rounded-lg border border-[#f0d9a6] bg-white px-3 py-2"
-                value={overlap}
-                min={0}
-                onChange={(e) => setOverlap(Number(e.target.value))}
-              />
-            </div>
-
-            <div className="md:col-span-2 flex items-center gap-3">
-              <button
-                className="rounded-xl bg-[#a83232] px-4 py-2 text-white shadow hover:bg-[#822727] disabled:opacity-60"
-                onClick={onReindex}
-                disabled={reindexing}
-              >
-                {reindexing ? '重建中…' : '重建索引'}
-              </button>
-              <button
-                className="rounded-xl border border-[#a83232] px-4 py-2 text-[#a83232] shadow hover:bg-[#f0d9a6] disabled:opacity-60"
-                onClick={loadMeta}
-                disabled={loadingMeta}
-              >
-                {loadingMeta ? '刷新中…' : '刷新 Meta'}
-              </button>
-            </div>
           </div>
+        )}
 
-          {/* Meta 展示 */}
-          <div className="rounded-xl border border-[#f0d9a6] bg-white p-4">
-            <div className="mb-2 text-sm text-[#4a2c2a]">索引信息</div>
-            {meta ? (
-              <div className="grid grid-cols-2 gap-y-1 text-sm md:grid-cols-3">
-                <div>backend：<b>{meta.backend}</b></div>
-                <div>model：<b>{meta.model || '-'}</b></div>
-                <div>chunks：<b>{meta.num_chunks}</b></div>
-                <div>files：<b>{meta.num_files}</b></div>
-                <div>chunk_size：<b>{meta.chunk_size}</b></div>
-                <div>overlap：<b>{meta.overlap}</b></div>
-                <div className="md:col-span-3">last_build：<b>{meta.last_build || '-'}</b></div>
-              </div>
-            ) : (
-              <div className="text-sm text-gray-600">当前没有索引，请先重建。</div>
-            )}
-          </div>
-        </div>
-
-        {/* 检索测试 */}
-        <div className="space-y-3">
-          <h2 className="text-lg font-semibold text-[#a83232]">检索测试</h2>
-          <div className="space-y-3 rounded-xl border border-[#f0d9a6] bg-white p-4">
-            <textarea
-              className="w-full rounded-lg border border-[#f0d9a6] bg-white px-3 py-2"
-              rows={3}
-              placeholder="输入问题…"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-            />
-            <div className="flex items-center gap-3">
-              <label className="text-sm text-[#4a2c2a]">Top-k</label>
-              <input
-                type="number"
-                className="w-24 rounded-lg border border-[#f0d9a6] bg-white px-3 py-2"
-                value={k}
-                min={1}
-                onChange={(e) => setK(Number(e.target.value))}
-              />
-              <button
-                className="rounded-xl bg-[#a83232] px-4 py-2 text-white shadow hover:bg-[#822727] disabled:opacity-60"
-                onClick={onQuery}
-                disabled={querying}
-              >
-                {querying ? '检索中…' : '检索'}
-              </button>
+        {/* Buttons List */}
+        <div className="card overflow-hidden">
+          {buttons.length === 0 ? (
+            <div className="py-12 text-center text-[var(--color-text-muted)]">
+              暂无快捷按钮，点击"添加按钮"创建
             </div>
-
-            <div className="space-y-2">
-              {results.length === 0 ? (
-                <div className="text-sm text-gray-600">暂无结果</div>
-              ) : (
-                results.map(r => (
-                  <div key={r.rank} className="rounded-lg border border-[#f0d9a6] bg-white p-3">
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="font-medium">{`#${r.rank} ${r.file}`}</div>
-                      <div className="font-mono text-xs">score: {r.score.toFixed(4)}</div>
-                    </div>
-                    <div className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">{r.text}</div>
+          ) : (
+            <div className="divide-y divide-[var(--color-border)]">
+              {buttons.map((btn, index) => (
+                <div
+                  key={index}
+                  className={`p-4 flex items-start gap-4 ${!btn.active ? 'opacity-50' : ''}`}
+                >
+                  <div className="flex flex-col gap-1">
+                    <button
+                      onClick={() => moveButton(index, 'up')}
+                      disabled={index === 0}
+                      className="p-1 text-[var(--color-text-hint)] hover:text-[var(--color-text-primary)] disabled:opacity-30"
+                    >
+                      <GripVertical className="w-4 h-4" />
+                    </button>
                   </div>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
 
-      {/* Footer 操作条（与 quick_buttons 风格一致） */}
-      <footer className="sticky bottom-0 border-t border-[#f0d9a6] bg-[#fff7e8]/90 backdrop-blur p-4 text-right">
-        <span className="text-sm text-[#4a2c2a]">管理完成后请及时重建索引以生效</span>
-      </footer>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-medium text-[var(--color-text-primary)]">{btn.label}</span>
+                      {!btn.active && (
+                        <span className="px-2 py-0.5 text-xs rounded-full bg-yellow-500/20 text-yellow-600">已禁用</span>
+                      )}
+                    </div>
+                    <p className="text-sm text-[var(--color-text-muted)] line-clamp-2">{btn.prompt}</p>
+                  </div>
+
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => openEditForm(index)}
+                      className="p-1.5 rounded-lg text-[var(--color-text-hint)] hover:text-[var(--color-gold)] hover:bg-[var(--color-bg-elevated)] transition-colors"
+                      title="编辑"
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => toggleActive(index)}
+                      className="p-1.5 rounded-lg text-[var(--color-text-hint)] hover:text-[var(--color-gold)] hover:bg-[var(--color-bg-elevated)] transition-colors"
+                      title={btn.active ? '禁用' : '启用'}
+                    >
+                      {btn.active ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
+                    </button>
+                    <button
+                      onClick={() => deleteButton(index)}
+                      className="p-1.5 rounded-lg text-[var(--color-text-hint)] hover:text-[var(--color-primary)] hover:bg-[var(--color-bg-elevated)] transition-colors"
+                      title="删除"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </main>
   );
 }
