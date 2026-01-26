@@ -166,8 +166,8 @@ function TryPageContent() {
             <ArrowLeft className="w-4 h-4" />
             <span className="text-sm hidden sm:inline">返回首页</span>
           </Link>
-          <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-            <Sparkles className="w-4 h-4 text-[var(--color-gold)]" />
+          <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm whitespace-nowrap">
+            <Sparkles className="w-4 h-4 text-[var(--color-gold)] flex-shrink-0" />
             <span className="text-[var(--color-text-muted)]">免费体验版</span>
           </div>
           <Link
@@ -185,8 +185,8 @@ function TryPageContent() {
         <section className="mb-6 sm:mb-8">
           {/* Four Pillars Card */}
           <div className="card p-3 sm:p-6">
-            <h2 className="text-base sm:text-lg font-semibold text-[var(--color-gold)] mb-3 sm:mb-4 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
-              <span className="w-1 h-5 bg-[var(--color-gold)] rounded-full" />
+            <h2 className="text-base sm:text-lg font-semibold text-[var(--color-gold)] mb-3 sm:mb-4 flex items-center gap-2 whitespace-nowrap" style={{ fontFamily: 'var(--font-display)' }}>
+              <span className="w-1 h-5 bg-[var(--color-gold)] rounded-full flex-shrink-0" />
               四柱命盘
             </h2>
 
@@ -223,7 +223,7 @@ function TryPageContent() {
             {/* Dayun Timeline */}
             {paipan && paipan.dayun && paipan.dayun.length > 0 && (
               <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-[var(--color-border)]">
-                <h3 className="text-xs sm:text-sm font-medium text-[var(--color-text-secondary)] mb-2 sm:mb-4">大运流年</h3>
+                <h3 className="text-xs sm:text-sm font-medium text-[var(--color-text-secondary)] mb-2 sm:mb-4 whitespace-nowrap">大运流年</h3>
                 <div className="flex gap-1.5 sm:gap-3 overflow-x-auto pb-2 -mx-1 px-1">
                   {paipan.dayun.slice(0, 8).map((dy, idx) => (
                     <div
@@ -245,8 +245,8 @@ function TryPageContent() {
 
         {/* AI Analysis Section */}
         <section className="card p-4 sm:p-6">
-          <h2 className="text-base sm:text-lg font-semibold text-[var(--color-gold)] mb-3 sm:mb-4 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
-            <span className="w-1 h-5 bg-[var(--color-gold)] rounded-full" />
+          <h2 className="text-base sm:text-lg font-semibold text-[var(--color-gold)] mb-3 sm:mb-4 flex items-center gap-2 whitespace-nowrap" style={{ fontFamily: 'var(--font-display)' }}>
+            <span className="w-1 h-5 bg-[var(--color-gold)] rounded-full flex-shrink-0" />
             AI 命理解读
             {isStreaming && (
               <span className="ml-2 flex items-center gap-1 text-sm font-normal text-[var(--color-text-muted)]">

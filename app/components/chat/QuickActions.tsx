@@ -13,8 +13,8 @@ export function QuickActions({
 }) {
   return (
     <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
-      <div className="flex items-center gap-2 mb-3">
-        <Sparkles className="w-4 h-4 text-[var(--color-gold)]" />
+      <div className="flex items-center gap-2 mb-3 whitespace-nowrap">
+        <Sparkles className="w-4 h-4 text-[var(--color-gold)] flex-shrink-0" />
         <span className="text-sm font-medium text-[var(--color-text-secondary)]">快捷分析</span>
       </div>
       <div className="flex flex-wrap gap-2">

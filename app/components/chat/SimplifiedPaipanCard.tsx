@@ -25,10 +25,10 @@ export function SimplifiedPaipanCard({ paipan }: SimplifiedPaipanCardProps) {
     <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-3 sm:p-4 shadow-sm h-full flex flex-col">
       {/* 标题栏 */}
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-xs sm:text-sm font-semibold text-[var(--color-text-primary)]">
+        <h3 className="text-xs sm:text-sm font-semibold text-[var(--color-text-primary)] whitespace-nowrap">
           四柱八字
         </h3>
-        <span className="text-[9px] sm:text-[10px] text-[var(--color-text-hint)]">
+        <span className="text-[9px] sm:text-[10px] text-[var(--color-text-hint)] whitespace-nowrap">
           您的命盘
         </span>
       </div>
