@@ -14,7 +14,6 @@ export type RegisterReq = {
   username: string;
   password: string;
   invitation_code: string;
-  nickname?: string;
 };
 
 export type User = {
@@ -51,7 +50,6 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [nickname, setNickname] = useState('');
   const [invitationCode, setInvitationCode] = useState('');
 
   const [agree, setAgree] = useState(true);
@@ -123,7 +121,6 @@ export default function RegisterPage() {
         username: username.trim(),
         password,
         invitation_code: invitationCode.trim(),
-        nickname: nickname || undefined,
       };
 
       const resp = await postJSON<RegisterResp>(api('/auth/web/register'), body);
@@ -144,7 +141,7 @@ export default function RegisterPage() {
         const fallbackUser: User = {
           id: (resp as { id?: number }).id ?? 0,
           username: (resp as { username?: string }).username ?? username,
-          nickname: (resp as { nickname?: string }).nickname ?? nickname,
+          nickname: (resp as { nickname?: string }).nickname ?? null,
           avatar_url: (resp as { avatar_url?: string }).avatar_url ?? null,
           email: (resp as { email?: string }).email ?? email,
         };
@@ -320,17 +317,6 @@ export default function RegisterPage() {
               </div>
               <div className="mt-1 text-xs text-[var(--color-text-muted)]">密码强度：{pwStrength.label}</div>
             </div>
-          </div>
-
-          {/* Nickname */}
-          <div>
-            <label className="block text-xs text-[var(--color-text-secondary)] mb-1.5">昵称（可选）</label>
-            <input
-              className="input"
-              value={nickname}
-              onChange={(e) => setNickname(e.target.value)}
-              placeholder="展示给其他用户的称呼"
-            />
           </div>
 
           {/* Agreement */}

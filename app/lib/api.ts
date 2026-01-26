@@ -9,10 +9,17 @@ export const api = (path: string) => {
   return API_BASE ? `${API_BASE}${pathWithPrefix}` : pathWithPrefix;
 };
 
-export async function postJSON<T>(url: string, body: unknown): Promise<T> {
+export async function postJSON<T>(
+  url: string,
+  body: unknown,
+  options?: { headers?: Record<string, string> }
+): Promise<T> {
   const r = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...options?.headers,
+    },
     credentials: 'include',
     body: JSON.stringify(body),
   });
