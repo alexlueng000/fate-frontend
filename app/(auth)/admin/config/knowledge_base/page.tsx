@@ -226,17 +226,18 @@ export default function KBAdminPage() {
   };
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 space-y-8">
-      {/* Back Link */}
-      <Link
-        href="/admin"
-        className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-colors"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        返回管理后台
-      </Link>
+    <main className="min-h-screen pt-20 pb-8 px-4">
+      <div className="max-w-6xl mx-auto space-y-6">
+        {/* Back Link */}
+        <Link
+          href="/admin"
+          className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          返回管理后台
+        </Link>
 
-      <h1 className="text-2xl font-bold">知识库管理</h1>
+        <h1 className="text-2xl font-bold">知识库管理</h1>
 
       {errMsg && (
         <div className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-red-700">
@@ -431,6 +432,7 @@ export default function KBAdminPage() {
           </div>
         </div>
       </section>
-    </div>
+      </div>
+    </main>
   );
 }
