@@ -24,8 +24,14 @@ export async function postJSON<T>(
     body: JSON.stringify(body),
   });
   if (!r.ok) {
-    const msg = await r.text().catch(() => '');
-    throw new Error(msg || `HTTP ${r.status}`);
+    const text = await r.text().catch(() => '');
+    // 尝试解析 JSON 格式的错误响应
+    try {
+      const json = JSON.parse(text);
+      throw new Error(json.detail || json.message || text || `HTTP ${r.status}`);
+    } catch {
+      throw new Error(text || `HTTP ${r.status}`);
+    }
   }
   return r.json() as Promise<T>;
 }

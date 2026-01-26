@@ -20,16 +20,16 @@ type MarkdownViewProps = {
 
 const components: Components = {
   h1: ({ node, ...props }) => (
-    <h1 className="text-xl font-bold mt-4 mb-3 text-[var(--color-text-primary)]" style={{ wordBreak: 'keep-all', overflowWrap: 'break-word' }} {...props} />
+    <h1 className="text-xl font-bold mt-4 mb-3 text-[var(--color-text-primary)]" {...props} />
   ),
   h2: ({ node, ...props }) => (
-    <h2 className="text-lg font-bold mt-3 mb-2 text-[var(--color-text-primary)]" style={{ wordBreak: 'keep-all', overflowWrap: 'break-word' }} {...props} />
+    <h2 className="text-lg font-bold mt-3 mb-2 text-[var(--color-text-primary)]" {...props} />
   ),
   h3: ({ node, ...props }) => (
-    <h3 className="text-base font-bold mt-3 mb-2 text-[#D4380D] font-[var(--font-display)] border-b border-[rgba(212,56,13,0.2)] pb-1" style={{ wordBreak: 'keep-all', overflowWrap: 'break-word' }} {...props} />
+    <h3 className="text-base font-bold mt-3 mb-2 text-[#D4380D] font-[var(--font-display)] border-b border-[rgba(212,56,13,0.2)] pb-1" {...props} />
   ),
   h4: ({ node, ...props }) => (
-    <h4 className="text-sm font-bold mt-2 mb-1 text-[#D4380D] font-[var(--font-display)]" style={{ wordBreak: 'keep-all', overflowWrap: 'break-word' }} {...props} />
+    <h4 className="text-sm font-bold mt-2 mb-1 text-[#D4380D] font-[var(--font-display)]" {...props} />
   ),
   h5: ({ node, ...props }) => (
     <h5 className="text-base font-medium my-1" {...props} />

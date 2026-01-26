@@ -65,14 +65,13 @@ export default function RegisterPage() {
   const [codeError, setCodeError] = useState<string | null>(null);
 
   const emailOk = useMemo(() => validateEmail(email), [email]);
-  const unameOk = useMemo(() => username.trim().length >= 3, [username]);
   const pwStrength = useMemo(() => passwordStrength(password), [password]);
   const pwOk = useMemo(() => password.length >= 8 && pwStrength.score >= 2, [password, pwStrength]);
   const codeOk = useMemo(() => invitationCode.trim().length >= 4, [invitationCode]);
 
   const canSubmit = useMemo(() => {
-    return emailOk && unameOk && pwOk && codeOk && codeValid === true && agree && !submitting;
-  }, [emailOk, unameOk, pwOk, codeOk, codeValid, agree, submitting]);
+    return emailOk && username.trim().length > 0 && pwOk && codeOk && codeValid === true && agree && !submitting;
+  }, [emailOk, username, pwOk, codeOk, codeValid, agree, submitting]);
 
   // 验证邀请码
   async function validateInvitationCode() {
@@ -110,7 +109,7 @@ export default function RegisterPage() {
     if (!codeOk) { setErr('请输入邀请码'); return; }
     if (codeValid !== true) { setErr('请输入有效的邀请码'); return; }
     if (!emailOk) { setErr('请输入正确的邮箱'); return; }
-    if (!unameOk) { setErr('用户名至少 3 个字符'); return; }
+    if (!username.trim()) { setErr('请输入用户名'); return; }
     if (!pwOk) { setErr('密码至少 8 位，且强度需达到一般以上'); return; }
     if (!agree) { setErr('请先同意服务条款与隐私政策'); return; }
 
@@ -278,7 +277,7 @@ export default function RegisterPage() {
                 className="input !pl-12"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="至少3个字符"
+                placeholder="请输入用户名"
                 autoComplete="username"
               />
             </div>
