@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Settings, MessageSquare, Zap, BookOpen, ChevronRight, ArrowLeft } from 'lucide-react';
+import { Settings, MessageSquare, Zap, BookOpen, Ticket, ChevronRight, ArrowLeft } from 'lucide-react';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -40,6 +40,13 @@ export default function AdminPage() {
   }
 
   const menuItems = [
+    {
+      href: '/admin/invitation-codes',
+      icon: <Ticket className="w-6 h-6" />,
+      title: '邀请码管理',
+      description: '创建和管理用户注册邀请码',
+      color: '#22c55e',
+    },
     {
       href: '/admin/config/system_prompt',
       icon: <MessageSquare className="w-6 h-6" />,

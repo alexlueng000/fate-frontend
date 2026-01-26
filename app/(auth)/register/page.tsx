@@ -5,17 +5,16 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { postJSON, api } from '@/app/lib/api';
 import { saveAuth, setUserCache } from '@/app/lib/auth';
-import { Mail, User as UserIcon, Lock, Eye, EyeOff, Loader2, Phone, Hash, Sparkles } from 'lucide-react';
+import { Mail, User as UserIcon, Lock, Eye, EyeOff, Loader2, Ticket, Sparkles, CheckCircle, XCircle } from 'lucide-react';
 
 const BAGUA = ['☰', '☱', '☲', '☳', '☴', '☵', '☶', '☷'];
 
 export type RegisterReq = {
   email: string;
-  username?: string;
-  password?: string;
+  username: string;
+  password: string;
+  invitation_code: string;
   nickname?: string;
-  phone?: string;
-  code?: string;
 };
 
 export type User = {
@@ -53,10 +52,8 @@ export default function RegisterPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [nickname, setNickname] = useState('');
-  const [phone, setPhone] = useState('');
-  const [code, setCode] = useState('');
+  const [invitationCode, setInvitationCode] = useState('');
 
-  const [mode, setMode] = useState<'account' | 'phone'>('account');
   const [agree, setAgree] = useState(true);
   const [showPw, setShowPw] = useState(false);
 
@@ -64,43 +61,70 @@ export default function RegisterPage() {
   const [err, setErr] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
 
+  // 邀请码验证状态
+  const [codeValidating, setCodeValidating] = useState(false);
+  const [codeValid, setCodeValid] = useState<boolean | null>(null);
+  const [codeError, setCodeError] = useState<string | null>(null);
+
   const emailOk = useMemo(() => validateEmail(email), [email]);
   const unameOk = useMemo(() => username.trim().length >= 3, [username]);
   const pwStrength = useMemo(() => passwordStrength(password), [password]);
   const pwOk = useMemo(() => password.length >= 8 && pwStrength.score >= 2, [password, pwStrength]);
-  const phoneOk = useMemo(() => /^\d{11}$/.test(phone), [phone]);
-  const codeOk = useMemo(() => code.length >= 4, [code]);
+  const codeOk = useMemo(() => invitationCode.trim().length >= 4, [invitationCode]);
 
   const canSubmit = useMemo(() => {
-    if (!emailOk) return false;
-    if (mode === 'account') return unameOk && pwOk && agree && !submitting;
-    if (mode === 'phone') return phoneOk && codeOk && agree && !submitting;
-    return false;
-  }, [mode, emailOk, unameOk, pwOk, phoneOk, codeOk, agree, submitting]);
+    return emailOk && unameOk && pwOk && codeOk && codeValid === true && agree && !submitting;
+  }, [emailOk, unameOk, pwOk, codeOk, codeValid, agree, submitting]);
+
+  // 验证邀请码
+  async function validateInvitationCode() {
+    if (!codeOk) {
+      setCodeValid(null);
+      setCodeError(null);
+      return;
+    }
+
+    setCodeValidating(true);
+    setCodeError(null);
+
+    try {
+      const resp = await postJSON<{ valid: boolean; message: string }>(
+        api('/auth/validate-invitation-code'),
+        { code: invitationCode.trim() }
+      );
+      setCodeValid(resp.valid);
+      if (!resp.valid) {
+        setCodeError(resp.message);
+      }
+    } catch (e: unknown) {
+      setCodeValid(false);
+      setCodeError((e as Error)?.message || '验证失败');
+    } finally {
+      setCodeValidating(false);
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErr(null);
     setOk(null);
 
+    if (!codeOk) { setErr('请输入邀请码'); return; }
+    if (codeValid !== true) { setErr('请输入有效的邀请码'); return; }
     if (!emailOk) { setErr('请输入正确的邮箱'); return; }
-    if (mode === 'account' && !unameOk) { setErr('用户名至少 3 个字符'); return; }
-    if (mode === 'account' && !pwOk) { setErr('密码至少 8 位，且强度需达到一般以上'); return; }
-    if (mode === 'phone' && !phoneOk) { setErr('请输入正确的手机号'); return; }
-    if (mode === 'phone' && !codeOk) { setErr('请输入验证码'); return; }
+    if (!unameOk) { setErr('用户名至少 3 个字符'); return; }
+    if (!pwOk) { setErr('密码至少 8 位，且强度需达到一般以上'); return; }
     if (!agree) { setErr('请先同意服务条款与隐私政策'); return; }
 
     setSubmitting(true);
     try {
-      const body: RegisterReq = { email };
-      if (mode === 'account') {
-        body.username = username.trim();
-        body.password = password;
-        body.nickname = nickname || undefined;
-      } else {
-        body.phone = phone;
-        body.code = code;
-      }
+      const body: RegisterReq = {
+        email,
+        username: username.trim(),
+        password,
+        invitation_code: invitationCode.trim(),
+        nickname: nickname || undefined,
+      };
 
       const resp = await postJSON<RegisterResp>(api('/auth/web/register'), body);
 
@@ -178,34 +202,8 @@ export default function RegisterPage() {
             创建账户
           </h1>
           <p className="text-xs text-[var(--color-text-muted)]">
-            注册以解锁完整功能
+            使用邀请码注册
           </p>
-        </div>
-
-        {/* Tabs */}
-        <div className="flex gap-2 p-1 rounded-xl bg-[var(--color-bg-elevated)] mb-4">
-          <button
-            type="button"
-            onClick={() => setMode('account')}
-            className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${
-              mode === 'account'
-                ? 'bg-[var(--color-bg-card)] text-[var(--color-text-primary)] shadow-sm'
-                : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]'
-            }`}
-          >
-            邮箱注册
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode('phone')}
-            className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${
-              mode === 'phone'
-                ? 'bg-[var(--color-bg-card)] text-[var(--color-text-primary)] shadow-sm'
-                : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]'
-            }`}
-          >
-            手机注册
-          </button>
         </div>
 
         {/* Error/Success Alert */}
@@ -222,141 +220,118 @@ export default function RegisterPage() {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-3">
-          {mode === 'account' ? (
-            <>
-              {/* Email */}
-              <div>
-                <label className="block text-xs text-[var(--color-text-secondary)] mb-1.5">邮箱</label>
-                <div className="relative">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
-                  <input
-                    className="input !pl-12"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    type="email"
-                    autoComplete="email"
-                  />
-                </div>
-                {!emailOk && email.length > 0 && (
-                  <p className="mt-1 text-xs text-[var(--color-primary)]">邮箱格式不正确</p>
-                )}
+          {/* Invitation Code - First and prominent */}
+          <div>
+            <label className="block text-xs text-[var(--color-text-secondary)] mb-1.5">
+              邀请码 <span className="text-[var(--color-primary)]">*</span>
+            </label>
+            <div className="relative">
+              <Ticket className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
+              <input
+                className="input !pl-12 !pr-12"
+                value={invitationCode}
+                onChange={(e) => {
+                  setInvitationCode(e.target.value.toUpperCase());
+                  setCodeValid(null);
+                  setCodeError(null);
+                }}
+                onBlur={validateInvitationCode}
+                placeholder="请输入邀请码"
+                autoComplete="off"
+              />
+              <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                {codeValidating && <Loader2 className="w-5 h-5 animate-spin text-[var(--color-text-hint)]" />}
+                {!codeValidating && codeValid === true && <CheckCircle className="w-5 h-5 text-green-500" />}
+                {!codeValidating && codeValid === false && <XCircle className="w-5 h-5 text-[var(--color-primary)]" />}
               </div>
+            </div>
+            {codeError && (
+              <p className="mt-1 text-xs text-[var(--color-primary)]">{codeError}</p>
+            )}
+            {codeValid === true && (
+              <p className="mt-1 text-xs text-green-500">邀请码有效</p>
+            )}
+          </div>
 
-              {/* Username */}
-              <div>
-                <label className="block text-xs text-[var(--color-text-secondary)] mb-1.5">用户名</label>
-                <div className="relative">
-                  <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
-                  <input
-                    className="input !pl-12"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="至少3个字符"
-                    autoComplete="username"
-                  />
-                </div>
-              </div>
+          {/* Email */}
+          <div>
+            <label className="block text-xs text-[var(--color-text-secondary)] mb-1.5">邮箱</label>
+            <div className="relative">
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
+              <input
+                className="input !pl-12"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                type="email"
+                autoComplete="email"
+              />
+            </div>
+            {!emailOk && email.length > 0 && (
+              <p className="mt-1 text-xs text-[var(--color-primary)]">邮箱格式不正确</p>
+            )}
+          </div>
 
-              {/* Password */}
-              <div>
-                <label className="block text-xs text-[var(--color-text-secondary)] mb-1.5">密码</label>
-                <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
-                  <input
-                    className="input !pl-12 pr-12"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    type={showPw ? 'text' : 'password'}
-                    placeholder="至少8位"
-                    autoComplete="new-password"
-                  />
-                  <button
-                    type="button"
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--color-text-hint)] hover:text-[var(--color-text-secondary)]"
-                    onClick={() => setShowPw((v) => !v)}
-                  >
-                    {showPw ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
-                </div>
-                <div className="mt-2">
-                  <div className="h-1.5 w-full rounded-full bg-[var(--color-bg-elevated)] overflow-hidden">
-                    <div
-                      className="h-full transition-all"
-                      style={{
-                        width: `${(pwStrength.score / 4) * 100}%`,
-                        backgroundColor: pwStrength.score >= 3 ? '#22c55e' : pwStrength.score === 2 ? '#f59e0b' : '#ef4444',
-                      }}
-                    />
-                  </div>
-                  <div className="mt-1 text-xs text-[var(--color-text-muted)]">密码强度：{pwStrength.label}</div>
-                </div>
-              </div>
+          {/* Username */}
+          <div>
+            <label className="block text-xs text-[var(--color-text-secondary)] mb-1.5">用户名</label>
+            <div className="relative">
+              <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
+              <input
+                className="input !pl-12"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="至少3个字符"
+                autoComplete="username"
+              />
+            </div>
+          </div>
 
-              {/* Nickname */}
-              <div>
-                <label className="block text-xs text-[var(--color-text-secondary)] mb-1.5">昵称（可选）</label>
-                <input
-                  className="input"
-                  value={nickname}
-                  onChange={(e) => setNickname(e.target.value)}
-                  placeholder="展示给其他用户的称呼"
+          {/* Password */}
+          <div>
+            <label className="block text-xs text-[var(--color-text-secondary)] mb-1.5">密码</label>
+            <div className="relative">
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
+              <input
+                className="input !pl-12 pr-12"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                type={showPw ? 'text' : 'password'}
+                placeholder="至少8位"
+                autoComplete="new-password"
+              />
+              <button
+                type="button"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--color-text-hint)] hover:text-[var(--color-text-secondary)]"
+                onClick={() => setShowPw((v) => !v)}
+              >
+                {showPw ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
+            <div className="mt-2">
+              <div className="h-1.5 w-full rounded-full bg-[var(--color-bg-elevated)] overflow-hidden">
+                <div
+                  className="h-full transition-all"
+                  style={{
+                    width: `${(pwStrength.score / 4) * 100}%`,
+                    backgroundColor: pwStrength.score >= 3 ? '#22c55e' : pwStrength.score === 2 ? '#f59e0b' : '#ef4444',
+                  }}
                 />
               </div>
-            </>
-          ) : (
-            <>
-              {/* Email for phone mode */}
-              <div>
-                <label className="block text-sm text-[var(--color-text-secondary)] mb-2">邮箱</label>
-                <div className="relative">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
-                  <input
-                    className="input !pl-12"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    type="email"
-                  />
-                </div>
-              </div>
+              <div className="mt-1 text-xs text-[var(--color-text-muted)]">密码强度：{pwStrength.label}</div>
+            </div>
+          </div>
 
-              {/* Phone */}
-              <div>
-                <label className="block text-xs text-[var(--color-text-secondary)] mb-1.5">手机号</label>
-                <div className="relative">
-                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
-                  <input
-                    className="input !pl-12"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="11位手机号"
-                    inputMode="numeric"
-                  />
-                </div>
-              </div>
-
-              {/* Code */}
-              <div>
-                <label className="block text-xs text-[var(--color-text-secondary)] mb-1.5">验证码</label>
-                <div className="flex gap-3">
-                  <div className="relative flex-1">
-                    <Hash className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
-                    <input
-                      className="input !pl-12"
-                      value={code}
-                      onChange={(e) => setCode(e.target.value)}
-                      placeholder="输入验证码"
-                      inputMode="numeric"
-                    />
-                  </div>
-                  <button type="button" className="btn btn-secondary shrink-0 px-4">
-                    获取验证码
-                  </button>
-                </div>
-              </div>
-            </>
-          )}
+          {/* Nickname */}
+          <div>
+            <label className="block text-xs text-[var(--color-text-secondary)] mb-1.5">昵称（可选）</label>
+            <input
+              className="input"
+              value={nickname}
+              onChange={(e) => setNickname(e.target.value)}
+              placeholder="展示给其他用户的称呼"
+            />
+          </div>
 
           {/* Agreement */}
           <label className="flex items-start gap-3 text-sm cursor-pointer">
