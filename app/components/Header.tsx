@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useUser, logout } from '@/app/lib/auth';
 import { ChevronDown, LogOut, User, Settings, LayoutDashboard } from 'lucide-react';
 
@@ -59,17 +60,19 @@ export default function Header() {
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
         {/* Logo */}
         <Link href="/" className="group flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-gold)] flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
-            <span className="text-white text-lg font-bold" style={{ fontFamily: 'var(--font-display)' }}>
-              盏
-            </span>
-          </div>
-          <span
+          <Image
+            src="/yifan_logo.png"
+            alt="易凡文化"
+            width={160}
+            height={160}
+            className="group-hover:scale-105 transition-transform"
+          />
+          {/* <span
             className="text-xl font-bold text-gradient-gold group-hover:opacity-80 transition-opacity hidden sm:inline"
             style={{ fontFamily: 'var(--font-display)' }}
           >
-            一盏大师
-          </span>
+            易凡文化
+          </span> */}
         </Link>
 
         {/* Right Actions */}

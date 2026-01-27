@@ -19,6 +19,7 @@ import {
   ChevronUp,
   MapPin,
 } from 'lucide-react';
+import Image from 'next/image';
 
 // 八卦符号
 const BAGUA = ['☰', '☱', '☲', '☳', '☴', '☵', '☶', '☷'];
@@ -84,13 +85,17 @@ export default function LandingPage() {
       {/* Hero Section */}
       <section className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 py-20">
         <div className="max-w-5xl mx-auto text-center w-full">
-          {/* Badge */}
+          {/* Social Proof Badge */}
           <div
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-8 opacity-0 ${mounted ? 'animate-fade-in' : ''}`}
+            className={`inline-flex items-center gap-3 px-5 py-2.5 rounded-full glass mb-8 opacity-0 ${mounted ? 'animate-fade-in' : ''}`}
           >
-            <Sparkles className="w-4 h-4 text-[var(--color-gold)]" />
+            <div className="flex -space-x-2">
+              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-gold)] flex items-center justify-center text-white text-xs font-medium border-2 border-white">张</div>
+              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[var(--color-gold)] to-[var(--color-tech)] flex items-center justify-center text-white text-xs font-medium border-2 border-white">李</div>
+              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[var(--color-tech)] to-[var(--color-primary)] flex items-center justify-center text-white text-xs font-medium border-2 border-white">王</div>
+            </div>
             <span className="text-sm text-[var(--color-text-secondary)]">
-              传统智慧 × AI 分析
+              <span className="text-[var(--color-primary)] font-semibold">10,000+</span> 用户已获得解读
             </span>
           </div>
 
@@ -226,11 +231,79 @@ export default function LandingPage() {
               无需注册，立即体验 · 数据加密存储
             </p>
           </div>
+
+          {/* Trust Indicators */}
+          <div className={`flex items-center justify-center gap-6 mt-8 text-[var(--color-text-hint)] text-sm opacity-0 ${mounted ? 'animate-fade-in delay-400' : ''}`}>
+            <div className="flex items-center gap-2">
+              <Shield className="w-4 h-4" />
+              <span>数据加密</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Zap className="w-4 h-4" />
+              <span>秒级响应</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4" />
+              <span>AI 深度解读</span>
+            </div>
+          </div>
         </div>
 
         {/* Scroll Indicator */}
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-float">
           <ChevronDown className="w-6 h-6 text-[var(--color-text-hint)]" />
+        </div>
+      </section>
+
+      {/* Stats Bar Section */}
+      <section className="relative z-10 py-12 px-4 bg-gradient-to-r from-[var(--color-primary)]/5 via-[var(--color-gold)]/5 to-[var(--color-primary)]/5">
+        <div className="max-w-4xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <StatItem number="10,000+" label="累计解读" />
+            <StatItem number="98%" label="用户满意度" />
+            <StatItem number="3分钟" label="平均响应" />
+            <StatItem number="24/7" label="全天候服务" />
+          </div>
+        </div>
+      </section>
+
+      {/* Vision Section */}
+      <section className="relative z-10 py-24 px-4 overflow-hidden">
+        <div className="max-w-4xl mx-auto text-center relative">
+          <div className="mb-12">
+            <h2
+              className="text-3xl md:text-5xl font-bold mb-6"
+              style={{ fontFamily: 'var(--font-display)' }}
+            >
+              <span className="text-[var(--color-text-primary)]">在</span>
+              <span className="text-gradient-primary"> 50/50 </span>
+              <span className="text-[var(--color-text-primary)]">的决策中</span>
+              <br />
+              <span className="text-gradient-gold">增加一点可能性</span>
+            </h2>
+            <p className="text-lg text-[var(--color-text-secondary)] max-w-2xl mx-auto">
+              人生充满选择，当理性分析无法给出答案时，
+              传统智慧或许能为你提供另一个视角
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            <VisionCard
+              icon="🎯"
+              title="不是预测命运"
+              description="而是理解自己的能量特质与潜在优势"
+            />
+            <VisionCard
+              icon="🧭"
+              title="不是迷信依赖"
+              description="而是在迷茫时获得一个参考方向"
+            />
+            <VisionCard
+              icon="💡"
+              title="不是绝对答案"
+              description="而是为决策增加一个思考维度"
+            />
+          </div>
         </div>
       </section>
 
@@ -305,7 +378,7 @@ export default function LandingPage() {
               className="text-3xl md:text-4xl font-bold text-[var(--color-text-primary)] mb-4"
               style={{ fontFamily: 'var(--font-display)' }}
             >
-              为什么选择一盏大师
+              为什么选择易凡
             </h2>
             <div className="ornament-line w-24 mx-auto mt-4" />
           </div>
@@ -328,6 +401,42 @@ export default function LandingPage() {
               title="隐私安全"
               description="端到端加密，数据仅你可见，随时可删除"
               gradient="from-[var(--color-tech)] to-[var(--color-tech-light)]"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section className="relative z-10 py-24 px-4 bg-[var(--color-bg-deep)]">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <h2
+              className="text-3xl md:text-4xl font-bold text-[var(--color-text-primary)] mb-4"
+              style={{ fontFamily: 'var(--font-display)' }}
+            >
+              用户真实反馈
+            </h2>
+            <div className="ornament-line w-24 mx-auto mt-4" />
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            <TestimonialCard
+              content="在考虑是否跳槽时用了一盏大师，虽然最终决定还是自己做的，但它帮我理清了很多思路，看到了自己没注意到的优势。"
+              author="张女士"
+              role="互联网产品经理"
+              avatar="张"
+            />
+            <TestimonialCard
+              content="作为一个理工科出身的人，本来对这类东西持怀疑态度。但它的分析确实很有逻辑，不是那种模糊的套话，而是具体到我的情况。"
+              author="李先生"
+              role="软件工程师"
+              avatar="李"
+            />
+            <TestimonialCard
+              content="给我妈用了一下，她说比她之前找的算命先生讲得还清楚，关键是随时可以问问题，不用担心被忽悠。"
+              author="王同学"
+              role="大学生"
+              avatar="王"
             />
           </div>
         </div>
@@ -436,10 +545,14 @@ export default function LandingPage() {
       <footer className="relative z-10 border-t border-[var(--color-border)] py-8 px-4">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-gold)] flex items-center justify-center">
-              <span className="text-white text-sm font-bold">盏</span>
-            </div>
-            <span className="text-[var(--color-text-secondary)]">© 2026 广州乐与学文化旅游有限公司</span>
+            <Image
+              src="/yifan_logo.png"
+              alt="易凡文化"
+              width={32}
+              height={32}
+              className="rounded-lg"
+            />
+            <span className="text-[var(--color-text-secondary)]">© 2026 广州乐与学文化旅游有限公司 All copyright reserved.</span>
           </div>
           <nav className="flex items-center gap-6 text-sm text-[var(--color-text-muted)]">
             <Link href="/privacy" className="hover:text-[var(--color-gold)] transition-colors">
@@ -459,6 +572,73 @@ export default function LandingPage() {
 }
 
 /* Sub Components */
+
+function StatItem({ number, label }: { number: string; label: string }) {
+  return (
+    <div className="text-center">
+      <div className="text-2xl md:text-3xl font-bold text-gradient-primary mb-1">
+        {number}
+      </div>
+      <div className="text-sm text-[var(--color-text-muted)]">{label}</div>
+    </div>
+  );
+}
+
+function VisionCard({
+  icon,
+  title,
+  description,
+}: {
+  icon: string;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="card card-hover p-6 text-center group">
+      <div className="text-4xl mb-4 group-hover:scale-110 transition-transform">
+        {icon}
+      </div>
+      <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">
+        {title}
+      </h3>
+      <p className="text-sm text-[var(--color-text-muted)]">
+        {description}
+      </p>
+    </div>
+  );
+}
+
+function TestimonialCard({
+  content,
+  author,
+  role,
+  avatar,
+}: {
+  content: string;
+  author: string;
+  role: string;
+  avatar: string;
+}) {
+  return (
+    <div className="card card-hover p-6 relative">
+      <div className="absolute top-4 left-4 text-4xl text-[var(--color-gold)] opacity-20 font-serif">
+        "
+      </div>
+      <p className="text-[var(--color-text-secondary)] mb-6 pt-6 leading-relaxed">
+        {content}
+      </p>
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-gold)] flex items-center justify-center text-white font-medium">
+          {avatar}
+        </div>
+        <div>
+          <div className="font-medium text-[var(--color-text-primary)]">{author}</div>
+          <div className="text-sm text-[var(--color-text-muted)]">{role}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function FeatureCard({
   icon,
