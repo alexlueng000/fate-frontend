@@ -3,27 +3,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useUser, fetchMe, logout } from '@/app/lib/auth';
+import { useUser, logout } from '@/app/lib/auth';
 import { ChevronDown, LogOut, User, Settings, LayoutDashboard } from 'lucide-react';
 
 export default function Header() {
   const router = useRouter();
-  const { user: me, setUser } = useUser();
+  const { user: me } = useUser();
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
-
-  // 拉取用户信息 & 登录成功后跳转
-  useEffect(() => {
-    if (!me) {
-      void fetchMe().then((u) => {
-        if (u) {
-          setUser(u);
-          router.push('/panel');
-        }
-      });
-    }
-  }, [me, setUser, router]);
 
   // 滚动态
   useEffect(() => {

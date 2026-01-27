@@ -97,6 +97,8 @@ export function saveAuth(resp: LoginResp) {
   if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
     if (resp.access_token) localStorage.setItem('auth_token', resp.access_token);
   }
+  // 重置 fetchMe 状态，允许重新获取用户信息
+  resetFetchMeState();
   setUserCache(resp.user);
 }
 
@@ -120,6 +122,8 @@ export function clearAuth() {
   }
   // 清理所有聊天相关数据
   clearAllChatData();
+  // 重置 fetchMe 状态
+  resetFetchMeState();
   setUserCache(null);
 }
 
@@ -131,18 +135,46 @@ export function getAuthToken(): string | null {
   return localStorage.getItem('auth_token');
 }
 
+// 防止重复请求的标记
+let _fetchMePromise: Promise<User | null> | null = null;
+let _fetchMeAttempted = false;
+
 export async function fetchMe(): Promise<User | null> {
+  // 如果已经尝试过且没有 token，直接返回 null
   const token = getAuthToken();
+  if (_fetchMeAttempted && !token) {
+    return null;
+  }
+
+  // 如果正在请求中，返回同一个 Promise
+  if (_fetchMePromise) {
+    return _fetchMePromise;
+  }
+
   const headers: Record<string, string> = {};
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  try {
-    const resp = await fetch(api('/me'), { headers, credentials: 'include' });
-    if (!resp.ok) return null;
-    return (await resp.json()) as User;
-  } catch {
-    return null;
-  }
+  _fetchMePromise = (async () => {
+    try {
+      const resp = await fetch(api('/me'), { headers, credentials: 'include' });
+      _fetchMeAttempted = true;
+      if (!resp.ok) return null;
+      return (await resp.json()) as User;
+    } catch {
+      _fetchMeAttempted = true;
+      return null;
+    } finally {
+      _fetchMePromise = null;
+    }
+  })();
+
+  return _fetchMePromise;
+}
+
+// 重置 fetchMe 状态（登录/登出时调用）
+export function resetFetchMeState() {
+  _fetchMePromise = null;
+  _fetchMeAttempted = false;
 }
 
 export async function logout(): Promise<void> {

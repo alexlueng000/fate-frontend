@@ -473,6 +473,17 @@ body {
   font-weight: 600;
 }
 
+/* 确保标题是块级元素，防止最后一个字换行 */
+.msg-md h1,
+.msg-md h2,
+.msg-md h3,
+.msg-md h4,
+.msg-md h5,
+.msg-md h6 {
+  display: block;
+  width: 100%;
+}
+
 /* ==================== Bagua Pattern Background ==================== */
 .bagua-pattern {
   position: absolute;
