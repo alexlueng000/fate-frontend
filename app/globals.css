@@ -473,6 +473,36 @@ body {
   font-weight: 600;
 }
 
+/* 修复标题换行问题 - 强制 CJK 文字不在字符间断行 */
+.msg-md h1,
+.msg-md h2,
+.msg-md h3,
+.msg-md h4,
+.msg-md h5,
+.msg-md h6 {
+  display: block !important;
+  width: 100% !important;
+  word-break: keep-all !important;
+  overflow-wrap: break-word !important;
+}
+
+/* h3 下划线使用伪元素实现，确保在整个标题块底部 */
+.msg-md h3 {
+  position: relative;
+  border-bottom: none !important;
+  padding-bottom: 0.5rem;
+}
+
+.msg-md h3::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background-color: rgba(212, 56, 13, 0.2);
+}
+
 /* ==================== Bagua Pattern Background ==================== */
 .bagua-pattern {
   position: absolute;
