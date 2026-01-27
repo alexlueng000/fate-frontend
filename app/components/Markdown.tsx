@@ -3,7 +3,7 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import remarkBreaks from 'remark-breaks';
+// import remarkBreaks from 'remark-breaks';  // 暂时禁用，可能导致标题换行问题
 import rehypeRaw from 'rehype-raw';
 import rehypeHighlight from 'rehype-highlight';
 import type { Components } from 'react-markdown';
@@ -116,7 +116,7 @@ export default function MarkdownView({ content }: MarkdownViewProps) {
   return (
     <div className="msg-md">
       <ReactMarkdown
-        remarkPlugins={[remarkGfm, remarkBreaks]}
+        remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeRaw, rehypeHighlight]}
         components={components}
       >
