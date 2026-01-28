@@ -84,7 +84,7 @@ export default function WuxingRadar({ data = defaultData }: WuxingRadarProps) {
               borderRadius: 'var(--radius-md)',
               color: 'var(--color-text-primary)',
             }}
-            formatter={(value: number, name: string) => [`${value}%`, name]}
+            formatter={(value, name) => [`${value ?? 0}%`, name as string]}
           />
         </RadarChart>
       </ResponsiveContainer>
