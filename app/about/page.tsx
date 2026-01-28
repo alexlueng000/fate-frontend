@@ -3,11 +3,13 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowLeft, Target, Bot, MessageCircle, AlertTriangle, Mail, AtSign } from 'lucide-react';
+import Footer from '@/app/components/Footer';
 
 export default function AboutPage() {
   return (
-    <main className="min-h-screen pt-20 pb-12 px-4">
-      <div className="max-w-4xl mx-auto">
+    <main className="min-h-screen flex flex-col pt-20">
+      <div className="flex-1 pb-12 px-4">
+        <div className="max-w-4xl mx-auto">
         {/* 返回链接 */}
         <Link
           href="/"
@@ -121,14 +123,10 @@ export default function AboutPage() {
               </div>
             </div>
           </div>
-
-          {/* 底部版权 */}
-          <div className="text-center py-8 text-[var(--color-text-muted)] text-sm">
-            <p>Copyright © 2024 FateInsight</p>
-            <p>All Rights Reserved</p>
-          </div>
+        </div>
         </div>
       </div>
+      <Footer />
     </main>
   );
 }

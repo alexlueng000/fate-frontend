@@ -2,11 +2,13 @@
 
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
+import Footer from '@/app/components/Footer';
 
 export default function TermsPage() {
   return (
-    <main className="min-h-screen pt-20 pb-12 px-4">
-      <div className="max-w-4xl mx-auto">
+    <main className="min-h-screen flex flex-col pt-20">
+      <div className="flex-1 pb-12 px-4">
+        <div className="max-w-4xl mx-auto">
         {/* 返回链接 */}
         <Link
           href="/"
@@ -112,7 +114,9 @@ export default function TermsPage() {
             </p>
           </section>
         </div>
+        </div>
       </div>
+      <Footer />
     </main>
   );
 }

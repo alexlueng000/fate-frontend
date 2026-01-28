@@ -2,11 +2,13 @@
 
 import Link from 'next/link';
 import { ArrowLeft, Shield, Lock, Eye, Database } from 'lucide-react';
+import Footer from '@/app/components/Footer';
 
 export default function PrivacyPage() {
   return (
-    <main className="min-h-screen pt-20 pb-12 px-4">
-      <div className="max-w-4xl mx-auto">
+    <main className="min-h-screen flex flex-col pt-20">
+      <div className="flex-1 pb-12 px-4">
+        <div className="max-w-4xl mx-auto">
         {/* 返回链接 */}
         <Link
           href="/"
@@ -178,8 +180,10 @@ export default function PrivacyPage() {
               我们将在收到您的请求后15个工作日内予以回复。
             </p>
           </div>
+          </div>
         </div>
       </div>
+      <Footer />
     </main>
   );
 }

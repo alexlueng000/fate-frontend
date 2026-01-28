@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useUser, logout } from '@/app/lib/auth';
-import { ChevronDown, LogOut, User, Settings, LayoutDashboard } from 'lucide-react';
+import { ChevronDown, LogOut, User, Settings, LayoutDashboard, HelpCircle, Info } from 'lucide-react';
 
 export default function Header() {
   const router = useRouter();
@@ -67,13 +67,25 @@ export default function Header() {
             height={160}
             className="group-hover:scale-105 transition-transform"
           />
-          {/* <span
-            className="text-xl font-bold text-gradient-gold group-hover:opacity-80 transition-opacity hidden sm:inline"
-            style={{ fontFamily: 'var(--font-display)' }}
-          >
-            易凡文化
-          </span> */}
         </Link>
+
+        {/* Center Navigation */}
+        <nav className="hidden md:flex items-center gap-6">
+          <Link
+            href="/about"
+            className="flex items-center gap-1.5 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors"
+          >
+            <Info className="w-4 h-4" />
+            关于我们
+          </Link>
+          <Link
+            href="/faq"
+            className="flex items-center gap-1.5 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors"
+          >
+            <HelpCircle className="w-4 h-4" />
+            常见问题
+          </Link>
+        </nav>
 
         {/* Right Actions */}
         {!me ? (

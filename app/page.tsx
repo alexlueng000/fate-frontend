@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Footer from '@/app/components/Footer';
 import {
   Sparkles,
   TrendingUp,
@@ -15,8 +16,6 @@ import {
   Shield,
   Zap,
   Brain,
-  ChevronDown,
-  ChevronUp,
   MapPin,
 } from 'lucide-react';
 import Image from 'next/image';
@@ -31,7 +30,6 @@ export default function LandingPage() {
   const [birthDate, setBirthDate] = useState('');
   const [birthTime, setBirthTime] = useState('');
   const [birthPlace, setBirthPlace] = useState('');
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -480,33 +478,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* FAQ Section */}
-      <section className="relative z-10 py-24 px-4">
-        <div className="max-w-3xl mx-auto">
-          <div className="text-center mb-16">
-            <h2
-              className="text-3xl md:text-4xl font-bold text-[var(--color-text-primary)] mb-4"
-              style={{ fontFamily: 'var(--font-display)' }}
-            >
-              常见问题
-            </h2>
-            <div className="ornament-line w-24 mx-auto mt-4" />
-          </div>
-
-          <div className="space-y-4">
-            {faqs.map((faq, index) => (
-              <FaqItem
-                key={index}
-                question={faq.question}
-                answer={faq.answer}
-                isOpen={openFaq === index}
-                onToggle={() => setOpenFaq(openFaq === index ? null : index)}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Final CTA */}
       <section className="relative z-10 py-24 px-4">
         <div className="max-w-2xl mx-auto text-center">
@@ -542,34 +513,9 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="relative z-10 border-t border-[var(--color-border)] py-8 px-4">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <Image
-              src="/yifan_logo.png"
-              alt="易凡文化"
-              width={32}
-              height={32}
-              className="rounded-lg"
-            />
-            <span className="text-[var(--color-text-secondary)]">© 2026 广州乐与学文化旅游有限公司 All copyright reserved.</span>
-          </div>
-          <nav className="flex items-center gap-6 text-sm text-[var(--color-text-muted)]">
-            <Link href="/about" className="hover:text-[var(--color-gold)] transition-colors">
-              关于我们
-            </Link>
-            <Link href="/privacy" className="hover:text-[var(--color-gold)] transition-colors">
-              隐私政策
-            </Link>
-            <Link href="/terms" className="hover:text-[var(--color-gold)] transition-colors">
-              使用条款
-            </Link>
-            <Link href="/contact" className="hover:text-[var(--color-gold)] transition-colors">
-              联系我们
-            </Link>
-          </nav>
-        </div>
-      </footer>
+      <div className="relative z-10">
+        <Footer />
+      </div>
     </main>
   );
 }
@@ -692,55 +638,3 @@ function ProcessStep({
     </div>
   );
 }
-
-function FaqItem({
-  question,
-  answer,
-  isOpen,
-  onToggle,
-}: {
-  question: string;
-  answer: string;
-  isOpen: boolean;
-  onToggle: () => void;
-}) {
-  return (
-    <div className="card overflow-hidden">
-      <button
-        onClick={onToggle}
-        className="w-full flex items-center justify-between p-5 text-left hover:bg-[var(--color-bg-hover)] transition-colors"
-      >
-        <span className="font-medium text-[var(--color-text-primary)] pr-8">{question}</span>
-        {isOpen ? (
-          <ChevronUp className="w-5 h-5 text-[var(--color-gold)] flex-shrink-0" />
-        ) : (
-          <ChevronDown className="w-5 h-5 text-[var(--color-text-muted)] flex-shrink-0" />
-        )}
-      </button>
-      {isOpen && (
-        <div className="px-5 pb-5 text-[var(--color-text-secondary)] animate-fade-in">
-          {answer}
-        </div>
-      )}
-    </div>
-  );
-}
-
-const faqs = [
-  {
-    question: '我不懂八字，可以用吗？',
-    answer: '完全可以！无需任何八字基础，直接用自然语言提问即可。我们的 AI 会将专业术语转化为通俗易懂的语言，并提供详细的知识解释。',
-  },
-  {
-    question: '解读结果准确吗？',
-    answer: '我们基于传统八字理论，结合现代概率模型进行分析。结果仅供参考，建议将其作为人生决策的辅助工具，而非绝对依据。',
-  },
-  {
-    question: '我的隐私会泄露吗？',
-    answer: '所有数据端到端加密存储，仅你本人可见，绝不向第三方泄露。你可以随时删除自己的数据。',
-  },
-  {
-    question: '免费体验包含什么？',
-    answer: '免费体验包含一次完整的命盘生成和 AI 深度解读，你可以查看四柱命盘、五行分布、大运流年等完整分析。',
-  },
-];

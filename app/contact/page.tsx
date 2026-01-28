@@ -2,11 +2,13 @@
 
 import Link from 'next/link';
 import { ArrowLeft, Mail, MessageCircle } from 'lucide-react';
+import Footer from '@/app/components/Footer';
 
 export default function ContactPage() {
   return (
-    <main className="min-h-screen pt-20 pb-12 px-4">
-      <div className="max-w-2xl mx-auto">
+    <main className="min-h-screen flex flex-col pt-20">
+      <div className="flex-1 pb-12 px-4">
+        <div className="max-w-2xl mx-auto">
         <Link
           href="/"
           className="inline-flex items-center gap-2 text-[var(--color-text-muted)] hover:text-[var(--color-primary)] mb-8 transition-colors"
@@ -79,8 +81,10 @@ export default function ContactPage() {
               我们通常会在 <strong>1-2 个工作日</strong> 内回复您的邮件
             </p>
           </div>
+          </div>
         </div>
       </div>
+      <Footer />
     </main>
   );
 }
