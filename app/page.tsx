@@ -17,6 +17,7 @@ import {
   Zap,
   Brain,
   MapPin,
+  ChevronDown,
 } from 'lucide-react';
 import Image from 'next/image';
 
