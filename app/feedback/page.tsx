@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Send, Loader2, CheckCircle, MessageSquare } from 'lucide-react';
 import Footer from '@/app/components/Footer';
 import { useUser } from '@/app/lib/auth';
+import { api, postJSON } from '@/app/lib/api';
 
 type FeedbackType = 'bug' | 'feature' | 'question' | 'other';
 
@@ -16,15 +16,24 @@ const FEEDBACK_TYPES: { value: FeedbackType; label: string; emoji: string }[] = 
   { value: 'other', label: '其他', emoji: '📝' },
 ];
 
+interface FeedbackResponse {
+  id: number;
+  type: string;
+  content: string;
+  contact: string | null;
+  status: string;
+  created_at: string;
+}
+
 export default function FeedbackPage() {
-  const router = useRouter();
-  const { user } = useUser();
+  const { user, token } = useUser();
 
   const [feedbackType, setFeedbackType] = useState<FeedbackType>('bug');
   const [content, setContent] = useState('');
   const [contact, setContact] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [feedbackId, setFeedbackId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const canSubmit = content.trim().length >= 10 && !submitting;
@@ -37,23 +46,22 @@ export default function FeedbackPage() {
     setError(null);
 
     try {
-      // 这里可以接入实际的反馈提交 API
-      // 目前模拟提交成功
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
 
-      // TODO: 实际提交到后端
-      // const resp = await fetch(api('/feedback'), {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({
-      //     type: feedbackType,
-      //     content,
-      //     contact: contact || user?.email,
-      //     user_id: user?.id,
-      //   }),
-      // });
-      // if (!resp.ok) throw new Error('提交失败');
+      const resp = await postJSON<FeedbackResponse>(
+        api('/feedback'),
+        {
+          type: feedbackType,
+          content,
+          contact: contact || null,
+        },
+        { headers }
+      );
 
+      setFeedbackId(resp.id);
       setSubmitted(true);
     } catch (err) {
       setError((err as Error)?.message || '提交失败，请稍后重试');
@@ -76,15 +84,21 @@ export default function FeedbackPage() {
             >
               感谢您的反馈！
             </h1>
-            <p className="text-[var(--color-text-muted)] mb-8">
+            <p className="text-[var(--color-text-muted)] mb-2">
               我们会认真阅读并尽快处理您的意见
             </p>
+            {feedbackId && (
+              <p className="text-sm text-[var(--color-text-hint)] mb-8">
+                反馈编号：#{feedbackId}
+              </p>
+            )}
             <div className="flex gap-4 justify-center">
               <button
                 onClick={() => {
                   setSubmitted(false);
                   setContent('');
                   setContact('');
+                  setFeedbackId(null);
                 }}
                 className="btn btn-secondary px-6 py-2"
               >
