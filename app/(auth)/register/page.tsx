@@ -1,10 +1,10 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { postJSON, api } from '@/app/lib/api';
-import { saveAuth, setUserCache } from '@/app/lib/auth';
+import { saveAuth, setUserCache, useUser } from '@/app/lib/auth';
 import { Mail, User as UserIcon, Lock, Eye, EyeOff, Loader2, Ticket, Sparkles, CheckCircle, XCircle } from 'lucide-react';
 
 const BAGUA = ['☰', '☱', '☲', '☳', '☴', '☵', '☶', '☷'];
@@ -47,6 +47,7 @@ function passwordStrength(pw: string): { score: number; label: string } {
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { user } = useUser();
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -58,11 +59,19 @@ export default function RegisterPage() {
   const [submitting, setSubmitting] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
+  const [registerSuccess, setRegisterSuccess] = useState(false);
 
   // 邀请码验证状态
   const [codeValidating, setCodeValidating] = useState(false);
   const [codeValid, setCodeValid] = useState<boolean | null>(null);
   const [codeError, setCodeError] = useState<string | null>(null);
+
+  // 当用户状态更新后进行跳转
+  useEffect(() => {
+    if (registerSuccess && user) {
+      router.replace('/panel');
+    }
+  }, [registerSuccess, user, router]);
 
   const emailOk = useMemo(() => validateEmail(email), [email]);
   const pwStrength = useMemo(() => passwordStrength(password), [password]);
@@ -148,7 +157,8 @@ export default function RegisterPage() {
       }
 
       setOk('注册成功，正在为你跳转…');
-      router.replace('/panel');
+      // 标记注册成功，等待 useEffect 检测到用户状态更新后跳转
+      setRegisterSuccess(true);
     } catch (e: unknown) {
       setErr((e as Error)?.message || '注册失败');
     } finally {

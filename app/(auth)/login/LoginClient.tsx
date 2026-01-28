@@ -1,9 +1,9 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { loginWeb, saveAuth } from '@/app/lib/auth';
+import { loginWeb, saveAuth, useUser } from '@/app/lib/auth';
 import { Mail, Lock, Eye, EyeOff, Loader2, Sparkles } from 'lucide-react';
 
 // 八卦符号
@@ -12,6 +12,7 @@ const BAGUA = ['☰', '☱', '☲', '☳', '☴', '☵', '☶', '☷'];
 export default function LoginClient() {
   const router = useRouter();
   const search = useSearchParams();
+  const { user } = useUser();
 
   const raw = search.get('redirect');
   // 过滤掉登录/注册页面，避免循环跳转
@@ -23,6 +24,14 @@ export default function LoginClient() {
 
   const [submitting, setSubmitting] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [loginSuccess, setLoginSuccess] = useState(false);
+
+  // 当用户状态更新后进行跳转
+  useEffect(() => {
+    if (loginSuccess && user) {
+      router.replace(redirect);
+    }
+  }, [loginSuccess, user, router, redirect]);
 
   // Validations
   function validateEmail(v: string): boolean {
@@ -47,11 +56,8 @@ export default function LoginClient() {
       const resp = await loginWeb({ email, password });
       saveAuth(resp);
 
-      try {
-        window.dispatchEvent(new StorageEvent('storage', { key: 'me' }));
-      } catch {}
-
-      router.replace(redirect);
+      // 标记登录成功，等待 useEffect 检测到用户状态更新后跳转
+      setLoginSuccess(true);
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
