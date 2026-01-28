@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Send, Loader2, CheckCircle, MessageSquare } from 'lucide-react';
 import Footer from '@/app/components/Footer';
-import { useUser } from '@/app/lib/auth';
+import { useUser, getAuthToken } from '@/app/lib/auth';
 import { api, postJSON } from '@/app/lib/api';
 
 type FeedbackType = 'bug' | 'feature' | 'question' | 'other';
@@ -26,7 +26,7 @@ interface FeedbackResponse {
 }
 
 export default function FeedbackPage() {
-  const { user, token } = useUser();
+  const { user } = useUser();
 
   const [feedbackType, setFeedbackType] = useState<FeedbackType>('bug');
   const [content, setContent] = useState('');
@@ -47,6 +47,7 @@ export default function FeedbackPage() {
 
     try {
       const headers: Record<string, string> = {};
+      const token = getAuthToken();
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
