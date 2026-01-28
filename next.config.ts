@@ -2,6 +2,7 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  output: 'standalone',  // Docker 部署需要
   reactStrictMode: true,
   eslint: {
     // 在构建和启动时忽略 ESLint 报错

@@ -555,6 +555,9 @@ export default function LandingPage() {
             <span className="text-[var(--color-text-secondary)]">© 2026 广州乐与学文化旅游有限公司 All copyright reserved.</span>
           </div>
           <nav className="flex items-center gap-6 text-sm text-[var(--color-text-muted)]">
+            <Link href="/about" className="hover:text-[var(--color-gold)] transition-colors">
+              关于我们
+            </Link>
             <Link href="/privacy" className="hover:text-[var(--color-gold)] transition-colors">
               隐私政策
             </Link>
