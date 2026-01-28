@@ -21,8 +21,6 @@ export default function AboutPage() {
 
         {/* Logo 和版本 */}
         <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-24 h-24 rounded-2xl mb-6 overflow-hidden">
-            
           <h1
             className="text-4xl font-bold text-[var(--color-text-primary)] mb-2"
             style={{ fontFamily: 'var(--font-display)' }}
