@@ -108,7 +108,7 @@ export default function LoginClient() {
             欢迎回来
           </h1>
           <p className="text-xs text-[var(--color-text-muted)]">
-            登录以继续使用一盏大师
+            登录以继续使用易凡文化
           </p>
         </div>
 

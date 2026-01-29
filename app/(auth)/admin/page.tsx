@@ -135,7 +135,7 @@ export default function AdminPage() {
         {/* Footer */}
         <div className="mt-12 text-center">
           <p className="text-sm text-[var(--color-text-hint)]">
-            一盏大师 · 管理控制台
+            易凡文化 · 管理控制台
           </p>
         </div>
       </div>

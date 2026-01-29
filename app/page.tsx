@@ -362,7 +362,7 @@ export default function LandingPage() {
 
           <div className="grid md:grid-cols-3 gap-6">
             <TestimonialCard
-              content="在考虑是否跳槽时用了一盏大师，它帮我理清了很多思路，看到了自己没注意到的优势。最终决定还是自己做的，但多了一份信心。"
+              content="在考虑是否跳槽时用了易凡文化，它帮我理清了很多思路，看到了自己没注意到的优势。最终决定还是自己做的，但多了一份信心。"
               author="张女士"
               role="产品经理"
               rating={5}

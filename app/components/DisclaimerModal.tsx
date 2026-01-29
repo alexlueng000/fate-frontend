@@ -39,7 +39,7 @@ export function DisclaimerModal({ open, onAccept }: DisclaimerModalProps) {
 
         {/* 免责声明内容（200-300字） */}
         <div className="space-y-4 text-[var(--color-text-secondary)] leading-relaxed max-h-[60vh] overflow-y-auto">
-          <p>欢迎使用一盏大师！在使用本服务前，请仔细阅读以下声明：</p>
+          <p>欢迎使用易凡文化！在使用本服务前，请仔细阅读以下声明：</p>
 
           <div className="space-y-3">
             <p><strong>1. 服务性质</strong></p>
