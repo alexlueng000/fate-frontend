@@ -27,7 +27,7 @@ export default function TermsPage() {
             服务条款
           </h1>
           <p className="text-[var(--color-text-muted)]">
-            最后更新：2025年1月
+            最后更新：2026年1月
           </p>
         </div>
 
@@ -38,7 +38,7 @@ export default function TermsPage() {
               1. 服务说明
             </h2>
             <p>
-              一盏大师是一个基于传统八字命理与现代AI技术的在线分析平台。
+              易凡是一个基于传统八字命理与现代AI技术的在线分析平台。
               我们提供的服务仅供娱乐和参考，不构成任何形式的专业建议。
             </p>
           </section>

@@ -8,13 +8,13 @@ export default function Footer() {
     <footer className="border-t border-[var(--color-border)] py-8 px-4 mt-auto">
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <Image
+          {/* <Image
             src="/yifan_logo.png"
             alt="易凡文化"
             width={32}
             height={32}
             className="rounded-lg"
-          />
+          /> */}
           <span className="text-[var(--color-text-secondary)] text-sm">
             © 2026 广州乐与学文化旅游有限公司 All copyright reserved.
           </span>

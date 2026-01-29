@@ -1,28 +1,23 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Footer from '@/app/components/Footer';
 import {
   Sparkles,
-  TrendingUp,
-  BookOpen,
-  ChevronRight,
   Calendar,
   Clock,
-  User,
+  MapPin,
   ArrowRight,
   Shield,
   Zap,
   Brain,
-  MapPin,
-  ChevronDown,
+  ChevronRight,
+  Star,
+  Play,
+  CheckCircle2,
 } from 'lucide-react';
-import Image from 'next/image';
-
-// 八卦符号
-const BAGUA = ['☰', '☱', '☲', '☳', '☴', '☵', '☶', '☷'];
 
 export default function LandingPage() {
   const router = useRouter();
@@ -39,7 +34,7 @@ export default function LandingPage() {
 
   const handleStartReading = () => {
     if (!birthDate || !birthTime || !birthPlace) {
-      alert('请填写完整的出生信息：日期、时间和地点');
+      alert('请填写完整的出生信息');
       return;
     }
     const params = new URLSearchParams({
@@ -53,589 +48,494 @@ export default function LandingPage() {
   };
 
   return (
-    <main className="min-h-screen relative overflow-hidden">
-      {/* Noise Overlay */}
-      <div className="noise-overlay" />
+    <main className="min-h-screen relative">
+      {/* ========== HERO SECTION ========== */}
+      <section className="relative min-h-screen flex items-center overflow-hidden">
+        {/* 背景：大面积渐变 + 装饰元素 */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#FFF8F0] via-white to-[#FFF0E8]" />
 
-      {/* Animated Background Elements */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        {/* Soft gradient orbs */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[var(--color-primary)] rounded-full opacity-5 blur-[100px] animate-pulse-glow" />
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-[var(--color-gold)] rounded-full opacity-5 blur-[80px] animate-pulse-glow delay-500" />
+        {/* 装饰性圆环 */}
+        <div className="absolute top-1/2 right-0 -translate-y-1/2 translate-x-1/3 w-[800px] h-[800px] rounded-full border border-[var(--color-primary)]/10" />
+        <div className="absolute top-1/2 right-0 -translate-y-1/2 translate-x-1/3 w-[600px] h-[600px] rounded-full border border-[var(--color-gold)]/10" />
+        <div className="absolute top-1/2 right-0 -translate-y-1/2 translate-x-1/3 w-[400px] h-[400px] rounded-full border border-[var(--color-primary)]/5" />
 
-        {/* Rotating Bagua Ring */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] opacity-[0.05] animate-rotate-slow">
-          {BAGUA.map((symbol, i) => (
-            <span
-              key={i}
-              className="absolute text-6xl text-[var(--color-primary)]"
-              style={{
-                left: '50%',
-                top: '50%',
-                transform: `rotate(${i * 45}deg) translateY(-350px) rotate(-${i * 45}deg)`,
-              }}
-            >
-              {symbol}
-            </span>
-          ))}
-        </div>
-      </div>
+        {/* 浮动的八卦符号 */}
+        <div className="absolute top-20 right-20 text-8xl text-[var(--color-gold)]/10 animate-float">☰</div>
+        <div className="absolute bottom-32 right-40 text-6xl text-[var(--color-primary)]/10 animate-float delay-300">☵</div>
+        <div className="absolute top-40 left-20 text-5xl text-[var(--color-gold)]/10 animate-float delay-500">☲</div>
 
-      {/* Hero Section */}
-      <section className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 py-20">
-        <div className="max-w-5xl mx-auto text-center w-full">
-          {/* Social Proof Badge */}
-          <div
-            className={`inline-flex items-center gap-3 px-5 py-2.5 rounded-full glass mb-8 opacity-0 ${mounted ? 'animate-fade-in' : ''}`}
-          >
-            <div className="flex -space-x-2">
-              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-gold)] flex items-center justify-center text-white text-xs font-medium border-2 border-white">张</div>
-              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[var(--color-gold)] to-[var(--color-tech)] flex items-center justify-center text-white text-xs font-medium border-2 border-white">李</div>
-              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[var(--color-tech)] to-[var(--color-primary)] flex items-center justify-center text-white text-xs font-medium border-2 border-white">王</div>
-            </div>
-            <span className="text-sm text-[var(--color-text-secondary)]">
-              <span className="text-[var(--color-primary)] font-semibold">10,000+</span> 用户已获得解读
-            </span>
-          </div>
-
-          {/* Main Title */}
-          <h1
-            className={`text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold mb-6 opacity-0 ${mounted ? 'animate-slide-up delay-100' : ''}`}
-            style={{ fontFamily: 'var(--font-display)' }}
-          >
-            <span className="text-gradient-primary">解读命理智慧</span>
-            <br />
-            <span className="text-[var(--color-text-primary)]">洞察人生趋势</span>
-          </h1>
-
-          {/* Subtitle */}
-          <p
-            className={`text-base md:text-lg lg:text-xl text-[var(--color-text-secondary)] max-w-2xl mx-auto mb-12 px-2 opacity-0 ${mounted ? 'animate-fade-in delay-200' : ''}`}
-          >
-            基于传统八字理论与现代概率模型，为你提供
-            <span className="text-[var(--color-primary)]">科学、客观</span>
-            的命理分析与趋势预测
-          </p>
-
-          {/* Quick Try Form */}
-          <div
-            className={`max-w-xl mx-auto w-full card p-6 sm:p-8 opacity-0 ${mounted ? 'animate-scale-in delay-300' : ''}`}
-          >
-            <div className="flex items-center gap-2 mb-6">
-              <div className="w-2 h-2 rounded-full bg-[var(--color-primary)]" />
-              <span className="text-sm text-[var(--color-text-muted)]">免费体验一次完整解读</span>
-            </div>
-
-            <div className="space-y-3 sm:space-y-4">
-              {/* Gender Selection */}
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setGender('男')}
-                  className={`flex-1 py-3 px-3 sm:px-4 rounded-xl flex items-center justify-center gap-2 transition-all text-sm sm:text-base ${
-                    gender === '男'
-                      ? 'bg-[var(--color-bg-hover)] border border-[var(--color-gold-dark)] text-[var(--color-gold)]'
-                      : 'bg-[var(--color-bg-elevated)] border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-accent)]'
-                  }`}
-                >
-                  <User className="w-4 h-4" />
-                  <span>男</span>
-                </button>
-                <button
-                  onClick={() => setGender('女')}
-                  className={`flex-1 py-3 px-3 sm:px-4 rounded-xl flex items-center justify-center gap-2 transition-all text-sm sm:text-base ${
-                    gender === '女'
-                      ? 'bg-[var(--color-bg-hover)] border border-[var(--color-gold-dark)] text-[var(--color-gold)]'
-                      : 'bg-[var(--color-bg-elevated)] border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-accent)]'
-                  }`}
-                >
-                  <User className="w-4 h-4" />
-                  <span>女</span>
-                </button>
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 py-20">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            {/* 左侧：文案 */}
+            <div className={`space-y-8 ${mounted ? 'animate-fade-in' : 'opacity-0'}`}>
+              {/* 标签 */}
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--color-primary)]/10 text-[var(--color-primary)] text-sm font-medium">
+                <Sparkles className="w-4 h-4" />
+                AI 驱动的命理分析平台
               </div>
 
-              {/* Calendar Selection */}
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setCalendar('gregorian')}
-                  className={`flex-1 py-3 px-3 sm:px-4 rounded-xl flex items-center justify-center gap-2 transition-all text-sm sm:text-base ${
-                    calendar === 'gregorian'
-                      ? 'bg-[var(--color-bg-hover)] border border-[var(--color-gold-dark)] text-[var(--color-gold)]'
-                      : 'bg-[var(--color-bg-elevated)] border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-accent)]'
-                  }`}
-                >
-                  <Calendar className="w-4 h-4" />
-                  <span>阳历</span>
-                </button>
-                <button
-                  onClick={() => setCalendar('lunar')}
-                  className={`flex-1 py-3 px-3 sm:px-4 rounded-xl flex items-center justify-center gap-2 transition-all text-sm sm:text-base ${
-                    calendar === 'lunar'
-                      ? 'bg-[var(--color-bg-hover)] border border-[var(--color-gold-dark)] text-[var(--color-gold)]'
-                      : 'bg-[var(--color-bg-elevated)] border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-accent)]'
-                  }`}
-                >
-                  <Calendar className="w-4 h-4" />
-                  <span>农历</span>
-                </button>
+              {/* 主标题 */}
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight" style={{ fontFamily: 'var(--font-display)' }}>
+                <span className="text-[var(--color-text-primary)]">在人生的</span>
+                <br />
+                <span className="text-gradient-primary">十字路口</span>
+                <br />
+                <span className="text-[var(--color-text-primary)]">多一个</span>
+                <span className="text-[var(--color-gold)]">参考</span>
+              </h1>
+
+              {/* 副标题 */}
+              <p className="text-xl text-[var(--color-text-secondary)] max-w-lg leading-relaxed">
+                结合传统八字命理与现代 AI 技术，为你提供<strong className="text-[var(--color-primary)]">科学、客观</strong>的命理分析，
+                帮助你更好地认识自己。
+              </p>
+
+              {/* 特点标签 */}
+              <div className="flex flex-wrap gap-4">
+                {[
+                  { label: '专业', icon: '🎓' },
+                  { label: '严谨', icon: '📐' },
+                  { label: '启发思考', icon: '💡' },
+                ].map((tag) => (
+                  <span
+                    key={tag.label}
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white border border-[var(--color-border)] text-[var(--color-text-primary)] text-base font-semibold shadow-md"
+                  >
+                    <span className="text-xl">{tag.icon}</span>
+                    {tag.label}
+                  </span>
+                ))}
               </div>
 
-              {/* Birth Date */}
+              {/* 信任指标 */}
+              <div className="flex flex-wrap items-center gap-6 text-sm text-[var(--color-text-muted)]">
+                <div className="flex items-center gap-2">
+                  <div className="flex">
+                    {[1,2,3,4,5].map(i => (
+                      <Star key={i} className="w-4 h-4 text-[var(--color-gold)] fill-[var(--color-gold)]" />
+                    ))}
+                  </div>
+                  <span>4.9 分好评</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  <span>10,000+ 用户信赖</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-blue-500" />
+                  <span>数据加密保护</span>
+                </div>
+              </div>
+
+              {/* CTA 按钮 */}
+              <div className="pt-4">
+                <Link
+                  href="/demo"
+                  className="btn btn-primary px-8 py-4 text-lg group"
+                >
+                  <Play className="w-5 h-5" />
+                  查看示例报告
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </div>
+            </div>
+
+            {/* 右侧：表单卡片 */}
+            <div id="form-section" className={`${mounted ? 'animate-scale-in delay-200' : 'opacity-0'}`}>
               <div className="relative">
-                <Calendar className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
-                <input
-                  type="date"
-                  value={birthDate}
-                  onChange={(e) => setBirthDate(e.target.value)}
-                  className="input !pl-10 sm:!pl-12"
-                  placeholder="出生日期"
-                />
+                {/* 卡片光晕 */}
+                <div className="absolute -inset-4 bg-gradient-to-r from-[var(--color-primary)]/20 via-[var(--color-gold)]/30 to-[var(--color-primary)]/20 rounded-[40px] blur-2xl opacity-60" />
+
+                {/* 主卡片 */}
+                <div className="relative bg-white rounded-3xl p-8 shadow-2xl border border-white/50">
+                  {/* 卡片头部 */}
+                  <div className="text-center mb-8">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-gold)] mb-4">
+                      <Sparkles className="w-8 h-8 text-white" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-[var(--color-text-primary)]" style={{ fontFamily: 'var(--font-display)' }}>
+                      开始你的命理之旅
+                    </h2>
+                    <p className="text-[var(--color-text-muted)] mt-2">填写出生信息，获取专属解读</p>
+                  </div>
+
+                  {/* 表单 */}
+                  <div className="space-y-4">
+                    {/* 性别选择 */}
+                    <div className="grid grid-cols-2 gap-3">
+                      {(['男', '女'] as const).map((g) => (
+                        <button
+                          key={g}
+                          onClick={() => setGender(g)}
+                          className={`py-3.5 rounded-xl font-medium transition-all ${
+                            gender === g
+                              ? 'bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-light)] text-white shadow-lg shadow-[var(--color-primary)]/25'
+                              : 'bg-[var(--color-bg-deep)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)]'
+                          }`}
+                        >
+                          {g === '男' ? '👨 男' : '👩 女'}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* 历法选择 */}
+                    <div className="grid grid-cols-2 gap-3">
+                      {([
+                        { value: 'gregorian', label: '阳历' },
+                        { value: 'lunar', label: '农历' },
+                      ] as const).map((c) => (
+                        <button
+                          key={c.value}
+                          onClick={() => setCalendar(c.value)}
+                          className={`py-3.5 rounded-xl font-medium transition-all ${
+                            calendar === c.value
+                              ? 'bg-gradient-to-r from-[var(--color-gold-dark)] to-[var(--color-gold)] text-white shadow-lg shadow-[var(--color-gold)]/25'
+                              : 'bg-[var(--color-bg-deep)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)]'
+                          }`}
+                        >
+                          {c.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* 日期输入 */}
+                    <div className="relative">
+                      <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
+                      <input
+                        type="date"
+                        value={birthDate}
+                        onChange={(e) => setBirthDate(e.target.value)}
+                        className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-[var(--color-bg-deep)] border-2 border-transparent focus:border-[var(--color-primary)] focus:bg-white outline-none transition-all"
+                      />
+                    </div>
+
+                    {/* 时间输入 */}
+                    <div className="relative">
+                      <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
+                      <input
+                        type="time"
+                        value={birthTime}
+                        onChange={(e) => setBirthTime(e.target.value)}
+                        className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-[var(--color-bg-deep)] border-2 border-transparent focus:border-[var(--color-primary)] focus:bg-white outline-none transition-all"
+                      />
+                    </div>
+
+                    {/* 地点输入 */}
+                    <div className="relative">
+                      <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
+                      <input
+                        type="text"
+                        value={birthPlace}
+                        onChange={(e) => setBirthPlace(e.target.value)}
+                        placeholder="出生城市（如：北京）"
+                        className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-[var(--color-bg-deep)] border-2 border-transparent focus:border-[var(--color-primary)] focus:bg-white outline-none transition-all placeholder:text-[var(--color-text-hint)]"
+                      />
+                    </div>
+
+                    {/* 提交按钮 */}
+                    <button
+                      onClick={handleStartReading}
+                      className="w-full py-4 rounded-xl bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-light)] text-white text-lg font-semibold shadow-xl shadow-[var(--color-primary)]/30 hover:shadow-2xl hover:shadow-[var(--color-primary)]/40 hover:-translate-y-0.5 transition-all group"
+                    >
+                      <span className="flex items-center justify-center gap-2">
+                        <Sparkles className="w-5 h-5" />
+                        立即生成命理报告
+                        <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                      </span>
+                    </button>
+
+                    {/* 底部提示 */}
+                    <p className="text-center text-xs text-[var(--color-text-hint)] pt-2">
+                      🔒 数据加密存储，仅你可见 · 无需注册
+                    </p>
+                  </div>
+                </div>
               </div>
-
-              {/* Birth Time */}
-              <div className="relative">
-                <Clock className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
-                <input
-                  type="time"
-                  value={birthTime}
-                  onChange={(e) => setBirthTime(e.target.value)}
-                  className="input !pl-10 sm:!pl-12"
-                  placeholder="出生时间"
-                />
-              </div>
-
-              {/* Birth Place - 必填 */}
-              <div className="relative">
-                <MapPin className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
-                <input
-                  type="text"
-                  value={birthPlace}
-                  onChange={(e) => setBirthPlace(e.target.value)}
-                  className="input !pl-10 sm:!pl-12"
-                  placeholder="出生地点（必填）"
-                />
-              </div>
-
-              {/* Submit Button */}
-              <button
-                onClick={handleStartReading}
-                className="w-full btn btn-primary py-3 sm:py-4 text-base sm:text-lg font-semibold group"
-              >
-                <Sparkles className="w-5 h-5" />
-                立即免费解读
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </button>
             </div>
-
-            <p className="text-xs text-[var(--color-text-hint)] mt-4 text-center px-2">
-              无需注册，立即体验 · 数据加密存储
-            </p>
-          </div>
-
-          {/* Trust Indicators */}
-          <div className={`flex items-center justify-center gap-6 mt-8 text-[var(--color-text-hint)] text-sm opacity-0 ${mounted ? 'animate-fade-in delay-400' : ''}`}>
-            <div className="flex items-center gap-2">
-              <Shield className="w-4 h-4" />
-              <span>数据加密</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Zap className="w-4 h-4" />
-              <span>秒级响应</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4" />
-              <span>AI 深度解读</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Scroll Indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-float">
-          <ChevronDown className="w-6 h-6 text-[var(--color-text-hint)]" />
-        </div>
-      </section>
-
-      {/* Stats Bar Section */}
-      <section className="relative z-10 py-12 px-4 bg-gradient-to-r from-[var(--color-primary)]/5 via-[var(--color-gold)]/5 to-[var(--color-primary)]/5">
-        <div className="max-w-4xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <StatItem number="10,000+" label="累计解读" />
-            <StatItem number="98%" label="用户满意度" />
-            <StatItem number="3分钟" label="平均响应" />
-            <StatItem number="24/7" label="全天候服务" />
           </div>
         </div>
       </section>
 
-      {/* Vision Section */}
-      <section className="relative z-10 py-24 px-4 overflow-hidden">
-        <div className="max-w-4xl mx-auto text-center relative">
-          <div className="mb-12">
-            <h2
-              className="text-3xl md:text-5xl font-bold mb-6"
-              style={{ fontFamily: 'var(--font-display)' }}
-            >
-              <span className="text-[var(--color-text-primary)]">在</span>
-              <span className="text-gradient-primary"> 50/50 </span>
-              <span className="text-[var(--color-text-primary)]">的决策中</span>
-              <br />
-              <span className="text-gradient-gold">增加一点可能性</span>
+      {/* ========== 核心价值 SECTION ========== */}
+      <section className="py-24 px-6 bg-white relative overflow-hidden">
+        {/* 背景装饰 */}
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[var(--color-primary)]/20 to-transparent" />
+
+        <div className="max-w-6xl mx-auto">
+          {/* 标题 */}
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6" style={{ fontFamily: 'var(--font-display)' }}>
+              <span className="text-[var(--color-text-primary)]">不是算命，是</span>
+              <span className="text-gradient-primary">认识自己</span>
             </h2>
-            <p className="text-lg text-[var(--color-text-secondary)] max-w-2xl mx-auto">
-              人生充满选择，当理性分析无法给出答案时，
-              传统智慧或许能为你提供另一个视角
+            <p className="text-xl text-[var(--color-text-secondary)] max-w-2xl mx-auto">
+              我们不预测命运，而是帮助你理解自己的特质与潜能
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
-            <VisionCard
+          {/* 三列卡片 */}
+          <div className="grid md:grid-cols-3 gap-8">
+            <ValueCard
               icon="🎯"
-              title="不是预测命运"
-              description="而是理解自己的能量特质与潜在优势"
+              title="理解自我特质"
+              description="通过八字分析，了解你的性格特点、天赋优势和潜在挑战，更好地认识真实的自己。"
+              color="primary"
             />
-            <VisionCard
+            <ValueCard
               icon="🧭"
-              title="不是迷信依赖"
-              description="而是在迷茫时获得一个参考方向"
+              title="把握时机节奏"
+              description="分析大运流年，帮助你理解人生不同阶段的能量变化，在合适的时机做合适的事。"
+              color="gold"
             />
-            <VisionCard
+            <ValueCard
               icon="💡"
-              title="不是绝对答案"
-              description="而是为决策增加一个思考维度"
+              title="辅助理性决策"
+              description="当逻辑分析无法给出答案时，传统智慧或许能为你提供另一个思考维度。"
+              color="tech"
             />
           </div>
         </div>
       </section>
 
-      {/* Dual Positioning Section */}
-      <section className="relative z-10 py-24 px-4">
+      {/* ========== 功能特点 SECTION ========== */}
+      <section className="py-24 px-6 bg-gradient-to-b from-[var(--color-bg-deep)] to-white">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2
-              className="text-3xl md:text-4xl font-bold mb-4"
-              style={{ fontFamily: 'var(--font-display)' }}
-            >
-              <span className="text-[var(--color-text-primary)]">双重定位</span>
-              <span className="text-[var(--color-gold)]">·</span>
-              <span className="text-[var(--color-text-primary)]">科学解读</span>
-            </h2>
-            <div className="ornament-line w-24 mx-auto mt-4" />
-          </div>
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            {/* 左侧：特点列表 */}
+            <div className="space-y-8">
+              <h2 className="text-4xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
+                <span className="text-[var(--color-text-primary)]">为什么选择</span>
+                <br />
+                <span className="text-gradient-gold">一盏大师</span>
+              </h2>
 
-          <div className="grid md:grid-cols-2 gap-8">
-            {/* Knowledge Interpreter */}
-            <div className="card card-hover p-8 group">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[var(--color-gold-dark)] to-[var(--color-gold)] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <BookOpen className="w-8 h-8 text-[var(--color-bg-deep)]" />
+              <div className="space-y-6">
+                <FeatureItem
+                  icon={<Zap className="w-6 h-6" />}
+                  title="秒级响应"
+                  description="AI 实时分析，无需等待，即刻获得专业解读"
+                  color="primary"
+                />
+                <FeatureItem
+                  icon={<Brain className="w-6 h-6" />}
+                  title="深度解读"
+                  description="结合传统命理与现代 AI，提供个性化深度分析"
+                  color="gold"
+                />
+                <FeatureItem
+                  icon={<Shield className="w-6 h-6" />}
+                  title="隐私保护"
+                  description="端到端加密，数据仅你可见，随时可删除"
+                  color="tech"
+                />
               </div>
-              <h3 className="text-2xl font-bold text-[var(--color-gold)] mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-                传统文化知识的解释者
-              </h3>
-              <p className="text-[var(--color-text-secondary)] mb-6 leading-relaxed">
-                深入浅出地解读八字命理、五行生克、大运流年等传统智慧，
-                让古老的东方哲学变得通俗易懂。
-              </p>
-              <ul className="space-y-3">
-                {['八字基础知识科普', '五行相生相克原理', '术语通俗化解读', '文化背景深度讲解'].map((item, i) => (
-                  <li key={i} className="flex items-center gap-3 text-[var(--color-text-muted)]">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[var(--color-gold)]" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
             </div>
 
-            {/* Trend Analysis Tool */}
-            <div className="card card-hover p-8 group">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[var(--color-primary-dark)] to-[var(--color-primary)] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <TrendingUp className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold text-[var(--color-primary-light)] mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-                基于概率模型的趋势分析
-              </h3>
-              <p className="text-[var(--color-text-secondary)] mb-6 leading-relaxed">
-                运用现代数据分析方法，将传统命理转化为可量化的趋势预测，
-                提供客观、科学的参考依据。
-              </p>
-              <ul className="space-y-3">
-                {['大运流年趋势图表', '五行能量分布分析', '关键时间节点预测', '多维度数据可视化'].map((item, i) => (
-                  <li key={i} className="flex items-center gap-3 text-[var(--color-text-muted)]">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[var(--color-primary)]" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
+            {/* 右侧：统计数据 */}
+            <div className="grid grid-cols-2 gap-6">
+              <StatCard number={10000} suffix="+" label="累计用户" />
+              <StatCard number={98} suffix="%" label="满意度" />
+              <StatCard number={3} suffix="分钟" label="平均响应" />
+              <StatCard number={24} suffix="/7" label="全天服务" />
             </div>
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="relative z-10 py-24 px-4">
+      {/* ========== 用户评价 SECTION ========== */}
+      <section className="py-24 px-6 bg-white">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <h2
-              className="text-3xl md:text-4xl font-bold text-[var(--color-text-primary)] mb-4"
-              style={{ fontFamily: 'var(--font-display)' }}
-            >
-              为什么选择易凡
+            <h2 className="text-4xl font-bold mb-4" style={{ fontFamily: 'var(--font-display)' }}>
+              <span className="text-[var(--color-text-primary)]">用户</span>
+              <span className="text-gradient-primary">真实评价</span>
             </h2>
-            <div className="ornament-line w-24 mx-auto mt-4" />
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            <FeatureCard
-              icon={<Zap className="w-6 h-6" />}
-              title="秒级响应"
-              description="AI 实时分析，无需等待，即刻获得专业解读"
-              gradient="from-[var(--color-primary-dark)] to-[var(--color-primary)]"
-            />
-            <FeatureCard
-              icon={<Brain className="w-6 h-6" />}
-              title="智能解读"
-              description="结合传统理论与现代 AI，提供深度个性化分析"
-              gradient="from-[var(--color-gold-dark)] to-[var(--color-gold)]"
-            />
-            <FeatureCard
-              icon={<Shield className="w-6 h-6" />}
-              title="隐私安全"
-              description="端到端加密，数据仅你可见，随时可删除"
-              gradient="from-[var(--color-tech)] to-[var(--color-tech-light)]"
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials Section */}
-      <section className="relative z-10 py-24 px-4 bg-[var(--color-bg-deep)]">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2
-              className="text-3xl md:text-4xl font-bold text-[var(--color-text-primary)] mb-4"
-              style={{ fontFamily: 'var(--font-display)' }}
-            >
-              用户真实反馈
-            </h2>
-            <div className="ornament-line w-24 mx-auto mt-4" />
+            <div className="flex items-center justify-center gap-2 text-[var(--color-text-muted)]">
+              <div className="flex">
+                {[1,2,3,4,5].map(i => (
+                  <Star key={i} className="w-5 h-5 text-[var(--color-gold)] fill-[var(--color-gold)]" />
+                ))}
+              </div>
+              <span>基于 2,000+ 条真实评价</span>
+            </div>
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
             <TestimonialCard
-              content="在考虑是否跳槽时用了一盏大师，虽然最终决定还是自己做的，但它帮我理清了很多思路，看到了自己没注意到的优势。"
+              content="在考虑是否跳槽时用了一盏大师，它帮我理清了很多思路，看到了自己没注意到的优势。最终决定还是自己做的，但多了一份信心。"
               author="张女士"
-              role="互联网产品经理"
-              avatar="张"
+              role="产品经理"
+              rating={5}
             />
             <TestimonialCard
-              content="作为一个理工科出身的人，本来对这类东西持怀疑态度。但它的分析确实很有逻辑，不是那种模糊的套话，而是具体到我的情况。"
+              content="作为理工科出身，本来持怀疑态度。但分析确实很有逻辑，不是模糊的套话，而是具体到我的情况。值得一试。"
               author="李先生"
               role="软件工程师"
-              avatar="李"
+              rating={5}
             />
             <TestimonialCard
-              content="给我妈用了一下，她说比她之前找的算命先生讲得还清楚，关键是随时可以问问题，不用担心被忽悠。"
+              content="给我妈用了一下，她说比之前找的算命先生讲得还清楚，关键是随时可以问问题，不用担心被忽悠。"
               author="王同学"
               role="大学生"
-              avatar="王"
+              rating={4}
             />
           </div>
         </div>
       </section>
 
-      {/* Process Section */}
-      <section className="relative z-10 py-24 px-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-16">
-            <h2
-              className="text-3xl md:text-4xl font-bold text-[var(--color-text-primary)] mb-4"
-              style={{ fontFamily: 'var(--font-display)' }}
-            >
-              三步获取专属解读
-            </h2>
-            <div className="ornament-line w-24 mx-auto mt-4" />
-          </div>
-
-          <div className="relative">
-            {/* Connection Line */}
-            <div className="hidden md:block absolute top-1/2 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[var(--color-gold-dark)] to-transparent -translate-y-1/2" />
-
-            <div className="grid md:grid-cols-3 gap-8">
-              <ProcessStep
-                number="01"
-                title="输入信息"
-                description="填写出生日期和时间"
-              />
-              <ProcessStep
-                number="02"
-                title="AI 分析"
-                description="智能生成命盘与解读"
-              />
-              <ProcessStep
-                number="03"
-                title="获得洞察"
-                description="查看趋势与行动建议"
-              />
-            </div>
-          </div>
+      {/* ========== 最终 CTA SECTION ========== */}
+      <section className="py-24 px-6 bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-dark)] relative overflow-hidden">
+        {/* 装饰元素 */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-10 left-10 text-9xl text-white">☰</div>
+          <div className="absolute bottom-10 right-10 text-9xl text-white">☷</div>
         </div>
-      </section>
 
-      {/* Final CTA */}
-      <section className="relative z-10 py-24 px-4">
-        <div className="max-w-2xl mx-auto text-center">
-          <div className="card p-12 relative overflow-hidden">
-            {/* Glow Effect */}
-            <div className="absolute inset-0 bg-gradient-to-br from-[var(--color-primary)]/10 to-[var(--color-gold)]/10" />
-
-            <div className="relative">
-              <h3
-                className="text-3xl md:text-4xl font-bold text-[var(--color-text-primary)] mb-4"
-                style={{ fontFamily: 'var(--font-display)' }}
-              >
-                开启你的命理之旅
-              </h3>
-              <p className="text-[var(--color-text-secondary)] mb-8">
-                免费体验一次完整解读，感受传统智慧与现代科技的完美融合
-              </p>
-              <Link
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-                className="btn btn-primary px-8 py-4 text-lg"
-              >
-                <Sparkles className="w-5 h-5" />
-                立即开始
-                <ChevronRight className="w-5 h-5" />
-              </Link>
-            </div>
-          </div>
+        <div className="relative z-10 max-w-3xl mx-auto text-center">
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6" style={{ fontFamily: 'var(--font-display)' }}>
+            开启你的命理之旅
+          </h2>
+          <p className="text-xl text-white/80 mb-10">
+            免费体验一次完整解读，感受传统智慧与现代科技的融合
+          </p>
+          <button
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            className="inline-flex items-center gap-3 px-10 py-5 bg-white text-[var(--color-primary)] text-xl font-bold rounded-2xl shadow-2xl hover:shadow-3xl hover:-translate-y-1 transition-all group"
+          >
+            <Sparkles className="w-6 h-6" />
+            立即免费体验
+            <ChevronRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
+          </button>
         </div>
       </section>
 
       {/* Footer */}
-      <div className="relative z-10">
-        <Footer />
-      </div>
+      <Footer />
     </main>
   );
 }
 
-/* Sub Components */
+/* ========== 子组件 ========== */
 
-function StatItem({ number, label }: { number: string; label: string }) {
-  return (
-    <div className="text-center">
-      <div className="text-2xl md:text-3xl font-bold text-gradient-primary mb-1">
-        {number}
-      </div>
-      <div className="text-sm text-[var(--color-text-muted)]">{label}</div>
-    </div>
-  );
-}
-
-function VisionCard({
-  icon,
-  title,
-  description,
-}: {
+function ValueCard({ icon, title, description, color }: {
   icon: string;
   title: string;
   description: string;
+  color: 'primary' | 'gold' | 'tech';
 }) {
+  const colorMap = {
+    primary: 'from-[var(--color-primary)] to-[var(--color-primary-light)]',
+    gold: 'from-[var(--color-gold-dark)] to-[var(--color-gold)]',
+    tech: 'from-[var(--color-tech)] to-[var(--color-tech-light)]',
+  };
+
   return (
-    <div className="card card-hover p-6 text-center group">
-      <div className="text-4xl mb-4 group-hover:scale-110 transition-transform">
+    <div className="group p-8 rounded-3xl bg-[var(--color-bg-deep)] hover:bg-white hover:shadow-2xl transition-all duration-300">
+      <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${colorMap[color]} flex items-center justify-center text-3xl mb-6 group-hover:scale-110 transition-transform`}>
         {icon}
       </div>
-      <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">
-        {title}
-      </h3>
-      <p className="text-sm text-[var(--color-text-muted)]">
-        {description}
-      </p>
+      <h3 className="text-xl font-bold text-[var(--color-text-primary)] mb-3">{title}</h3>
+      <p className="text-[var(--color-text-secondary)] leading-relaxed">{description}</p>
     </div>
   );
 }
 
-function TestimonialCard({
-  content,
-  author,
-  role,
-  avatar,
-}: {
+function FeatureItem({ icon, title, description, color }: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  color: 'primary' | 'gold' | 'tech';
+}) {
+  const colorMap = {
+    primary: 'bg-[var(--color-primary)]/10 text-[var(--color-primary)]',
+    gold: 'bg-[var(--color-gold)]/10 text-[var(--color-gold)]',
+    tech: 'bg-[var(--color-tech)]/10 text-[var(--color-tech)]',
+  };
+
+  return (
+    <div className="flex gap-4">
+      <div className={`w-12 h-12 rounded-xl ${colorMap[color]} flex items-center justify-center flex-shrink-0`}>
+        {icon}
+      </div>
+      <div>
+        <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-1">{title}</h3>
+        <p className="text-[var(--color-text-muted)]">{description}</p>
+      </div>
+    </div>
+  );
+}
+
+function StatCard({ number, suffix, label }: { number: number; suffix: string; label: string }) {
+  const [count, setCount] = useState(0);
+  const [hasAnimated, setHasAnimated] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasAnimated) {
+          setHasAnimated(true);
+          // 计数动画
+          const duration = 2000;
+          const startTime = Date.now();
+          const animate = () => {
+            const elapsed = Date.now() - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 4);
+            setCount(Math.floor(number * eased));
+            if (progress < 1) requestAnimationFrame(animate);
+          };
+          requestAnimationFrame(animate);
+        }
+      },
+      { threshold: 0.5 }
+    );
+
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [number, hasAnimated]);
+
+  return (
+    <div ref={ref} className="p-6 rounded-2xl bg-white shadow-lg hover:shadow-xl transition-shadow text-center">
+      <div className="text-4xl font-bold text-gradient-primary mb-2">
+        {count.toLocaleString()}{suffix}
+      </div>
+      <div className="text-[var(--color-text-muted)]">{label}</div>
+    </div>
+  );
+}
+
+function TestimonialCard({ content, author, role, rating }: {
   content: string;
   author: string;
   role: string;
-  avatar: string;
+  rating: number;
 }) {
   return (
-    <div className="card card-hover p-6 relative">
-      <div className="absolute top-4 left-4 text-4xl text-[var(--color-gold)] opacity-20 font-serif">
-        "
+    <div className="p-6 rounded-2xl bg-[var(--color-bg-deep)] hover:bg-white hover:shadow-xl transition-all">
+      {/* 评分 */}
+      <div className="flex gap-1 mb-4">
+        {[...Array(5)].map((_, i) => (
+          <Star
+            key={i}
+            className={`w-4 h-4 ${i < rating ? 'text-[var(--color-gold)] fill-[var(--color-gold)]' : 'text-gray-200'}`}
+          />
+        ))}
       </div>
-      <p className="text-[var(--color-text-secondary)] mb-6 pt-6 leading-relaxed">
-        {content}
-      </p>
+
+      {/* 内容 */}
+      <p className="text-[var(--color-text-secondary)] mb-6 leading-relaxed">"{content}"</p>
+
+      {/* 作者 */}
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-gold)] flex items-center justify-center text-white font-medium">
-          {avatar}
+          {author[0]}
         </div>
         <div>
           <div className="font-medium text-[var(--color-text-primary)]">{author}</div>
           <div className="text-sm text-[var(--color-text-muted)]">{role}</div>
         </div>
       </div>
-    </div>
-  );
-}
-
-function FeatureCard({
-  icon,
-  title,
-  description,
-  gradient,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  gradient: string;
-}) {
-  return (
-    <div className="card card-hover p-6 text-center group">
-      <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center mx-auto mb-4 text-white group-hover:scale-110 transition-transform`}>
-        {icon}
-      </div>
-      <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">
-        {title}
-      </h3>
-      <p className="text-sm text-[var(--color-text-muted)]">
-        {description}
-      </p>
-    </div>
-  );
-}
-
-function ProcessStep({
-  number,
-  title,
-  description,
-}: {
-  number: string;
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="text-center relative">
-      <div className="w-20 h-20 rounded-full glass mx-auto mb-4 flex items-center justify-center">
-        <span className="text-2xl font-bold text-gradient-gold">{number}</span>
-      </div>
-      <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">
-        {title}
-      </h3>
-      <p className="text-sm text-[var(--color-text-muted)]">
-        {description}
-      </p>
     </div>
   );
 }
