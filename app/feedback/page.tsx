@@ -183,8 +183,13 @@ export default function FeedbackPage() {
                 rows={6}
                 className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] px-4 py-3 text-[var(--color-text-primary)] placeholder:text-[var(--color-text-hint)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/10 outline-none transition-all resize-none"
               />
-              <div className="mt-2 text-xs text-[var(--color-text-hint)] text-right">
-                {content.length} / 1000
+              <div className="mt-2 flex justify-between text-xs">
+                {content.trim().length > 0 && content.trim().length < 10 ? (
+                  <span className="text-[var(--color-primary)]">还需输入 {10 - content.trim().length} 个字</span>
+                ) : (
+                  <span></span>
+                )}
+                <span className="text-[var(--color-text-hint)]">{content.length} / 1000</span>
               </div>
             </div>
 

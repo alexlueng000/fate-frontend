@@ -83,7 +83,17 @@ export async function loginWeb(payload: { email: string; password: string }) {
 
   if (!resp.ok) {
     const text = await resp.text().catch(() => '');
-    throw new Error(`登录失败（HTTP ${resp.status}）：${text || '服务器返回错误'}`);
+    // 尝试解析 JSON 格式的错误响应
+    let errorMsg = '服务器返回错误';
+    if (text) {
+      try {
+        const json = JSON.parse(text);
+        errorMsg = json.detail || json.message || errorMsg;
+      } catch {
+        errorMsg = text;
+      }
+    }
+    throw new Error(errorMsg);
   }
 
   const data = await resp.json().catch(() => null);
