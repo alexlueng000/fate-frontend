@@ -33,8 +33,8 @@ export default function LandingPage() {
   }, []);
 
   const handleStartReading = () => {
-    if (!birthDate || !birthTime || !birthPlace) {
-      alert('请填写完整的出生信息');
+    if (!birthDate || !birthTime) {
+      alert('请填写出生日期和时间');
       return;
     }
     const params = new URLSearchParams({
@@ -42,7 +42,7 @@ export default function LandingPage() {
       calendar,
       birth_date: birthDate,
       birth_time: birthTime,
-      birthplace: birthPlace,
+      birthplace: birthPlace.trim() || '北京',
     });
     router.push(`/try?${params.toString()}`);
   };
@@ -306,7 +306,7 @@ export default function LandingPage() {
               <h2 className="text-4xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
                 <span className="text-[var(--color-text-primary)]">为什么选择</span>
                 <br />
-                <span className="text-gradient-gold">一盏大师</span>
+                <span className="text-gradient-gold">易凡文化</span>
               </h2>
 
               <div className="space-y-6">

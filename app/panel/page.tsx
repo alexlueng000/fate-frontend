@@ -438,12 +438,13 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
 
     try {
       // 1) 计算命盘
+      const actualBirthPlace = birthPlace.trim() || '北京';
       const body = {
         gender,
         calendar: calendarType,  // 'gregorian' | 'lunar'
         birth_date: birthDate,   // 'YYYY-MM-DD'
         birth_time: birthTime,   // 'HH:MM'
-        birthplace: birthPlace,
+        birthplace: actualBirthPlace,
         birthplace_provided: !!birthPlace.trim(),
       };
 
