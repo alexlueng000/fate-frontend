@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { loginWeb, saveAuth, useUser } from '@/app/lib/auth';
 import { Mail, Lock, Eye, EyeOff, Loader2, Sparkles } from 'lucide-react';
@@ -11,12 +11,10 @@ const BAGUA = ['☰', '☱', '☲', '☳', '☴', '☵', '☶', '☷'];
 
 export default function LoginClient() {
   const router = useRouter();
-  const search = useSearchParams();
   const { user } = useUser();
 
-  const raw = search.get('redirect');
-  // 过滤掉登录/注册页面，避免循环跳转
-  const redirect = !raw || raw === '/' || raw === '/login' || raw === '/register' ? '/panel' : raw;
+  // 登录后总是跳转到 panel 页面
+  const redirect = '/panel';
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
