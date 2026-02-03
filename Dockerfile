@@ -23,6 +23,13 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# ========== 构建参数 ==========
+# 后端 API 地址（构建时传入）
+# 开发环境: http://localhost:8000
+# 生产环境: https://api.fateinsight.site
+ARG NEXT_PUBLIC_API_BASE=http://localhost:8000
+ENV NEXT_PUBLIC_API_BASE=${NEXT_PUBLIC_API_BASE}
+
 # Set environment variables for build
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production

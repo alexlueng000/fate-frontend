@@ -1,65 +1,59 @@
 'use client';
 
-import { useMemo, useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useMemo, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { loginWeb, saveAuth, useUser } from '@/app/lib/auth';
-import { Mail, Lock, Eye, EyeOff, Loader2, Sparkles } from 'lucide-react';
+import { postJSON, api } from '@/app/lib/api';
+import { Mail, Loader2, ArrowLeft, Send } from 'lucide-react';
 
-// 八卦符号
 const BAGUA = ['☰', '☱', '☲', '☳', '☴', '☵', '☶', '☷'];
 
-export default function LoginClient() {
+export default function ForgotPasswordPage() {
   const router = useRouter();
-  const search = useSearchParams();
-  const { user } = useUser();
-
-  const raw = search.get('redirect');
-  // 过滤掉登录/注册页面，避免循环跳转
-  const redirect = !raw || raw === '/' || raw === '/login' || raw === '/register' ? '/panel' : raw;
-
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPw, setShowPw] = useState(false);
-
   const [submitting, setSubmitting] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [loginSuccess, setLoginSuccess] = useState(false);
+  const [countdown, setCountdown] = useState(0);
 
-  // 当用户状态更新后进行跳转
-  useEffect(() => {
-    if (loginSuccess && user) {
-      router.replace(redirect);
-    }
-  }, [loginSuccess, user, router, redirect]);
-
-  // Validations
+  // 邮箱验证
   function validateEmail(v: string): boolean {
     const re = /^(?:[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+)@(?:[a-zA-Z0-9.-]+)\.[a-zA-Z]{2,}$/;
     return re.test(v);
   }
   const emailOk = useMemo(() => validateEmail(email), [email]);
-  const pwOk = useMemo(() => password.length >= 1, [password]);
+  const canSubmit = useMemo(
+    () => emailOk && !submitting && countdown === 0,
+    [emailOk, submitting, countdown]
+  );
 
-  const canSubmit = useMemo(() => {
-    return emailOk && pwOk && !submitting;
-  }, [emailOk, pwOk, submitting]);
+  // 倒计时
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [countdown]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErr(null);
 
+    if (!emailOk) {
+      setErr('请输入正确的邮箱地址');
+      return;
+    }
+
     setSubmitting(true);
     try {
-      if (!emailOk) throw new Error('请输入合法邮箱');
-      if (!pwOk) throw new Error('请输入密码');
-      const resp = await loginWeb({ email, password });
-      saveAuth(resp);
-
-      // 标记登录成功，等待 useEffect 检测到用户状态更新后跳转
-      setLoginSuccess(true);
+      await postJSON<{ success: boolean; message: string }>(
+        api('/auth/password-reset/send-code'),
+        { email }
+      );
+      setCountdown(60);
+      // 跳转到重置密码页面
+      router.push(`/reset-password?email=${encodeURIComponent(email)}`);
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : String(e));
+      setErr((e as Error)?.message || '发送失败，请稍后重试');
     } finally {
       setSubmitting(false);
     }
@@ -71,8 +65,6 @@ export default function LoginClient() {
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[var(--color-primary)] rounded-full opacity-10 blur-[100px] animate-pulse-glow" />
         <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-[var(--color-gold)] rounded-full opacity-10 blur-[80px] animate-pulse-glow delay-500" />
-
-        {/* Rotating Bagua */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] opacity-[0.02] animate-rotate-slow">
           {BAGUA.map((symbol, i) => (
             <span
@@ -90,13 +82,16 @@ export default function LoginClient() {
         </div>
       </div>
 
-      {/* Login Card */}
+      {/* Card */}
       <div className="relative w-full max-w-md card p-6 animate-scale-in">
         {/* Header */}
         <div className="text-center mb-4">
           <Link href="/" className="inline-flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-gold)] flex items-center justify-center shadow-lg">
-              <span className="text-white text-lg font-bold" style={{ fontFamily: 'var(--font-display)' }}>
+              <span
+                className="text-white text-lg font-bold"
+                style={{ fontFamily: 'var(--font-display)' }}
+              >
                 盏
               </span>
             </div>
@@ -105,10 +100,10 @@ export default function LoginClient() {
             className="text-xl font-bold text-[var(--color-text-primary)] mb-1"
             style={{ fontFamily: 'var(--font-display)' }}
           >
-            欢迎回来
+            找回密码
           </h1>
           <p className="text-xs text-[var(--color-text-muted)]">
-            登录以继续使用易凡文化
+            输入您的注册邮箱，我们将发送验证码
           </p>
         </div>
 
@@ -120,7 +115,7 @@ export default function LoginClient() {
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {/* Email */}
           <div>
             <label className="block text-xs text-[var(--color-text-secondary)] mb-1.5">
@@ -143,40 +138,6 @@ export default function LoginClient() {
             )}
           </div>
 
-          {/* Password */}
-          <div>
-            <div className="flex justify-between items-center mb-1.5">
-              <label className="block text-xs text-[var(--color-text-secondary)]">
-                密码
-              </label>
-              <Link
-                href="/forgot-password"
-                className="text-xs text-[var(--color-gold)] hover:text-[var(--color-gold-light)] transition-colors"
-              >
-                忘记密码？
-              </Link>
-            </div>
-            <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
-              <input
-                className="input !pl-12 pr-12"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                type={showPw ? 'text' : 'password'}
-                placeholder="输入密码"
-                autoComplete="current-password"
-              />
-              <button
-                type="button"
-                aria-label={showPw ? '隐藏密码' : '显示密码'}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--color-text-hint)] hover:text-[var(--color-text-secondary)] transition-colors"
-                onClick={() => setShowPw((v) => !v)}
-              >
-                {showPw ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
-            </div>
-          </div>
-
           {/* Submit */}
           <button
             type="submit"
@@ -186,26 +147,26 @@ export default function LoginClient() {
             {submitting ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
-                登录中…
+                发送中…
               </>
+            ) : countdown > 0 ? (
+              `${countdown}秒后可重新发送`
             ) : (
               <>
-                <Sparkles className="w-5 h-5" />
-                登录
+                <Send className="w-5 h-5" />
+                发送验证码
               </>
             )}
           </button>
 
-          {/* Footer */}
-          <p className="text-sm text-center text-[var(--color-text-muted)]">
-            还没有账号？
-            <Link
-              href="/register"
-              className="ml-1 text-[var(--color-gold)] hover:text-[var(--color-gold-light)] transition-colors"
-            >
-              去注册
-            </Link>
-          </p>
+          {/* Back to login */}
+          <Link
+            href="/login"
+            className="flex items-center justify-center gap-2 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-gold)] transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            返回登录
+          </Link>
         </form>
       </div>
     </div>
