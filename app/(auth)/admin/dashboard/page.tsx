@@ -59,6 +59,7 @@ interface SourceData {
   source: string;
   label: string;
   count: number;
+  [key: string]: string | number;
 }
 
 const COLORS = ['#a83232', '#e5c07b', '#22c55e', '#3b82f6', '#8b5cf6'];
