@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Settings, MessageSquare, Zap, BookOpen, Ticket, ChevronRight, ArrowLeft, Shield } from 'lucide-react';
+import { Settings, MessageSquare, Zap, BookOpen, Ticket, ChevronRight, ArrowLeft, Shield, BarChart3 } from 'lucide-react';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -40,6 +40,13 @@ export default function AdminPage() {
   }
 
   const menuItems = [
+    {
+      href: '/admin/dashboard',
+      icon: <BarChart3 className="w-6 h-6" />,
+      title: '数据概览',
+      description: '查看用户、对话、消息等统计数据',
+      color: '#3b82f6',
+    },
     {
       href: '/admin/invitation-codes',
       icon: <Ticket className="w-6 h-6" />,
