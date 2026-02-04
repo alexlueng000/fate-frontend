@@ -19,7 +19,7 @@ import {
   saveConversation, loadConversation, getActiveConversationId,
   savePaipanLocal, loadPaipanLocal,
 } from '@/app/lib/chat/storage';
-import { loadDefaultBirthData, saveDefaultBirthData, type DefaultBirthData } from '@/app/lib/birthData';
+import { loadDefaultBirthData, saveDefaultBirthData, clearDefaultBirthData, type DefaultBirthData } from '@/app/lib/birthData';
 
 import { SYSTEM_INTRO } from '@/app/lib/chat/constants';
 import { useUser, fetchMe } from '@/app/lib/auth';
@@ -442,20 +442,38 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
     }
   };
 
-  // ===== 保存为默认命盘（内部调用） =====
-  const doSaveDefaultBirthData = async () => {
-    if (!birthDate || !birthTime) return;
-    try {
-      await saveDefaultBirthData({
-        gender,
-        calendar: calendarType,
-        birthDate,
-        birthTime,
-        birthPlace: birthPlace.trim() || '北京',
-      });
-      setHasDefault(true);
-    } catch (e) {
-      console.error('Failed to save default birth data:', e);
+  // ===== 切换默认命盘开关 =====
+  const handleToggleDefault = async () => {
+    if (saveAsDefault) {
+      // 关闭开关：清除默认命盘
+      setSaveAsDefault(false);
+      try {
+        await clearDefaultBirthData();
+        setHasDefault(false);
+      } catch (e) {
+        console.error('Failed to clear default birth data:', e);
+        setSaveAsDefault(true);  // 恢复开关状态
+      }
+    } else {
+      // 打开开关：保存默认命盘
+      if (!birthDate || !birthTime) {
+        setCalcErr('请先填写出生日期和时间');
+        return;
+      }
+      setSaveAsDefault(true);
+      try {
+        await saveDefaultBirthData({
+          gender,
+          calendar: calendarType,
+          birthDate,
+          birthTime,
+          birthPlace: birthPlace.trim() || '北京',
+        });
+        setHasDefault(true);
+      } catch (e) {
+        console.error('Failed to save default birth data:', e);
+        setSaveAsDefault(false);  // 恢复开关状态
+      }
     }
   };
 
@@ -497,11 +515,6 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
 
       setPaipan(mingpan);
       savePaipanLocal(mingpan);
-
-      // 如果开关打开，保存为默认命盘
-      if (saveAsDefault) {
-        doSaveDefaultBirthData();
-      }
 
       // 2) 清理旧会话 & 插入开场白 + 流式占位
       sessionStorage.removeItem('conversation_id');
@@ -695,7 +708,7 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
                 type="button"
                 role="switch"
                 aria-checked={saveAsDefault}
-                onClick={() => setSaveAsDefault(!saveAsDefault)}
+                onClick={handleToggleDefault}
                 className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 ${
                   saveAsDefault ? 'bg-[var(--color-primary)]' : 'bg-gray-300'
                 }`}
@@ -707,7 +720,7 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
                 />
               </button>
               <span className="text-sm text-[var(--color-text-secondary)]">
-                设为默认命盘
+                {saveAsDefault ? '取消默认命盘' : '设为默认命盘'}
               </span>
             </label>
 
