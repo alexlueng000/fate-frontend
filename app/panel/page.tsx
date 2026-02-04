@@ -63,7 +63,7 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
 
   // ===== 默认命盘状态 =====
   const [hasDefault, setHasDefault] = useState(false);
-  const [savingDefault, setSavingDefault] = useState(false);
+  const [saveAsDefault, setSaveAsDefault] = useState(false);  // 滑块开关状态
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -132,6 +132,7 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
         setBirthTime(data.birthTime);
         setBirthPlace(data.birthPlace);
         setHasDefault(true);
+        setSaveAsDefault(true);  // 如果有默认命盘，默认开启开关
       }
     });
   }, []);
@@ -441,10 +442,9 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
     }
   };
 
-  // ===== 保存为默认命盘 =====
-  const handleSaveAsDefault = async () => {
+  // ===== 保存为默认命盘（内部调用） =====
+  const doSaveDefaultBirthData = async () => {
     if (!birthDate || !birthTime) return;
-    setSavingDefault(true);
     try {
       await saveDefaultBirthData({
         gender,
@@ -456,8 +456,6 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
       setHasDefault(true);
     } catch (e) {
       console.error('Failed to save default birth data:', e);
-    } finally {
-      setSavingDefault(false);
     }
   };
 
@@ -499,6 +497,11 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
 
       setPaipan(mingpan);
       savePaipanLocal(mingpan);
+
+      // 如果开关打开，保存为默认命盘
+      if (saveAsDefault) {
+        doSaveDefaultBirthData();
+      }
 
       // 2) 清理旧会话 & 插入开场白 + 流式占位
       sessionStorage.removeItem('conversation_id');
@@ -686,6 +689,28 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
               />
             </div>
 
+            {/* 设为默认命盘开关 */}
+            <div className="flex items-center justify-between py-1">
+              <span className="text-xs text-[var(--color-text-secondary)]">
+                {hasDefault ? '更新默认命盘' : '设为默认命盘'}
+              </span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={saveAsDefault}
+                onClick={() => setSaveAsDefault(!saveAsDefault)}
+                className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 ${
+                  saveAsDefault ? 'bg-[var(--color-primary)]' : 'bg-gray-300'
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                    saveAsDefault ? 'translate-x-4' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+            </div>
+
             {/* 提交 */}
             <div className="flex items-center gap-2">
               <button
@@ -706,18 +731,6 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
                 )}
               </button>
             </div>
-
-            {/* 保存为默认命盘 */}
-            {birthDate && birthTime && (
-              <button
-                type="button"
-                onClick={handleSaveAsDefault}
-                disabled={savingDefault}
-                className="w-full text-xs text-[var(--color-primary)] hover:underline disabled:opacity-60 py-1"
-              >
-                {savingDefault ? '保存中...' : (hasDefault ? '更新默认命盘' : '保存为默认命盘')}
-              </button>
-            )}
 
             {calcErr && <div className="text-xs text-[var(--color-primary)] mt-1.5">{calcErr}</div>}
           </form>
