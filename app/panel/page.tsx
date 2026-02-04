@@ -643,7 +643,7 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
                 className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-3 py-2 outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/10 transition-all text-xs"
                 value={birthPlace}
                 onChange={(e) => setBirthPlace(e.target.value)}
-                placeholder="如：深圳"
+                placeholder="如：北京"
               />
             </div>
 
