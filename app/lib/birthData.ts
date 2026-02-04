@@ -13,13 +13,13 @@ const STORAGE_KEY = 'default_birth_data';
 
 /**
  * 加载默认命盘数据
- * - 已登录用户：从服务器获取
+ * - 已登录用户：只从服务器获取
  * - 未登录用户：从 localStorage 获取
  */
 export async function loadDefaultBirthData(): Promise<DefaultBirthData | null> {
   const token = getAuthToken();
 
-  // 已登录：从服务器获取
+  // 已登录：只从服务器获取
   if (token) {
     try {
       const resp = await fetch(api('/me'), {
@@ -42,9 +42,11 @@ export async function loadDefaultBirthData(): Promise<DefaultBirthData | null> {
     } catch (e) {
       console.error('Failed to load default birth data from server:', e);
     }
+    // 已登录用户，服务器无数据则返回 null（不回退到 localStorage）
+    return null;
   }
 
-  // 未登录或服务器无数据：从 localStorage 获取
+  // 未登录：从 localStorage 获取
   if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
     const local = localStorage.getItem(STORAGE_KEY);
     return local ? JSON.parse(local) : null;

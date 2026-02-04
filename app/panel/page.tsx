@@ -690,10 +690,7 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
             </div>
 
             {/* 设为默认命盘开关 */}
-            <div className="flex items-center justify-between py-1">
-              <span className="text-xs text-[var(--color-text-secondary)]">
-                {hasDefault ? '更新默认命盘' : '设为默认命盘'}
-              </span>
+            <label className="flex items-center gap-2 py-1 cursor-pointer">
               <button
                 type="button"
                 role="switch"
@@ -709,7 +706,10 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
                   }`}
                 />
               </button>
-            </div>
+              <span className="text-sm text-[var(--color-text-secondary)]">
+                设为默认命盘
+              </span>
+            </label>
 
             {/* 提交 */}
             <div className="flex items-center gap-2">
