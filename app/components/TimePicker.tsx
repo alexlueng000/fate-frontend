@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { DateTimeTheme, dateTimeThemes } from './form/dateTimeThemes';
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
@@ -11,6 +12,7 @@ type IOSWheelTimeProps = {
   disabled?: boolean;
   minuteStep?: number;                   // 默认 1 → 0..59
   attachToBody?: boolean;                // 默认 true：弹层不撑布局
+  theme?: DateTimeTheme;                 // 主题
 };
 
 export function IOSWheelTime({
@@ -20,7 +22,9 @@ export function IOSWheelTime({
   disabled = false,
   minuteStep = 1,
   attachToBody = true,
+  theme = 'panel',
 }: IOSWheelTimeProps) {
+  const themeConfig = dateTimeThemes[theme];
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const popupRef   = useRef<HTMLDivElement | null>(null);
 
@@ -121,23 +125,23 @@ export function IOSWheelTime({
   const popup = (
     <div
       ref={popupRef}
-      className="z-[9999] rounded-xl border border-[#f0d9a6] bg-white"
+      className={`z-[9999] rounded-xl border ${themeConfig.popup}`}
       style={{ width: rect?.width ?? 260, ...(attachToBody && rect ? { position: 'absolute' as const, top: rect.top, left: rect.left } : {}) }}
     >
       <div className="flex items-center justify-between px-3 py-2">
         <div className="text-sm text-neutral-700">
-          已选 <span className="ml-1 font-semibold text-[#a83232]">{pad(h)}:{pad(m)}</span>
+          已选 <span className={`ml-1 ${themeConfig.selectedText}`}>{pad(h)}:{pad(m)}</span>
         </div>
         <div className="flex gap-2">
-          <button onClick={clear} className="rounded-lg border border-[#f0d9a6] bg-white px-2.5 py-1.5 text-xs text-neutral-700 hover:bg-[#fff7ed]">清空</button>
-          <button onClick={() => confirm()} className="rounded-lg bg-[#a83232] px-3 py-1.5 text-xs font-medium text-[#fff7e8] hover:bg-[#8c2b2b]">完成</button>
+          <button onClick={clear} className={`rounded-lg border px-2.5 py-1.5 text-xs ${themeConfig.popupButtonSecondary}`}>清空</button>
+          <button onClick={() => confirm()} className={`rounded-lg px-3 py-1.5 text-xs font-medium ${themeConfig.popupButton}`}>完成</button>
         </div>
       </div>
 
       <div className="relative px-3 pb-3">
         {/* 中线选中框（绝对垂直居中） */}
         <div
-          className="pointer-events-none absolute left-3 right-3 top-1/2 -translate-y-1/2 rounded-lg border border-[#f0d9a6] bg-transparent"
+          className={`pointer-events-none absolute left-3 right-3 top-1/2 -translate-y-1/2 rounded-lg border ${themeConfig.popupBorder} bg-transparent`}
           style={{ height: ROW_H }}
         />
         <div className="grid grid-cols-2 gap-3">
@@ -147,7 +151,7 @@ export function IOSWheelTime({
             <div
               ref={colHRef}
               onScroll={onScrollH}
-              className="font-mono overflow-auto rounded-lg border border-[#f0d9a6] text-neutral-800"
+              className={`font-mono overflow-auto rounded-lg border ${themeConfig.popupBorder} text-neutral-800`}
               style={{ height: VIEW_H, scrollSnapType: 'y mandatory' as const }}
             >
               {/* 上下占位让中线正中 */}
@@ -156,7 +160,7 @@ export function IOSWheelTime({
                 <div
                   key={i}
                   style={{ height: ROW_H, lineHeight: `${ROW_H}px`, scrollSnapAlign: 'center' }}
-                  className={`text-center text-sm ${i === h ? 'text-[#a83232] font-semibold' : ''}`}
+                  className={`text-center text-sm ${i === h ? themeConfig.selectedText : ''}`}
                   onClick={() => { setH(i); confirm(i, m); }}
                 >
                   {pad(i)}
@@ -171,7 +175,7 @@ export function IOSWheelTime({
             <div
               ref={colMRef}
               onScroll={onScrollM}
-              className="font-mono overflow-auto rounded-lg border border-[#f0d9a6] text-neutral-800"
+              className={`font-mono overflow-auto rounded-lg border ${themeConfig.popupBorder} text-neutral-800`}
               style={{ height: VIEW_H, scrollSnapType: 'y mandatory' as const }}
             >
               <div style={{ height: (VIEW_H - ROW_H) / 2 }} />
@@ -179,7 +183,7 @@ export function IOSWheelTime({
                 <div
                   key={mm}
                   style={{ height: ROW_H, lineHeight: `${ROW_H}px`, scrollSnapAlign: 'center' }}
-                  className={`text-center text-sm ${mm === m ? 'text-[#a83232] font-semibold' : ''}`}
+                  className={`text-center text-sm ${mm === m ? themeConfig.selectedText : ''}`}
                   onClick={() => { setM(mm); confirm(h, mm); }}
                 >
                   {pad(mm)}
@@ -201,7 +205,7 @@ export function IOSWheelTime({
         type="button"
         disabled={disabled}
         onClick={() => setOpen((v) => !v)}
-        className="w-full rounded-xl border border-[#f0d9a6] bg-[#fff7ed] px-3 py-2 text-left text-sm text-neutral-900 outline-none focus:ring-2 focus:ring-red-400"
+        className={`w-full rounded-xl text-left text-sm text-neutral-900 outline-none ${themeConfig.trigger} ${themeConfig.triggerPadding}`}
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-label="选择时间"

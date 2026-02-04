@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Footer from '@/app/components/Footer';
+import { IOSWheelDate } from '@/app/components/DatePicker';
+import { IOSWheelTime } from '@/app/components/TimePicker';
 import {
   Sparkles,
   Calendar,
@@ -200,23 +202,23 @@ export default function LandingPage() {
 
                     {/* 日期输入 */}
                     <div className="relative">
-                      <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
-                      <input
-                        type="date"
+                      <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)] z-10 pointer-events-none" />
+                      <IOSWheelDate
                         value={birthDate}
-                        onChange={(e) => setBirthDate(e.target.value)}
-                        className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-[var(--color-bg-deep)] border-2 border-transparent focus:border-[var(--color-primary)] focus:bg-white outline-none transition-all"
+                        onChange={setBirthDate}
+                        theme="landing"
+                        attachToBody
                       />
                     </div>
 
                     {/* 时间输入 */}
                     <div className="relative">
-                      <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
-                      <input
-                        type="time"
+                      <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)] z-10 pointer-events-none" />
+                      <IOSWheelTime
                         value={birthTime}
-                        onChange={(e) => setBirthTime(e.target.value)}
-                        className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-[var(--color-bg-deep)] border-2 border-transparent focus:border-[var(--color-primary)] focus:bg-white outline-none transition-all"
+                        onChange={setBirthTime}
+                        theme="landing"
+                        attachToBody
                       />
                     </div>
 
