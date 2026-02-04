@@ -19,6 +19,7 @@ import {
   saveConversation, loadConversation, getActiveConversationId,
   savePaipanLocal, loadPaipanLocal,
 } from '@/app/lib/chat/storage';
+import { loadDefaultBirthData, saveDefaultBirthData, type DefaultBirthData } from '@/app/lib/birthData';
 
 import { SYSTEM_INTRO } from '@/app/lib/chat/constants';
 import { useUser, fetchMe } from '@/app/lib/auth';
@@ -59,6 +60,10 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
   const [birthTime, setBirthTime] = useState(''); // HH:MM
   const [calcLoading, setCalcLoading] = useState(false);
   const [calcErr, setCalcErr] = useState<string | null>(null);
+
+  // ===== 默认命盘状态 =====
+  const [hasDefault, setHasDefault] = useState(false);
+  const [savingDefault, setSavingDefault] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -115,6 +120,20 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
 
   useEffect(() => {
     loadQuickButtonsFromAdmin();
+  }, []);
+
+  // ===== 加载默认命盘 =====
+  useEffect(() => {
+    loadDefaultBirthData().then(data => {
+      if (data) {
+        setGender(data.gender);
+        setCalendarType(data.calendar);
+        setBirthDate(data.birthDate);
+        setBirthTime(data.birthTime);
+        setBirthPlace(data.birthPlace);
+        setHasDefault(true);
+      }
+    });
   }, []);
 
          // 放在组件里任意位置（或 utils）
@@ -422,6 +441,26 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
     }
   };
 
+  // ===== 保存为默认命盘 =====
+  const handleSaveAsDefault = async () => {
+    if (!birthDate || !birthTime) return;
+    setSavingDefault(true);
+    try {
+      await saveDefaultBirthData({
+        gender,
+        calendar: calendarType,
+        birthDate,
+        birthTime,
+        birthPlace: birthPlace.trim() || '北京',
+      });
+      setHasDefault(true);
+    } catch (e) {
+      console.error('Failed to save default birth data:', e);
+    } finally {
+      setSavingDefault(false);
+    }
+  };
+
   // ===== 表单：排盘 + 启动解读 =====
   const handleCalcPaipan = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -667,6 +706,19 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
                 )}
               </button>
             </div>
+
+            {/* 保存为默认命盘 */}
+            {birthDate && birthTime && (
+              <button
+                type="button"
+                onClick={handleSaveAsDefault}
+                disabled={savingDefault}
+                className="w-full text-xs text-[var(--color-primary)] hover:underline disabled:opacity-60 py-1"
+              >
+                {savingDefault ? '保存中...' : (hasDefault ? '更新默认命盘' : '保存为默认命盘')}
+              </button>
+            )}
+
             {calcErr && <div className="text-xs text-[var(--color-primary)] mt-1.5">{calcErr}</div>}
           </form>
         </section>
