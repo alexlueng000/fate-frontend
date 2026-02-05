@@ -2,15 +2,25 @@
 export async function trySSE(
   url: string,
   body: unknown,
-  onDelta: (text: string) => void,   // 回调“当前整段最新文本”（已规范化）
+  onDelta: (text: string) => void,   // 回调"当前整段最新文本"（已规范化）
   onMeta?: (meta: unknown) => void,
   opts?: { signal?: AbortSignal }    // ✅ 支持中止旧流
 ): Promise<void> {
   const log = (...a: unknown[]) => console.log('[SSE]', ...a);
 
+  // 构建请求头，自动添加 Authorization
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    Accept: 'text/event-stream',
+  };
+  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const res = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
+    headers,
     body: JSON.stringify(body),
     signal: opts?.signal,            // ✅ 透传 signal
   });
