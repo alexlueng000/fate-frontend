@@ -148,9 +148,12 @@ export default function ChatPage() {
             }
           } catch {
             // 流式不可用 → 回退到一次性
+            const token = localStorage.getItem('auth_token');
+            const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
             const res = await fetch(api('/chat/start'), {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers,
               body: JSON.stringify({ paipan: mingpan }),
             });
             if (!res.ok) throw new Error(await res.text());
@@ -234,9 +237,12 @@ export default function ChatPage() {
   );
 
   const sendOnce = async (content: string) => {
+    const token = localStorage.getItem('auth_token');
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
     const res = await fetch(api('/chat'), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ conversation_id: conversationId, message: content }),
     });
     if (!res.ok) throw new Error(await res.text());

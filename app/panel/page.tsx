@@ -245,9 +245,12 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
 
   // ===== 一次性请求 =====
   const sendOnce = async (content: string) => {
+    const token = localStorage.getItem('auth_token');
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
     const res = await fetch(api('/chat'), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ conversation_id: conversationId, message: content }),
     });
     if (!res.ok) throw new Error(await res.text());
@@ -557,9 +560,12 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
         );
       } catch (err) {
         // 4) 流式失败 → 一次性兜底
+        const token = localStorage.getItem('auth_token');
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
         const res = await fetch(api('/chat/start'), {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify({ paipan: mingpan }),
         });
         if (!res.ok) throw new Error(await res.text());
