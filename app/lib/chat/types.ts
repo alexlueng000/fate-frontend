@@ -4,6 +4,11 @@ export type Msg = {
   streaming?: boolean; // 新增（可选）
   meta?: {
     kind: string;
+    messageId?: number;  // 关联后端消息ID，用于评价功能
+  };
+  userRating?: {  // 当前用户的评价状态
+    ratingType: 'up' | 'down';
+    reason?: string;
   };
 };
 export type FourPillars = { year: string[]; month: string[]; day: string[]; hour: string[] };

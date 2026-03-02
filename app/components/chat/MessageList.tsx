@@ -1,16 +1,21 @@
 'use client';
-import { Msg } from '@/app/lib/chat/types';
+import { Msg, Paipan } from '@/app/lib/chat/types';
 import { ComponentType } from 'react';
 import { Bot, User } from 'lucide-react';
+import { MessageRating } from './MessageRating';
 
 export function MessageList({
   scrollRef,
   messages,
   Markdown,
+  paipanData,
+  onRated,
 }: {
   scrollRef?: React.MutableRefObject<HTMLDivElement | null> | React.RefObject<HTMLDivElement | null>;
   messages: Msg[];
   Markdown: ComponentType<{ content: string }>;
+  paipanData?: Paipan;
+  onRated?: (messageIndex: number, rating: { ratingType: 'up' | 'down'; reason?: string }) => void;
 }) {
   if (messages.length === 0) {
     return (
@@ -58,27 +63,41 @@ export function MessageList({
             </div>
 
             {/* Message Bubble */}
-            <div
-              className={`max-w-[95%] sm:max-w-[85%] rounded-xl px-4 py-3 ${
-                isAssistant
-                  ? 'bg-[var(--color-bg-card)] border border-[var(--color-border)] text-[var(--color-text-primary)]'
-                  : 'bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-light)] text-white'
-              } ${m.streaming ? 'animate-pulse' : ''}`}
-            >
-              {isAssistant ? (
-                isIntro ? (
-                  <div className="border-l-2 border-[var(--color-gold)] pl-3">
+            <div className="flex flex-col max-w-[95%] sm:max-w-[85%]">
+              <div
+                className={`rounded-xl px-4 py-3 ${
+                  isAssistant
+                    ? 'bg-[var(--color-bg-card)] border border-[var(--color-border)] text-[var(--color-text-primary)]'
+                    : 'bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-light)] text-white'
+                } ${m.streaming ? 'animate-pulse' : ''}`}
+              >
+                {isAssistant ? (
+                  isIntro ? (
+                    <div className="border-l-2 border-[var(--color-gold)] pl-3">
+                      <div className="msg-md">
+                        <Markdown content={content} />
+                      </div>
+                    </div>
+                  ) : (
                     <div className="msg-md">
                       <Markdown content={content} />
                     </div>
-                  </div>
+                  )
                 ) : (
-                  <div className="msg-md">
-                    <Markdown content={content} />
-                  </div>
-                )
-              ) : (
-                <p className="text-sm">{content}</p>
+                  <p className="text-sm">{content}</p>
+                )}
+              </div>
+
+              {/* 评价按钮 - 仅在AI消息且非流式状态时显示 */}
+              {isAssistant && !m.streaming && m.meta?.messageId && (
+                <div className="flex justify-end mt-1">
+                  <MessageRating
+                    messageId={m.meta.messageId}
+                    userRating={m.userRating}
+                    paipanData={paipanData}
+                    onRated={(rating) => onRated?.(i, rating)}
+                  />
+                </div>
               )}
             </div>
           </div>

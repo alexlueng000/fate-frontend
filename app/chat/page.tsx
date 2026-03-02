@@ -16,6 +16,7 @@ import {
   Msg, Paipan, QUICK_BUTTONS,
   readPaipanParamsFromURL, normalizeMarkdown,
 } from '@/app/lib/chat/types';
+import { getRating } from '@/app/lib/chat/rating';
 import { api, pickReply } from '@/app/lib/chat/api';
 import { trySSE } from '@/app/lib/chat/sse';
 import {
@@ -383,6 +384,20 @@ export default function ChatPage() {
   };
 
   // ===== UI =====
+  // 处理消息评价回调
+  const handleRated = async (messageIndex: number, rating: { ratingType: 'up' | 'down'; reason?: string }) => {
+    setMsgs((prev) => {
+      const next = [...prev];
+      if (messageIndex >= 0 && messageIndex < next.length) {
+        next[messageIndex] = {
+          ...next[messageIndex],
+          userRating: rating,
+        };
+      }
+      return next;
+    });
+  };
+
   return (
     <main className="min-h-screen bg-[#fef3c7] text-neutral-800 p-6 sm:p-10">
       <div className="mx-auto w-full max-w-5xl space-y-6">
@@ -408,6 +423,8 @@ export default function ChatPage() {
           scrollRef={scrollRef}
           messages={msgs}
           Markdown={Markdown}
+          paipanData={paipan ?? undefined}
+          onRated={handleRated}
         />
 
         {(booting || loading) && (
