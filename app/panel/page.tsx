@@ -827,7 +827,7 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
             scrollRef={scrollRef}
             messages={msgs}
             Markdown={Markdown}
-            paipanData={paipan}
+            paipanData={paipan ?? undefined}
             onRated={handleRated}
           />
 
