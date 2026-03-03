@@ -303,6 +303,22 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
             sessionStorage.setItem('conversation_id', cid);
             setConversationId(cid);
           }
+          // 保存 message_id 到消息对象
+          const msgId = (meta as any)?.message_id;
+          console.log('[DEBUG] Received message_id from meta:', msgId);
+          if (msgId) {
+            setMsgs(prev => {
+              const i = aiIndexRef.current;
+              if (i == null || i < 0 || i >= prev.length) return prev;
+              const next = [...prev];
+              next[i] = {
+                ...next[i],
+                meta: { ...next[i].meta, messageId: msgId }
+              };
+              console.log('[DEBUG] Updated message with messageId:', next[i]);
+              return next;
+            });
+          }
         }
       );
 
@@ -555,6 +571,22 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
               cidLocal = cid;
               sessionStorage.setItem('conversation_id', cid);
               setConversationId(cid);
+            }
+            // 保存 message_id 到消息对象
+            const msgId = (metaAny as any)?.message_id;
+            console.log('[DEBUG] Start chat - Received message_id from meta:', msgId);
+            if (msgId) {
+              setMsgs((prev) => {
+                const next = [...prev];
+                if (assistantIndex >= 0 && assistantIndex < next.length) {
+                  next[assistantIndex] = {
+                    ...next[assistantIndex],
+                    meta: { ...next[assistantIndex].meta, messageId: msgId }
+                  };
+                  console.log('[DEBUG] Start chat - Updated message with messageId:', next[assistantIndex]);
+                }
+                return next;
+              });
             }
           }
         );
