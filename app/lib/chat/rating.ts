@@ -2,6 +2,7 @@
 import { api, postJSON } from '@/app/lib/api';
 import type { Paipan } from './types';
 
+export type { Paipan } from './types';
 export type RatingType = 'up' | 'down';
 export type RatingReason = 'inaccurate' | 'irrelevant' | 'unclear' | 'inappropriate' | 'other';
 
