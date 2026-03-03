@@ -3,7 +3,7 @@ export type Msg = {
   content: string;
   streaming?: boolean; // 新增（可选）
   meta?: {
-    kind: string;
+    kind?: string;  // 改为可选
     messageId?: number;  // 关联后端消息ID，用于评价功能
   };
   userRating?: {  // 当前用户的评价状态
