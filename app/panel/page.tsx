@@ -352,6 +352,20 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
     }
   };
 
+  // 处理评价回调
+  const handleRated = (messageIndex: number, rating: { ratingType: 'up' | 'down'; reason?: string }) => {
+    setMsgs(prev => {
+      const next = [...prev];
+      if (messageIndex >= 0 && messageIndex < next.length) {
+        next[messageIndex] = {
+          ...next[messageIndex],
+          userRating: rating
+        };
+      }
+      return next;
+    });
+  };
+
   // ===== 基本交互 =====
   const send = async () => {
     if (!conversationId) {
@@ -809,7 +823,13 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
         {/* ===== 聊天区域 ===== */}
         <section className="space-y-4">
           {/* 消息列表 */}
-          <MessageList scrollRef={scrollRef} messages={msgs} Markdown={Markdown} />
+          <MessageList
+            scrollRef={scrollRef}
+            messages={msgs}
+            Markdown={Markdown}
+            paipanData={paipan}
+            onRated={handleRated}
+          />
 
           {/* 状态 & 错误 */}
           {(booting || loading) && (

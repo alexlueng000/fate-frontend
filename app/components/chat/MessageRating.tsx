@@ -46,7 +46,10 @@ export function MessageRating({ messageId, userRating, paipanData, onRated }: Pr
   };
 
   const handleDownvoteClick = () => {
-    // 如果已经点踩，再次点击可以取消（这里简化处理，直接打开弹窗）
+    // 如果已经点踩，不允许再次点击
+    if (currentRating === 'down') {
+      return;
+    }
     setIsModalOpen(true);
   };
 
@@ -56,31 +59,31 @@ export function MessageRating({ messageId, userRating, paipanData, onRated }: Pr
         {/* 点赞按钮 */}
         <button
           onClick={handleUpvote}
-          disabled={isSubmitting}
+          disabled={isSubmitting || currentRating === 'down'}
           className={`p-1.5 rounded-lg transition-all ${
             currentRating === 'up'
-              ? 'text-[var(--color-gold)] bg-[var(--color-gold)]/10'
+              ? 'text-[var(--color-gold)] bg-[var(--color-gold)]/20 shadow-sm'
               : 'text-[var(--color-text-muted)] hover:text-[var(--color-gold)] hover:bg-[var(--color-bg-hover)]'
           } ${currentRating === 'down' ? 'opacity-40 cursor-not-allowed' : ''} ${isSubmitting ? 'opacity-50' : ''}`}
           aria-label="点赞"
           title={currentRating === 'up' ? '已点赞' : '点赞'}
         >
-          <ThumbsUp className="w-4 h-4" />
+          <ThumbsUp className={`w-4 h-4 ${currentRating === 'up' ? 'fill-current' : ''}`} />
         </button>
 
         {/* 点踩按钮 */}
         <button
           onClick={handleDownvoteClick}
-          disabled={isSubmitting || currentRating === 'up'}
+          disabled={isSubmitting || currentRating === 'up' || currentRating === 'down'}
           className={`p-1.5 rounded-lg transition-all ${
             currentRating === 'down'
-              ? 'text-[var(--color-primary)] bg-[var(--color-primary)]/10'
+              ? 'text-[var(--color-primary)] bg-[var(--color-primary)]/20 shadow-sm'
               : 'text-[var(--color-text-muted)] hover:text-[var(--color-primary)] hover:bg-[var(--color-bg-hover)]'
-          } ${currentRating === 'up' ? 'opacity-40 cursor-not-allowed' : ''} ${isSubmitting ? 'opacity-50' : ''}`}
+          } ${currentRating === 'up' || currentRating === 'down' ? 'opacity-40 cursor-not-allowed' : ''} ${isSubmitting ? 'opacity-50' : ''}`}
           aria-label="点踩"
           title={currentRating === 'down' ? '已点踩' : '点踩'}
         >
-          <ThumbsDown className="w-4 h-4" />
+          <ThumbsDown className={`w-4 h-4 ${currentRating === 'down' ? 'fill-current' : ''}`} />
         </button>
       </div>
 
