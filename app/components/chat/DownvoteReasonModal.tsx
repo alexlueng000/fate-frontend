@@ -124,7 +124,16 @@ export function DownvoteReasonModal({ isOpen, onClose, onSubmit }: Props) {
                 rows={3}
               />
               <div className="flex items-center justify-between mt-1">
-                <span className={`text-xs ${customReason.trim().length < 15 ? 'text-[var(--color-text-muted)]' : 'text-[var(--color-gold)]'}`}>
+                <span className={`text-xs ${
+                  customReason.trim().length < 15
+                    ? 'text-red-500 font-medium'
+                    : 'text-[var(--color-gold)] font-medium'
+                }`}>
+                  {customReason.trim().length < 15
+                    ? `还需 ${15 - customReason.trim().length} 字`
+                    : '✓ 已满足要求'}
+                </span>
+                <span className="text-xs text-[var(--color-text-muted)]">
                   {customReason.trim().length} / 15 字
                 </span>
               </div>
@@ -151,7 +160,11 @@ export function DownvoteReasonModal({ isOpen, onClose, onSubmit }: Props) {
           <button
             onClick={handleSubmit}
             disabled={!selectedReason || isSubmitting || (selectedReason === 'other' && customReason.trim().length < 15)}
-            className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              !selectedReason || isSubmitting || (selectedReason === 'other' && customReason.trim().length < 15)
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-[var(--color-primary)] text-white hover:opacity-90 cursor-pointer'
+            }`}
           >
             {isSubmitting ? '提交中...' : '提交'}
           </button>
