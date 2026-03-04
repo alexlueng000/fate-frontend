@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Settings, MessageSquare, Zap, BookOpen, Ticket, ChevronRight, ArrowLeft, Shield, BarChart3 } from 'lucide-react';
+import { Settings, MessageSquare, Zap, BookOpen, Ticket, ChevronRight, ArrowLeft, Shield, BarChart3, MessageCircle } from 'lucide-react';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -46,6 +46,13 @@ export default function AdminPage() {
       title: '数据概览',
       description: '查看用户、对话、消息等统计数据',
       color: '#3b82f6',
+    },
+    {
+      href: '/admin/feedbacks',
+      icon: <MessageCircle className="w-6 h-6" />,
+      title: '用户反馈',
+      description: '查看和回复用户反馈信息',
+      color: '#10b981',
     },
     {
       href: '/admin/invitation-codes',
