@@ -275,9 +275,25 @@ export default function MessageRatingsPage() {
                   <div className="text-xs text-[var(--color-text-muted)] mb-2">
                     AI 回复内容:
                   </div>
-                  <div className="text-[var(--color-text-primary)] line-clamp-3">
-                    {rating.message_content || '（无内容）'}
-                  </div>
+                  {rating.message_content && rating.message_content.length > 300 ? (
+                    <details className="group">
+                      <summary className="cursor-pointer text-[var(--color-text-primary)] list-none">
+                        <div className="line-clamp-3 group-open:line-clamp-none">
+                          {rating.message_content}
+                        </div>
+                        <div className="text-xs text-[var(--color-primary)] mt-2 group-open:hidden">
+                          点击展开完整内容 ▼
+                        </div>
+                        <div className="text-xs text-[var(--color-primary)] mt-2 hidden group-open:block">
+                          点击收起 ▲
+                        </div>
+                      </summary>
+                    </details>
+                  ) : (
+                    <div className="text-[var(--color-text-primary)] whitespace-pre-wrap">
+                      {rating.message_content || '（无内容）'}
+                    </div>
+                  )}
                 </div>
 
                 {/* Custom Reason (if exists and is long) */}
@@ -315,13 +331,68 @@ export default function MessageRatingsPage() {
 
                 {/* Paipan Data (if exists) */}
                 {rating.paipan_data && (
-                  <details className="mt-4">
-                    <summary className="text-xs text-[var(--color-text-muted)] cursor-pointer hover:text-[var(--color-text-primary)]">
+                  <details className="mt-4 group">
+                    <summary className="text-sm font-medium text-[var(--color-text-primary)] cursor-pointer hover:text-[var(--color-primary)] transition-colors list-none flex items-center gap-2">
+                      <span className="group-open:rotate-90 transition-transform">▶</span>
                       查看命盘数据
                     </summary>
-                    <pre className="mt-2 p-3 bg-[var(--color-bg-elevated)] rounded text-xs overflow-auto">
-                      {JSON.stringify(rating.paipan_data, null, 2)}
-                    </pre>
+                    <div className="mt-3 p-4 bg-[var(--color-bg-elevated)] rounded-lg">
+                      {/* Four Pillars */}
+                      {rating.paipan_data.four_pillars && (
+                        <div className="mb-4">
+                          <div className="text-xs font-medium text-[var(--color-text-muted)] mb-2">
+                            四柱八字
+                          </div>
+                          <div className="grid grid-cols-4 gap-2">
+                            {['year', 'month', 'day', 'hour'].map((pillar, idx) => {
+                              const pillarData = rating.paipan_data.four_pillars[pillar];
+                              const labels = ['年柱', '月柱', '日柱', '时柱'];
+                              return (
+                                <div key={pillar} className="bg-white rounded-lg p-3 text-center border border-[var(--color-border)]">
+                                  <div className="text-xs text-[var(--color-text-muted)] mb-1">
+                                    {labels[idx]}
+                                  </div>
+                                  <div className="text-lg font-bold text-[var(--color-text-primary)]">
+                                    {pillarData ? pillarData.join('') : '-'}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Dayun */}
+                      {rating.paipan_data.dayun && rating.paipan_data.dayun.length > 0 && (
+                        <div>
+                          <div className="text-xs font-medium text-[var(--color-text-muted)] mb-2">
+                            大运（前5步）
+                          </div>
+                          <div className="grid grid-cols-5 gap-2">
+                            {rating.paipan_data.dayun.slice(0, 5).map((du: any, idx: number) => (
+                              <div key={idx} className="bg-white rounded-lg p-2 text-center border border-[var(--color-border)]">
+                                <div className="text-xs text-[var(--color-text-muted)]">
+                                  {du.age}岁
+                                </div>
+                                <div className="text-sm font-bold text-[var(--color-text-primary)]">
+                                  {du.pillar ? du.pillar.join('') : '-'}
+                                </div>
+                                <div className="text-xs text-[var(--color-text-muted)]">
+                                  {du.start_year}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Raw JSON (fallback) */}
+                      {!rating.paipan_data.four_pillars && !rating.paipan_data.dayun && (
+                        <pre className="text-xs overflow-auto text-[var(--color-text-primary)]">
+                          {JSON.stringify(rating.paipan_data, null, 2)}
+                        </pre>
+                      )}
+                    </div>
                   </details>
                 )}
               </div>
