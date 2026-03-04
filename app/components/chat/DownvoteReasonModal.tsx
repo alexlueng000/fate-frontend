@@ -7,22 +7,39 @@ import { DOWNVOTE_REASONS, type RatingReason, type Paipan } from '@/app/lib/chat
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (reason: RatingReason) => void;
+  onSubmit: (reason: RatingReason, customReason?: string) => Promise<void>;
 }
 
 export function DownvoteReasonModal({ isOpen, onClose, onSubmit }: Props) {
   const [selectedReason, setSelectedReason] = useState<RatingReason | null>(null);
+  const [customReason, setCustomReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
   if (!isOpen) return null;
 
   const handleSubmit = async () => {
     if (!selectedReason) return;
 
+    // 如果选择了"其他"，验证自定义理由
+    if (selectedReason === 'other') {
+      const trimmed = customReason.trim();
+      if (trimmed.length < 15) {
+        setError('请输入至少15个字的理由');
+        return;
+      }
+    }
+
     setIsSubmitting(true);
+    setError('');
     try {
-      onSubmit(selectedReason);
+      // 传递自定义理由（如果有）
+      await onSubmit(selectedReason, selectedReason === 'other' ? customReason.trim() : undefined);
+      // 提交成功后重置状态
       setSelectedReason(null);
+      setCustomReason('');
+    } catch (err) {
+      setError('提交失败，请重试');
     } finally {
       setIsSubmitting(false);
     }
@@ -30,6 +47,8 @@ export function DownvoteReasonModal({ isOpen, onClose, onSubmit }: Props) {
 
   const handleClose = () => {
     setSelectedReason(null);
+    setCustomReason('');
+    setError('');
     onClose();
   };
 
@@ -71,7 +90,10 @@ export function DownvoteReasonModal({ isOpen, onClose, onSubmit }: Props) {
                   name="downvote-reason"
                   value={reason.value}
                   checked={selectedReason === reason.value}
-                  onChange={(e) => setSelectedReason(e.target.value as RatingReason)}
+                  onChange={(e) => {
+                    setSelectedReason(e.target.value as RatingReason);
+                    setError('');
+                  }}
                   className="mt-0.5 w-4 h-4 text-[var(--color-primary)] border-[var(--color-border)] focus:ring-[var(--color-primary)]"
                 />
                 <div className="flex-1">
@@ -87,6 +109,34 @@ export function DownvoteReasonModal({ isOpen, onClose, onSubmit }: Props) {
               </label>
             ))}
           </div>
+
+          {/* 自定义理由输入框（选择"其他"时显示） */}
+          {selectedReason === 'other' && (
+            <div className="mt-4">
+              <textarea
+                value={customReason}
+                onChange={(e) => {
+                  setCustomReason(e.target.value);
+                  setError('');
+                }}
+                placeholder="请详细说明您的理由（至少15个字）"
+                className="w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-elevated)] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/10 outline-none transition-all resize-none"
+                rows={3}
+              />
+              <div className="flex items-center justify-between mt-1">
+                <span className={`text-xs ${customReason.trim().length < 15 ? 'text-[var(--color-text-muted)]' : 'text-[var(--color-gold)]'}`}>
+                  {customReason.trim().length} / 15 字
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* 错误提示 */}
+          {error && (
+            <div className="mt-3 px-3 py-2 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">
+              {error}
+            </div>
+          )}
         </div>
 
         {/* Footer */}
@@ -100,7 +150,7 @@ export function DownvoteReasonModal({ isOpen, onClose, onSubmit }: Props) {
           </button>
           <button
             onClick={handleSubmit}
-            disabled={!selectedReason || isSubmitting}
+            disabled={!selectedReason || isSubmitting || (selectedReason === 'other' && customReason.trim().length < 15)}
             className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting ? '提交中...' : '提交'}

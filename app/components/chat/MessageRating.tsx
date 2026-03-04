@@ -32,14 +32,15 @@ export function MessageRating({ messageId, userRating, paipanData, onRated }: Pr
     }
   };
 
-  const handleDownvote = async (reason: RatingReason) => {
+  const handleDownvote = async (reason: RatingReason, customReason?: string) => {
     setIsSubmitting(true);
     try {
-      await submitRating(messageId, 'down', reason, paipanData);
-      onRated({ ratingType: 'down', reason });
+      await submitRating(messageId, 'down', reason, paipanData, customReason);
+      onRated({ ratingType: 'down', reason: customReason || reason });
       setIsModalOpen(false);
     } catch (error) {
       console.error('点踩失败:', error);
+      throw error;  // 重新抛出错误，让 Modal 处理
     } finally {
       setIsSubmitting(false);
     }

@@ -9,6 +9,7 @@ export type RatingReason = 'inaccurate' | 'irrelevant' | 'unclear' | 'inappropri
 export interface MessageRatingCreate {
   rating_type: RatingType;
   reason?: RatingReason;
+  custom_reason?: string;  // 自定义理由（当reason=other时）
   paipan_data?: Paipan;
 }
 
@@ -34,12 +35,14 @@ export interface MessageRatingOkResp {
  * @param ratingType 评价类型：up=点赞, down=点踩
  * @param reason 点踩原因（仅在ratingType=down时需要）
  * @param paipanData 命盘数据（点踩时保存用于后续分析）
+ * @param customReason 自定义理由（当reason=other时提供）
  */
 export async function submitRating(
   messageId: number,
   ratingType: RatingType,
   reason?: RatingReason,
-  paipanData?: Paipan
+  paipanData?: Paipan,
+  customReason?: string
 ): Promise<MessageRatingOkResp> {
   const body: MessageRatingCreate = {
     rating_type: ratingType,
@@ -47,6 +50,10 @@ export async function submitRating(
 
   if (reason) {
     body.reason = reason;
+  }
+
+  if (customReason) {
+    body.custom_reason = customReason;
   }
 
   if (paipanData) {
