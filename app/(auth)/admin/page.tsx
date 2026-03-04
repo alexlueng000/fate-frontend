@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Settings, MessageSquare, Zap, BookOpen, Ticket, ChevronRight, ArrowLeft, Shield, BarChart3, MessageCircle } from 'lucide-react';
+import { Settings, MessageSquare, Zap, BookOpen, Ticket, ChevronRight, ArrowLeft, Shield, BarChart3, MessageCircle, ThumbsDown } from 'lucide-react';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -46,6 +46,13 @@ export default function AdminPage() {
       title: '数据概览',
       description: '查看用户、对话、消息等统计数据',
       color: '#3b82f6',
+    },
+    {
+      href: '/admin/ratings',
+      icon: <ThumbsDown className="w-6 h-6" />,
+      title: '消息评价',
+      description: '查看用户对 AI 回复的点赞和点踩',
+      color: '#ef4444',
     },
     {
       href: '/admin/feedbacks',
