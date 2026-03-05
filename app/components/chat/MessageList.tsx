@@ -53,11 +53,6 @@ export function MessageList({
         const isIntro = m.meta?.kind === 'intro';
         const content = m.content || '';
 
-        // 调试日志
-        if (isAssistant && !m.streaming) {
-          console.log('[MessageList] Message', i, '- messageId:', m.meta?.messageId, '- streaming:', m.streaming, '- meta:', m.meta);
-        }
-
         return (
           <div key={i} className={`flex gap-3 ${isAssistant ? '' : 'flex-row-reverse'}`}>
             {/* Avatar - 桌面端显示，移动端隐藏 */}

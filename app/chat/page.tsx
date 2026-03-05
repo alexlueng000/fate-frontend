@@ -391,17 +391,9 @@ export default function ChatPage() {
   // ===== UI =====
   // 白话版：首次请求/重试
   const handleSimplify = async (idx: number) => {
-    console.log('[handleSimplify] 点击白话版按钮，idx=', idx, 'msgs.length=', msgs.length);
     const msg = msgs[idx];
-    if (!msg || msg.role !== 'assistant') {
-      console.log('[handleSimplify] 消息不存在或不是 assistant');
-      return;
-    }
-    if (msg.simplify?.status === 'loading') {
-      console.log('[handleSimplify] 已经在加载中');
-      return;
-    }
-    console.log('[handleSimplify] 开始请求白话版，content 长度=', msg.content.length);
+    if (!msg || msg.role !== 'assistant') return;
+    if (msg.simplify?.status === 'loading') return;
 
     setMsgs(prev => {
       const next = [...prev];
