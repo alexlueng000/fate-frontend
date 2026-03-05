@@ -92,7 +92,7 @@ export default function ChatPage() {
             // 先插入一个占位 assistant，边流追加内容
             let assistantIndex = -1;
             setMsgs(() => {
-              const next: Msg[] = [{ role: 'assistant', content: '' }];
+              const next: Msg[] = [{ role: 'assistant', content: '', streaming: true }];
               assistantIndex = 0;
               return next;
             });
@@ -133,7 +133,7 @@ export default function ChatPage() {
               const next = [...prev];
               if (assistantIndex >= 0 && assistantIndex < next.length) {
                 const normalized = normalizeMarkdown(next[assistantIndex].content || '');
-                next[assistantIndex] = { ...next[assistantIndex], content: normalized };
+                next[assistantIndex] = { ...next[assistantIndex], content: normalized, streaming: false };
                 finalText = normalized;
               }
               return next;
@@ -264,7 +264,7 @@ export default function ChatPage() {
     // 先插入占位的 assistant
     let assistantIndex = -1;
     setMsgs((prev) => {
-      const next: Msg[] = [...prev, { role: 'assistant', content: '' }];
+      const next: Msg[] = [...prev, { role: 'assistant', content: '', streaming: true }];
       assistantIndex = next.length - 1;
       return next;
     });
@@ -298,7 +298,7 @@ export default function ChatPage() {
       setMsgs((prev) => {
         if (assistantIndex < 0 || assistantIndex >= prev.length) return prev;
         const next = [...prev];
-        next[assistantIndex] = { ...next[assistantIndex], content: normalizeMarkdown(next[assistantIndex].content) };
+        next[assistantIndex] = { ...next[assistantIndex], content: normalizeMarkdown(next[assistantIndex].content), streaming: false };
         return next;
       });
     } catch {
@@ -391,9 +391,17 @@ export default function ChatPage() {
   // ===== UI =====
   // 白话版：首次请求/重试
   const handleSimplify = async (idx: number) => {
+    console.log('[handleSimplify] 点击白话版按钮，idx=', idx, 'msgs.length=', msgs.length);
     const msg = msgs[idx];
-    if (!msg || msg.role !== 'assistant') return;
-    if (msg.simplify?.status === 'loading') return;
+    if (!msg || msg.role !== 'assistant') {
+      console.log('[handleSimplify] 消息不存在或不是 assistant');
+      return;
+    }
+    if (msg.simplify?.status === 'loading') {
+      console.log('[handleSimplify] 已经在加载中');
+      return;
+    }
+    console.log('[handleSimplify] 开始请求白话版，content 长度=', msg.content.length);
 
     setMsgs(prev => {
       const next = [...prev];
