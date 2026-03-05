@@ -190,7 +190,12 @@ export default function ChatPage() {
         if (cached?.length) {
           if (!alive) return;
           setConversationId(active);
-          setMsgs(cached);
+          // Fix any interrupted simplify loading states
+          setMsgs(cached.map(m =>
+            m.simplify?.status === 'loading'
+              ? { ...m, simplify: { ...m.simplify, status: 'error' as const, error: '已中断，请重试' } }
+              : m
+          ));
           if (!cachedPaipan) {
             const p2 = loadPaipanLocal();
             if (p2) setPaipan(p2);
@@ -384,6 +389,73 @@ export default function ChatPage() {
   };
 
   // ===== UI =====
+  // 白话版：首次请求/重试
+  const handleSimplify = async (idx: number) => {
+    const msg = msgs[idx];
+    if (!msg || msg.role !== 'assistant') return;
+    if (msg.simplify?.status === 'loading') return;
+
+    setMsgs(prev => {
+      const next = [...prev];
+      next[idx] = { ...next[idx], simplify: { status: 'loading', content: '', expanded: true } };
+      return next;
+    });
+
+    try {
+      await trySSE(
+        api('/chat/simplify'),
+        { message_content: msg.content },
+        (text) => {
+          if (!mountedRef.current) return;
+          setMsgs(prev => {
+            const next = [...prev];
+            if (next[idx]?.simplify?.status === 'loading') {
+              next[idx] = {
+                ...next[idx],
+                simplify: { ...next[idx].simplify!, content: text, status: 'loading', expanded: true },
+              };
+            }
+            return next;
+          });
+        },
+      );
+
+      setMsgs(prev => {
+        const next = [...prev];
+        if (next[idx]?.simplify) {
+          next[idx] = { ...next[idx], simplify: { ...next[idx].simplify!, status: 'done' } };
+        }
+        return next;
+      });
+    } catch (e) {
+      setMsgs(prev => {
+        const next = [...prev];
+        if (next[idx]?.simplify) {
+          next[idx] = {
+            ...next[idx],
+            simplify: {
+              ...next[idx].simplify!,
+              status: 'error',
+              error: e instanceof Error ? e.message : '生成失败',
+            },
+          };
+        }
+        return next;
+      });
+    }
+  };
+
+  // 白话版：折叠/展开
+  const handleSimplifyToggle = (idx: number) => {
+    setMsgs(prev => {
+      const next = [...prev];
+      const simplify = next[idx]?.simplify;
+      if (!simplify) return prev;
+      next[idx] = { ...next[idx], simplify: { ...simplify, expanded: !simplify.expanded } };
+      return next;
+    });
+  };
+
   // 处理消息评价回调
   const handleRated = async (messageIndex: number, rating: { ratingType: 'up' | 'down'; reason?: string }) => {
     setMsgs((prev) => {
@@ -425,6 +497,8 @@ export default function ChatPage() {
           Markdown={Markdown}
           paipanData={paipan ?? undefined}
           onRated={handleRated}
+          onSimplify={handleSimplify}
+          onSimplifyToggle={handleSimplifyToggle}
         />
 
         {(booting || loading) && (

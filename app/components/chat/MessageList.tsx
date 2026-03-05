@@ -3,6 +3,8 @@ import { Msg, Paipan } from '@/app/lib/chat/types';
 import { ComponentType } from 'react';
 import { Bot, User } from 'lucide-react';
 import { MessageRating } from './MessageRating';
+import { SimplifyButton } from './SimplifyButton';
+import { SimplifyPanel } from './SimplifyPanel';
 
 export function MessageList({
   scrollRef,
@@ -10,12 +12,16 @@ export function MessageList({
   Markdown,
   paipanData,
   onRated,
+  onSimplify,
+  onSimplifyToggle,
 }: {
   scrollRef?: React.MutableRefObject<HTMLDivElement | null> | React.RefObject<HTMLDivElement | null>;
   messages: Msg[];
   Markdown: ComponentType<{ content: string }>;
   paipanData?: Paipan;
   onRated?: (messageIndex: number, rating: { ratingType: 'up' | 'down'; reason?: string }) => void;
+  onSimplify?: (index: number) => void;
+  onSimplifyToggle?: (index: number) => void;
 }) {
   if (messages.length === 0) {
     return (
@@ -93,16 +99,35 @@ export function MessageList({
                 )}
               </div>
 
-              {/* 评价按钮 - 仅在AI消息且非流式状态时显示 */}
-              {isAssistant && !m.streaming && m.meta?.messageId && (
-                <div className="flex justify-end mt-1">
-                  <MessageRating
-                    messageId={m.meta.messageId}
-                    userRating={m.userRating}
-                    paipanData={paipanData}
-                    onRated={(rating) => onRated?.(i, rating)}
+              {/* 操作按钮行 - 仅在AI消息且非流式状态时显示 */}
+              {isAssistant && !m.streaming && (
+                <div className="flex justify-end items-center gap-1 mt-1 flex-wrap">
+                  <SimplifyButton
+                    status={m.simplify?.status ?? 'idle'}
+                    expanded={m.simplify?.expanded ?? false}
+                    onRequest={() => onSimplify?.(i)}
+                    onToggle={() => onSimplifyToggle?.(i)}
                   />
+                  {m.meta?.messageId && (
+                    <MessageRating
+                      messageId={m.meta.messageId}
+                      userRating={m.userRating}
+                      paipanData={paipanData}
+                      onRated={(rating) => onRated?.(i, rating)}
+                    />
+                  )}
                 </div>
+              )}
+
+              {/* 白话版面板 */}
+              {isAssistant && m.simplify && (
+                <SimplifyPanel
+                  status={m.simplify.status}
+                  content={m.simplify.content}
+                  expanded={m.simplify.expanded}
+                  error={m.simplify.error}
+                  Markdown={Markdown}
+                />
               )}
             </div>
           </div>
