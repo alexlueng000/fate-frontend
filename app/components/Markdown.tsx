@@ -26,10 +26,10 @@ const components: Components = {
     <h2 className="text-lg font-bold mt-3 mb-2 text-[var(--color-text-primary)]" style={{ wordBreak: 'keep-all', overflowWrap: 'break-word' }} {...props} />
   ),
   h3: ({ node, ...props }) => (
-    <h3 className="text-base font-bold mt-3 mb-2 text-[#D4380D] font-[var(--font-display)] pb-1" style={{ wordBreak: 'keep-all', overflowWrap: 'break-word' }} {...props} />
+    <h3 className="text-base font-bold mt-3 mb-2 text-[#D4380D] font-[var(--font-display)] pb-1" style={{ wordBreak: 'keep-all' }} {...props} />
   ),
   h4: ({ node, ...props }) => (
-    <h4 className="text-sm font-bold mt-2 mb-1 text-[#D4380D] font-[var(--font-display)]" style={{ wordBreak: 'keep-all', overflowWrap: 'break-word' }} {...props} />
+    <h4 className="text-sm font-bold mt-2 mb-1 text-[#D4380D] font-[var(--font-display)]" style={{ wordBreak: 'keep-all' }} {...props} />
   ),
   h5: ({ node, ...props }) => (
     <h5 className="text-base font-medium my-1" {...props} />
