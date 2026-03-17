@@ -94,8 +94,8 @@ export function MessageList({
                 )}
               </div>
 
-              {/* 操作按钮行 - 仅在AI消息且非流式状态时显示 */}
-              {isAssistant && !m.streaming && (
+              {/* 操作按钮行 - 仅在AI消息且非流式状态且非开场白时显示 */}
+              {isAssistant && !m.streaming && !isIntro && (
                 <div className="flex justify-end items-center gap-1 mt-1 flex-wrap">
                   <SimplifyButton
                     status={m.simplify?.status ?? 'idle'}
@@ -115,7 +115,7 @@ export function MessageList({
               )}
 
               {/* 白话版面板 */}
-              {isAssistant && m.simplify && (
+              {isAssistant && !isIntro && m.simplify && (
                 <SimplifyPanel
                   status={m.simplify.status}
                   content={m.simplify.content}
