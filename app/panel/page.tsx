@@ -36,6 +36,7 @@ export default function PanelPage() {
 const aiIndexRef = useRef<number | null>(null);
 const streamingLockRef = useRef(false);
 const lastFullRef = useRef(''); // 防重复 setState（可选）
+const mountedRef = useRef(true);
 
 
   // ===== 用户信息 =====
@@ -198,6 +199,11 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
 
 
 
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+
   // ===== 滚动到底 =====
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
@@ -225,7 +231,11 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
         if (cached?.length) {
           if (!alive) return;
           setConversationId(active);
-          setMsgs(cached);
+          setMsgs(cached.map(m =>
+            m.simplify?.status === 'loading'
+              ? { ...m, simplify: { ...m.simplify, status: 'error' as const, error: '已中断，请重试' } }
+              : m
+          ));
         }
       }
     })();
@@ -665,6 +675,73 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
     }
   };
 
+  // ===== 白话版：首次请求/重试 =====
+  const handleSimplify = async (idx: number) => {
+    const msg = msgs[idx];
+    if (!msg || msg.role !== 'assistant') return;
+    if (msg.simplify?.status === 'loading') return;
+
+    setMsgs(prev => {
+      const next = [...prev];
+      next[idx] = { ...next[idx], simplify: { status: 'loading', content: '', expanded: true } };
+      return next;
+    });
+
+    try {
+      await trySSE(
+        api('/chat/simplify'),
+        { message_content: msg.content },
+        (text) => {
+          if (!mountedRef.current) return;
+          setMsgs(prev => {
+            const next = [...prev];
+            if (next[idx]?.simplify?.status === 'loading') {
+              next[idx] = {
+                ...next[idx],
+                simplify: { ...next[idx].simplify!, content: text, status: 'loading', expanded: true },
+              };
+            }
+            return next;
+          });
+        },
+      );
+
+      setMsgs(prev => {
+        const next = [...prev];
+        if (next[idx]?.simplify) {
+          next[idx] = { ...next[idx], simplify: { ...next[idx].simplify!, status: 'done' } };
+        }
+        return next;
+      });
+    } catch (e) {
+      setMsgs(prev => {
+        const next = [...prev];
+        if (next[idx]?.simplify) {
+          next[idx] = {
+            ...next[idx],
+            simplify: {
+              ...next[idx].simplify!,
+              status: 'error',
+              error: e instanceof Error ? e.message : '生成失败',
+            },
+          };
+        }
+        return next;
+      });
+    }
+  };
+
+  // ===== 白话版：折叠/展开 =====
+  const handleSimplifyToggle = (idx: number) => {
+    setMsgs(prev => {
+      const next = [...prev];
+      const simplify = next[idx]?.simplify;
+      if (!simplify) return prev;
+      next[idx] = { ...next[idx], simplify: { ...simplify, expanded: !simplify.expanded } };
+      return next;
+    });
+  };
+
   const canUseQuick = !qbLoading && !loading && !booting && !!conversationId;
 
   return (
@@ -829,6 +906,8 @@ const lastFullRef = useRef(''); // 防重复 setState（可选）
             Markdown={Markdown}
             paipanData={paipan ?? undefined}
             onRated={handleRated}
+            onSimplify={handleSimplify}
+            onSimplifyToggle={handleSimplifyToggle}
           />
 
           {/* 状态 & 错误 */}

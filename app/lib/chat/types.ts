@@ -10,6 +10,12 @@ export type Msg = {
     ratingType: 'up' | 'down';
     reason?: string;
   };
+  simplify?: {
+    status: 'idle' | 'loading' | 'done' | 'error';
+    content: string;
+    expanded: boolean;
+    error?: string;
+  };
 };
 export type FourPillars = { year: string[]; month: string[]; day: string[]; hour: string[] };
 export type DayunItem = { age: number; start_year: number; pillar: string[] };
