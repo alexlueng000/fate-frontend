@@ -16,6 +16,7 @@ export type Msg = {
     expanded: boolean;
     error?: string;
   };
+  suggestedQuestions?: string[]; // 推荐问题
 };
 export type FourPillars = { year: string[]; month: string[]; day: string[]; hour: string[] };
 export type DayunItem = { age: number; start_year: number; pillar: string[] };

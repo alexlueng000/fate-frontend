@@ -5,6 +5,7 @@ import { Bot, User } from 'lucide-react';
 import { MessageRating } from './MessageRating';
 import { SimplifyButton } from './SimplifyButton';
 import { SimplifyPanel } from './SimplifyPanel';
+import { SuggestedQuestions } from './SuggestedQuestions';
 
 export function MessageList({
   scrollRef,
@@ -14,6 +15,8 @@ export function MessageList({
   onRated,
   onSimplify,
   onSimplifyToggle,
+  onQuestionClick,
+  loading,
 }: {
   scrollRef?: React.MutableRefObject<HTMLDivElement | null> | React.RefObject<HTMLDivElement | null>;
   messages: Msg[];
@@ -22,6 +25,8 @@ export function MessageList({
   onRated?: (messageIndex: number, rating: { ratingType: 'up' | 'down'; reason?: string }) => void;
   onSimplify?: (index: number) => void;
   onSimplifyToggle?: (index: number) => void;
+  onQuestionClick?: (question: string) => void;
+  loading?: boolean;
 }) {
   if (messages.length === 0) {
     return (
@@ -122,6 +127,15 @@ export function MessageList({
                   expanded={m.simplify.expanded}
                   error={m.simplify.error}
                   Markdown={Markdown}
+                />
+              )}
+
+              {/* 推荐问题 */}
+              {isAssistant && !isIntro && !m.streaming && m.suggestedQuestions && onQuestionClick && (
+                <SuggestedQuestions
+                  questions={m.suggestedQuestions}
+                  onQuestionClick={onQuestionClick}
+                  loading={loading}
                 />
               )}
             </div>

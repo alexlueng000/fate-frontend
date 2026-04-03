@@ -14,6 +14,7 @@ import { BirthDateTimeFields } from '@/app/components/chat/BirthDateTime';
 import {
   Msg, Paipan, QUICK_BUTTONS,
 } from '@/app/lib/chat/types';
+import { parseSuggestedQuestions } from '@/app/lib/chat/parser';
 import { api, pickReply } from '@/app/lib/chat/api';
 import { trySSE } from '@/app/lib/chat/sse';
 import {
@@ -346,7 +347,14 @@ const mountedRef = useRef(true);
         const i = aiIndexRef.current;
         if (i == null || i < 0 || i >= prev.length) return prev;
         const next = [...prev];
-        next[i] = { ...next[i], streaming: false };
+        const normalized = normalizeMarkdown(next[i].content || '');
+        const { questions, cleanedContent } = parseSuggestedQuestions(normalized);
+        next[i] = {
+          ...next[i],
+          streaming: false,
+          content: cleanedContent,
+          suggestedQuestions: questions,
+        };
         return next;
       });
     } catch (e) {
@@ -357,10 +365,13 @@ const mountedRef = useRef(true);
         const i = aiIndexRef.current;
         if (i == null || i < 0 || i >= prev.length) return prev;
         const next = [...prev];
+        const normalized = normalizeMarkdown(full || '（后端未返回解读内容）');
+        const { questions, cleanedContent } = parseSuggestedQuestions(normalized);
         next[i] = {
           role: 'assistant',
           streaming: false,
-          content: normalizeMarkdown(full || '（后端未返回解读内容）'),
+          content: cleanedContent,
+          suggestedQuestions: questions,
         };
         return next;
       });
@@ -487,6 +498,20 @@ const mountedRef = useRef(true);
     setLoading(true);
     try {
       await sendStream(fullPrompt);
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleQuestionClick = async (question: string) => {
+    if (!conversationId || loading) return;
+    setErr(null);
+    setMsgs((m) => [...m, { role: 'user', content: question }]);
+    setLoading(true);
+    try {
+      await sendStream(question);
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
@@ -646,11 +671,17 @@ const mountedRef = useRef(true);
         const firstText = normalizeMarkdown(
           (data?.text || data?.content || '').trim() || '（后端未返回解读内容）'
         );
-        finalTextLocal = firstText;
+        const { questions, cleanedContent } = parseSuggestedQuestions(firstText);
+        finalTextLocal = cleanedContent;
         setMsgs((prev) => {
           const next = [...prev];
           if (assistantIndex >= 0 && assistantIndex < next.length) {
-            next[assistantIndex] = { role: 'assistant', streaming: false, content: firstText };
+            next[assistantIndex] = {
+              role: 'assistant',
+              streaming: false,
+              content: cleanedContent,
+              suggestedQuestions: questions,
+            };
           }
           return next;
         });
@@ -954,6 +985,8 @@ const mountedRef = useRef(true);
             onRated={handleRated}
             onSimplify={handleSimplify}
             onSimplifyToggle={handleSimplifyToggle}
+            onQuestionClick={handleQuestionClick}
+            loading={loading}
           />
 
           {/* 状态 & 错误 */}

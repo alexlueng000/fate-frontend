@@ -16,6 +16,7 @@ import {
   Msg, Paipan, QUICK_BUTTONS,
   readPaipanParamsFromURL, normalizeMarkdown,
 } from '@/app/lib/chat/types';
+import { parseSuggestedQuestions } from '@/app/lib/chat/parser';
 import { getRating } from '@/app/lib/chat/rating';
 import { api, pickReply } from '@/app/lib/chat/api';
 import { trySSE } from '@/app/lib/chat/sse';
@@ -133,8 +134,14 @@ export default function ChatPage() {
               const next = [...prev];
               if (assistantIndex >= 0 && assistantIndex < next.length) {
                 const normalized = normalizeMarkdown(next[assistantIndex].content || '');
-                next[assistantIndex] = { ...next[assistantIndex], content: normalized, streaming: false };
-                finalText = normalized;
+                const { questions, cleanedContent } = parseSuggestedQuestions(normalized);
+                next[assistantIndex] = {
+                  ...next[assistantIndex],
+                  content: cleanedContent,
+                  streaming: false,
+                  suggestedQuestions: questions,
+                };
+                finalText = cleanedContent;
               }
               return next;
             });
@@ -298,7 +305,14 @@ export default function ChatPage() {
       setMsgs((prev) => {
         if (assistantIndex < 0 || assistantIndex >= prev.length) return prev;
         const next = [...prev];
-        next[assistantIndex] = { ...next[assistantIndex], content: normalizeMarkdown(next[assistantIndex].content), streaming: false };
+        const normalized = normalizeMarkdown(next[assistantIndex].content);
+        const { questions, cleanedContent } = parseSuggestedQuestions(normalized);
+        next[assistantIndex] = {
+          ...next[assistantIndex],
+          content: cleanedContent,
+          streaming: false,
+          suggestedQuestions: questions,
+        };
         return next;
       });
     } catch {
@@ -374,6 +388,20 @@ export default function ChatPage() {
     setLoading(true);
     try {
       await sendStream(fullPrompt);
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleQuestionClick = async (question: string) => {
+    if (!conversationId || loading) return;
+    setErr(null);
+    setMsgs((m) => [...m, { role: 'user', content: question }]);
+    setLoading(true);
+    try {
+      await sendStream(question);
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
@@ -499,6 +527,8 @@ export default function ChatPage() {
           onRated={handleRated}
           onSimplify={handleSimplify}
           onSimplifyToggle={handleSimplifyToggle}
+          onQuestionClick={handleQuestionClick}
+          loading={loading}
         />
 
         {(booting || loading) && (
