@@ -347,12 +347,12 @@ const mountedRef = useRef(true);
         const i = aiIndexRef.current;
         if (i == null || i < 0 || i >= prev.length) return prev;
         const next = [...prev];
-        const normalized = normalizeMarkdown(next[i].content || '');
-        const { questions, cleanedContent } = parseSuggestedQuestions(normalized);
+        const { questions, cleanedContent } = parseSuggestedQuestions(next[i].content || '');
+        const normalized = normalizeMarkdown(cleanedContent);
         next[i] = {
           ...next[i],
           streaming: false,
-          content: cleanedContent,
+          content: normalized,
           suggestedQuestions: questions,
         };
         return next;
@@ -365,12 +365,12 @@ const mountedRef = useRef(true);
         const i = aiIndexRef.current;
         if (i == null || i < 0 || i >= prev.length) return prev;
         const next = [...prev];
-        const normalized = normalizeMarkdown(full || '（后端未返回解读内容）');
-        const { questions, cleanedContent } = parseSuggestedQuestions(normalized);
+        const { questions, cleanedContent } = parseSuggestedQuestions(full || '（后端未返回解读内容）');
+        const normalized = normalizeMarkdown(cleanedContent);
         next[i] = {
           role: 'assistant',
           streaming: false,
-          content: cleanedContent,
+          content: normalized,
           suggestedQuestions: questions,
         };
         return next;
@@ -668,18 +668,17 @@ const mountedRef = useRef(true);
           setConversationId(cid);
         }
 
-        const firstText = normalizeMarkdown(
-          (data?.text || data?.content || '').trim() || '（后端未返回解读内容）'
-        );
-        const { questions, cleanedContent } = parseSuggestedQuestions(firstText);
-        finalTextLocal = cleanedContent;
+        const rawText = (data?.text || data?.content || '').trim() || '（后端未返回解读内容）';
+        const { questions, cleanedContent } = parseSuggestedQuestions(rawText);
+        const firstText = normalizeMarkdown(cleanedContent);
+        finalTextLocal = firstText;
         setMsgs((prev) => {
           const next = [...prev];
           if (assistantIndex >= 0 && assistantIndex < next.length) {
             next[assistantIndex] = {
               role: 'assistant',
               streaming: false,
-              content: cleanedContent,
+              content: firstText,
               suggestedQuestions: questions,
             };
           }
@@ -687,11 +686,20 @@ const mountedRef = useRef(true);
         });
       }
 
-      // 5) 收尾：去掉 streaming
+      // 5) 收尾：解析推荐问题 + 归一化 + 去掉 streaming
       setMsgs((prev) => {
         const next = [...prev];
         if (assistantIndex >= 0 && assistantIndex < next.length) {
-          next[assistantIndex] = { ...next[assistantIndex], streaming: false };
+          const raw = next[assistantIndex].content || '';
+          const { questions, cleanedContent } = parseSuggestedQuestions(raw);
+          const normalized = normalizeMarkdown(cleanedContent);
+          finalTextLocal = normalized;
+          next[assistantIndex] = {
+            ...next[assistantIndex],
+            streaming: false,
+            content: normalized,
+            suggestedQuestions: questions,
+          };
         }
         return next;
       });

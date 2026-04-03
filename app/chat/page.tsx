@@ -127,21 +127,21 @@ export default function ChatPage() {
               }
             );
 
-            // 流结束 → 归一化 + 持久化
+            // 流结束 → 先解析推荐问题，再归一化 + 持久化
             if (!alive) return;
             let finalText = '';
             setMsgs((prev) => {
               const next = [...prev];
               if (assistantIndex >= 0 && assistantIndex < next.length) {
-                const normalized = normalizeMarkdown(next[assistantIndex].content || '');
-                const { questions, cleanedContent } = parseSuggestedQuestions(normalized);
+                const { questions, cleanedContent } = parseSuggestedQuestions(next[assistantIndex].content || '');
+                const normalized = normalizeMarkdown(cleanedContent);
                 next[assistantIndex] = {
                   ...next[assistantIndex],
-                  content: cleanedContent,
+                  content: normalized,
                   streaming: false,
                   suggestedQuestions: questions,
                 };
-                finalText = cleanedContent;
+                finalText = normalized;
               }
               return next;
             });
@@ -301,15 +301,15 @@ export default function ChatPage() {
         }
       );
 
-      // 归一化 Markdown
+      // 先解析推荐问题，再归一化 Markdown
       setMsgs((prev) => {
         if (assistantIndex < 0 || assistantIndex >= prev.length) return prev;
         const next = [...prev];
-        const normalized = normalizeMarkdown(next[assistantIndex].content);
-        const { questions, cleanedContent } = parseSuggestedQuestions(normalized);
+        const { questions, cleanedContent } = parseSuggestedQuestions(next[assistantIndex].content);
+        const normalized = normalizeMarkdown(cleanedContent);
         next[assistantIndex] = {
           ...next[assistantIndex],
-          content: cleanedContent,
+          content: normalized,
           streaming: false,
           suggestedQuestions: questions,
         };
