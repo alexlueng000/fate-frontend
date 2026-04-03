@@ -1,4 +1,4 @@
-import { Msg, Paipan, normalizeMarkdown } from './types';
+import { Msg, Paipan } from './types';
 
 const LS_ACTIVE = 'chat:active';
 const LS_CONV_PREFIX = 'chat:conv:'; // + conversation_id
@@ -16,13 +16,9 @@ export function loadConversation(conversationId: string): Msg[] | null {
     if (!raw) return null;
 
     const messages = JSON.parse(raw) as Msg[];
-    // 对所有 assistant 消息的内容进行 normalize 处理，确保旧数据也能正确显示
-    return messages.map(msg => {
-      if (msg.role === 'assistant' && msg.content && msg.meta?.kind !== 'intro') {
-        return { ...msg, content: normalizeMarkdown(msg.content) };
-      }
-      return msg;
-    });
+    // 直接返回消息，不进行额外的 normalize 处理
+    // 因为消息在保存前已经经过了 normalize 处理
+    return messages;
   } catch {
     return null;
   }
@@ -63,4 +59,51 @@ export function clearAllChatData() {
     // 清理 sessionStorage 中的会话 ID
     sessionStorage.removeItem('conversation_id');
   } catch {}
+}
+
+/**
+ * 修复损坏的对话数据（清理重复的 # 号）
+ * 用于修复因重复调用 normalizeMarkdown 导致的 "### ### ###" 问题
+ */
+export function repairCorruptedConversations() {
+  try {
+    let repairedCount = 0;
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith(LS_CONV_PREFIX)) {
+        try {
+          const raw = localStorage.getItem(key);
+          if (!raw) return;
+
+          const messages = JSON.parse(raw) as Msg[];
+          let hasCorruption = false;
+
+          const repairedMessages = messages.map(msg => {
+            if (msg.role === 'assistant' && msg.content) {
+              // 检测是否有重复的 # 号（如 "### ### ###"）
+              const corrupted = /^#{3,}\s+#{3,}/gm.test(msg.content);
+              if (corrupted) {
+                hasCorruption = true;
+                // 清理重复的 # 号：将 "### ### ### 标题" 替换为 "### 标题"
+                const cleaned = msg.content.replace(/^(#{3,}(?:\s+#{3,})+)\s+/gm, '### ');
+                return { ...msg, content: cleaned };
+              }
+            }
+            return msg;
+          });
+
+          if (hasCorruption) {
+            localStorage.setItem(key, JSON.stringify(repairedMessages));
+            repairedCount++;
+          }
+        } catch (e) {
+          console.warn('Failed to repair conversation:', key, e);
+        }
+      }
+    });
+
+    return repairedCount;
+  } catch (e) {
+    console.error('Failed to repair corrupted conversations:', e);
+    return 0;
+  }
 }
