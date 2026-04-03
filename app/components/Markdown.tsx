@@ -20,10 +20,10 @@ type MarkdownViewProps = {
 
 const components: Components = {
   h1: ({ node, ...props }) => (
-    <h1 className="text-xl font-bold mt-4 mb-3 text-[var(--color-text-primary)]" style={{ wordBreak: 'keep-all', overflowWrap: 'break-word' }} {...props} />
+    <h3 className="text-base font-bold mt-3 mb-2 text-[#D4380D] font-[var(--font-display)] pb-1" style={{ wordBreak: 'keep-all' }} {...props} />
   ),
   h2: ({ node, ...props }) => (
-    <h2 className="text-lg font-bold mt-3 mb-2 text-[var(--color-text-primary)]" style={{ wordBreak: 'keep-all', overflowWrap: 'break-word' }} {...props} />
+    <h3 className="text-base font-bold mt-3 mb-2 text-[#D4380D] font-[var(--font-display)] pb-1" style={{ wordBreak: 'keep-all' }} {...props} />
   ),
   h3: ({ node, ...props }) => (
     <h3 className="text-base font-bold mt-3 mb-2 text-[#D4380D] font-[var(--font-display)] pb-1" style={{ wordBreak: 'keep-all' }} {...props} />
