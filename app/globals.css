@@ -525,33 +525,33 @@ body {
 }
 
 .wuxing-wood {
-  background: rgba(16, 185, 129, 0.1);
+  background: rgba(16, 185, 129, 0.08);
   color: #059669;
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  border: 1px solid rgba(16, 185, 129, 0.25);
 }
 
 .wuxing-fire {
-  background: rgba(239, 68, 68, 0.1);
+  background: rgba(239, 68, 68, 0.08);
   color: #DC2626;
-  border: 1px solid rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.25);
 }
 
 .wuxing-earth {
-  background: rgba(245, 158, 11, 0.1);
+  background: rgba(245, 158, 11, 0.08);
   color: #D97706;
-  border: 1px solid rgba(245, 158, 11, 0.2);
+  border: 1px solid rgba(245, 158, 11, 0.25);
 }
 
 .wuxing-metal {
-  background: rgba(107, 114, 128, 0.1);
+  background: rgba(107, 114, 128, 0.08);
   color: #4B5563;
-  border: 1px solid rgba(107, 114, 128, 0.2);
+  border: 1px solid rgba(107, 114, 128, 0.25);
 }
 
 .wuxing-water {
-  background: rgba(14, 165, 233, 0.1);
+  background: rgba(14, 165, 233, 0.08);
   color: #0284C7;
-  border: 1px solid rgba(14, 165, 233, 0.2);
+  border: 1px solid rgba(14, 165, 233, 0.25);
 }
 
 /* ==================== Responsive Utilities ==================== */

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 
 import Markdown from '@/app/components/Markdown';
 import { SimplifiedPaipanCard } from '@/app/components/chat/SimplifiedPaipanCard';
+import { DetailedPaipanTable } from '@/app/components/chat/DetailedPaipanTable';
 import { QuickActions } from '@/app/components/chat/QuickActions';
 import { MessageList } from '@/app/components/chat/MessageList';
 import { InputArea } from '@/app/components/chat/InputArea';
@@ -66,6 +67,9 @@ const mountedRef = useRef(true);
   const [hasDefault, setHasDefault] = useState(false);
   const [saveAsDefault, setSaveAsDefault] = useState(false);  // 滑块开关状态
 
+  // ===== 视图模式 =====
+  const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
+
   const scrollRef = useRef<HTMLDivElement>(null);
 
    // ====== 快捷按钮（从 DB 取，失败回退到本地 7 条）=====
@@ -121,6 +125,11 @@ const mountedRef = useRef(true);
 
   useEffect(() => {
     loadQuickButtonsFromAdmin();
+    // 恢复视图模式
+    const savedViewMode = localStorage.getItem('paipan_view_mode');
+    if (savedViewMode === 'card' || savedViewMode === 'table') {
+      setViewMode(savedViewMode);
+    }
   }, []);
 
   // ===== 加载默认命盘 =====
@@ -881,7 +890,44 @@ const mountedRef = useRef(true);
         {/* 四柱八字展示区域 */}
         <div className="lg:min-h-[400px]">
           {paipan ? (
-            <SimplifiedPaipanCard paipan={paipan} />
+            <div className="space-y-3">
+              {/* 视图切换按钮 */}
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={() => {
+                    setViewMode('card');
+                    localStorage.setItem('paipan_view_mode', 'card');
+                  }}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                    viewMode === 'card'
+                      ? 'bg-[var(--color-primary)] text-white shadow-sm'
+                      : 'bg-[var(--color-bg-elevated)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] border border-[var(--color-border)]'
+                  }`}
+                >
+                  简洁视图
+                </button>
+                <button
+                  onClick={() => {
+                    setViewMode('table');
+                    localStorage.setItem('paipan_view_mode', 'table');
+                  }}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                    viewMode === 'table'
+                      ? 'bg-[var(--color-primary)] text-white shadow-sm'
+                      : 'bg-[var(--color-bg-elevated)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] border border-[var(--color-border)]'
+                  }`}
+                >
+                  详细视图
+                </button>
+              </div>
+
+              {/* 排盘卡片 */}
+              {viewMode === 'card' ? (
+                <SimplifiedPaipanCard paipan={paipan} />
+              ) : (
+                <DetailedPaipanTable paipan={paipan} />
+              )}
+            </div>
           ) : (
             <div className="hidden lg:flex rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-6 shadow-sm items-center justify-center h-full">
               <div className="text-center">
