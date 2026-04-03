@@ -1,4 +1,4 @@
-import { Msg, Paipan } from './types';
+import { Msg, Paipan, normalizeMarkdown } from './types';
 
 const LS_ACTIVE = 'chat:active';
 const LS_CONV_PREFIX = 'chat:conv:'; // + conversation_id
@@ -13,7 +13,16 @@ export function saveConversation(conversationId: string, messages: Msg[]) {
 export function loadConversation(conversationId: string): Msg[] | null {
   try {
     const raw = localStorage.getItem(`${LS_CONV_PREFIX}${conversationId}`);
-    return raw ? (JSON.parse(raw) as Msg[]) : null;
+    if (!raw) return null;
+
+    const messages = JSON.parse(raw) as Msg[];
+    // 对所有 assistant 消息的内容进行 normalize 处理，确保旧数据也能正确显示
+    return messages.map(msg => {
+      if (msg.role === 'assistant' && msg.content && msg.meta?.kind !== 'intro') {
+        return { ...msg, content: normalizeMarkdown(msg.content) };
+      }
+      return msg;
+    });
   } catch {
     return null;
   }
