@@ -290,10 +290,12 @@ const mountedRef = useRef(true);
     }
     streamingLockRef.current = true;
 
-    // 1) 插入占位 assistant（标记 streaming）
+    // 1) 插入占位 assistant（标记 streaming），用闭包捕获索引
+    let myIndex = -1;
     setMsgs(prev => {
       const next: Msg[] = [...prev, { role: 'assistant', content: '', streaming: true }];
-      aiIndexRef.current = next.length - 1;
+      myIndex = next.length - 1;
+      aiIndexRef.current = myIndex;
       return next;
     });
 
@@ -303,10 +305,9 @@ const mountedRef = useRef(true);
       lastFullRef.current = fullText;
 
       setMsgs(prev => {
-        const i = aiIndexRef.current;
-        if (i == null || i < 0 || i >= prev.length) return prev;
+        if (myIndex < 0 || myIndex >= prev.length) return prev;
         const next = [...prev];
-        next[i] = { ...next[i], content: fullText };
+        next[myIndex] = { ...next[myIndex], content: fullText };
         return next;
       });
     };
@@ -328,14 +329,13 @@ const mountedRef = useRef(true);
           console.log('[DEBUG] Received message_id from meta:', msgId);
           if (msgId) {
             setMsgs(prev => {
-              const i = aiIndexRef.current;
-              if (i == null || i < 0 || i >= prev.length) return prev;
+              if (myIndex < 0 || myIndex >= prev.length) return prev;
               const next = [...prev];
-              next[i] = {
-                ...next[i],
-                meta: { ...next[i].meta, messageId: msgId }
+              next[myIndex] = {
+                ...next[myIndex],
+                meta: { ...next[myIndex].meta, messageId: msgId }
               };
-              console.log('[DEBUG] Updated message with messageId:', next[i]);
+              console.log('[DEBUG] Updated message with messageId:', next[myIndex]);
               return next;
             });
           }
@@ -344,13 +344,12 @@ const mountedRef = useRef(true);
 
       // 3) 结束后取消 streaming
       setMsgs(prev => {
-        const i = aiIndexRef.current;
-        if (i == null || i < 0 || i >= prev.length) return prev;
+        if (myIndex < 0 || myIndex >= prev.length) return prev;
         const next = [...prev];
-        const { questions, cleanedContent } = parseSuggestedQuestions(next[i].content || '');
+        const { questions, cleanedContent } = parseSuggestedQuestions(next[myIndex].content || '');
         const normalized = normalizeMarkdown(cleanedContent);
-        next[i] = {
-          ...next[i],
+        next[myIndex] = {
+          ...next[myIndex],
           streaming: false,
           content: normalized,
           suggestedQuestions: questions,
@@ -362,12 +361,11 @@ const mountedRef = useRef(true);
       // 4) 降级：一次性请求并做 normalize
       const full = await sendOnce(content);
       setMsgs(prev => {
-        const i = aiIndexRef.current;
-        if (i == null || i < 0 || i >= prev.length) return prev;
+        if (myIndex < 0 || myIndex >= prev.length) return prev;
         const next = [...prev];
         const { questions, cleanedContent } = parseSuggestedQuestions(full || '（后端未返回解读内容）');
         const normalized = normalizeMarkdown(cleanedContent);
-        next[i] = {
+        next[myIndex] = {
           role: 'assistant',
           streaming: false,
           content: normalized,
@@ -398,8 +396,8 @@ const mountedRef = useRef(true);
 
   // ===== 基本交互 =====
   const send = async () => {
-    if (!conversationId) {
-      setErr('缺少会话，请先完成排盘并开启解读。');
+    if (!conversationId || streamingLockRef.current) {
+      if (!conversationId) setErr('缺少会话，请先完成排盘并开启解读。');
       return;
     }
     const content = input.trim();
@@ -489,8 +487,8 @@ const mountedRef = useRef(true);
 
   const sendQuick = async (label: string, fullPrompt: string) => {
     console.log("sendQuick: ", label, fullPrompt);
-    if (!conversationId) {
-      setErr('缺少会话，请先完成排盘并开启解读。');
+    if (!conversationId || streamingLockRef.current) {
+      if (!conversationId) setErr('缺少会话，请先完成排盘并开启解读。');
       return;
     }
     setErr(null);
@@ -506,7 +504,7 @@ const mountedRef = useRef(true);
   };
 
   const handleQuestionClick = async (question: string) => {
-    if (!conversationId || loading) return;
+    if (!conversationId || streamingLockRef.current) return;
     setErr(null);
     setMsgs((m) => [...m, { role: 'user', content: question }]);
     setLoading(true);
