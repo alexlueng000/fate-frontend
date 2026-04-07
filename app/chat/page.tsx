@@ -499,7 +499,7 @@ export default function ChatPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#fef3c7] text-neutral-800 p-6 sm:p-10">
+    <main className="min-h-screen bg-[#F7F3EE] text-neutral-800 p-6 sm:p-10">
       <div className="mx-auto w-full max-w-5xl space-y-6">
         <ChatHeader
           conversationId={conversationId}

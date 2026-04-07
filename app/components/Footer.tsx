@@ -20,6 +20,9 @@ export default function Footer() {
           </span>
         </div>
         <nav className="flex items-center gap-6 text-sm text-[var(--color-text-muted)]">
+          <Link href="/knowledge" className="hover:text-[var(--color-gold)] transition-colors">
+            命理学堂
+          </Link>
           <Link href="/about" className="hover:text-[var(--color-gold)] transition-colors">
             关于我们
           </Link>

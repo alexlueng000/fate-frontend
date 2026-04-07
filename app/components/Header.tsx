@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useUser, logout } from '@/app/lib/auth';
-import { ChevronDown, LogOut, User, Settings, LayoutDashboard, HelpCircle, Info } from 'lucide-react';
+import { ChevronDown, LogOut, User, Settings, LayoutDashboard, HelpCircle, Info, BookOpen } from 'lucide-react';
 
 export default function Header() {
   const router = useRouter();
@@ -72,6 +72,13 @@ export default function Header() {
         {/* Center Navigation */}
         <nav className="hidden md:flex items-center gap-6">
           <Link
+            href="/knowledge"
+            className="flex items-center gap-1.5 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors"
+          >
+            <BookOpen className="w-4 h-4" />
+            命理学堂
+          </Link>
+          <Link
             href="/about"
             className="flex items-center gap-1.5 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors"
           >
@@ -122,9 +129,9 @@ export default function Header() {
                 onClick={() => setMenuOpen((v) => !v)}
                 aria-haspopup="menu"
                 aria-expanded={menuOpen}
-                className="flex h-10 items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-3 hover:border-[var(--color-border-accent)] transition-colors"
+                className="flex h-10 items-center gap-2 rounded-md border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-3 hover:border-[var(--color-border-accent)] transition-colors"
               >
-                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-gold)] text-white text-sm font-semibold">
+                <span className="flex h-7 w-7 items-center justify-center rounded-sm bg-[var(--color-primary)] text-white text-sm font-semibold">
                   {(me.nickname || me.username || 'U').slice(0, 1).toUpperCase()}
                 </span>
                 <span className="text-[var(--color-text-primary)] text-sm hidden sm:inline">
@@ -139,7 +146,7 @@ export default function Header() {
                 <div
                   role="menu"
                   aria-label="用户菜单"
-                  className="absolute right-0 mt-2 w-48 overflow-hidden rounded-xl card animate-scale-in"
+                  className="absolute right-0 mt-2 w-48 overflow-hidden rounded-md card animate-scale-in"
                 >
                   <Link
                     href="/account"

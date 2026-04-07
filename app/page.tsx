@@ -54,7 +54,7 @@ export default function LandingPage() {
       {/* ========== HERO SECTION ========== */}
       <section className="relative min-h-screen flex items-center overflow-hidden">
         {/* 背景：大面积渐变 + 装饰元素 */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#FFF8F0] via-white to-[#FFF0E8]" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#F7F3EE] via-[#FBF8F4] to-[#F1EAE2]" />
 
         {/* 装饰性圆环 */}
         <div className="absolute top-1/2 right-0 -translate-y-1/2 translate-x-1/3 w-[800px] h-[800px] rounded-full border border-[var(--color-primary)]/10" />
@@ -133,7 +133,7 @@ export default function LandingPage() {
               <div className="pt-4">
                 <Link
                   href="/demo"
-                  className="btn btn-primary px-8 py-4 text-lg group"
+                  className="btn btn-primary px-8 py-4 text-lg group rounded-md"
                 >
                   <Play className="w-5 h-5" />
                   查看示例报告
@@ -149,10 +149,10 @@ export default function LandingPage() {
                 <div className="absolute -inset-4 bg-gradient-to-r from-[var(--color-primary)]/20 via-[var(--color-gold)]/30 to-[var(--color-primary)]/20 rounded-[40px] blur-2xl opacity-60" />
 
                 {/* 主卡片 */}
-                <div className="relative bg-white rounded-3xl p-8 shadow-2xl border border-white/50">
+                <div className="relative bg-[var(--color-bg-elevated)] rounded-lg p-8 shadow-md border border-[var(--color-border)]">
                   {/* 卡片头部 */}
                   <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-gold)] mb-4">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-md bg-[var(--color-primary)] mb-4">
                       <Sparkles className="w-8 h-8 text-white" />
                     </div>
                     <h2 className="text-2xl font-bold text-[var(--color-text-primary)]" style={{ fontFamily: 'var(--font-display)' }}>
@@ -169,9 +169,9 @@ export default function LandingPage() {
                         <button
                           key={g}
                           onClick={() => setGender(g)}
-                          className={`py-3.5 rounded-xl font-medium transition-all ${
+                          className={`py-3.5 rounded-md font-medium transition-all ${
                             gender === g
-                              ? 'bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-light)] text-white shadow-lg shadow-[var(--color-primary)]/25'
+                              ? 'bg-[var(--color-primary)] text-white shadow-md'
                               : 'bg-[var(--color-bg-deep)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)]'
                           }`}
                         >
@@ -189,9 +189,9 @@ export default function LandingPage() {
                         <button
                           key={c.value}
                           onClick={() => setCalendar(c.value)}
-                          className={`py-3.5 rounded-xl font-medium transition-all ${
+                          className={`py-3.5 rounded-md font-medium transition-all ${
                             calendar === c.value
-                              ? 'bg-gradient-to-r from-[var(--color-gold-dark)] to-[var(--color-gold)] text-white shadow-lg shadow-[var(--color-gold)]/25'
+                              ? 'bg-[var(--color-gold-dark)] text-white shadow-md'
                               : 'bg-[var(--color-bg-deep)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)]'
                           }`}
                         >
@@ -230,14 +230,14 @@ export default function LandingPage() {
                         value={birthPlace}
                         onChange={(e) => setBirthPlace(e.target.value)}
                         placeholder="出生城市（如：北京）"
-                        className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-[var(--color-bg-deep)] border-2 border-transparent focus:border-[var(--color-primary)] focus:bg-white outline-none transition-all placeholder:text-[var(--color-text-hint)]"
+                        className="w-full pl-12 pr-4 py-3.5 rounded-md bg-[var(--color-bg-deep)] border border-[var(--color-border)] focus:border-[var(--color-primary)] focus:shadow-[0_0_0_3px_rgba(181,68,52,0.12)] outline-none transition-all placeholder:text-[var(--color-text-hint)]"
                       />
                     </div>
 
                     {/* 提交按钮 */}
                     <button
                       onClick={handleStartReading}
-                      className="w-full py-4 rounded-xl bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-light)] text-white text-lg font-semibold shadow-xl shadow-[var(--color-primary)]/30 hover:shadow-2xl hover:shadow-[var(--color-primary)]/40 hover:-translate-y-0.5 transition-all group"
+                      className="w-full py-4 rounded-md bg-[var(--color-primary)] text-[#FFF8F2] text-lg font-semibold shadow-md hover:bg-[var(--color-primary-hover)] hover:-translate-y-0.5 transition-all group"
                     >
                       <span className="flex items-center justify-center gap-2">
                         <Sparkles className="w-5 h-5" />

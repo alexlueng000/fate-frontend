@@ -39,7 +39,7 @@ const components: Components = {
   ),
 
   p: ({ node, ...props }) => (
-    <p className="my-2 break-words text-justify text-[#1A1A1A] leading-relaxed" {...props} />
+    <p className="my-2 break-words text-justify text-[#4B433D] leading-relaxed" {...props} />
   ),
   li: ({ node, ...props }) => (
     <li className="my-1 break-words pl-1" {...props} />
