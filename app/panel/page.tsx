@@ -19,7 +19,7 @@ import { api, pickReply } from '@/app/lib/chat/api';
 import { trySSE } from '@/app/lib/chat/sse';
 import {
   saveConversation, loadConversation, getActiveConversationId,
-  savePaipanLocal, loadPaipanLocal,
+  savePaipanLocal, loadPaipanLocal, repairCorruptedConversations,
 } from '@/app/lib/chat/storage';
 import { loadDefaultBirthData, saveDefaultBirthData, clearDefaultBirthData, type DefaultBirthData } from '@/app/lib/birthData';
 
@@ -223,6 +223,16 @@ const mountedRef = useRef(true);
   useEffect(() => {
     let alive = true;
     (async () => {
+      // 首次加载时修复损坏的对话数据
+      try {
+        const repairedCount = repairCorruptedConversations();
+        if (repairedCount > 0) {
+          console.log(`[Storage] Repaired ${repairedCount} corrupted conversations`);
+        }
+      } catch (e) {
+        console.warn('[Storage] Failed to repair conversations:', e);
+      }
+
       if (!me) {
         const fetched = await fetchMe();
         if (!fetched) {
