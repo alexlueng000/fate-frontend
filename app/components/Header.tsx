@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useUser, logout } from '@/app/lib/auth';
-import { ChevronDown, LogOut, User, Settings, LayoutDashboard, HelpCircle, Info, BookOpen } from 'lucide-react';
+import { ChevronDown, LogOut, User, Settings, LayoutDashboard, HelpCircle, Info, BookOpen, Tag } from 'lucide-react';
 
 export default function Header() {
   const router = useRouter();
@@ -91,6 +91,13 @@ export default function Header() {
           >
             <HelpCircle className="w-4 h-4" />
             常见问题
+          </Link>
+          <Link
+            href="/pricing"
+            className="flex items-center gap-1.5 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors"
+          >
+            <Tag className="w-4 h-4" />
+            套餐定价
           </Link>
         </nav>
 
