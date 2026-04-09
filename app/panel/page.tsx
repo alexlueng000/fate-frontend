@@ -914,7 +914,7 @@ const mountedRef = useRef(true);
               <button
                 type="submit"
                 disabled={calcLoading}
-                className="flex-1 rounded-xl bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-light)] px-3 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-60 transition-all shadow-md shadow-[var(--color-primary)]/20 flex items-center justify-center gap-1.5"
+                className="flex-1 rounded-xl bg-[var(--color-primary)] px-3 py-2 text-sm font-medium text-white hover:bg-[var(--color-primary-dark)] disabled:opacity-60 transition-all shadow-md shadow-[var(--color-primary)]/20 flex items-center justify-center gap-1.5"
               >
                 {calcLoading ? (
                   <>
