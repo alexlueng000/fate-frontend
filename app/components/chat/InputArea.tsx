@@ -169,9 +169,9 @@ export function InputArea({
 
       <p className="mt-2 text-xs text-[var(--color-text-hint)] flex items-center justify-between">
         <span>Enter 发送 · Shift+Enter 换行</span>
-        {quota != null && !quota.is_unlimited && (
-          <span className={quota.remaining <= 3 ? 'text-[var(--color-primary)]' : ''}>
-            剩余次数：{quota.remaining}
+        {quota != null && (
+          <span className={!quota.is_unlimited && quota.remaining <= 3 ? 'text-[var(--color-primary)]' : ''}>
+            {quota.is_unlimited ? '次数：内测免费' : `剩余次数：${quota.remaining}`}
           </span>
         )}
       </p>
