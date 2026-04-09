@@ -197,7 +197,7 @@ export default function PricingPage() {
   function startPolling(oid: number) {
     setPolling(true);
     const token = getAuthToken();
-    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
     let attempts = 0;
 
     const timer = setInterval(async () => {
