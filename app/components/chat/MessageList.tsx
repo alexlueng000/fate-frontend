@@ -102,12 +102,13 @@ export function MessageList({
               {/* 操作按钮行 - 仅在AI消息且非流式状态且非开场白时显示 */}
               {isAssistant && !m.streaming && !isIntro && (
                 <div className="flex justify-end items-center gap-1 mt-1 flex-wrap">
-                  <SimplifyButton
+                  {/* 白话版功能暂时隐藏 */}
+                  {/* <SimplifyButton
                     status={m.simplify?.status ?? 'idle'}
                     expanded={m.simplify?.expanded ?? false}
                     onRequest={() => onSimplify?.(i)}
                     onToggle={() => onSimplifyToggle?.(i)}
-                  />
+                  /> */}
                   {m.meta?.messageId && (
                     <MessageRating
                       messageId={m.meta.messageId}
@@ -119,8 +120,8 @@ export function MessageList({
                 </div>
               )}
 
-              {/* 白话版面板 */}
-              {isAssistant && !isIntro && m.simplify && (
+              {/* 白话版面板暂时隐藏 */}
+              {/* {isAssistant && !isIntro && m.simplify && (
                 <SimplifyPanel
                   status={m.simplify.status}
                   content={m.simplify.content}
@@ -128,7 +129,7 @@ export function MessageList({
                   error={m.simplify.error}
                   Markdown={Markdown}
                 />
-              )}
+              )} */}
 
               {/* 推荐问题 */}
               {isAssistant && !isIntro && !m.streaming && m.suggestedQuestions && onQuestionClick && (
