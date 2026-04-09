@@ -3,6 +3,11 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { Send, RotateCcw, Square, Trash2 } from 'lucide-react';
 
+type QuotaInfo = {
+  remaining: number;
+  is_unlimited: boolean;
+};
+
 type InputAreaProps = {
   value: string;
   onChange: (v: string) => void;
@@ -21,6 +26,7 @@ type InputAreaProps = {
   maxRows?: number;
   suggestions?: string[];
   maxLength?: number;
+  quota?: QuotaInfo | null;
 };
 
 export function InputArea({
@@ -35,6 +41,7 @@ export function InputArea({
   allowEnterToSend = true,
   maxRows = 6,
   maxLength,
+  quota,
 }: InputAreaProps) {
   const ref = useRef<HTMLTextAreaElement | null>(null);
 
@@ -160,8 +167,13 @@ export function InputArea({
         </div>
       </div>
 
-      <p className="mt-2 text-xs text-[var(--color-text-hint)]">
-        Enter 发送 · Shift+Enter 换行
+      <p className="mt-2 text-xs text-[var(--color-text-hint)] flex items-center justify-between">
+        <span>Enter 发送 · Shift+Enter 换行</span>
+        {quota != null && !quota.is_unlimited && (
+          <span className={quota.remaining <= 3 ? 'text-[var(--color-primary)]' : ''}>
+            剩余次数：{quota.remaining}
+          </span>
+        )}
       </p>
     </div>
   );

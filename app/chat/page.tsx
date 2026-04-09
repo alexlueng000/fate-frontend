@@ -36,7 +36,20 @@ export default function ChatPage() {
   const [booting, setBooting] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [paipan, setPaipan] = useState<Paipan | null>(null);
+  const [quota, setQuota] = useState<{ remaining: number; is_unlimited: boolean } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem('auth_token');
+    if (!token) return;
+    fetch('/api/quota/me', {
+      headers: { Authorization: `Bearer ${token}` },
+      credentials: 'include',
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data) setQuota({ remaining: data.remaining, is_unlimited: data.is_unlimited }); })
+      .catch(() => {});
+  }, []);
 
   const mountedRef = useRef(true);
 
@@ -568,6 +581,7 @@ export default function ChatPage() {
           disabled={booting || !conversationId}
           onSend={send}
           onRegenerate={regenerate}
+          quota={quota}
         />
       </div>
     </main>

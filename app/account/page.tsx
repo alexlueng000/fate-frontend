@@ -1,15 +1,16 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useUser, fetchMe, logout } from '@/app/lib/auth';
-import { User, Mail, LogOut, Settings, History, ChevronRight, MessageSquare } from 'lucide-react';
+import { User, Mail, LogOut, Settings, History, ChevronRight, MessageSquare, Zap } from 'lucide-react';
 import Footer from '@/app/components/Footer';
 
 export default function AccountPage() {
   const router = useRouter();
   const { user: me, setUser } = useUser();
+  const [quota, setQuota] = useState<{ total: number; used: number; remaining: number; is_unlimited: boolean } | null>(null);
 
   useEffect(() => {
     if (!me) {
@@ -19,6 +20,18 @@ export default function AccountPage() {
       });
     }
   }, [me, setUser, router]);
+
+  useEffect(() => {
+    const token = localStorage.getItem('auth_token');
+    if (!token) return;
+    fetch('/api/quota/me', {
+      headers: { Authorization: `Bearer ${token}` },
+      credentials: 'include',
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data) setQuota(data); })
+      .catch(() => {});
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -78,6 +91,28 @@ export default function AccountPage() {
                   <div className="text-[var(--color-text-primary)]">{me.email || '未设置'}</div>
                 </div>
               </div>
+
+              {quota && (
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-[var(--color-bg-elevated)]">
+                  <Zap className="w-5 h-5 text-[var(--color-gold)]" />
+                  <div className="flex-1">
+                    <div className="text-xs text-[var(--color-text-hint)]">剩余次数</div>
+                    {quota.is_unlimited ? (
+                      <div className="text-[var(--color-text-primary)]">无限制</div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span className={`font-medium ${quota.remaining <= 3 ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-primary)]'}`}>
+                          {quota.remaining}
+                        </span>
+                        <span className="text-xs text-[var(--color-text-hint)]">/ 共 {quota.total} 次（已用 {quota.used}）</span>
+                      </div>
+                    )}
+                  </div>
+                  <Link href="/pricing" className="text-xs text-[var(--color-primary)] hover:underline">
+                    购买次数
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
 

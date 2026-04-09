@@ -77,6 +77,19 @@ const mountedRef = useRef(true);
   type QuickBtn = { label: string; prompt: string; order?: number; active?: boolean };
   const [qbLoading, setQbLoading] = useState(true);
   const [quickButtons, setQuickButtons] = useState<Array<{ label: string; prompt: string }>>(QUICK_BUTTONS);
+  const [quota, setQuota] = useState<{ remaining: number; is_unlimited: boolean } | null>(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem('auth_token');
+    if (!token) return;
+    fetch('/api/quota/me', {
+      headers: { Authorization: `Bearer ${token}` },
+      credentials: 'include',
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data) setQuota({ remaining: data.remaining, is_unlimited: data.is_unlimited }); })
+      .catch(() => {});
+  }, []);
 
 
   function parseValue(v: any): { items?: QuickBtn[]; maxCount?: number } {
@@ -1038,6 +1051,7 @@ const mountedRef = useRef(true);
             onStop={() => {/* 如果你有中断流式的逻辑，这里触发 */}}
             onClear={clearChat}
             confirmClear={true}
+            quota={quota}
           />
         </section>
       </div>
