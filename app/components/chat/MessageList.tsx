@@ -79,7 +79,7 @@ export function MessageList({
                 className={`rounded-xl px-4 py-3 ${
                   isAssistant
                     ? 'bg-[var(--color-bg-card)] border border-[var(--color-border)] text-[var(--color-text-primary)]'
-                    : 'bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-light)] text-white'
+                    : 'bg-[var(--color-primary)] text-white'
                 } ${m.streaming ? 'animate-pulse' : ''}`}
               >
                 {isAssistant ? (

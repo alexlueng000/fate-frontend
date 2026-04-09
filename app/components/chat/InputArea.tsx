@@ -120,7 +120,7 @@ export function InputArea({
             <button
               onClick={onSend}
               disabled={!canSend || disabled}
-              className="h-[52px] px-5 rounded-xl bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-light)] text-white font-medium flex items-center gap-2 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-[var(--color-primary)]/20"
+              className="h-[52px] px-5 rounded-xl bg-[var(--color-primary)] text-white font-medium flex items-center gap-2 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-[var(--color-primary)]/20"
             >
               <Send className="w-4 h-4" />
               发送
