@@ -52,6 +52,7 @@ export default function ChatPage() {
   }, []);
 
   const mountedRef = useRef(true);
+  const sendingRef = useRef(false); // 同步锁，防止 React state 异步导致的并发重复提交
 
   // 安全读取 conversation_id（不依赖 any）
   function readConversationId(meta: unknown): string {
@@ -125,15 +126,15 @@ export default function ChatPage() {
             await trySSE(
               api('/chat/start'),
               { paipan: mingpan },
-              // onDelta：追加增量
-              (delta) => {
+              // onDelta：trySSE 发完整累积文本，直接替换
+              (fullText) => {
                 if (!alive) return;
                 setMsgs((prev) => {
                   const next = [...prev];
                   if (assistantIndex >= 0 && assistantIndex < next.length) {
                     next[assistantIndex] = {
                       ...next[assistantIndex],
-                      content: next[assistantIndex].content + delta,
+                      content: fullText,
                     };
                   }
                   return next;
@@ -299,11 +300,12 @@ export default function ChatPage() {
       return next;
     });
 
-    const append = (delta: string) => {
+    const append = (fullText: string) => {
       setMsgs((prev) => {
         if (assistantIndex < 0 || assistantIndex >= prev.length) return prev;
         const next = [...prev];
-        next[assistantIndex] = { ...next[assistantIndex], content: next[assistantIndex].content + delta };
+        // trySSE 的 onDelta 发的是完整累积文本，直接替换而非追加
+        next[assistantIndex] = { ...next[assistantIndex], content: fullText };
         return next;
       });
     };
@@ -351,6 +353,7 @@ export default function ChatPage() {
   };
 
   const send = async () => {
+    if (sendingRef.current) return;       // 同步锁，防止 React 异步 state 导致并发提交
     if (!conversationId) {
       setErr('缺少会话，请返回首页重新创建。');
       return;
@@ -358,6 +361,7 @@ export default function ChatPage() {
     const content = input.trim();
     if (!content) return;
 
+    sendingRef.current = true;
     setErr(null);
     setMsgs((m) => [...m, { role: 'user', content }]);
     setInput('');
@@ -369,6 +373,7 @@ export default function ChatPage() {
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
       setLoading(false);
+      sendingRef.current = false;
     }
   };
 
@@ -402,10 +407,12 @@ export default function ChatPage() {
   };
 
   const sendQuick = async (label: string, fullPrompt: string) => {
+    if (sendingRef.current) return;
     if (!conversationId) {
       setErr('缺少会话，请返回首页重新创建。');
       return;
     }
+    sendingRef.current = true;
     setErr(null);
     setMsgs((m) => [...m, { role: 'user', content: `${label}分析` }]);
     setLoading(true);
@@ -415,11 +422,13 @@ export default function ChatPage() {
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
       setLoading(false);
+      sendingRef.current = false;
     }
   };
 
   const handleQuestionClick = async (question: string) => {
-    if (!conversationId || loading) return;
+    if (sendingRef.current || !conversationId || loading) return;
+    sendingRef.current = true;
     setErr(null);
     setMsgs((m) => [...m, { role: 'user', content: question }]);
     setLoading(true);
@@ -429,6 +438,7 @@ export default function ChatPage() {
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
       setLoading(false);
+      sendingRef.current = false;
     }
   };
 
