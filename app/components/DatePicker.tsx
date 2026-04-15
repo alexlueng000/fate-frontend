@@ -222,8 +222,11 @@ export function IOSWheelDate({
                 <div
                   key={yr}
                   style={{ height: ROW_H, lineHeight: `${ROW_H}px`, scrollSnapAlign: 'center' }}
-                  className={`text-center text-sm ${yr === y ? themeConfig.selectedText : ''}`}
-                  onClick={() => { setY(yr); confirm(yr, m, d); }}
+                  className={`text-center text-sm cursor-pointer ${yr === y ? themeConfig.selectedText : ''}`}
+                  onClick={() => {
+                    setY(yr);
+                    colYRef.current?.scrollTo({ top: years.indexOf(yr) * ROW_H, behavior: 'smooth' });
+                  }}
                 >
                   {yr}
                 </div>
@@ -245,8 +248,11 @@ export function IOSWheelDate({
                 <div
                   key={mo}
                   style={{ height: ROW_H, lineHeight: `${ROW_H}px`, scrollSnapAlign: 'center' }}
-                  className={`text-center text-sm ${mo === m ? themeConfig.selectedText : ''}`}
-                  onClick={() => { setM(mo); confirm(y, mo, d); }}
+                  className={`text-center text-sm cursor-pointer ${mo === m ? themeConfig.selectedText : ''}`}
+                  onClick={() => {
+                    setM(mo);
+                    colMRef.current?.scrollTo({ top: (mo - 1) * ROW_H, behavior: 'smooth' });
+                  }}
                 >
                   {pad(mo)}
                 </div>
@@ -268,8 +274,11 @@ export function IOSWheelDate({
                 <div
                   key={day}
                   style={{ height: ROW_H, lineHeight: `${ROW_H}px`, scrollSnapAlign: 'center' }}
-                  className={`text-center text-sm ${day === d ? themeConfig.selectedText : ''}`}
-                  onClick={() => { setD(day); confirm(y, m, day); }}
+                  className={`text-center text-sm cursor-pointer ${day === d ? themeConfig.selectedText : ''}`}
+                  onClick={() => {
+                    setD(day);
+                    colDRef.current?.scrollTo({ top: (day - 1) * ROW_H, behavior: 'smooth' });
+                  }}
                 >
                   {pad(day)}
                 </div>
