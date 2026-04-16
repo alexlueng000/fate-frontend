@@ -18,6 +18,15 @@ export type User = {
   avatar_url?: string | null;
   email?: string | null;
   is_admin?: boolean;
+  has_profile?: boolean;
+  profile_brief?: {
+    id: number;
+    gender: string;
+    birth_date: string;
+    birth_time: string;
+    birth_location: string;
+    display_info: string;
+  } | null;
 };
 
 export type LoginResp = {
@@ -190,4 +199,84 @@ export function resetFetchMeState() {
 export async function logout(): Promise<void> {
   // 若后端有 /auth/logout，可在此调用
   clearAuth();
+}
+
+// ===================== 档案状态检查 =====================
+
+export type ProfileStatus = {
+  hasProfile: boolean;
+  profileBrief?: {
+    id: number;
+    gender: string;
+    birth_date: string;
+    birth_time: string;
+    birth_location: string;
+    display_info: string;
+  } | null;
+};
+
+/**
+ * 检查用户档案状态
+ * 从 /api/auth/me 获取 has_profile 和 profile_brief
+ */
+export async function checkProfileStatus(): Promise<ProfileStatus | null> {
+  const token = getAuthToken();
+  if (!token) return null;
+
+  try {
+    const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
+    const resp = await fetch(api('/auth/me'), { headers, credentials: 'include' });
+    if (!resp.ok) return null;
+
+    const data = await resp.json() as User;
+    return {
+      hasProfile: data.has_profile ?? false,
+      profileBrief: data.profile_brief ?? null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+// ===================== 路由守卫 Hook =====================
+
+export type RouteGuardResult =
+  | { allowed: true }
+  | { allowed: false; redirect: '/login' | '/profile/create' | '/chat' };
+
+/**
+ * 路由守卫：检查用户登录态和建档态
+ *
+ * @param requireAuth - 是否需要登录
+ * @param requireProfile - 是否需要建档
+ * @returns 是否允许访问，以及重定向路径
+ */
+export async function checkRouteAccess(
+  requireAuth: boolean = false,
+  requireProfile: boolean = false
+): Promise<RouteGuardResult> {
+  const token = getAuthToken();
+
+  // 需要登录但未登录
+  if (requireAuth && !token) {
+    return { allowed: false, redirect: '/login' };
+  }
+
+  // 不需要登录，直接放行
+  if (!requireAuth) {
+    return { allowed: true };
+  }
+
+  // 需要建档，检查档案状态
+  if (requireProfile) {
+    const status = await checkProfileStatus();
+    if (!status) {
+      return { allowed: false, redirect: '/login' };
+    }
+    if (!status.hasProfile) {
+      return { allowed: false, redirect: '/profile/create' };
+    }
+  }
+
+  return { allowed: true };
 }
