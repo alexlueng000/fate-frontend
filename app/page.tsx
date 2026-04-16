@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Footer from '@/app/components/Footer';
 import { IOSWheelDate } from '@/app/components/DatePicker';
 import { IOSWheelTime } from '@/app/components/TimePicker';
+import { getAuthToken, checkProfileStatus } from '@/app/lib/auth';
 import {
   Sparkles,
   Calendar,
@@ -29,25 +30,45 @@ export default function LandingPage() {
   const [birthTime, setBirthTime] = useState('');
   const [birthPlace, setBirthPlace] = useState('');
   const [mounted, setMounted] = useState(false);
+  const [checking, setChecking] = useState(true);
+
+  // 检查登录状态，已登录用户自动跳转
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = getAuthToken();
+      if (token) {
+        const status = await checkProfileStatus();
+        if (status) {
+          // 已登录，根据档案状态跳转
+          if (status.hasProfile) {
+            router.replace('/chat');
+          } else {
+            router.replace('/profile/create');
+          }
+          return;
+        }
+      }
+      setChecking(false);
+    };
+    checkAuth();
+  }, [router]);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   const handleStartReading = () => {
-    if (!birthDate || !birthTime) {
-      alert('请填写出生日期和时间');
-      return;
-    }
-    const params = new URLSearchParams({
-      gender,
-      calendar,
-      birth_date: birthDate,
-      birth_time: birthTime,
-      birthplace: birthPlace.trim() || '北京',
-    });
-    router.push(`/try?${params.toString()}`);
+    // 未登录用户：引导到登录页
+    router.push('/login');
   };
+
+  if (checking) {
+    return (
+      <div className="min-h-screen bg-[#F7F3EE] flex items-center justify-center">
+        <div className="text-neutral-600">加载中...</div>
+      </div>
+    );
+  }
 
   return (
     <main className="min-h-screen relative">
@@ -169,11 +190,12 @@ export default function LandingPage() {
                         <button
                           key={g}
                           onClick={() => setGender(g)}
+                          disabled
                           className={`py-3.5 rounded-md font-medium transition-all ${
                             gender === g
                               ? 'bg-[var(--color-primary)] text-white shadow-md'
                               : 'bg-[var(--color-bg-deep)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)]'
-                          }`}
+                          } opacity-50 cursor-not-allowed`}
                         >
                           {g === '男' ? '👨 男' : '👩 女'}
                         </button>
@@ -189,11 +211,12 @@ export default function LandingPage() {
                         <button
                           key={c.value}
                           onClick={() => setCalendar(c.value)}
+                          disabled
                           className={`py-3.5 rounded-md font-medium transition-all ${
                             calendar === c.value
                               ? 'bg-[var(--color-gold-dark)] text-white shadow-md'
                               : 'bg-[var(--color-bg-deep)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)]'
-                          }`}
+                          } opacity-50 cursor-not-allowed`}
                         >
                           {c.label}
                         </button>
@@ -201,36 +224,31 @@ export default function LandingPage() {
                     </div>
 
                     {/* 日期输入 */}
-                    <div className="relative">
+                    <div className="relative opacity-50">
                       <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)] z-10 pointer-events-none" />
-                      <IOSWheelDate
-                        value={birthDate}
-                        onChange={setBirthDate}
-                        theme="landing"
-                        attachToBody
-                      />
+                      <div className="w-full pl-12 pr-4 py-3.5 rounded-md bg-[var(--color-bg-deep)] border border-[var(--color-border)] text-[var(--color-text-hint)]">
+                        选择出生日期
+                      </div>
                     </div>
 
                     {/* 时间输入 */}
-                    <div className="relative">
+                    <div className="relative opacity-50">
                       <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)] z-10 pointer-events-none" />
-                      <IOSWheelTime
-                        value={birthTime}
-                        onChange={setBirthTime}
-                        theme="landing"
-                        attachToBody
-                      />
+                      <div className="w-full pl-12 pr-4 py-3.5 rounded-md bg-[var(--color-bg-deep)] border border-[var(--color-border)] text-[var(--color-text-hint)]">
+                        选择出生时间
+                      </div>
                     </div>
 
                     {/* 地点输入 */}
-                    <div className="relative">
+                    <div className="relative opacity-50">
                       <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
                       <input
                         type="text"
                         value={birthPlace}
                         onChange={(e) => setBirthPlace(e.target.value)}
                         placeholder="出生城市（如：北京）"
-                        className="w-full pl-12 pr-4 py-3.5 rounded-md bg-[var(--color-bg-deep)] border border-[var(--color-border)] focus:border-[var(--color-primary)] focus:shadow-[0_0_0_3px_rgba(181,68,52,0.12)] outline-none transition-all placeholder:text-[var(--color-text-hint)]"
+                        disabled
+                        className="w-full pl-12 pr-4 py-3.5 rounded-md bg-[var(--color-bg-deep)] border border-[var(--color-border)] outline-none placeholder:text-[var(--color-text-hint)] cursor-not-allowed"
                       />
                     </div>
 
@@ -241,14 +259,14 @@ export default function LandingPage() {
                     >
                       <span className="flex items-center justify-center gap-2">
                         <Sparkles className="w-5 h-5" />
-                        立即生成命理报告
+                        登录后开始使用
                         <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                       </span>
                     </button>
 
                     {/* 底部提示 */}
                     <p className="text-center text-xs text-[var(--color-text-hint)] pt-2">
-                      🔒 数据加密存储，仅你可见 · 无需注册
+                      🔒 数据加密存储，仅你可见
                     </p>
                   </div>
                 </div>
