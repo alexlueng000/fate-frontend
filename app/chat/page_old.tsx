@@ -2,11 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useRouteGuard } from '@/app/lib/useRouteGuard';
-import { getAuthToken } from '@/app/lib/auth';
 
 import Markdown from '@/app/components/Markdown';
-import { WuxingBadge, WuxingBar, getWuxing, colorClasses } from '@/app/components/WuXing';
+import { Wuxing, WuxingBadge, WuxingBar, getWuxing, colorClasses, guessElementPercent } from '@/app/components/WuXing';
 
 import { ChatHeader } from '@/app/components/chat/ChatHeader';
 import { PaipanCard } from '@/app/components/chat/PaipanCard';
@@ -15,9 +13,11 @@ import { MessageList } from '@/app/components/chat/MessageList';
 import { InputArea } from '@/app/components/chat/InputArea';
 
 import {
-  Msg, Paipan, QUICK_BUTTONS, normalizeMarkdown,
+  Msg, Paipan, QUICK_BUTTONS,
+  readPaipanParamsFromURL, normalizeMarkdown,
 } from '@/app/lib/chat/types';
 import { parseSuggestedQuestions } from '@/app/lib/chat/parser';
+import { getRating } from '@/app/lib/chat/rating';
 import { api, pickReply } from '@/app/lib/chat/api';
 import { trySSE } from '@/app/lib/chat/sse';
 import {
@@ -25,72 +25,60 @@ import {
   savePaipanLocal, loadPaipanLocal, repairCorruptedConversations,
 } from '@/app/lib/chat/storage';
 
-interface ProfileBrief {
-  id: number;
-  gender: string;
-  birth_date: string;
-  birth_time: string;
-  birth_location: string;
-  display_info: string;
-}
-
 export default function ChatPage() {
   const router = useRouter();
-  const loading = useRouteGuard(true, true); // 需要登录和档案
 
   // ===== State =====
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [input, setInput] = useState('');
-  const [sending, setSending] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [booting, setBooting] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [paipan, setPaipan] = useState<Paipan | null>(null);
-  const [profileBrief, setProfileBrief] = useState<ProfileBrief | null>(null);
   const [quota, setQuota] = useState<{ remaining: number; is_unlimited: boolean } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const mountedRef = useRef(true);
-
-  // 安全读取 conversation_id
-  function readConversationId(meta: unknown): string {
-    if (typeof meta !== 'object' || meta === null) return '';
-    const v = (meta as Record<string, unknown>)['conversation_id'];
-    return typeof v === 'string' ? v : '';
-  }
 
   useEffect(() => {
-    mountedRef.current = true;
-    return () => { mountedRef.current = false; };
-  }, []);
-
-  // 自动滚动
-  useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
-  }, [msgs, sending, booting]);
-
-  // 获取配额
-  useEffect(() => {
-    if (loading) return;
-    const token = getAuthToken();
+    const token = localStorage.getItem('auth_token');
     if (!token) return;
-    fetch(api('/quota/me'), {
+    fetch('/api/quota/me', {
       headers: { Authorization: `Bearer ${token}` },
       credentials: 'include',
     })
       .then(r => r.ok ? r.json() : null)
       .then(data => { if (data) setQuota({ remaining: data.remaining, is_unlimited: data.is_unlimited }); })
       .catch(() => {});
-  }, [loading]);
+  }, []);
 
-  // Bootstrap：从档案启动会话或恢复旧会话
+  const mountedRef = useRef(true);
+
+  // 安全读取 conversation_id（不依赖 any）
+  function readConversationId(meta: unknown): string {
+    if (typeof meta !== 'object' || meta === null) return '';
+    const v = (meta as Record<string, unknown>)['conversation_id'];
+    return typeof v === 'string' ? v : '';
+  }
+  
   useEffect(() => {
-    if (loading) return;
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+
+
+  // ===== Effects =====
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+  }, [msgs, loading, booting]);
+
+  // Bootstrap：URL参数 → 计算命盘 → chat/start（流式）；否则恢复会话
+  useEffect(() => {
     let alive = true;
 
     (async () => {
       setBooting(true);
 
-      // 修复损坏的对话数据
+      // 首次加载时修复损坏的对话数据
       try {
         const repairedCount = repairCorruptedConversations();
         if (repairedCount > 0) {
@@ -100,130 +88,178 @@ export default function ChatPage() {
         console.warn('[Storage] Failed to repair conversations:', e);
       }
 
-      // 尝试恢复旧会话
+      const cachedPaipan = loadPaipanLocal();
+      if (cachedPaipan) setPaipan(cachedPaipan);
+
+      const urlPayload = readPaipanParamsFromURL();
+      if (urlPayload) {
+        try {
+          // 开新会话前清理旧ID
+          sessionStorage.removeItem('conversation_id');
+
+          // 计算命盘
+          const calcRes = await fetch(api('/bazi/calc_paipan'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(urlPayload),
+          });
+          if (!calcRes.ok) throw new Error(await calcRes.text());
+          const calcData = await calcRes.json();
+          const mingpan = calcData?.mingpan as Paipan | undefined;
+          if (!mingpan) throw new Error('后端未返回命盘（mingpan）。');
+
+          setPaipan(mingpan);
+          savePaipanLocal(mingpan);
+
+          // ===== 初始化会话：优先流式，失败回退 =====
+          try {
+            // 先插入一个占位 assistant，边流追加内容
+            let assistantIndex = -1;
+            setMsgs(() => {
+              const next: Msg[] = [{ role: 'assistant', content: '', streaming: true }];
+              assistantIndex = 0;
+              return next;
+            });
+
+            const cidLocal = '';
+            await trySSE(
+              api('/chat/start'),
+              { paipan: mingpan },
+              // onDelta：追加增量
+              (delta) => {
+                if (!alive) return;
+                setMsgs((prev) => {
+                  const next = [...prev];
+                  if (assistantIndex >= 0 && assistantIndex < next.length) {
+                    next[assistantIndex] = {
+                      ...next[assistantIndex],
+                      content: next[assistantIndex].content + delta,
+                    };
+                  }
+                  return next;
+                });
+              },
+              // onMeta：拿到 conversation_id
+              (meta) => {
+                if (!alive) return;
+                const cid = readConversationId(meta);  // ✅ 不再直接访问 meta.xxx
+                if (cid) {
+                  sessionStorage.setItem('conversation_id', cid);
+                  setConversationId(cid);
+                }
+              }
+            );
+
+            // 流结束 → 先解析推荐问题，再归一化 + 持久化
+            if (!alive) return;
+            let finalText = '';
+            setMsgs((prev) => {
+              const next = [...prev];
+              if (assistantIndex >= 0 && assistantIndex < next.length) {
+                const { questions, cleanedContent } = parseSuggestedQuestions(next[assistantIndex].content || '');
+                const normalized = normalizeMarkdown(cleanedContent);
+                next[assistantIndex] = {
+                  ...next[assistantIndex],
+                  content: normalized,
+                  streaming: false,
+                  suggestedQuestions: questions,
+                };
+                finalText = normalized;
+              }
+              return next;
+            });
+
+            if (cidLocal) {
+              saveConversation(cidLocal, [{ role: 'assistant', content: finalText }]);
+            } else {
+              // 如果后端没有通过 meta 下发 conversation_id，
+              // 此时将无法继续对话。建议后端在流中发送一次：
+              // data: {"meta":{"conversation_id":"..."}}
+              // （如需兜底，可在此追加一次非流式 /chat/start 仅获取ID，但会重复生成内容。）
+            }
+          } catch {
+            // 流式不可用 → 回退到一次性
+            const token = localStorage.getItem('auth_token');
+            const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            const res = await fetch(api('/chat/start'), {
+              method: 'POST',
+              headers,
+              body: JSON.stringify({ paipan: mingpan }),
+            });
+            if (!res.ok) throw new Error(await res.text());
+            const data = await res.json();
+            if (!alive) return;
+
+            const cid = String(data.conversation_id || '');
+            if (cid) {
+              sessionStorage.setItem('conversation_id', cid);
+              setConversationId(cid);
+            }
+
+            const first = pickReply(data).trim();
+            const initMsgs: Msg[] = [
+              { role: 'assistant', content: normalizeMarkdown(first || '（后端未返回解读内容）') },
+            ];
+            setMsgs(initMsgs);
+            if (cid) saveConversation(cid, initMsgs);
+          }
+        } catch (e: unknown) {
+          if (!alive) return;
+          setErr(e instanceof Error ? e.message : String(e));
+        } finally {
+          if (alive) setBooting(false);
+        }
+        return; // 处理完 URL 分支后返回
+      }
+
+      // ===== 无 URL 参数：恢复旧会话 =====
       const active = getActiveConversationId() || sessionStorage.getItem('conversation_id');
       if (active) {
         const cached = loadConversation(active);
         if (cached?.length) {
           if (!alive) return;
           setConversationId(active);
+          // Fix any interrupted simplify loading states
           setMsgs(cached.map(m =>
             m.simplify?.status === 'loading'
               ? { ...m, simplify: { ...m.simplify, status: 'error' as const, error: '已中断，请重试' } }
               : m
           ));
-          const cachedPaipan = loadPaipanLocal();
-          if (cachedPaipan) setPaipan(cachedPaipan);
-
-          // 获取档案简要信息
-          const token = getAuthToken();
-          if (token) {
-            try {
-              const resp = await fetch(api('/profile/me/brief'), {
-                headers: { Authorization: `Bearer ${token}` },
-                credentials: 'include',
-              });
-              if (resp.ok) {
-                const brief = await resp.json();
-                setProfileBrief(brief);
-              }
-            } catch {}
+          if (!cachedPaipan) {
+            const p2 = loadPaipanLocal();
+            if (p2) setPaipan(p2);
           }
-
           setBooting(false);
           return;
         }
       }
 
-      // 没有旧会话，从档案启动新会话
-      try {
-        const token = getAuthToken();
-        if (!token) {
-          setErr('未登录，请重新登录');
-          setBooting(false);
-          return;
-        }
-
-        // 获取档案简要信息
-        const briefResp = await fetch(api('/profile/me/brief'), {
-          headers: { Authorization: `Bearer ${token}` },
-          credentials: 'include',
-        });
-        if (briefResp.ok) {
-          const brief = await briefResp.json();
-          setProfileBrief(brief);
-        }
-
-        // 清理旧会话ID
-        sessionStorage.removeItem('conversation_id');
-
-        // 启动新会话（后端自动从档案读取命盘）
-        let assistantIndex = -1;
-        setMsgs(() => {
-          const next: Msg[] = [{ role: 'assistant', content: '', streaming: true }];
-          assistantIndex = 0;
-          return next;
-        });
-
-        await trySSE(
-          api('/chat/start'),
-          {}, // 不传 paipan，后端从档案读取
-          (delta) => {
-            if (!alive) return;
-            setMsgs((prev) => {
-              const next = [...prev];
-              if (assistantIndex >= 0 && assistantIndex < next.length) {
-                next[assistantIndex] = {
-                  ...next[assistantIndex],
-                  content: next[assistantIndex].content + delta,
-                };
-              }
-              return next;
-            });
-          },
-          (meta) => {
-            if (!alive) return;
-            const cid = readConversationId(meta);
-            if (cid) {
-              sessionStorage.setItem('conversation_id', cid);
-              setConversationId(cid);
-            }
-          }
-        );
-
-        // 流结束，解析推荐问题
+      // ===== 兼容老入口 =====
+      const bootSaved = sessionStorage.getItem('bootstrap_reply');
+      const cidSaved = sessionStorage.getItem('conversation_id');
+      if (bootSaved?.trim()) {
         if (!alive) return;
-        let finalText = '';
-        setMsgs((prev) => {
-          const next = [...prev];
-          if (assistantIndex >= 0 && assistantIndex < next.length) {
-            const { questions, cleanedContent } = parseSuggestedQuestions(next[assistantIndex].content || '');
-            const normalized = normalizeMarkdown(cleanedContent);
-            next[assistantIndex] = {
-              ...next[assistantIndex],
-              content: normalized,
-              streaming: false,
-              suggestedQuestions: questions,
-            };
-            finalText = normalized;
-          }
-          return next;
-        });
-
-        const cid = sessionStorage.getItem('conversation_id');
-        if (cid) {
-          saveConversation(cid, [{ role: 'assistant', content: finalText }]);
+        if (cidSaved) setConversationId(cidSaved);
+        const initMsgs: Msg[] = [{ role: 'assistant', content: normalizeMarkdown(bootSaved) }];
+        setMsgs(initMsgs);
+        if (cidSaved) saveConversation(cidSaved, initMsgs);
+        if (!cachedPaipan) {
+          const p2 = loadPaipanLocal();
+          if (p2) setPaipan(p2);
         }
-      } catch (e: unknown) {
-        if (!alive) return;
-        setErr(e instanceof Error ? e.message : String(e));
-      } finally {
-        if (alive) setBooting(false);
+        sessionStorage.removeItem('bootstrap_reply');
+        setBooting(false);
+        return;
       }
+
+      // 没有任何上下文
+      setErr('缺少排盘参数，请返回首页重新创建会话。');
+      setBooting(false);
     })();
 
     return () => { alive = false; };
-  }, [loading]);
+  }, []);
 
   // 持久化消息
   useEffect(() => {
@@ -232,13 +268,30 @@ export default function ChatPage() {
 
   // ===== Helpers =====
   const canSend = useMemo(
-    () => !!conversationId && !!input.trim() && !sending && !booting,
-    [conversationId, input, sending, booting],
+    () => !!conversationId && !!input.trim() && !loading && !booting,
+    [conversationId, input, loading, booting],
   );
 
-  const sendStream = async (content: string) => {
-    if (!conversationId) throw new Error('缺少会话，请刷新页面重试');
+  const sendOnce = async (content: string) => {
+    const token = localStorage.getItem('auth_token');
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const res = await fetch(api('/chat'), {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ conversation_id: conversationId, message: content }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const data = await res.json();
+    return pickReply(data).trim();
+  };
 
+
+
+  const sendStream = async (content: string) => {
+    if (!conversationId) throw new Error('缺少会话，请返回首页重新创建。');
+
+    // 先插入占位的 assistant
     let assistantIndex = -1;
     setMsgs((prev) => {
       const next: Msg[] = [...prev, { role: 'assistant', content: '', streaming: true }];
@@ -256,13 +309,14 @@ export default function ChatPage() {
     };
 
     try {
+      // 优先 SSE
       await trySSE(
         api('/chat'),
         { conversation_id: conversationId, message: content },
         append,
         (meta) => {
-          if (!mountedRef.current) return;
-          const cid = readConversationId(meta);
+          if (!mountedRef.current) return;          // ✅ 防卸载后 setState
+          const cid = readConversationId(meta);     // 你已实现的安全取值函数
           if (cid) {
             sessionStorage.setItem('conversation_id', cid);
             setConversationId(cid);
@@ -270,6 +324,7 @@ export default function ChatPage() {
         }
       );
 
+      // 先解析推荐问题，再归一化 Markdown
       setMsgs((prev) => {
         if (assistantIndex < 0 || assistantIndex >= prev.length) return prev;
         const next = [...prev];
@@ -285,17 +340,7 @@ export default function ChatPage() {
       });
     } catch {
       // 降级为一次性
-      const token = getAuthToken();
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-      const res = await fetch(api('/chat'), {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ conversation_id: conversationId, message: content }),
-      });
-      if (!res.ok) throw new Error(await res.text());
-      const data = await res.json();
-      const full = pickReply(data).trim();
+      const full = await sendOnce(content);
       setMsgs((prev) => {
         if (assistantIndex < 0 || assistantIndex >= prev.length) return prev;
         const next = [...prev];
@@ -307,7 +352,7 @@ export default function ChatPage() {
 
   const send = async () => {
     if (!conversationId) {
-      setErr('缺少会话，请刷新页面重试');
+      setErr('缺少会话，请返回首页重新创建。');
       return;
     }
     const content = input.trim();
@@ -316,14 +361,14 @@ export default function ChatPage() {
     setErr(null);
     setMsgs((m) => [...m, { role: 'user', content }]);
     setInput('');
-    setSending(true);
+    setLoading(true);
 
     try {
       await sendStream(content);
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
-      setSending(false);
+      setLoading(false);
     }
   };
 
@@ -332,15 +377,12 @@ export default function ChatPage() {
     const lastAssistantIdx = [...msgs].map((m, i) => ({ m, i })).reverse().find(x => x.m.role === 'assistant')?.i;
     if (lastAssistantIdx == null) return;
 
-    setSending(true);
+    setLoading(true);
     setErr(null);
     try {
-      const token = getAuthToken();
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
       const res = await fetch(api('/chat/regenerate'), {
         method: 'POST',
-        headers,
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ conversation_id: conversationId }),
       });
       if (!res.ok) throw new Error(await res.text());
@@ -355,38 +397,38 @@ export default function ChatPage() {
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
-      setSending(false);
+      setLoading(false);
     }
   };
 
   const sendQuick = async (label: string, fullPrompt: string) => {
     if (!conversationId) {
-      setErr('缺少会话，请刷新页面重试');
+      setErr('缺少会话，请返回首页重新创建。');
       return;
     }
     setErr(null);
     setMsgs((m) => [...m, { role: 'user', content: `${label}分析` }]);
-    setSending(true);
+    setLoading(true);
     try {
       await sendStream(fullPrompt);
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
-      setSending(false);
+      setLoading(false);
     }
   };
 
   const handleQuestionClick = async (question: string) => {
-    if (!conversationId || sending) return;
+    if (!conversationId || loading) return;
     setErr(null);
     setMsgs((m) => [...m, { role: 'user', content: question }]);
-    setSending(true);
+    setLoading(true);
     try {
       await sendStream(question);
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
-      setSending(false);
+      setLoading(false);
     }
   };
 
@@ -397,6 +439,8 @@ export default function ChatPage() {
     }
   };
 
+  // ===== UI =====
+  // 白话版：首次请求/重试
   const handleSimplify = async (idx: number) => {
     const msg = msgs[idx];
     if (!msg || msg.role !== 'assistant') return;
@@ -452,6 +496,7 @@ export default function ChatPage() {
     }
   };
 
+  // 白话版：折叠/展开
   const handleSimplifyToggle = (idx: number) => {
     setMsgs(prev => {
       const next = [...prev];
@@ -462,6 +507,7 @@ export default function ChatPage() {
     });
   };
 
+  // 处理消息评价回调
   const handleRated = async (messageIndex: number, rating: { ratingType: 'up' | 'down'; reason?: string }) => {
     setMsgs((prev) => {
       const next = [...prev];
@@ -475,14 +521,6 @@ export default function ChatPage() {
     });
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#F7F3EE] flex items-center justify-center">
-        <div className="text-neutral-600">加载中...</div>
-      </div>
-    );
-  }
-
   return (
     <main className="min-h-screen bg-[#F7F3EE] text-neutral-800 p-6 sm:p-10">
       <div className="mx-auto w-full max-w-5xl space-y-6">
@@ -491,23 +529,6 @@ export default function ChatPage() {
           onBack={() => router.push('/')}
         />
 
-        {/* 档案简要信息 */}
-        {profileBrief && (
-          <div className="bg-white rounded-2xl border border-neutral-200 p-4 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="text-sm text-neutral-600">
-                {profileBrief.gender} · {profileBrief.birth_date} {profileBrief.birth_time} · {profileBrief.birth_location}
-              </div>
-            </div>
-            <button
-              onClick={() => router.push('/profile/view')}
-              className="text-sm text-[#a83232] hover:underline"
-            >
-              查看详情
-            </button>
-          </div>
-        )}
-
         {paipan && (
           <PaipanCard
             paipan={paipan}
@@ -515,8 +536,11 @@ export default function ChatPage() {
             WuxingBar={WuxingBar}
             getWuxing={getWuxing}
             colorClasses={colorClasses}
+            // guessPercent={(el: Wuxing) => guessElementPercent(el)}
           />
         )}
+
+       
 
         <MessageList
           scrollRef={scrollRef}
@@ -527,10 +551,10 @@ export default function ChatPage() {
           onSimplify={handleSimplify}
           onSimplifyToggle={handleSimplifyToggle}
           onQuestionClick={handleQuestionClick}
-          loading={sending}
+          loading={loading}
         />
 
-        {(booting || sending) && (
+        {(booting || loading) && (
           <div className="flex items-center gap-2 rounded-2xl bg-white/90 border border-red-200 p-3 text-sm text-neutral-800">
             <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-red-300 border-t-red-600" />
             {booting ? '正在解读中…' : '发送中…'}
@@ -543,7 +567,7 @@ export default function ChatPage() {
         )}
 
         <QuickActions
-          disabled={sending || booting || !conversationId}
+          disabled={loading || booting || !conversationId}
           buttons={QUICK_BUTTONS}
           onClick={sendQuick}
         />
@@ -553,7 +577,7 @@ export default function ChatPage() {
           onChange={setInput}
           onKeyDown={onKeyDown}
           canSend={canSend}
-          sending={sending}
+          sending={loading}
           disabled={booting || !conversationId}
           onSend={send}
           onRegenerate={regenerate}
