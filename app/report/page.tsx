@@ -98,11 +98,8 @@ export default function ReportPage() {
           await trySSE(
             api('/chat/start?stream=true'),
             {
-              gender: profileData.gender,
-              calendar_type: profileData.calendar_type,
-              birth_date: profileData.birth_date,
-              birth_time: profileData.birth_time,
-              birth_location: profileData.birth_location,
+              paipan: paipanData.mingpan,
+              kb_topk: 0,
             },
             (text) => {
               // onDelta 回调：接收规范化后的文本
@@ -138,17 +135,13 @@ export default function ReportPage() {
             },
             credentials: 'include',
             body: JSON.stringify({
-              gender: profileData.gender,
-              calendar_type: profileData.calendar_type,
-              birth_date: profileData.birth_date,
-              birth_time: profileData.birth_time,
-              birth_location: profileData.birth_location,
+              paipan: paipanData.mingpan,
             }),
           });
 
           if (fallbackResp.ok) {
             const fallbackData = await fallbackResp.json();
-            setAiReport(fallbackData.content || '');
+            setAiReport(fallbackData.reply || '');
             if (fallbackData.conversation_id) {
               convId = fallbackData.conversation_id;
               setConversationId(convId);
