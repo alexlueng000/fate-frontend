@@ -75,7 +75,7 @@ export default function ReportPage() {
             gender: profileData.gender === 'male' ? '男' : '女',
             calendar: profileData.calendar_type === 'solar' ? 'gregorian' : 'lunar',
             birth_date: profileData.birth_date,
-            birth_time: profileData.birth_time,
+            birth_time: profileData.birth_time.substring(0, 5), // 截取 HH:MM 部分
             birthplace: profileData.birth_location,
           }),
         });
