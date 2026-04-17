@@ -83,7 +83,7 @@ export default function CreateProfilePage() {
         {/* Decorative right panel */}
         <div className="hidden lg:block absolute right-0 top-0 w-72 h-64 bg-[#E8DDD0] rounded-bl-3xl opacity-60" />
 
-        <div className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 pt-10 pb-6">
+        <div className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 pt-24 pb-6">
           {/* Title block */}
           <div className="text-center mb-8">
             <h1 className="text-4xl sm:text-5xl font-bold text-neutral-800 mb-3 tracking-tight">
