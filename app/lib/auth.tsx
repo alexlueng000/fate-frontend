@@ -217,7 +217,7 @@ export type ProfileStatus = {
 
 /**
  * 检查用户档案状态
- * 从 /api/auth/me 获取 has_profile 和 profile_brief
+ * 从 /api/me 获取 has_profile 和 profile_brief
  */
 export async function checkProfileStatus(): Promise<ProfileStatus | null> {
   const token = getAuthToken();
@@ -225,10 +225,12 @@ export async function checkProfileStatus(): Promise<ProfileStatus | null> {
 
   try {
     const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
-    const resp = await fetch(api('/auth/me'), { headers, credentials: 'include' });
+    const resp = await fetch(api('/me'), { headers, credentials: 'include' });
     if (!resp.ok) return null;
 
     const data = await resp.json() as User;
+    // 更新缓存的用户信息
+    setUserCache(data);
     return {
       hasProfile: data.has_profile ?? false,
       profileBrief: data.profile_brief ?? null,

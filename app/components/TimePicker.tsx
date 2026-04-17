@@ -160,8 +160,11 @@ export function IOSWheelTime({
                 <div
                   key={i}
                   style={{ height: ROW_H, lineHeight: `${ROW_H}px`, scrollSnapAlign: 'center' }}
-                  className={`text-center text-sm ${i === h ? themeConfig.selectedText : ''}`}
-                  onClick={() => { setH(i); confirm(i, m); }}
+                  className={`text-center text-sm cursor-pointer ${i === h ? themeConfig.selectedText : ''}`}
+                  onClick={() => {
+                    setH(i);
+                    colHRef.current?.scrollTo({ top: i * ROW_H, behavior: 'smooth' });
+                  }}
                 >
                   {pad(i)}
                 </div>
@@ -179,12 +182,15 @@ export function IOSWheelTime({
               style={{ height: VIEW_H, scrollSnapType: 'y mandatory' as const }}
             >
               <div style={{ height: (VIEW_H - ROW_H) / 2 }} />
-              {minutes.map((mm) => (
+              {minutes.map((mm, idx) => (
                 <div
                   key={mm}
                   style={{ height: ROW_H, lineHeight: `${ROW_H}px`, scrollSnapAlign: 'center' }}
-                  className={`text-center text-sm ${mm === m ? themeConfig.selectedText : ''}`}
-                  onClick={() => { setM(mm); confirm(h, mm); }}
+                  className={`text-center text-sm cursor-pointer ${mm === m ? themeConfig.selectedText : ''}`}
+                  onClick={() => {
+                    setM(mm);
+                    colMRef.current?.scrollTo({ top: idx * ROW_H, behavior: 'smooth' });
+                  }}
                 >
                   {pad(mm)}
                 </div>

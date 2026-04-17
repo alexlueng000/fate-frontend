@@ -79,7 +79,7 @@ export default function CreateProfilePage() {
         throw new Error(errorMsg);
       }
 
-      router.push('/chat');
+      router.push('/report');
     } catch (err) {
       setError(err instanceof Error ? err.message : '创建档案失败');
     } finally {
