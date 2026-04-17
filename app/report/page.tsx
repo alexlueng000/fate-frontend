@@ -7,7 +7,7 @@ import { getAuthToken } from '@/app/lib/auth';
 import { api } from '@/app/lib/api';
 import Markdown from '@/app/components/Markdown';
 import { WuxingBadge, WuxingBar, getWuxing, colorClasses, type Wuxing } from '@/app/components/WuXing';
-import { Paipan, normalizeMarkdown } from '@/app/lib/chat/types';
+import { Paipan } from '@/app/lib/chat/types';
 import { trySSE } from '@/app/lib/chat/sse';
 import { savePaipanLocal, saveConversation } from '@/app/lib/chat/storage';
 
@@ -92,45 +92,43 @@ export default function ReportPage() {
 
         // 3. 获取 AI 分析报告（流式）
         setStreaming(true);
-        let fullReport = '';
         let convId = '';
 
-        const success = await trySSE(
-          api('/chat/start?stream=true'),
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-            credentials: 'include',
-            body: JSON.stringify({
+        try {
+          await trySSE(
+            api('/chat/start?stream=true'),
+            {
               gender: profileData.gender,
               calendar_type: profileData.calendar_type,
               birth_date: profileData.birth_date,
               birth_time: profileData.birth_time,
               birth_location: profileData.birth_location,
-            }),
-          },
-          (chunk) => {
-            if (chunk.text) {
-              if (chunk.replace) {
-                fullReport = chunk.text;
-              } else {
-                fullReport += chunk.text;
+            },
+            (text) => {
+              // onDelta 回调：接收规范化后的文本
+              setAiReport(text);
+            },
+            (meta) => {
+              // onMeta 回调：接收元数据
+              const metaObj = meta as any;
+              if (metaObj?.conversation_id) {
+                convId = metaObj.conversation_id;
+                setConversationId(convId);
               }
-              setAiReport(normalizeMarkdown(fullReport));
             }
-            if (chunk.meta?.conversation_id) {
-              convId = chunk.meta.conversation_id;
-              setConversationId(convId);
-            }
+          );
+
+          setStreaming(false);
+
+          // 缓存对话
+          if (convId && aiReport) {
+            saveConversation(convId, [
+              { role: 'assistant', content: aiReport },
+            ]);
           }
-        );
-
-        setStreaming(false);
-
-        if (!success) {
+        } catch (sseError) {
+          console.warn('SSE failed, trying fallback:', sseError);
+          setStreaming(false);
           // SSE 失败，尝试普通请求
           const fallbackResp = await fetch(api('/chat/start'), {
             method: 'POST',
@@ -150,18 +148,12 @@ export default function ReportPage() {
 
           if (fallbackResp.ok) {
             const fallbackData = await fallbackResp.json();
-            setAiReport(normalizeMarkdown(fallbackData.content || ''));
+            setAiReport(fallbackData.content || '');
             if (fallbackData.conversation_id) {
-              setConversationId(fallbackData.conversation_id);
+              convId = fallbackData.conversation_id;
+              setConversationId(convId);
             }
           }
-        }
-
-        // 缓存对话
-        if (convId) {
-          saveConversation(convId, [
-            { role: 'assistant', content: fullReport || aiReport },
-          ]);
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : '加载失败');
