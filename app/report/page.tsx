@@ -72,11 +72,11 @@ export default function ReportPage() {
           },
           credentials: 'include',
           body: JSON.stringify({
-            gender: profileData.gender,
-            calendar_type: profileData.calendar_type,
+            gender: profileData.gender === 'male' ? '男' : '女',
+            calendar: profileData.calendar_type === 'solar' ? 'gregorian' : 'lunar',
             birth_date: profileData.birth_date,
             birth_time: profileData.birth_time,
-            birth_location: profileData.birth_location,
+            birthplace: profileData.birth_location,
           }),
         });
 
