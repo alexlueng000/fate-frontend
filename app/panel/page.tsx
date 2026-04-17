@@ -232,7 +232,7 @@ const mountedRef = useRef(true);
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [msgs, loading, booting]);
 
-  // ===== 登录校验 & 恢复最近一次会话 =====
+  // ===== 登录校验 & 档案检查 & 恢复最近一次会话 =====
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -253,6 +253,24 @@ const mountedRef = useRef(true);
           return;
         }
         setUser(fetched);
+      }
+
+      // 检查用户是否有档案
+      const token = localStorage.getItem('auth_token');
+      if (token) {
+        try {
+          const profileRes = await fetch(api('/profile/me'), {
+            headers: { Authorization: `Bearer ${token}` },
+            credentials: 'include',
+          });
+          if (profileRes.status === 404) {
+            // 用户没有档案，跳转到创建档案页
+            router.replace('/profile/create');
+            return;
+          }
+        } catch (e) {
+          console.warn('[Profile] Failed to check profile:', e);
+        }
       }
 
       const active = getActiveConversationId() || sessionStorage.getItem('conversation_id');
