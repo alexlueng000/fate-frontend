@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useUser, fetchMe, logout } from '@/app/lib/auth';
-import { User, Mail, LogOut, Settings, History, ChevronRight, MessageSquare, Zap } from 'lucide-react';
+import { User, Mail, LogOut, Settings, History, ChevronRight, MessageSquare, Zap, FileText } from 'lucide-react';
 import Footer from '@/app/components/Footer';
 
 export default function AccountPage() {
@@ -118,6 +118,15 @@ export default function AccountPage() {
 
           {/* Quick Actions */}
           <div className="card p-2">
+            <Link
+              href="/profile/edit"
+              className="flex items-center gap-3 p-4 rounded-xl hover:bg-[var(--color-bg-hover)] transition-colors"
+            >
+              <FileText className="w-5 h-5 text-[var(--color-gold)]" />
+              <span className="flex-1 text-[var(--color-text-primary)]">编辑个人档案</span>
+              <ChevronRight className="w-5 h-5 text-[var(--color-text-hint)]" />
+            </Link>
+
             <Link
               href="/panel"
               className="flex items-center gap-3 p-4 rounded-xl hover:bg-[var(--color-bg-hover)] transition-colors"

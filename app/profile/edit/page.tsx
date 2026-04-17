@@ -64,8 +64,9 @@ export default function EditProfilePage() {
 
         const data = await response.json();
         setProfile(data);
-        setGender(data.gender);
-        setCalendarType(data.calendar_type);
+        // 将后端返回的英文值转换为中文显示
+        setGender(data.gender === 'male' ? '男' : '女');
+        setCalendarType(data.calendar_type === 'solar' ? '公历' : '农历');
         setBirthDate(data.birth_date);
         setBirthTime(data.birth_time);
         setBirthLocation(data.birth_location);
@@ -105,8 +106,8 @@ export default function EditProfilePage() {
         },
         credentials: 'include',
         body: JSON.stringify({
-          gender,
-          calendar_type: calendarType,
+          gender: gender === '男' ? 'male' : 'female',
+          calendar_type: calendarType === '公历' ? 'solar' : 'lunar',
           birth_date: birthDate,
           birth_time: birthTime,
           birth_location: birthLocation,
@@ -118,7 +119,18 @@ export default function EditProfilePage() {
         let errorMsg = '更新档案失败';
         try {
           const json = JSON.parse(text);
-          errorMsg = json.detail || json.message || errorMsg;
+          // Handle Pydantic validation errors
+          if (json.detail) {
+            if (Array.isArray(json.detail)) {
+              errorMsg = json.detail.map((err: any) => err.msg || JSON.stringify(err)).join('; ');
+            } else if (typeof json.detail === 'string') {
+              errorMsg = json.detail;
+            } else {
+              errorMsg = JSON.stringify(json.detail);
+            }
+          } else {
+            errorMsg = json.message || errorMsg;
+          }
         } catch {
           errorMsg = text || errorMsg;
         }

@@ -50,8 +50,8 @@ export default function CreateProfilePage() {
         },
         credentials: 'include',
         body: JSON.stringify({
-          gender,
-          calendar_type: calendarType,
+          gender: gender === '男' ? 'male' : 'female',
+          calendar_type: calendarType === '公历' ? 'solar' : 'lunar',
           birth_date: birthDate,
           birth_time: birthTime,
           birth_location: birthLocation,
@@ -63,7 +63,18 @@ export default function CreateProfilePage() {
         let errorMsg = '创建档案失败';
         try {
           const json = JSON.parse(text);
-          errorMsg = json.detail || json.message || errorMsg;
+          // Handle Pydantic validation errors
+          if (json.detail) {
+            if (Array.isArray(json.detail)) {
+              errorMsg = json.detail.map((err: any) => err.msg || JSON.stringify(err)).join('; ');
+            } else if (typeof json.detail === 'string') {
+              errorMsg = json.detail;
+            } else {
+              errorMsg = JSON.stringify(json.detail);
+            }
+          } else {
+            errorMsg = json.message || errorMsg;
+          }
         } catch { errorMsg = text || errorMsg; }
         throw new Error(errorMsg);
       }
