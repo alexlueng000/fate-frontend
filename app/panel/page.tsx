@@ -263,10 +263,13 @@ const mountedRef = useRef(true);
             headers: { Authorization: `Bearer ${token}` },
             credentials: 'include',
           });
-          if (profileRes.status === 404) {
-            // 用户没有档案，跳转到创建档案页
-            router.replace('/profile/create');
-            return;
+          if (profileRes.ok) {
+            const profileData = await profileRes.json();
+            if (!profileData) {
+              // 用户没有档案，跳转到创建档案页
+              router.replace('/profile/create');
+              return;
+            }
           }
         } catch (e) {
           console.warn('[Profile] Failed to check profile:', e);
