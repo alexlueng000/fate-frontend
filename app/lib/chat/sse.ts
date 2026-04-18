@@ -212,6 +212,15 @@ export async function trySSE(
           return;
         }
 
+        // 有结构化文本字段（即使为空），不当作纯文本处理
+        if ((obj as any)?.replace === true ||
+            typeof (obj as any)?.delta   === 'string' ||
+            typeof (obj as any)?.text    === 'string' ||
+            typeof (obj as any)?.content === 'string' ||
+            typeof (obj as any)?.message === 'string') {
+          return;
+        }
+
         // 非 meta 且无 seg，则当作纯文本
         appendRawToken(payload);
         return;
