@@ -85,10 +85,13 @@ export default function ReportPage() {
         }
 
         const paipanData = await paipanResp.json();
-        setPaipan(paipanData);
+
+        // 解包 mingpan 层
+        const mingpan = paipanData.mingpan || paipanData;
+        setPaipan(mingpan);
 
         // 缓存命盘数据
-        savePaipanLocal(paipanData);
+        savePaipanLocal(mingpan);
 
         // 3. 获取 AI 分析报告（流式）
         setStreaming(true);
@@ -98,7 +101,7 @@ export default function ReportPage() {
           await trySSE(
             api('/chat/start?stream=true'),
             {
-              paipan: paipanData.mingpan,
+              paipan: mingpan,
               kb_topk: 0,
             },
             (text) => {
@@ -135,7 +138,7 @@ export default function ReportPage() {
             },
             credentials: 'include',
             body: JSON.stringify({
-              paipan: paipanData.mingpan,
+              paipan: mingpan,
             }),
           });
 
