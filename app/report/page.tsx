@@ -98,15 +98,18 @@ export default function ReportPage() {
         let convId = '';
         let finalText = '';
 
+        console.log('[report] calling /chat/start with paipan:', mingpan);
         try {
           await trySSE(
             api('/chat/start'),
             { paipan: mingpan },
             (text) => {
+              console.log('[report] onDelta len=', text.length, 'preview=', text.slice(0, 80));
               finalText = text;
               setAiReport(text);
             },
             (meta) => {
+              console.log('[report] onMeta=', meta);
               const metaObj = meta as any;
               const cid = metaObj?.conversation_id || metaObj?.meta?.conversation_id || '';
               if (cid) {
@@ -116,6 +119,7 @@ export default function ReportPage() {
             }
           );
 
+          console.log('[report] SSE done, finalText len=', finalText.length);
           setStreaming(false);
 
           if (convId && finalText) {
@@ -187,10 +191,10 @@ export default function ReportPage() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl sm:text-5xl font-bold text-neutral-800 mb-3 tracking-tight">
+          <h1 className="text-4xl sm:text-5xl font-bold text-neutral-800 mb-6 tracking-tight">
             命理分析报告
           </h1>
-          <p className="text-sm sm:text-base text-neutral-500 mb-4">
+          <p className="text-sm sm:text-base text-neutral-500 mb-6">
             {profile?.display_info || '您的八字命盘详细解读'}
           </p>
           <div className="flex items-center justify-center gap-3">

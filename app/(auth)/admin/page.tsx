@@ -79,8 +79,15 @@ export default function AdminPage() {
       href: '/admin/config/system_prompt',
       icon: <MessageSquare className="w-6 h-6" />,
       title: '系统提示词',
-      description: '编辑 AI 解读的系统提示词配置',
+      description: '编辑对话 AI 使用的系统提示词配置',
       color: 'var(--color-primary)',
+    },
+    {
+      href: '/admin/config/report_system_prompt',
+      icon: <MessageSquare className="w-6 h-6" />,
+      title: '报告页提示词',
+      description: '编辑命理分析报告页专用 AI 提示词',
+      color: '#7c3aed',
     },
     {
       href: '/admin/config/quick_buttons',
