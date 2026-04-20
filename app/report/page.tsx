@@ -96,55 +96,49 @@ export default function ReportPage() {
         // 3. 获取 AI 分析报告（流式）
         setStreaming(true);
         let convId = '';
+        let finalText = '';
 
         try {
           await trySSE(
-            api('/chat/start?stream=true'),
-            {
-              paipan: mingpan,
-              kb_topk: 0,
-            },
+            api('/chat/start'),
+            { paipan: mingpan },
             (text) => {
-              // onDelta 回调：接收规范化后的文本
+              finalText = text;
               setAiReport(text);
             },
             (meta) => {
-              // onMeta 回调：接收元数据
               const metaObj = meta as any;
-              if (metaObj?.conversation_id) {
-                convId = metaObj.conversation_id;
-                setConversationId(convId);
+              const cid = metaObj?.conversation_id || metaObj?.meta?.conversation_id || '';
+              if (cid) {
+                convId = cid;
+                setConversationId(cid);
               }
             }
           );
 
           setStreaming(false);
 
-          // 缓存对话
-          if (convId && aiReport) {
+          if (convId && finalText) {
             saveConversation(convId, [
-              { role: 'assistant', content: aiReport },
+              { role: 'assistant', content: finalText },
             ]);
           }
         } catch (sseError) {
           console.warn('SSE failed, trying fallback:', sseError);
           setStreaming(false);
-          // SSE 失败，尝试普通请求
+          const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+          if (token) headers['Authorization'] = `Bearer ${token}`;
           const fallbackResp = await fetch(api('/chat/start'), {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
+            headers,
             credentials: 'include',
-            body: JSON.stringify({
-              paipan: mingpan,
-            }),
+            body: JSON.stringify({ paipan: mingpan }),
           });
 
           if (fallbackResp.ok) {
             const fallbackData = await fallbackResp.json();
-            setAiReport(fallbackData.reply || '');
+            finalText = fallbackData.reply || '';
+            setAiReport(finalText);
             if (fallbackData.conversation_id) {
               convId = fallbackData.conversation_id;
               setConversationId(convId);
