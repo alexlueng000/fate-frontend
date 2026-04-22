@@ -14,12 +14,17 @@ interface UserProfile {
   birth_date: string;
   birth_time: string;
   birth_location: string;
-  bazi_year: string;
-  bazi_month: string;
-  bazi_day: string;
-  bazi_hour: string;
+  bazi_chart: {
+    four_pillars?: {
+      year?: string[];
+      month?: string[];
+      day?: string[];
+      hour?: string[];
+    };
+  } | null;
   created_at: string;
   updated_at: string;
+  display_info: string;
 }
 
 export default function ViewProfilePage() {
@@ -114,30 +119,32 @@ export default function ViewProfilePage() {
         <div className="bg-white rounded-3xl border border-neutral-200 p-6 sm:p-8 mb-6">
           <h2 className="text-xl font-bold text-neutral-900 mb-6">基本信息</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <InfoItem label="性别" value={profile.gender} />
-            <InfoItem label="历法类型" value={profile.calendar_type} />
-            <InfoItem label="出生日期" value={profile.birth_date} />
-            <InfoItem label="出生时间" value={profile.birth_time} />
+            <InfoItem label="性别" value={profile.gender === 'male' ? '男' : '女'} />
+            <InfoItem label="历法类型" value={profile.calendar_type === 'solar' ? '公历' : '农历'} />
+            <InfoItem label="出生日期" value={String(profile.birth_date)} />
+            <InfoItem label="出生时间" value={String(profile.birth_time)} />
             <InfoItem label="出生地点" value={profile.birth_location} className="sm:col-span-2" />
           </div>
         </div>
 
         {/* 八字命盘 */}
-        <div className="bg-white rounded-3xl border border-neutral-200 p-6 sm:p-8">
-          <h2 className="text-xl font-bold text-neutral-900 mb-6">八字命盘</h2>
-          <div className="grid grid-cols-4 gap-4">
-            <BaziPillar label="年柱" value={profile.bazi_year} />
-            <BaziPillar label="月柱" value={profile.bazi_month} />
-            <BaziPillar label="日柱" value={profile.bazi_day} />
-            <BaziPillar label="时柱" value={profile.bazi_hour} />
+        {profile.bazi_chart?.four_pillars && (
+          <div className="bg-white rounded-3xl border border-neutral-200 p-6 sm:p-8">
+            <h2 className="text-xl font-bold text-neutral-900 mb-6">八字命盘</h2>
+            <div className="grid grid-cols-4 gap-4">
+              <BaziPillar label="年柱" chars={profile.bazi_chart.four_pillars.year ?? []} />
+              <BaziPillar label="月柱" chars={profile.bazi_chart.four_pillars.month ?? []} />
+              <BaziPillar label="日柱" chars={profile.bazi_chart.four_pillars.day ?? []} />
+              <BaziPillar label="时柱" chars={profile.bazi_chart.four_pillars.hour ?? []} />
+            </div>
+            <div className="mt-6 p-4 rounded-xl bg-neutral-50 border border-neutral-200">
+              <p className="text-sm text-neutral-600 leading-relaxed">
+                八字命盘是根据您的出生时间计算得出，代表了您的先天命理格局。
+                您可以在聊天中询问关于命盘的详细解读。
+              </p>
+            </div>
           </div>
-          <div className="mt-6 p-4 rounded-xl bg-neutral-50 border border-neutral-200">
-            <p className="text-sm text-neutral-600 leading-relaxed">
-              八字命盘是根据您的出生时间计算得出，代表了您的先天命理格局。
-              您可以在聊天中询问关于命盘的详细解读。
-            </p>
-          </div>
-        </div>
+        )}
 
         {/* 更新时间 */}
         <div className="mt-6 text-center text-sm text-neutral-500">
@@ -165,15 +172,15 @@ function InfoItem({
   );
 }
 
-function BaziPillar({ label, value }: { label: string; value: string }) {
-  const [heavenly, earthly] = value.split('');
+function BaziPillar({ label, chars }: { label: string; chars: string[] }) {
+  const [heavenly, earthly] = chars;
 
   return (
     <div className="text-center">
       <div className="text-sm text-neutral-500 mb-3">{label}</div>
       <div className="bg-gradient-to-b from-[#a83232]/10 to-[#a83232]/5 rounded-2xl border-2 border-[#a83232]/20 p-4">
-        <div className="text-2xl font-bold text-[#a83232] mb-1">{heavenly}</div>
-        <div className="text-2xl font-bold text-[#a83232]">{earthly}</div>
+        <div className="text-2xl font-bold text-[#a83232] mb-1">{heavenly ?? '—'}</div>
+        <div className="text-2xl font-bold text-[#a83232]">{earthly ?? '—'}</div>
       </div>
     </div>
   );

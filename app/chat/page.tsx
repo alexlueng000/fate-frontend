@@ -7,9 +7,7 @@ import { getAuthToken } from '@/app/lib/auth';
 
 import Markdown from '@/app/components/Markdown';
 import { WuxingBadge, WuxingBar, getWuxing, colorClasses } from '@/app/components/WuXing';
-
 import { ChatHeader } from '@/app/components/chat/ChatHeader';
-import { PaipanCard } from '@/app/components/chat/PaipanCard';
 import { QuickActions } from '@/app/components/chat/QuickActions';
 import { MessageList } from '@/app/components/chat/MessageList';
 import { InputArea } from '@/app/components/chat/InputArea';
@@ -25,15 +23,6 @@ import {
   savePaipanLocal, loadPaipanLocal, repairCorruptedConversations,
 } from '@/app/lib/chat/storage';
 
-interface ProfileBrief {
-  id: number;
-  gender: string;
-  birth_date: string;
-  birth_time: string;
-  birth_location: string;
-  display_info: string;
-}
-
 export default function ChatPage() {
   const router = useRouter();
   const loading = useRouteGuard(true, true); // 需要登录和档案
@@ -46,7 +35,6 @@ export default function ChatPage() {
   const [booting, setBooting] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [paipan, setPaipan] = useState<Paipan | null>(null);
-  const [profileBrief, setProfileBrief] = useState<ProfileBrief | null>(null);
   const [quota, setQuota] = useState<{ remaining: number; is_unlimited: boolean } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const mountedRef = useRef(true);
@@ -115,21 +103,6 @@ export default function ChatPage() {
           const cachedPaipan = loadPaipanLocal();
           if (cachedPaipan) setPaipan(cachedPaipan);
 
-          // 获取档案简要信息
-          const token = getAuthToken();
-          if (token) {
-            try {
-              const resp = await fetch(api('/profile/me/brief'), {
-                headers: { Authorization: `Bearer ${token}` },
-                credentials: 'include',
-              });
-              if (resp.ok) {
-                const brief = await resp.json();
-                setProfileBrief(brief);
-              }
-            } catch {}
-          }
-
           setBooting(false);
           return;
         }
@@ -142,16 +115,6 @@ export default function ChatPage() {
           setErr('未登录，请重新登录');
           setBooting(false);
           return;
-        }
-
-        // 获取档案简要信息
-        const briefResp = await fetch(api('/profile/me/brief'), {
-          headers: { Authorization: `Bearer ${token}` },
-          credentials: 'include',
-        });
-        if (briefResp.ok) {
-          const brief = await briefResp.json();
-          setProfileBrief(brief);
         }
 
         // 清理旧会话ID
@@ -490,33 +453,6 @@ export default function ChatPage() {
           conversationId={conversationId}
           onBack={() => router.push('/')}
         />
-
-        {/* 档案简要信息 */}
-        {profileBrief && (
-          <div className="bg-white rounded-2xl border border-neutral-200 p-4 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="text-sm text-neutral-600">
-                {profileBrief.gender} · {profileBrief.birth_date} {profileBrief.birth_time} · {profileBrief.birth_location}
-              </div>
-            </div>
-            <button
-              onClick={() => router.push('/profile/view')}
-              className="text-sm text-[#a83232] hover:underline"
-            >
-              查看详情
-            </button>
-          </div>
-        )}
-
-        {paipan && (
-          <PaipanCard
-            paipan={paipan}
-            WuxingBadge={WuxingBadge}
-            WuxingBar={WuxingBar}
-            getWuxing={getWuxing}
-            colorClasses={colorClasses}
-          />
-        )}
 
         <MessageList
           scrollRef={scrollRef}
