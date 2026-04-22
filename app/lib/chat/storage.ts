@@ -30,6 +30,12 @@ export function getActiveConversationId(): string | null {
     return null;
   }
 }
+export function clearActiveConversationId() {
+  try {
+    localStorage.removeItem(LS_ACTIVE);
+    sessionStorage.removeItem('conversation_id');
+  } catch {}
+}
 export function savePaipanLocal(p: Paipan) {
   try {
     localStorage.setItem(LS_LAST_PAIPAN, JSON.stringify(p));

@@ -9,7 +9,7 @@ import Markdown from '@/app/components/Markdown';
 import { WuxingBadge, WuxingBar, getWuxing, colorClasses, type Wuxing } from '@/app/components/WuXing';
 import { Paipan } from '@/app/lib/chat/types';
 import { trySSE } from '@/app/lib/chat/sse';
-import { savePaipanLocal, saveConversation } from '@/app/lib/chat/storage';
+import { savePaipanLocal, saveConversation, clearActiveConversationId } from '@/app/lib/chat/storage';
 
 interface ProfileBrief {
   id: number;
@@ -159,6 +159,7 @@ export default function ReportPage() {
   }, [loading]);
 
   const handleStartChat = () => {
+    clearActiveConversationId();
     router.push('/chat');
   };
 
