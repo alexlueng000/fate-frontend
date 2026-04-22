@@ -17,6 +17,7 @@ export function MessageList({
   onSimplifyToggle,
   onQuestionClick,
   loading,
+  containerClassName,
 }: {
   scrollRef?: React.MutableRefObject<HTMLDivElement | null> | React.RefObject<HTMLDivElement | null>;
   messages: Msg[];
@@ -27,12 +28,14 @@ export function MessageList({
   onSimplifyToggle?: (index: number) => void;
   onQuestionClick?: (question: string) => void;
   loading?: boolean;
+  containerClassName?: string;
 }) {
+  const baseClass = containerClassName ?? 'rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)]';
   if (messages.length === 0) {
     return (
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-6"
+        className={`flex-1 overflow-y-auto p-6 ${baseClass}`}
       >
         <div className="flex h-full min-h-[300px] items-center justify-center">
           <div className="text-center">
@@ -40,7 +43,7 @@ export function MessageList({
               <Bot className="w-8 h-8 text-white" />
             </div>
             <p className="text-[var(--color-text-muted)]">
-              完成排盘后，AI 将为您解读命理
+              正在准备中…
             </p>
           </div>
         </div>
@@ -51,7 +54,7 @@ export function MessageList({
   return (
     <div
       ref={scrollRef}
-      className="flex-1 overflow-y-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-4 space-y-4"
+      className={`flex-1 overflow-y-auto p-4 space-y-4 ${baseClass}`}
     >
       {messages.map((m, i) => {
         const isAssistant = m.role === 'assistant';
