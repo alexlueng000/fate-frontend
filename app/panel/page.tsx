@@ -17,6 +17,7 @@ import {
   saveConversation, loadConversation, getActiveConversationId,
   repairCorruptedConversations,
 } from '@/app/lib/chat/storage';
+import { SYSTEM_INTRO } from '@/app/lib/chat/constants';
 import { useUser, fetchMe } from '@/app/lib/auth';
 
 interface Profile {
@@ -57,20 +58,6 @@ export default function PanelPage() {
   // ===== Helpers =====
   const isRecord = (v: unknown): v is Record<string, unknown> =>
     typeof v === 'object' && v !== null;
-
-  const readCid = (obj: Record<string, unknown>): string | null => {
-    const id = obj['conversation_id'] ?? obj['conversationId'];
-    return typeof id === 'string' ? id : null;
-  };
-
-  function pickCid(meta: unknown): string {
-    if (typeof meta === 'string') { try { return pickCid(JSON.parse(meta)); } catch { return ''; } }
-    if (!isRecord(meta)) return '';
-    const top = readCid(meta);
-    if (top) return top;
-    if ('meta' in meta && isRecord(meta.meta)) { const v = readCid(meta.meta as Record<string, unknown>); if (v) return v; }
-    return '';
-  }
 
   function hasConversationId(x: unknown): x is { conversation_id: string } {
     return isRecord(x) && 'conversation_id' in x && typeof (x as { conversation_id: string }).conversation_id === 'string';
@@ -174,80 +161,32 @@ export default function PanelPage() {
         }
       }
 
-      // No session → bootstrap new
+      // No session → call /chat/init to get conversation_id, show static intro
       if (!alive) return;
       setBooting(true);
 
-      let assistantIndex = -1;
-      setMsgs(() => {
-        const next: Msg[] = [{ role: 'assistant', content: '', streaming: true }];
-        assistantIndex = 0;
-        return next;
-      });
-
       try {
-        let cidLocal = '';
-        let finalText = '';
+        const token = localStorage.getItem('auth_token');
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
 
-        await trySSE(
-          api('/chat/start'),
-          {},
-          (full) => {
-            if (!alive) return;
-            finalText = full;
-            setMsgs(prev => {
-              const next = [...prev];
-              if (assistantIndex >= 0 && assistantIndex < next.length) {
-                next[assistantIndex] = { ...next[assistantIndex], content: full };
-              }
-              return next;
-            });
-          },
-          (metaAny) => {
-            if (!alive) return;
-            const cid = pickCid(metaAny);
-            if (cid) {
-              cidLocal = cid;
-              sessionStorage.setItem('conversation_id', cid);
-              setConversationId(cid);
-            }
-            const msgId = isRecord(metaAny) ? metaAny.message_id : undefined;
-            if (msgId) {
-              setMsgs(prev => {
-                const next = [...prev];
-                if (assistantIndex >= 0 && assistantIndex < next.length) {
-                  next[assistantIndex] = { ...next[assistantIndex], meta: { ...next[assistantIndex].meta, messageId: msgId as number } };
-                }
-                return next;
-              });
-            }
-          }
-        );
+        const initRes = await fetch(api('/chat/init'), {
+          method: 'POST',
+          headers,
+          credentials: 'include',
+        });
+        if (!initRes.ok) throw new Error(await initRes.text());
+        const { conversation_id: cid } = await initRes.json();
 
         if (!alive) return;
-        setMsgs(prev => {
-          const next = [...prev];
-          if (assistantIndex >= 0 && assistantIndex < next.length) {
-            const { questions, cleanedContent } = parseSuggestedQuestions(next[assistantIndex].content || '');
-            const normalized = normalizeMarkdown(cleanedContent);
-            finalText = normalized;
-            next[assistantIndex] = { ...next[assistantIndex], content: normalized, streaming: false, suggestedQuestions: questions };
-          }
-          return next;
-        });
+        sessionStorage.setItem('conversation_id', cid);
+        setConversationId(cid);
 
-        const cid = cidLocal || sessionStorage.getItem('conversation_id');
-        if (cid) saveConversation(cid, [{ role: 'assistant', content: finalText }]);
+        const introMsg: Msg = { role: 'assistant', content: SYSTEM_INTRO, meta: { kind: 'intro' } };
+        setMsgs([introMsg]);
+        saveConversation(cid, [introMsg]);
       } catch (e: unknown) {
-        if (!alive) return;
-        setErr(e instanceof Error ? e.message : String(e));
-        setMsgs(prev => {
-          const next = [...prev];
-          if (assistantIndex >= 0 && assistantIndex < next.length) {
-            next[assistantIndex] = { ...next[assistantIndex], streaming: false };
-          }
-          return next;
-        });
+        if (alive) setErr(e instanceof Error ? e.message : String(e));
       } finally {
         if (alive) setBooting(false);
       }
@@ -469,12 +408,12 @@ export default function PanelPage() {
     : '';
 
   return (
-    <div className="fixed inset-x-0 bottom-0 top-14 flex flex-col bg-gradient-to-b from-[#1e120c] via-[#251610] to-[#1a0f09]">
+    <div className="fixed inset-x-0 bottom-0 top-14 flex flex-col bg-gradient-to-b from-[#2c4a52] via-[#243d44] to-[#1a2e34]">
 
       {/* Profile status bar */}
       <div className="flex-shrink-0 flex items-center justify-between gap-3 px-4 py-2 border-b border-white/10 bg-black/30 backdrop-blur-sm">
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-medium tracking-widest text-[#c9a876] uppercase">当前命盘</p>
+          <p className="text-[10px] font-medium tracking-widest text-[#a8d4c0] uppercase">当前命盘</p>
           <p className="text-xs text-white/55 truncate mt-0.5">{profileSummary || '加载中…'}</p>
         </div>
         <div className="relative flex-shrink-0" ref={menuRef}>
@@ -486,12 +425,12 @@ export default function PanelPage() {
             <MoreVertical className="w-4 h-4 text-white/60" />
           </button>
           {showMenu && (
-            <div className="absolute right-0 top-10 z-50 min-w-[148px] rounded-xl overflow-hidden border border-white/10 bg-[#2a1710]/95 backdrop-blur-md shadow-2xl">
+            <div className="absolute right-0 top-10 z-50 min-w-[148px] rounded-xl overflow-hidden border border-white/10 bg-[#1a2e34]/95 backdrop-blur-md shadow-2xl">
               <button
                 onClick={() => { setShowMenu(false); router.push('/report'); }}
                 className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-white/80 hover:bg-white/10 transition-colors text-left"
               >
-                <FileText className="w-4 h-4 text-[#c9a876] flex-shrink-0" />
+                <FileText className="w-4 h-4 text-[#a8d4c0] flex-shrink-0" />
                 查看命理报告
               </button>
               <div className="h-px bg-white/10" />
@@ -499,7 +438,7 @@ export default function PanelPage() {
                 onClick={() => { setShowMenu(false); router.push('/profile/edit'); }}
                 className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-white/80 hover:bg-white/10 transition-colors text-left"
               >
-                <Edit3 className="w-4 h-4 text-[#c9a876] flex-shrink-0" />
+                <Edit3 className="w-4 h-4 text-[#a8d4c0] flex-shrink-0" />
                 修改资料
               </button>
             </div>
@@ -525,7 +464,7 @@ export default function PanelPage() {
         <div className="flex-shrink-0 px-4 pb-1">
           {booting && (
             <div className="flex items-center gap-2 py-1.5 text-xs text-white/40">
-              <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-[#c9a876]/30 border-t-[#c9a876]" />
+              <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-[#a8d4c0]/30 border-t-[#a8d4c0]" />
               正在解读中…
             </div>
           )}
