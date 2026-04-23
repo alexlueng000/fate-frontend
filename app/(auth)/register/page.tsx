@@ -4,7 +4,7 @@ import { useMemo, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { postJSON, api } from '@/app/lib/api';
-import { saveAuth, setUserCache, useUser } from '@/app/lib/auth';
+import { saveAuth, setUserCache, useUser, checkProfileStatus } from '@/app/lib/auth';
 import { Mail, User as UserIcon, Lock, Eye, EyeOff, Loader2, Ticket, Sparkles, CheckCircle, XCircle } from 'lucide-react';
 
 const BAGUA = ['☰', '☱', '☲', '☳', '☴', '☵', '☶', '☷'];
@@ -66,11 +66,17 @@ export default function RegisterPage() {
   const [codeValid, setCodeValid] = useState<boolean | null>(null);
   const [codeError, setCodeError] = useState<string | null>(null);
 
-  // 当用户状态更新后进行跳转
+  // 当用户状态更新后，根据是否有档案决定跳转目标
   useEffect(() => {
-    if (registerSuccess && user) {
-      router.replace('/panel');
-    }
+    if (!registerSuccess || !user) return;
+    (async () => {
+      const status = await checkProfileStatus();
+      if (status?.hasProfile) {
+        router.replace('/panel');
+      } else {
+        router.replace('/profile/create');
+      }
+    })();
   }, [registerSuccess, user, router]);
 
   const emailOk = useMemo(() => validateEmail(email), [email]);

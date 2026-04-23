@@ -189,7 +189,7 @@ export default function ReportPage() {
 
   const handleStartChat = () => {
     clearActiveConversationId();
-    router.push('/chat');
+    router.push('/panel');
   };
 
   if (loading) {

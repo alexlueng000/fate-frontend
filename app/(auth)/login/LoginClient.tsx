@@ -3,7 +3,7 @@
 import { useMemo, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { loginWeb, saveAuth, useUser } from '@/app/lib/auth';
+import { loginWeb, saveAuth, useUser, checkProfileStatus } from '@/app/lib/auth';
 import { Mail, Lock, Eye, EyeOff, Loader2, Sparkles } from 'lucide-react';
 
 // 八卦符号
@@ -13,9 +13,6 @@ export default function LoginClient() {
   const router = useRouter();
   const { user } = useUser();
 
-  // 登录后总是跳转到 panel 页面
-  const redirect = '/panel';
-
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
@@ -24,12 +21,18 @@ export default function LoginClient() {
   const [err, setErr] = useState<string | null>(null);
   const [loginSuccess, setLoginSuccess] = useState(false);
 
-  // 当用户状态更新后进行跳转
+  // 当用户状态更新后，根据是否有档案决定跳转目标
   useEffect(() => {
-    if (loginSuccess && user) {
-      router.replace(redirect);
-    }
-  }, [loginSuccess, user, router, redirect]);
+    if (!loginSuccess || !user) return;
+    (async () => {
+      const status = await checkProfileStatus();
+      if (status?.hasProfile) {
+        router.replace('/panel');
+      } else {
+        router.replace('/profile/create');
+      }
+    })();
+  }, [loginSuccess, user, router]);
 
   // Validations
   function validateEmail(v: string): boolean {

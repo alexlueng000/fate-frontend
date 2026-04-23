@@ -41,7 +41,7 @@ export default function LandingPage() {
         if (status) {
           // 已登录，根据档案状态跳转
           if (status.hasProfile) {
-            router.replace('/chat');
+            router.replace('/panel');
           } else {
             router.replace('/profile/create');
           }
