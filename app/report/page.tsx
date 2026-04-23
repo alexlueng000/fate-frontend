@@ -93,23 +93,45 @@ export default function ReportPage() {
         // 缓存命盘数据
         savePaipanLocal(mingpan);
 
-        // 3. 获取 AI 分析报告（流式）
+        // 3. 有已保存报告直接展示，否则请求 AI 生成并保存
+        if (profileData.ai_report) {
+          setAiReport(profileData.ai_report);
+
+          // 若有缓存对话也顺便恢复一下，允许继续对话
+          const cacheKey = `report_cache_${profileData.id}`;
+          const cached = (() => {
+            try { return JSON.parse(localStorage.getItem(cacheKey) || 'null'); } catch { return null; }
+          })();
+          if (cached?.conversation_id) {
+            setConversationId(cached.conversation_id);
+            saveConversation(cached.conversation_id, [{ role: 'assistant', content: profileData.ai_report }]);
+          }
+          return;
+        }
+
         setStreaming(true);
         let convId = '';
         let finalText = '';
 
-        console.log('[report] calling /chat/start with paipan:', mingpan);
+        const saveReportToDb = (text: string) => {
+          if (!text) return;
+          fetch(api('/profile/report'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            credentials: 'include',
+            body: JSON.stringify({ ai_report: text }),
+          }).catch(() => {});
+        };
+
         try {
           await trySSE(
             api('/chat/start'),
             { paipan: mingpan },
             (text) => {
-              console.log('[report] onDelta len=', text.length, 'preview=', text.slice(0, 80));
               finalText = text;
               setAiReport(text);
             },
             (meta) => {
-              console.log('[report] onMeta=', meta);
               const metaObj = meta as any;
               const cid = metaObj?.conversation_id || metaObj?.meta?.conversation_id || '';
               if (cid) {
@@ -119,13 +141,15 @@ export default function ReportPage() {
             }
           );
 
-          console.log('[report] SSE done, finalText len=', finalText.length);
           setStreaming(false);
 
           if (convId && finalText) {
-            saveConversation(convId, [
-              { role: 'assistant', content: finalText },
-            ]);
+            saveConversation(convId, [{ role: 'assistant', content: finalText }]);
+            try {
+              const cacheKey = `report_cache_${profileData.id}`;
+              localStorage.setItem(cacheKey, JSON.stringify({ conversation_id: convId }));
+            } catch {}
+            saveReportToDb(finalText);
           }
         } catch (sseError) {
           console.warn('SSE failed, trying fallback:', sseError);
@@ -146,6 +170,11 @@ export default function ReportPage() {
             if (fallbackData.conversation_id) {
               convId = fallbackData.conversation_id;
               setConversationId(convId);
+              try {
+                const cacheKey = `report_cache_${profileData.id}`;
+                localStorage.setItem(cacheKey, JSON.stringify({ conversation_id: convId }));
+              } catch {}
+              saveReportToDb(finalText);
             }
           }
         }
