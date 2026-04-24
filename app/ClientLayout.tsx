@@ -53,7 +53,7 @@ function LayoutBody({ children }: { children: ReactNode }) {
 
       {/* 桌面端：顶部功能导航 */}
       {showFunctionNav && (
-        <div className="hidden md:block mt-14">
+        <div className="hidden md:block">
           <TopNav />
         </div>
       )}
