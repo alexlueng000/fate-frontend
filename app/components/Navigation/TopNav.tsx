@@ -7,7 +7,7 @@ export default function TopNav() {
     <div className="border-b border-[var(--color-border)] bg-white">
       <div className="mx-auto max-w-6xl px-4">
         <nav className="flex items-center gap-2 py-3">
-          <NavLink href="/chat" icon="💬">
+          <NavLink href="/panel" icon="💬">
             八字对话
           </NavLink>
           <NavLink href="/xinji" icon="📖">

@@ -39,7 +39,7 @@ function LayoutBody({ children }: { children: ReactNode }) {
   };
 
   // 判断是否显示功能导航（只在三个主功能页面显示）
-  const showFunctionNav = ['/chat', '/xinji', '/liuyao'].some(path =>
+  const showFunctionNav = ['/panel', '/xinji', '/liuyao'].some(path =>
     pathname === path || pathname.startsWith(path + '/')
   );
 
