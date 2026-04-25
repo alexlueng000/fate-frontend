@@ -59,14 +59,14 @@ function LayoutBody({ children }: { children: ReactNode }) {
         {showFunctionNav && <SideNav />}
 
         {/* 主内容区 */}
-        <main className={`flex-1 overflow-auto ${showFunctionNav ? 'mb-16 md:mb-0' : ''}`}>
+        <main className={`flex-1 overflow-auto ${showFunctionNav ? 'mb-16 sm:mb-0' : ''}`}>
           {children}
         </main>
       </div>
 
       {/* 移动端：底部功能导航 */}
       {showFunctionNav && (
-        <div className="md:hidden">
+        <div className="sm:hidden">
           <BottomNav />
         </div>
       )}

@@ -408,7 +408,7 @@ export default function PanelPage() {
     : '';
 
   return (
-    <div className="fixed inset-x-0 bottom-0 top-14 flex flex-col bg-[var(--color-bg)]">
+    <div className="h-full flex flex-col bg-[var(--color-bg)]">
 
       {/* Profile status bar */}
       <div className="flex-shrink-0 flex items-center justify-between gap-3 px-4 py-2 border-b border-[var(--color-border)] bg-[var(--color-bg-elevated)]">
