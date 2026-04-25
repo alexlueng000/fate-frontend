@@ -204,8 +204,27 @@ export default function PanelPage() {
     [conversationId, input, loading, booting],
   );
 
+  // ===== Reinitialize session =====
+  const reinitSession = async () => {
+    const token = localStorage.getItem('auth_token');
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const initRes = await fetch(api('/chat/init'), {
+      method: 'POST',
+      headers,
+      credentials: 'include',
+    });
+    if (!initRes.ok) throw new Error(await initRes.text());
+    const { conversation_id: cid } = await initRes.json();
+
+    sessionStorage.setItem('conversation_id', cid);
+    setConversationId(cid);
+    return cid;
+  };
+
   // ===== Send / Stream =====
-  const sendOnce = async (content: string) => {
+  const sendOnce = async (content: string, retryOnSessionLost = true) => {
     const token = localStorage.getItem('auth_token');
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -213,11 +232,25 @@ export default function PanelPage() {
       method: 'POST', headers,
       body: JSON.stringify({ conversation_id: conversationId, message: content }),
     });
-    if (!res.ok) throw new Error(await res.text());
+    if (!res.ok) {
+      const errorText = await res.text();
+      // Check if session is lost
+      if (retryOnSessionLost && errorText.includes('会话不存在')) {
+        const newCid = await reinitSession();
+        // Retry with new conversation_id
+        const retryRes = await fetch(api('/chat'), {
+          method: 'POST', headers,
+          body: JSON.stringify({ conversation_id: newCid, message: content }),
+        });
+        if (!retryRes.ok) throw new Error(await retryRes.text());
+        return pickReply(await retryRes.json()).trim();
+      }
+      throw new Error(errorText);
+    }
     return pickReply(await res.json()).trim();
   };
 
-  const sendStream = async (content: string) => {
+  const sendStream = async (content: string, retryOnSessionLost = true) => {
     if (!conversationId) throw new Error('缺少会话，请刷新页面重试');
     if (streamingLockRef.current) return;
     streamingLockRef.current = true;
@@ -268,8 +301,22 @@ export default function PanelPage() {
         next[myIndex] = { ...next[myIndex], streaming: false, content: normalized, suggestedQuestions: questions };
         return next;
       });
-    } catch {
-      const full = await sendOnce(content);
+    } catch (e) {
+      // Check if session is lost and retry
+      const errorMsg = e instanceof Error ? e.message : String(e);
+      if (retryOnSessionLost && errorMsg.includes('会话不存在')) {
+        try {
+          await reinitSession();
+          // Retry once with new session
+          streamingLockRef.current = false;
+          await sendStream(content, false);
+          return;
+        } catch (retryError) {
+          // If retry fails, fall through to sendOnce
+        }
+      }
+
+      const full = await sendOnce(content, false);
       setMsgs(prev => {
         if (myIndex < 0 || myIndex >= prev.length) return prev;
         const next = [...prev];
