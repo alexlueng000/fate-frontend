@@ -408,37 +408,37 @@ export default function PanelPage() {
     : '';
 
   return (
-    <div className="fixed inset-x-0 bottom-0 top-14 flex flex-col bg-gradient-to-b from-[#2c4a52] via-[#243d44] to-[#1a2e34]">
+    <div className="fixed inset-x-0 bottom-0 top-14 flex flex-col bg-[var(--color-bg)]">
 
       {/* Profile status bar */}
-      <div className="flex-shrink-0 flex items-center justify-between gap-3 px-4 py-2 border-b border-white/10 bg-black/30 backdrop-blur-sm">
+      <div className="flex-shrink-0 flex items-center justify-between gap-3 px-4 py-2 border-b border-[var(--color-border)] bg-[var(--color-bg-elevated)]">
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-medium tracking-widest text-[#a8d4c0] uppercase">当前命盘</p>
-          <p className="text-xs text-white/55 truncate mt-0.5">{profileSummary || '加载中…'}</p>
+          <p className="text-[10px] font-medium tracking-widest text-[var(--color-text-muted)] uppercase">当前命盘</p>
+          <p className="text-xs text-[var(--color-text-secondary)] truncate mt-0.5">{profileSummary || '加载中…'}</p>
         </div>
         <div className="relative flex-shrink-0" ref={menuRef}>
           <button
             onClick={() => setShowMenu(v => !v)}
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+            className="w-8 h-8 flex items-center justify-center rounded-full bg-[var(--color-bg-hover)] hover:bg-[var(--color-border)] transition-colors"
             aria-label="更多操作"
           >
-            <MoreVertical className="w-4 h-4 text-white/60" />
+            <MoreVertical className="w-4 h-4 text-[var(--color-text-secondary)]" />
           </button>
           {showMenu && (
-            <div className="absolute right-0 top-10 z-50 min-w-[148px] rounded-xl overflow-hidden border border-white/10 bg-[#1a2e34]/95 backdrop-blur-md shadow-2xl">
+            <div className="absolute right-0 top-10 z-50 min-w-[148px] rounded-xl overflow-hidden border border-[var(--color-border)] bg-white shadow-lg">
               <button
                 onClick={() => { setShowMenu(false); router.push('/report'); }}
-                className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-white/80 hover:bg-white/10 transition-colors text-left"
+                className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] transition-colors text-left"
               >
-                <FileText className="w-4 h-4 text-[#a8d4c0] flex-shrink-0" />
+                <FileText className="w-4 h-4 text-[var(--color-primary)] flex-shrink-0" />
                 查看命理报告
               </button>
-              <div className="h-px bg-white/10" />
+              <div className="h-px bg-[var(--color-border)]" />
               <button
                 onClick={() => { setShowMenu(false); router.push('/profile/edit'); }}
-                className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-white/80 hover:bg-white/10 transition-colors text-left"
+                className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] transition-colors text-left"
               >
-                <Edit3 className="w-4 h-4 text-[#a8d4c0] flex-shrink-0" />
+                <Edit3 className="w-4 h-4 text-[var(--color-primary)] flex-shrink-0" />
                 修改资料
               </button>
             </div>
@@ -456,20 +456,19 @@ export default function PanelPage() {
         onSimplifyToggle={handleSimplifyToggle}
         onQuestionClick={handleQuestionClick}
         loading={loading}
-        containerClassName="bg-transparent"
       />
 
       {/* Inline status below messages (booting / error) */}
       {(booting || err) && (
         <div className="flex-shrink-0 px-4 pb-1">
           {booting && (
-            <div className="flex items-center gap-2 py-1.5 text-xs text-white/40">
-              <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-[#a8d4c0]/30 border-t-[#a8d4c0]" />
+            <div className="flex items-center gap-2 py-1.5 text-xs text-[var(--color-text-muted)]">
+              <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-[var(--color-primary)]/30 border-t-[var(--color-primary)]" />
               正在解读中…
             </div>
           )}
           {err && (
-            <div className="rounded-xl border border-red-500/20 bg-red-900/20 px-3 py-2 text-xs text-red-400">
+            <div className="rounded-xl border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-600">
               {err}
             </div>
           )}
@@ -477,7 +476,7 @@ export default function PanelPage() {
       )}
 
       {/* Bottom bar: quick actions + input */}
-      <div className="flex-shrink-0 border-t border-white/10 bg-black/30 backdrop-blur-sm px-3 pt-2.5 pb-3 space-y-2">
+      <div className="flex-shrink-0 border-t border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-3 pt-2.5 pb-3 space-y-2">
         <QuickActions
           disabled={!canUseQuick}
           buttons={quickButtons}

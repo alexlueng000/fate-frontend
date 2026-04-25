@@ -3,7 +3,7 @@
 import { ReactNode, useEffect, useState, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import Header from './components/Header';
-import TopNav from './components/Navigation/TopNav';
+import SideNav from './components/Navigation/SideNav';
 import BottomNav from './components/Navigation/BottomNav';
 import { UserProvider, useUser, fetchMe } from './lib/auth';
 import { DisclaimerModal } from './components/DisclaimerModal';
@@ -49,19 +49,20 @@ function LayoutBody({ children }: { children: ReactNode }) {
         open={showDisclaimer}
         onAccept={handleAcceptDisclaimer}
       />
+
+      {/* 固定顶部 Header */}
       <Header />
 
-      {/* 桌面端：顶部功能导航 */}
-      {showFunctionNav && (
-        <div className="hidden md:block">
-          <TopNav />
-        </div>
-      )}
+      {/* Header 下方区域：侧边栏 + 主内容 */}
+      <div className="flex flex-1 overflow-hidden mt-14">
+        {/* 桌面端：左侧功能导航 */}
+        {showFunctionNav && <SideNav />}
 
-      {/* 主内容区 */}
-      <main className={`flex-1 overflow-auto ${showFunctionNav ? 'mt-14 md:mt-0 mb-16 md:mb-0' : 'mt-14'}`}>
-        {children}
-      </main>
+        {/* 主内容区 */}
+        <main className={`flex-1 overflow-auto ${showFunctionNav ? 'mb-16 md:mb-0' : ''}`}>
+          {children}
+        </main>
+      </div>
 
       {/* 移动端：底部功能导航 */}
       {showFunctionNav && (
