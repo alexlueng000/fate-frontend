@@ -162,6 +162,7 @@ export default function PanelPage() {
       }
 
       // No session → call /chat/init to get conversation_id, show static intro
+      // Backend will load user's bazi from database and store in session
       if (!alive) return;
       setBooting(true);
 
