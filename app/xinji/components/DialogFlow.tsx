@@ -56,45 +56,71 @@ export default function DialogFlow({ onComplete, onCancel }: DialogFlowProps) {
     switch (step) {
       case 1:
         return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-semibold text-gray-800 text-center">
-              此刻，你的感受如何？
-            </h2>
-            <p className="text-gray-600 text-center">
-              用 1-10 分来表达你现在的情绪状态
-            </p>
+          <div className="space-y-8 animate-fadeIn">
+            <div className="text-center space-y-3">
+              <h2 className="text-3xl font-serif text-slate-800 tracking-wide">
+                此刻，你的感受如何？
+              </h2>
+              <p className="text-slate-600 font-light text-lg">
+                用数字来表达你现在的情绪状态
+              </p>
+            </div>
 
-            <div className="flex flex-col items-center gap-4">
-              <div className="flex items-center gap-2 w-full max-w-md">
-                <span className="text-sm text-gray-600">1</span>
-                <input
-                  type="range"
-                  min="1"
-                  max="10"
-                  value={emotionScore}
-                  onChange={(e) => setEmotionScore(Number(e.target.value))}
-                  className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-amber-500"
-                />
-                <span className="text-sm text-gray-600">10</span>
+            <div className="flex flex-col items-center gap-8 py-8">
+              {/* Score display with ink circle effect */}
+              <div className="relative">
+                <div className="absolute inset-0 bg-slate-200 rounded-full blur-2xl opacity-30 scale-110" />
+                <div className="relative w-32 h-32 rounded-full border-2 border-slate-300 flex items-center justify-center bg-white/80 backdrop-blur-sm">
+                  <span className="text-5xl font-serif text-slate-800">{emotionScore}</span>
+                </div>
               </div>
 
-              <div className="text-4xl font-bold text-amber-600">
-                {emotionScore}
+              {/* Custom slider */}
+              <div className="w-full max-w-md space-y-4">
+                <div className="relative h-2 bg-gradient-to-r from-slate-300 via-slate-400 to-slate-600 rounded-full overflow-hidden">
+                  <div
+                    className="absolute top-0 left-0 h-full bg-slate-800 transition-all duration-300 ease-out"
+                    style={{ width: `${(emotionScore / 10) * 100}%` }}
+                  />
+                  <input
+                    type="range"
+                    min="1"
+                    max="10"
+                    value={emotionScore}
+                    onChange={(e) => setEmotionScore(Number(e.target.value))}
+                    className="absolute inset-0 w-full opacity-0 cursor-pointer"
+                  />
+                </div>
+
+                <div className="flex justify-between text-sm text-slate-500 font-light">
+                  <span>低落</span>
+                  <span>平稳</span>
+                  <span>良好</span>
+                </div>
               </div>
 
-              <div className="text-sm text-gray-500 text-center">
-                {emotionScore <= 3 && '情绪较低，需要关注'}
-                {emotionScore > 3 && emotionScore <= 6 && '情绪平稳'}
-                {emotionScore > 6 && '情绪良好'}
+              {/* Emotion state description */}
+              <div className="text-center min-h-[2rem]">
+                <p className="text-slate-600 font-light italic">
+                  {emotionScore <= 3 && '情绪较低，需要关注自己'}
+                  {emotionScore > 3 && emotionScore <= 6 && '情绪平稳，保持觉察'}
+                  {emotionScore > 6 && '情绪良好，值得记录'}
+                </p>
               </div>
             </div>
 
-            <div className="flex justify-center gap-4 mt-8">
-              <button onClick={onCancel} className="btn-secondary px-6 py-2">
+            <div className="flex justify-center gap-4 pt-4">
+              <button
+                onClick={onCancel}
+                className="px-8 py-3 text-slate-600 font-light tracking-wide hover:text-slate-800 transition-colors"
+              >
                 取消
               </button>
-              <button onClick={() => setStep(2)} className="btn-primary px-6 py-2">
-                下一步
+              <button
+                onClick={() => setStep(2)}
+                className="px-8 py-3 bg-slate-800 text-white font-light tracking-wide hover:bg-slate-900 transition-all hover:tracking-wider"
+              >
+                继续
               </button>
             </div>
           </div>
@@ -102,38 +128,57 @@ export default function DialogFlow({ onComplete, onCancel }: DialogFlowProps) {
 
       case 2:
         return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-semibold text-gray-800 text-center">
-              选择你的情绪标签
-            </h2>
-            <p className="text-gray-600 text-center">
-              可以选择多个，也可以跳过
-            </p>
+          <div className="space-y-8 animate-fadeIn">
+            <div className="text-center space-y-3">
+              <h2 className="text-3xl font-serif text-slate-800 tracking-wide">
+                选择你的情绪
+              </h2>
+              <p className="text-slate-600 font-light text-lg">
+                可以选择多个，也可以跳过
+              </p>
+            </div>
 
-            <div className="flex flex-wrap gap-3 justify-center max-w-2xl mx-auto">
-              {EMOTION_TAGS.map(tag => (
+            {/* Organic tag layout */}
+            <div className="flex flex-wrap gap-3 justify-center max-w-2xl mx-auto py-8">
+              {EMOTION_TAGS.map((tag, index) => (
                 <button
                   key={tag}
                   onClick={() => handleTagToggle(tag)}
                   className={`
-                    px-4 py-2 rounded-full text-sm font-medium transition-all
+                    relative px-6 py-3 font-light tracking-wide transition-all duration-300
                     ${selectedTags.includes(tag)
-                      ? 'bg-amber-500 text-white shadow-md'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-slate-800 text-white shadow-lg scale-105'
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200 hover:scale-105'
                     }
                   `}
+                  style={{
+                    animationDelay: `${index * 50}ms`,
+                    borderRadius: `${20 + (index % 3) * 5}px ${25 + (index % 4) * 5}px ${22 + (index % 5) * 3}px ${18 + (index % 2) * 7}px`
+                  }}
                 >
                   {tag}
                 </button>
               ))}
             </div>
 
-            <div className="flex justify-center gap-4 mt-8">
-              <button onClick={() => setStep(1)} className="btn-secondary px-6 py-2">
+            {selectedTags.length > 0 && (
+              <div className="text-center text-sm text-slate-600 font-light animate-fadeIn">
+                已选择 {selectedTags.length} 个情绪
+              </div>
+            )}
+
+            <div className="flex justify-center gap-4 pt-4">
+              <button
+                onClick={() => setStep(1)}
+                className="px-8 py-3 text-slate-600 font-light tracking-wide hover:text-slate-800 transition-colors"
+              >
                 上一步
               </button>
-              <button onClick={() => setStep(3)} className="btn-primary px-6 py-2">
-                下一步
+              <button
+                onClick={() => setStep(3)}
+                className="px-8 py-3 bg-slate-800 text-white font-light tracking-wide hover:bg-slate-900 transition-all hover:tracking-wider"
+              >
+                继续
               </button>
             </div>
           </div>
@@ -141,32 +186,54 @@ export default function DialogFlow({ onComplete, onCancel }: DialogFlowProps) {
 
       case 3:
         return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-semibold text-gray-800 text-center">
-              写下你的感受
-            </h2>
-            <p className="text-gray-600 text-center">
-              不需要完美的文字，只需要真实的表达
-            </p>
-
-            <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="此刻，我感到..."
-              className="w-full h-48 p-4 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-amber-500"
-              autoFocus
-            />
-
-            <div className="text-sm text-gray-500 text-right">
-              {content.length} 字
+          <div className="space-y-8 animate-fadeIn">
+            <div className="text-center space-y-3">
+              <h2 className="text-3xl font-serif text-slate-800 tracking-wide">
+                写下你的感受
+              </h2>
+              <p className="text-slate-600 font-light text-lg">
+                不需要完美的文字，只需要真实的表达
+              </p>
             </div>
 
-            <div className="flex justify-center gap-4 mt-8">
-              <button onClick={() => setStep(2)} className="btn-secondary px-6 py-2">
+            <div className="relative">
+              {/* Decorative corners */}
+              <div className="absolute -top-2 -left-2 w-16 h-16 border-l border-t border-slate-300" />
+              <div className="absolute -bottom-2 -right-2 w-16 h-16 border-r border-b border-slate-300" />
+
+              <textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder="此刻，我感到..."
+                className="w-full h-64 p-6 bg-white/80 backdrop-blur-sm border border-slate-200 resize-none focus:outline-none focus:border-slate-400 transition-colors font-light text-slate-800 leading-relaxed text-lg"
+                autoFocus
+                style={{ fontFamily: 'inherit' }}
+              />
+            </div>
+
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-slate-500 font-light">
+                {content.length} 字
+              </span>
+              {content.length > 0 && (
+                <span className="text-sm text-slate-600 font-light italic animate-fadeIn">
+                  很好，继续写下去
+                </span>
+              )}
+            </div>
+
+            <div className="flex justify-center gap-4 pt-4">
+              <button
+                onClick={() => setStep(2)}
+                className="px-8 py-3 text-slate-600 font-light tracking-wide hover:text-slate-800 transition-colors"
+              >
                 上一步
               </button>
-              <button onClick={() => setStep(4)} className="btn-primary px-6 py-2">
-                下一步
+              <button
+                onClick={() => setStep(4)}
+                className="px-8 py-3 bg-slate-800 text-white font-light tracking-wide hover:bg-slate-900 transition-all hover:tracking-wider"
+              >
+                继续
               </button>
             </div>
           </div>
@@ -174,27 +241,42 @@ export default function DialogFlow({ onComplete, onCancel }: DialogFlowProps) {
 
       case 4:
         return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-semibold text-gray-800 text-center">
-              确认你的记录
-            </h2>
+          <div className="space-y-8 animate-fadeIn">
+            <div className="text-center space-y-3">
+              <h2 className="text-3xl font-serif text-slate-800 tracking-wide">
+                确认你的记录
+              </h2>
+              <p className="text-slate-600 font-light text-lg">
+                这些将被妥善保存
+              </p>
+            </div>
 
-            <div className="card p-6 space-y-4">
-              <div>
-                <span className="text-sm text-gray-600">情绪评分：</span>
-                <span className="text-lg font-semibold text-amber-600 ml-2">
-                  {emotionScore} 分
-                </span>
+            <div className="space-y-6 py-4">
+              {/* Score summary */}
+              <div className="flex items-center gap-4 pb-6 border-b border-slate-200">
+                <div className="w-16 h-16 rounded-full border border-slate-300 flex items-center justify-center bg-slate-50">
+                  <span className="text-2xl font-serif text-slate-800">{emotionScore}</span>
+                </div>
+                <div>
+                  <span className="text-sm text-slate-500 font-light block">情绪评分</span>
+                  <span className="text-slate-700 font-light">
+                    {emotionScore <= 3 && '较低状态'}
+                    {emotionScore > 3 && emotionScore <= 6 && '平稳状态'}
+                    {emotionScore > 6 && '良好状态'}
+                  </span>
+                </div>
               </div>
 
+              {/* Tags summary */}
               {selectedTags.length > 0 && (
-                <div>
-                  <span className="text-sm text-gray-600 block mb-2">情绪标签：</span>
+                <div className="pb-6 border-b border-slate-200">
+                  <span className="text-sm text-slate-500 font-light block mb-3">情绪标签</span>
                   <div className="flex flex-wrap gap-2">
                     {selectedTags.map(tag => (
                       <span
                         key={tag}
-                        className="px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-sm"
+                        className="px-4 py-2 bg-slate-100 text-slate-700 text-sm font-light"
+                        style={{ borderRadius: '20px 25px 22px 18px' }}
                       >
                         {tag}
                       </span>
@@ -203,24 +285,31 @@ export default function DialogFlow({ onComplete, onCancel }: DialogFlowProps) {
                 </div>
               )}
 
+              {/* Content summary */}
               <div>
-                <span className="text-sm text-gray-600 block mb-2">记录内容：</span>
-                <div className="text-gray-800 whitespace-pre-wrap bg-gray-50 p-4 rounded">
-                  {content}
+                <span className="text-sm text-slate-500 font-light block mb-3">记录内容</span>
+                <div className="relative">
+                  <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-slate-300 to-transparent" />
+                  <div className="pl-6 text-slate-700 font-light leading-relaxed whitespace-pre-wrap">
+                    {content}
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="flex justify-center gap-4 mt-8">
-              <button onClick={() => setStep(3)} className="btn-secondary px-6 py-2">
+            <div className="flex justify-center gap-4 pt-4">
+              <button
+                onClick={() => setStep(3)}
+                className="px-8 py-3 text-slate-600 font-light tracking-wide hover:text-slate-800 transition-colors"
+              >
                 修改
               </button>
               <button
                 onClick={handleSubmit}
                 disabled={loading}
-                className="btn-primary px-6 py-2 disabled:opacity-50"
+                className="px-8 py-3 bg-slate-800 text-white font-light tracking-wide hover:bg-slate-900 transition-all hover:tracking-wider disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? '提交中...' : '完成记录'}
+                {loading ? '保存中...' : '完成记录'}
               </button>
             </div>
           </div>
@@ -232,23 +321,65 @@ export default function DialogFlow({ onComplete, onCancel }: DialogFlowProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto p-8">
-        {/* 进度指示器 */}
-        <div className="flex justify-center gap-2 mb-8">
-          {[1, 2, 3, 4].map(s => (
-            <div
-              key={s}
-              className={`
-                w-12 h-1 rounded-full transition-all
-                ${s <= step ? 'bg-amber-500' : 'bg-gray-200'}
-              `}
-            />
-          ))}
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
+      <div className="bg-[#f8f6f1] max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+        {/* Decorative header */}
+        <div className="relative h-2 bg-gradient-to-r from-transparent via-slate-400 to-transparent" />
+
+        <div className="p-12">
+          {/* Progress indicator - ink dots */}
+          <div className="flex justify-center gap-3 mb-12">
+            {[1, 2, 3, 4].map(s => (
+              <div
+                key={s}
+                className="relative"
+              >
+                <div
+                  className={`
+                    w-3 h-3 rounded-full transition-all duration-500
+                    ${s === step
+                      ? 'bg-slate-800 scale-125'
+                      : s < step
+                        ? 'bg-slate-600'
+                        : 'bg-slate-300'
+                    }
+                  `}
+                />
+                {s < 4 && (
+                  <div
+                    className={`
+                      absolute top-1/2 left-full w-8 h-[1px] transition-colors duration-500
+                      ${s < step ? 'bg-slate-600' : 'bg-slate-300'}
+                    `}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+
+          {renderStep()}
         </div>
 
-        {renderStep()}
+        {/* Decorative footer */}
+        <div className="relative h-2 bg-gradient-to-r from-transparent via-slate-400 to-transparent" />
       </div>
+
+      <style jsx>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .animate-fadeIn {
+          animation: fadeIn 0.4s ease-out;
+        }
+      `}</style>
     </div>
   );
 }
