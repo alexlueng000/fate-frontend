@@ -524,7 +524,7 @@ export default function PanelPage() {
       )}
 
       {/* Bottom bar: quick actions + input */}
-      <div className="flex-shrink-0 border-t border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-3 pt-2.5 pb-3 space-y-2">
+      <div className="flex-shrink-0 border-t border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-2 sm:px-3 pt-2 pb-2 space-y-2">
         <QuickActions
           disabled={!canUseQuick}
           buttons={quickButtons}

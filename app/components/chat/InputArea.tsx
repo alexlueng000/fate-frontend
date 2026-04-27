@@ -95,8 +95,8 @@ export function InputArea({
   };
 
   return (
-    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
-      <div className="flex gap-3">
+    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-2 sm:p-3">
+      <div className="flex gap-2">
         {/* Input */}
         <div className="flex-1 relative">
           <textarea
@@ -105,14 +105,14 @@ export function InputArea({
             onChange={(e) => onChange(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
-            className="w-full min-h-[52px] max-h-[200px] resize-none rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-4 py-3 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-hint)] outline-none focus:border-[var(--color-gold-dark)] focus:ring-2 focus:ring-[var(--color-gold)]/20 disabled:opacity-50 transition-all"
+            className="w-full min-h-[40px] max-h-[160px] resize-none rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-3 py-2 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-hint)] outline-none focus:border-[var(--color-gold-dark)] focus:ring-1 focus:ring-[var(--color-gold)]/20 disabled:opacity-50 transition-all"
             disabled={disabled}
-            rows={2}
+            rows={1}
             aria-label="对话输入框"
           />
           {countInfo && (
             <div
-              className={`absolute bottom-2 right-3 text-xs ${
+              className={`absolute bottom-1.5 right-2 text-xs ${
                 countInfo.warn ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-hint)]'
               }`}
             >
@@ -122,56 +122,56 @@ export function InputArea({
         </div>
 
         {/* Buttons */}
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1.5">
           {!sending ? (
             <button
               onClick={onSend}
               disabled={!canSend || disabled}
-              className="h-[52px] px-5 rounded-xl bg-[var(--color-primary)] text-white font-medium flex items-center gap-2 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-[var(--color-primary)]/20"
+              className="h-[40px] px-4 rounded-lg bg-[var(--color-primary)] text-white font-medium flex items-center gap-1.5 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md shadow-[var(--color-primary)]/20"
             >
-              <Send className="w-4 h-4" />
-              发送
+              <Send className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">发送</span>
             </button>
           ) : (
             <button
               onClick={() => onStop?.()}
               disabled={disabled}
-              className="h-[52px] px-5 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] text-[var(--color-text-secondary)] font-medium flex items-center gap-2 hover:bg-[var(--color-bg-hover)] disabled:opacity-50 transition-all"
+              className="h-[40px] px-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-elevated)] text-[var(--color-text-secondary)] font-medium flex items-center gap-1.5 hover:bg-[var(--color-bg-hover)] disabled:opacity-50 transition-all"
             >
-              <Square className="w-4 h-4" />
-              停止
+              <Square className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">停止</span>
             </button>
           )}
 
-          <div className="flex gap-2">
+          <div className="flex gap-1.5">
             <button
               onClick={onRegenerate}
               disabled={sending || disabled}
-              className="flex-1 h-10 px-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] text-[var(--color-text-muted)] text-sm flex items-center justify-center gap-1.5 hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-secondary)] disabled:opacity-50 transition-all"
+              className="flex-1 h-8 px-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-elevated)] text-[var(--color-text-muted)] text-sm flex items-center justify-center hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-secondary)] disabled:opacity-50 transition-all"
               title="重新解读"
             >
-              <RotateCcw className="w-3.5 h-3.5" />
+              <RotateCcw className="w-3 h-3" />
             </button>
 
             {onClear && (
               <button
                 onClick={handleClear}
                 disabled={sending || disabled}
-                className="flex-1 h-10 px-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] text-[var(--color-text-muted)] text-sm flex items-center justify-center gap-1.5 hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-primary)] disabled:opacity-50 transition-all"
+                className="flex-1 h-8 px-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-elevated)] text-[var(--color-text-muted)] text-sm flex items-center justify-center hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-primary)] disabled:opacity-50 transition-all"
                 title="清空对话"
               >
-                <Trash2 className="w-3.5 h-3.5" />
+                <Trash2 className="w-3 h-3" />
               </button>
             )}
           </div>
         </div>
       </div>
 
-      <p className="mt-2 text-xs text-[var(--color-text-hint)] flex items-center justify-between">
-        <span>Enter 发送 · Shift+Enter 换行</span>
+      <p className="mt-1.5 px-1 text-xs text-[var(--color-text-hint)] flex items-center justify-between">
+        <span className="hidden sm:inline">Enter 发送 · Shift+Enter 换行</span>
         {quota != null && (
-          <span className={!quota.is_unlimited && quota.remaining <= 3 ? 'text-[var(--color-primary)]' : ''}>
-            {quota.is_unlimited ? '次数：内测免费' : `剩余次数：${quota.remaining}`}
+          <span className={`ml-auto ${!quota.is_unlimited && quota.remaining <= 3 ? 'text-[var(--color-primary)]' : ''}`}>
+            {quota.is_unlimited ? '次数：内测免费' : `剩余：${quota.remaining}`}
           </span>
         )}
       </p>

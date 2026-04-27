@@ -1,17 +1,22 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { emotionApi, WeeklyChart } from '@/app/lib/emotion/api';
+import { emotionApi, WeeklyChart, EmotionRecord } from '@/app/lib/emotion/api';
 import { useUser } from '@/app/lib/auth';
 import DialogFlow from './components/DialogFlow';
 import CharacterProfileView from './components/CharacterProfileView';
+import { useRouter } from 'next/navigation';
 
 export default function XinjiPage() {
   const { user } = useUser();
+  const router = useRouter();
   const [weeklyData, setWeeklyData] = useState<WeeklyChart | null>(null);
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [records, setRecords] = useState<EmotionRecord[]>([]);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -28,6 +33,31 @@ export default function XinjiPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadRecords = async () => {
+    try {
+      const data = await emotionApi.getRecords(10, 0);
+      setRecords(data);
+    } catch (error) {
+      console.error('Failed to load records:', error);
+    }
+  };
+
+  const handleComplete = () => {
+    setShowDialog(false);
+    loadWeeklyChart();
+    setSuccessMessage('记录已保存');
+    setTimeout(() => setSuccessMessage(null), 3000);
+  };
+
+  const handleShowHistory = () => {
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+    loadRecords();
+    setShowHistory(true);
   };
 
   const today = new Date();
@@ -53,6 +83,15 @@ export default function XinjiPage() {
       </div>
 
       <div className="relative max-w-6xl mx-auto px-6 py-12">
+        {/* Success message */}
+        {successMessage && (
+          <div className="fixed top-8 left-1/2 -translate-x-1/2 z-50 animate-fadeIn">
+            <div className="bg-slate-800 text-white px-6 py-3 rounded-lg shadow-lg">
+              ✓ {successMessage}
+            </div>
+          </div>
+        )}
+
         {/* Header with calligraphic feel */}
         <header className="mb-16 text-center">
           <div className="inline-block relative">
@@ -207,13 +246,14 @@ export default function XinjiPage() {
             </div>
           </div>
 
-          <div className="relative bg-gradient-to-br from-slate-800 to-slate-700 p-8 text-white overflow-hidden group cursor-pointer hover:from-slate-900 hover:to-slate-800 transition-all duration-500">
+          <div className="relative bg-gradient-to-br from-slate-800 to-slate-700 p-8 text-white overflow-hidden group cursor-pointer hover:from-slate-900 hover:to-slate-800 transition-all duration-500"
+            onClick={handleShowHistory}
+          >
             <div className="absolute -bottom-8 -right-8 w-40 h-40 bg-white/5 rounded-full blur-2xl" />
             <div className="relative">
               <div className="text-4xl mb-4 opacity-60">📚</div>
               <h3 className="font-serif text-lg mb-2 tracking-wide">历史记录</h3>
               <p className="text-sm text-slate-300 font-light leading-relaxed">查看过往的情绪轨迹</p>
-              <div className="mt-4 text-xs text-slate-400 tracking-wider">即将推出</div>
             </div>
           </div>
         </div>
@@ -222,16 +262,86 @@ export default function XinjiPage() {
       {/* Dialog modals */}
       {showDialog && (
         <DialogFlow
-          onComplete={() => {
-            setShowDialog(false);
-            loadWeeklyChart();
-          }}
+          onComplete={handleComplete}
           onCancel={() => setShowDialog(false)}
         />
       )}
 
       {showProfile && (
         <CharacterProfileView onClose={() => setShowProfile(false)} />
+      )}
+
+      {/* History modal */}
+      {showHistory && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
+          <div className="bg-[#f8f6f1] max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl flex flex-col">
+            {/* Header */}
+            <div className="relative border-b border-slate-200 p-6">
+              <h2 className="text-2xl font-serif text-slate-800 tracking-wide">历史记录</h2>
+              <button
+                onClick={() => setShowHistory(false)}
+                className="absolute top-6 right-6 w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-800 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Records list */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              {records.length === 0 ? (
+                <div className="text-center py-12 text-slate-500">
+                  暂无记录
+                </div>
+              ) : (
+                records.map((record) => (
+                  <div
+                    key={record.id}
+                    className="bg-white/80 backdrop-blur-sm p-6 border border-slate-200 hover:shadow-md transition-shadow"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-full border border-slate-300 flex items-center justify-center bg-slate-50">
+                          <span className="text-xl font-serif text-slate-800">{record.emotion_score}</span>
+                        </div>
+                        <div>
+                          <div className="text-sm text-slate-500">
+                            {new Date(record.record_date).toLocaleDateString('zh-CN', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric',
+                            })}
+                          </div>
+                          {record.solar_term && (
+                            <div className="text-xs text-slate-400 mt-1">
+                              {record.solar_term} · {record.wuxing_element}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {record.emotion_tags && record.emotion_tags.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {record.emotion_tags.map((tag, idx) => (
+                          <span
+                            key={idx}
+                            className="px-3 py-1 bg-slate-100 text-slate-600 text-xs rounded-full"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">
+                      {record.content}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
       )}
 
       <style jsx>{`

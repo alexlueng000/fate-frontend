@@ -19,6 +19,7 @@ export default function DialogFlow({ onComplete, onCancel }: DialogFlowProps) {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleTagToggle = (tag: string) => {
     setSelectedTags(prev =>
@@ -30,11 +31,12 @@ export default function DialogFlow({ onComplete, onCancel }: DialogFlowProps) {
 
   const handleSubmit = async () => {
     if (!content.trim()) {
-      alert('请输入你的感受');
+      setError('请输入你的感受');
       return;
     }
 
     setLoading(true);
+    setError(null);
     try {
       const data: CreateEmotionRecordRequest = {
         emotion_score: emotionScore,
@@ -44,9 +46,10 @@ export default function DialogFlow({ onComplete, onCancel }: DialogFlowProps) {
 
       await emotionApi.createRecord(data);
       onComplete();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to create emotion record:', error);
-      alert('记录失败，请重试');
+      const errorMsg = error.message || '记录失败，请重试';
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -312,6 +315,13 @@ export default function DialogFlow({ onComplete, onCancel }: DialogFlowProps) {
                 {loading ? '保存中...' : '完成记录'}
               </button>
             </div>
+
+            {/* Error message */}
+            {error && (
+              <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm text-center animate-fadeIn">
+                {error}
+              </div>
+            )}
           </div>
         );
 
