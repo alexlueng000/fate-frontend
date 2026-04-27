@@ -54,7 +54,7 @@ export function MessageList({
   return (
     <div
       ref={scrollRef}
-      className={`flex-1 overflow-y-auto p-4 space-y-4 ${baseClass}`}
+      className={`flex-1 overflow-y-auto px-3 py-4 space-y-4 ${baseClass}`}
     >
       {messages.map((m, i) => {
         const isAssistant = m.role === 'assistant';
@@ -62,7 +62,7 @@ export function MessageList({
         const content = m.content || '';
 
         return (
-          <div key={i} className={`flex gap-3 ${isAssistant ? '' : 'flex-row-reverse'}`}>
+          <div key={i} className={`flex gap-2 sm:gap-3 ${isAssistant ? '' : 'flex-row-reverse'}`}>
             {/* Avatar - 桌面端显示，移动端隐藏 */}
             <div className={`hidden sm:flex flex-shrink-0 w-8 h-8 rounded-lg items-center justify-center ${
               isAssistant
@@ -77,12 +77,12 @@ export function MessageList({
             </div>
 
             {/* Message Bubble */}
-            <div className="flex flex-col max-w-[95%] sm:max-w-[85%]">
+            <div className="flex flex-col min-w-0 flex-1">
               <div
-                className={`rounded-xl px-4 py-3 ${
+                className={`rounded-xl px-3 py-2.5 sm:px-4 sm:py-3 ${
                   isAssistant
                     ? 'bg-[var(--color-bg-card)] border border-[var(--color-border)] text-[var(--color-text-primary)]'
-                    : 'bg-[var(--color-primary)] text-white'
+                    : 'bg-[var(--color-primary)] text-white max-w-[85%] sm:max-w-[75%] ml-auto'
                 } ${m.streaming ? 'animate-pulse' : ''}`}
               >
                 {isAssistant ? (
