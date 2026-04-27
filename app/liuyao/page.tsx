@@ -94,24 +94,83 @@ export default function LiuyaoPage() {
     }
   };
 
-  const renderYaoLine = (line: any, index: number) => {
+  const renderYaoLine = (line: any, index: number, isChangeGua = false) => {
     const isYang = line.is_yang;
     const isDong = line.is_dong;
 
     return (
-      <div key={index} className="flex items-center gap-4 py-2">
-        <span className="text-sm text-gray-600 w-16">{line.liushou || ''}</span>
-        <div className="flex-1 flex items-center gap-2">
+      <div key={index} className="flex items-center gap-3 py-3 group">
+        <span className="text-xs tracking-wider text-stone-500 w-14 text-right font-light">
+          {line.liushou || ''}
+        </span>
+        <div className="flex-1 flex items-center gap-2 relative">
           {isYang ? (
-            <div className={`h-2 flex-1 rounded ${isDong ? 'bg-[#B93A2F]' : 'bg-gray-800'}`} />
+            <div
+              className={`h-1.5 flex-1 transition-all duration-300 ${
+                isDong && !isChangeGua
+                  ? 'bg-gradient-to-r from-red-600 to-red-500 shadow-[0_0_8px_rgba(185,58,47,0.4)]'
+                  : 'bg-stone-800'
+              }`}
+              style={{ clipPath: 'polygon(2% 0%, 98% 0%, 100% 50%, 98% 100%, 2% 100%, 0% 50%)' }}
+            />
           ) : (
             <div className="flex-1 flex gap-2">
-              <div className={`h-2 flex-1 rounded ${isDong ? 'bg-[#B93A2F]' : 'bg-gray-800'}`} />
-              <div className={`h-2 flex-1 rounded ${isDong ? 'bg-[#B93A2F]' : 'bg-gray-800'}`} />
+              <div
+                className={`h-1.5 flex-1 transition-all duration-300 ${
+                  isDong && !isChangeGua
+                    ? 'bg-gradient-to-r from-red-600 to-red-500 shadow-[0_0_8px_rgba(185,58,47,0.4)]'
+                    : 'bg-stone-800'
+                }`}
+                style={{ clipPath: 'polygon(2% 0%, 98% 0%, 100% 50%, 98% 100%, 2% 100%, 0% 50%)' }}
+              />
+              <div
+                className={`h-1.5 flex-1 transition-all duration-300 ${
+                  isDong && !isChangeGua
+                    ? 'bg-gradient-to-r from-red-600 to-red-500 shadow-[0_0_8px_rgba(185,58,47,0.4)]'
+                    : 'bg-stone-800'
+                }`}
+                style={{ clipPath: 'polygon(2% 0%, 98% 0%, 100% 50%, 98% 100%, 2% 100%, 0% 50%)' }}
+              />
             </div>
           )}
         </div>
-        <span className="text-sm text-gray-600 w-12">{line.dizhi || ''}</span>
+        <span className="text-xs tracking-wider text-stone-500 w-10 font-light">
+          {line.dizhi || ''}
+        </span>
+      </div>
+    );
+  };
+
+  const renderChangeYaoLine = (mainLine: any, index: number) => {
+    const isYang = mainLine.is_dong ? !mainLine.is_yang : mainLine.is_yang;
+
+    return (
+      <div key={index} className="flex items-center gap-3 py-3">
+        <span className="text-xs tracking-wider text-stone-400 w-14 text-right font-light opacity-0">
+          {mainLine.liushou || ''}
+        </span>
+        <div className="flex-1 flex items-center gap-2">
+          {isYang ? (
+            <div
+              className="h-1.5 flex-1 bg-stone-600 opacity-60"
+              style={{ clipPath: 'polygon(2% 0%, 98% 0%, 100% 50%, 98% 100%, 2% 100%, 0% 50%)' }}
+            />
+          ) : (
+            <div className="flex-1 flex gap-2">
+              <div
+                className="h-1.5 flex-1 bg-stone-600 opacity-60"
+                style={{ clipPath: 'polygon(2% 0%, 98% 0%, 100% 50%, 98% 100%, 2% 100%, 0% 50%)' }}
+              />
+              <div
+                className="h-1.5 flex-1 bg-stone-600 opacity-60"
+                style={{ clipPath: 'polygon(2% 0%, 98% 0%, 100% 50%, 98% 100%, 2% 100%, 0% 50%)' }}
+              />
+            </div>
+          )}
+        </div>
+        <span className="text-xs tracking-wider text-stone-400 w-10 font-light opacity-0">
+          {mainLine.dizhi || ''}
+        </span>
       </div>
     );
   };
@@ -292,45 +351,207 @@ export default function LiuyaoPage() {
             </form>
           </div>
         ) : (
-          /* 卦象结果 */
-          <div className="space-y-6">
-            {/* 卦象信息 */}
-            <div className="bg-white rounded-lg shadow-lg p-8 border border-gray-100">
-              <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold text-[#1F2937] mb-3">
-                  {result.main_gua}
-                </h2>
-                {result.change_gua && (
-                  <p className="text-gray-600 text-lg">变卦：{result.change_gua}</p>
-                )}
-              </div>
-
-              {/* 六爻图 */}
-              {result.lines && result.lines.lines && (
-                <div className="max-w-md mx-auto bg-gray-50 rounded-lg p-6">
-                  {[...result.lines.lines].reverse().map((line, index) =>
-                    renderYaoLine(line, result.lines!.lines.length - 1 - index)
-                  )}
-                </div>
-              )}
-
-              {/* 世应爻 */}
-              <div className="mt-6 text-center text-sm text-gray-600">
-                世爻：第{result.shi_yao}爻 | 应爻：第{result.ying_yao}爻
-              </div>
+          /* 卦象结果 - 双卦象展示 */
+          <div className="relative">
+            {/* 背景纹理 */}
+            <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
+              <div
+                className="w-full h-full"
+                style={{
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+                }}
+              />
             </div>
 
-            {/* 操作按钮 */}
-            <div className="flex justify-center gap-4">
-              <button
-                onClick={() => setResult(null)}
-                className="px-8 py-3 bg-white text-gray-700 border-2 border-gray-300 rounded-lg hover:border-[#B93A2F] hover:text-[#B93A2F] transition-all"
-              >
-                重新起卦
-              </button>
-              <button className="px-8 py-3 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed">
-                AI 解卦（开发中）
-              </button>
+            {/* 主内容区 */}
+            <div className="relative bg-gradient-to-b from-stone-50 via-amber-50/30 to-stone-50 rounded-2xl shadow-2xl border border-stone-200/50 overflow-hidden">
+              {/* 顶部装饰线 */}
+              <div className="h-1 bg-gradient-to-r from-transparent via-red-600/40 to-transparent" />
+
+              {/* 问事内容 */}
+              <div className="px-8 pt-10 pb-6 border-b border-stone-200/50">
+                <div className="max-w-3xl mx-auto text-center">
+                  <p className="text-xs tracking-[0.3em] text-stone-400 uppercase mb-3 font-light">
+                    所问之事
+                  </p>
+                  <h2 className="text-2xl text-stone-800 leading-relaxed font-light tracking-wide">
+                    {result.question}
+                  </h2>
+                </div>
+              </div>
+
+              {/* 双卦象展示区 */}
+              <div className="px-8 py-12">
+                <div className="max-w-5xl mx-auto">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16">
+                    {/* 本卦 */}
+                    <div className="relative">
+                      {/* 卦名 */}
+                      <div className="text-center mb-8">
+                        <div className="inline-block relative">
+                          <h3
+                            className="text-5xl font-serif text-stone-900 tracking-wider relative z-10"
+                            style={{ fontFamily: "'Noto Serif SC', serif" }}
+                          >
+                            {result.main_gua}
+                          </h3>
+                          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-24 h-px bg-gradient-to-r from-transparent via-stone-300 to-transparent" />
+                        </div>
+                        <p className="text-xs tracking-[0.25em] text-stone-500 mt-4 uppercase font-light">
+                          本卦
+                        </p>
+                      </div>
+
+                      {/* 六爻图 */}
+                      {result.lines && result.lines.lines && (
+                        <div className="relative">
+                          <div className="bg-white/60 backdrop-blur-sm rounded-xl p-8 shadow-lg border border-stone-200/50">
+                            {[...result.lines.lines].reverse().map((line, index) =>
+                              renderYaoLine(line, result.lines!.lines.length - 1 - index, false)
+                            )}
+                          </div>
+
+                          {/* 世应爻标注 */}
+                          <div className="mt-6 flex justify-center gap-8 text-xs tracking-wider text-stone-500">
+                            <span className="flex items-center gap-2">
+                              <span className="w-2 h-2 rounded-full bg-amber-500/60" />
+                              世爻：第{result.shi_yao}爻
+                            </span>
+                            <span className="flex items-center gap-2">
+                              <span className="w-2 h-2 rounded-full bg-sky-500/60" />
+                              应爻：第{result.ying_yao}爻
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 变卦 */}
+                    {result.change_gua && result.lines && result.lines.lines ? (
+                      <div className="relative">
+                        {/* 连接箭头 (仅桌面显示) */}
+                        <div className="hidden md:block absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
+                          <div className="flex flex-col items-center gap-2">
+                            <svg
+                              width="32"
+                              height="32"
+                              viewBox="0 0 32 32"
+                              fill="none"
+                              className="text-red-600/40"
+                            >
+                              <path
+                                d="M8 16H24M24 16L18 10M24 16L18 22"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                            <span className="text-[10px] tracking-widest text-red-600/60 uppercase font-light">
+                              变
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* 卦名 */}
+                        <div className="text-center mb-8">
+                          <div className="inline-block relative">
+                            <h3
+                              className="text-5xl font-serif text-stone-700 tracking-wider relative z-10"
+                              style={{ fontFamily: "'Noto Serif SC', serif" }}
+                            >
+                              {result.change_gua}
+                            </h3>
+                            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-24 h-px bg-gradient-to-r from-transparent via-stone-300 to-transparent" />
+                          </div>
+                          <p className="text-xs tracking-[0.25em] text-stone-400 mt-4 uppercase font-light">
+                            变卦
+                          </p>
+                        </div>
+
+                        {/* 六爻图 */}
+                        <div className="relative">
+                          <div className="bg-stone-100/40 backdrop-blur-sm rounded-xl p-8 shadow-lg border border-stone-200/30">
+                            {[...result.lines.lines].reverse().map((line, index) =>
+                              renderChangeYaoLine(line, result.lines!.lines.length - 1 - index)
+                            )}
+                          </div>
+
+                          {/* 变化说明 */}
+                          <div className="mt-6 text-center">
+                            <p className="text-xs text-stone-400 tracking-wide font-light">
+                              动爻变化后的卦象
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      /* 无变卦时显示占位 */
+                      <div className="relative flex items-center justify-center">
+                        <div className="text-center py-20">
+                          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-stone-100 flex items-center justify-center">
+                            <svg
+                              width="32"
+                              height="32"
+                              viewBox="0 0 32 32"
+                              fill="none"
+                              className="text-stone-300"
+                            >
+                              <circle cx="16" cy="16" r="12" stroke="currentColor" strokeWidth="2" />
+                              <path
+                                d="M16 12V16M16 20H16.01"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                              />
+                            </svg>
+                          </div>
+                          <p className="text-sm text-stone-400 tracking-wide font-light">
+                            此卦无动爻，无变卦
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* 底部操作区 */}
+              <div className="px-8 pb-10 pt-6 border-t border-stone-200/50 bg-gradient-to-b from-transparent to-stone-50/50">
+                <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
+                  <button
+                    onClick={() => setResult(null)}
+                    className="group px-10 py-3.5 bg-white text-stone-700 border border-stone-300 rounded-full hover:border-red-600 hover:text-red-600 transition-all duration-300 shadow-sm hover:shadow-md text-sm tracking-wider font-light"
+                  >
+                    <span className="flex items-center gap-2">
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 16 16"
+                        fill="none"
+                        className="transition-transform group-hover:rotate-180 duration-500"
+                      >
+                        <path
+                          d="M14 8C14 11.3137 11.3137 14 8 14C4.68629 14 2 11.3137 2 8C2 4.68629 4.68629 2 8 2"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                        />
+                        <path
+                          d="M8 2L8 6M8 2L11 2M8 2L8 2"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                      重新起卦
+                    </span>
+                  </button>
+                  <button className="px-10 py-3.5 bg-stone-200 text-stone-400 rounded-full cursor-not-allowed text-sm tracking-wider font-light shadow-sm">
+                    AI 解卦（开发中）
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}
