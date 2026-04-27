@@ -143,13 +143,19 @@ export default function LiuyaoPage() {
 
   const renderChangeYaoLine = (mainLine: any, index: number) => {
     const isYang = mainLine.is_dong ? !mainLine.is_yang : mainLine.is_yang;
+    const isDong = mainLine.is_dong;
 
     return (
-      <div key={index} className="flex items-center gap-3 py-3">
+      <div key={index} className="flex items-center gap-3 py-3 relative">
+        {/* 动爻红框标注 */}
+        {isDong && (
+          <div className="absolute inset-0 -mx-2 border-2 border-red-500/60 rounded-md bg-red-50/10 pointer-events-none" />
+        )}
+
         <span className="text-xs tracking-wider text-stone-400 w-14 text-right font-light opacity-0">
           {mainLine.liushou || ''}
         </span>
-        <div className="flex-1 flex items-center gap-2">
+        <div className="flex-1 flex items-center gap-2 relative z-10">
           {isYang ? (
             <div
               className="h-1.5 flex-1 bg-stone-600 opacity-60"
