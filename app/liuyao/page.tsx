@@ -101,6 +101,7 @@ export default function LiuyaoPage() {
   const handleInterpret = async () => {
     if (!result) return;
 
+    console.log('开始解卦，hexagram_id:', result.hexagram_id);
     setInterpreting(true);
     setInterpretation('');
 
@@ -108,10 +109,19 @@ export default function LiuyaoPage() {
       await liuyaoApi.interpretHexagram(
         result.hexagram_id,
         (chunk) => {
+          console.log('收到chunk:', chunk);
           setInterpretation(prev => prev + chunk);
         },
         () => {
+          console.log('解卦完成');
           setInterpreting(false);
+          // 滚动到解卦结果
+          setTimeout(() => {
+            const resultElement = document.getElementById('interpretation-result');
+            if (resultElement) {
+              resultElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }, 100);
         },
         (error) => {
           console.error('解卦失败:', error);
@@ -627,12 +637,17 @@ export default function LiuyaoPage() {
 
             {/* AI解卦结果 */}
             {interpretation && (
-              <div className="mt-8 bg-white rounded-2xl shadow-xl border border-stone-200/50 overflow-hidden">
+              <div id="interpretation-result" className="mt-8 bg-white rounded-2xl shadow-xl border border-stone-200/50 overflow-hidden">
                 <div className="h-1 bg-gradient-to-r from-transparent via-amber-600/40 to-transparent" />
                 <div className="px-8 py-10">
                   <div className="max-w-3xl mx-auto">
+                    <div className="mb-6 text-center">
+                      <h3 className="text-2xl font-serif text-stone-800 tracking-wide">
+                        AI 解卦
+                      </h3>
+                    </div>
                     <div className="prose prose-stone max-w-none">
-                      <div className="whitespace-pre-wrap text-stone-800 leading-relaxed">
+                      <div className="whitespace-pre-wrap text-stone-800 leading-relaxed text-base">
                         {interpretation}
                       </div>
                     </div>
