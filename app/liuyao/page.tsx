@@ -143,12 +143,17 @@ export default function LiuyaoPage() {
 
     return (
       <div key={index} className="flex items-center gap-3 py-3 group">
-        <span className="text-xs tracking-wider text-stone-600 w-12 text-right font-medium">
-          {line.liuqin || ''}
-        </span>
-        <span className="text-xs tracking-wider text-stone-500 w-14 text-right font-light">
-          {line.liushou || ''}
-        </span>
+        {/* 左侧：六亲 + 六兽 */}
+        <div className="flex items-center gap-2 w-20 justify-end">
+          <span className="text-xs tracking-wider text-stone-600 font-medium">
+            {line.liuqin || ''}
+          </span>
+          <span className="text-xs tracking-wider text-stone-500 font-light">
+            {line.liushou || ''}
+          </span>
+        </div>
+
+        {/* 中间：爻象 */}
         <div className="flex-1 flex items-center gap-2 relative">
           {isYang ? (
             <div
@@ -180,9 +185,16 @@ export default function LiuyaoPage() {
             </div>
           )}
         </div>
-        <span className="text-xs tracking-wider text-stone-500 w-10 font-light">
-          {line.dizhi || ''}
-        </span>
+
+        {/* 右侧：地支 + 五行 */}
+        <div className="flex items-center gap-2 w-16">
+          <span className="text-xs tracking-wider text-stone-500 font-light">
+            {line.dizhi || ''}
+          </span>
+          <span className="text-xs tracking-wider text-stone-600 font-medium">
+            {line.wuxing || ''}
+          </span>
+        </div>
       </div>
     );
   };
@@ -198,12 +210,17 @@ export default function LiuyaoPage() {
           <div className="absolute inset-0 -mx-2 border-2 border-red-500/60 rounded-md bg-red-50/10 pointer-events-none" />
         )}
 
-        <span className="text-xs tracking-wider text-stone-400 w-12 text-right font-medium opacity-0">
-          {mainLine.liuqin || ''}
-        </span>
-        <span className="text-xs tracking-wider text-stone-400 w-14 text-right font-light opacity-0">
-          {mainLine.liushou || ''}
-        </span>
+        {/* 左侧：六亲 + 六兽（透明占位） */}
+        <div className="flex items-center gap-2 w-20 justify-end opacity-0">
+          <span className="text-xs tracking-wider text-stone-400 font-medium">
+            {mainLine.liuqin || ''}
+          </span>
+          <span className="text-xs tracking-wider text-stone-400 font-light">
+            {mainLine.liushou || ''}
+          </span>
+        </div>
+
+        {/* 中间：爻象 */}
         <div className="flex-1 flex items-center gap-2 relative z-10">
           {isYang ? (
             <div
@@ -223,9 +240,16 @@ export default function LiuyaoPage() {
             </div>
           )}
         </div>
-        <span className="text-xs tracking-wider text-stone-400 w-10 font-light opacity-0">
-          {mainLine.dizhi || ''}
-        </span>
+
+        {/* 右侧：地支 + 五行（透明占位） */}
+        <div className="flex items-center gap-2 w-16 opacity-0">
+          <span className="text-xs tracking-wider text-stone-400 font-light">
+            {mainLine.dizhi || ''}
+          </span>
+          <span className="text-xs tracking-wider text-stone-400 font-medium">
+            {mainLine.wuxing || ''}
+          </span>
+        </div>
       </div>
     );
   };
