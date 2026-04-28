@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useUser } from '@/app/lib/auth';
 import { liuyaoApi, PaipanRequest, HexagramDetail } from '@/app/lib/liuyao/api';
 import { getHexagramByName } from '@/app/lib/hexagram';
+import MarkdownView from '@/app/components/Markdown';
 
 // 问事场景配置
 const QUESTION_SCENARIOS = [
@@ -646,11 +647,7 @@ export default function LiuyaoPage() {
                         AI 解卦
                       </h3>
                     </div>
-                    <div className="prose prose-stone max-w-none">
-                      <div className="whitespace-pre-wrap text-stone-800 leading-relaxed text-base">
-                        {interpretation}
-                      </div>
-                    </div>
+                    <MarkdownView content={interpretation} />
                   </div>
                 </div>
               </div>
