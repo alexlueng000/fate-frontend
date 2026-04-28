@@ -129,5 +129,67 @@ export const liuyaoApi = {
     }
 
     return response.json();
+  },
+
+  // AI解卦（流式）
+  async interpretHexagram(
+    hexagramId: string,
+    onChunk: (text: string) => void,
+    onDone: () => void,
+    onError: (error: string) => void
+  ): Promise<void> {
+    const response = await fetch(api(`/liuyao/${hexagramId}/interpret`), {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to start interpretation');
+    }
+
+    const reader = response.body?.getReader();
+    if (!reader) {
+      throw new Error('No response body');
+    }
+
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (!line.trim() || !line.startsWith('data:')) continue;
+
+          const data = line.slice(5).trim();
+          if (data === '[DONE]') {
+            onDone();
+            return;
+          }
+
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed.error) {
+              onError(parsed.error);
+              return;
+            }
+            if (parsed.text) {
+              onChunk(parsed.text);
+            }
+          } catch (e) {
+            console.warn('Failed to parse SSE data:', data);
+          }
+        }
+      }
+    } catch (error) {
+      onError(error instanceof Error ? error.message : 'Stream error');
+    }
   }
 };

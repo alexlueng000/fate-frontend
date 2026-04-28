@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useUser } from '@/app/lib/auth';
 import { liuyaoApi, PaipanRequest, HexagramDetail } from '@/app/lib/liuyao/api';
+import { getHexagramByName } from '@/app/lib/hexagram';
 
 // 问事场景配置
 const QUESTION_SCENARIOS = [
@@ -51,6 +52,8 @@ export default function LiuyaoPage() {
   const [numbers, setNumbers] = useState<string[]>(['', '', '']);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<HexagramDetail | null>(null);
+  const [interpretation, setInterpretation] = useState<string>('');
+  const [interpreting, setInterpreting] = useState(false);
 
   const currentPlaceholder = selectedScenario
     ? QUESTION_SCENARIOS.find(s => s.id === selectedScenario)?.placeholder
@@ -86,11 +89,40 @@ export default function LiuyaoPage() {
 
       const hexagram = await liuyaoApi.paipan(data);
       setResult(hexagram);
+      setInterpretation('');
     } catch (error: any) {
       console.error('排盘失败:', error);
       alert(error.message || '排盘失败，请重试');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleInterpret = async () => {
+    if (!result) return;
+
+    setInterpreting(true);
+    setInterpretation('');
+
+    try {
+      await liuyaoApi.interpretHexagram(
+        result.hexagram_id,
+        (chunk) => {
+          setInterpretation(prev => prev + chunk);
+        },
+        () => {
+          setInterpreting(false);
+        },
+        (error) => {
+          console.error('解卦失败:', error);
+          alert('解卦失败，请重试');
+          setInterpreting(false);
+        }
+      );
+    } catch (error: any) {
+      console.error('解卦失败:', error);
+      alert(error.message || '解卦失败，请重试');
+      setInterpreting(false);
     }
   };
 
@@ -403,9 +435,22 @@ export default function LiuyaoPage() {
                           </h3>
                           <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-24 h-px bg-gradient-to-r from-transparent via-stone-300 to-transparent" />
                         </div>
-                        <p className="text-xs tracking-[0.25em] text-stone-500 mt-4 uppercase font-light">
-                          本卦
-                        </p>
+                        <div className="mt-4 flex flex-col items-center gap-1">
+                          <p className="text-xs tracking-[0.25em] text-stone-500 uppercase font-light">
+                            本卦
+                          </p>
+                          {(() => {
+                            const hexInfo = getHexagramByName(result.main_gua);
+                            if (hexInfo) {
+                              return (
+                                <p className="text-xs text-stone-600 font-light">
+                                  第 {hexInfo.number} 卦
+                                </p>
+                              );
+                            }
+                            return null;
+                          })()}
+                        </div>
                       </div>
 
                       {/* 六爻图 */}
@@ -463,16 +508,29 @@ export default function LiuyaoPage() {
                         <div className="text-center mb-8">
                           <div className="inline-block relative">
                             <h3
-                              className="text-5xl font-serif text-stone-700 tracking-wider relative z-10"
+                              className="text-5xl font-serif text-stone-800 tracking-wider relative z-10"
                               style={{ fontFamily: "'Noto Serif SC', serif" }}
                             >
                               {result.change_gua}
                             </h3>
                             <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-24 h-px bg-gradient-to-r from-transparent via-stone-300 to-transparent" />
                           </div>
-                          <p className="text-xs tracking-[0.25em] text-stone-400 mt-4 uppercase font-light">
-                            变卦
-                          </p>
+                          <div className="mt-4 flex flex-col items-center gap-1">
+                            <p className="text-xs tracking-[0.25em] text-stone-400 uppercase font-light">
+                              变卦
+                            </p>
+                            {(() => {
+                              const hexInfo = getHexagramByName(result.change_gua);
+                              if (hexInfo) {
+                                return (
+                                  <p className="text-xs text-stone-500 font-light">
+                                    第 {hexInfo.number} 卦
+                                  </p>
+                                );
+                              }
+                              return null;
+                            })()}
+                          </div>
                         </div>
 
                         {/* 六爻图 */}
@@ -526,7 +584,10 @@ export default function LiuyaoPage() {
               <div className="px-8 pb-10 pt-6 border-t border-stone-200/50 bg-gradient-to-b from-transparent to-stone-50/50">
                 <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
                   <button
-                    onClick={() => setResult(null)}
+                    onClick={() => {
+                      setResult(null);
+                      setInterpretation('');
+                    }}
                     className="group px-10 py-3.5 bg-white text-stone-700 border border-stone-300 rounded-full hover:border-red-600 hover:text-red-600 transition-all duration-300 shadow-sm hover:shadow-md text-sm tracking-wider font-light"
                   >
                     <span className="flex items-center gap-2">
@@ -553,12 +614,32 @@ export default function LiuyaoPage() {
                       重新起卦
                     </span>
                   </button>
-                  <button className="px-10 py-3.5 bg-stone-200 text-stone-400 rounded-full cursor-not-allowed text-sm tracking-wider font-light shadow-sm">
-                    AI 解卦（开发中）
+                  <button
+                    onClick={handleInterpret}
+                    disabled={interpreting}
+                    className="px-10 py-3.5 bg-[#B93A2F] text-white rounded-full hover:bg-[#9a2f26] transition-all duration-300 shadow-lg hover:shadow-xl text-sm tracking-wider font-light disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {interpreting ? 'AI 解卦中...' : 'AI 解卦'}
                   </button>
                 </div>
               </div>
             </div>
+
+            {/* AI解卦结果 */}
+            {interpretation && (
+              <div className="mt-8 bg-white rounded-2xl shadow-xl border border-stone-200/50 overflow-hidden">
+                <div className="h-1 bg-gradient-to-r from-transparent via-amber-600/40 to-transparent" />
+                <div className="px-8 py-10">
+                  <div className="max-w-3xl mx-auto">
+                    <div className="prose prose-stone max-w-none">
+                      <div className="whitespace-pre-wrap text-stone-800 leading-relaxed">
+                        {interpretation}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
