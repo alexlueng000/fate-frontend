@@ -143,6 +143,9 @@ export default function LiuyaoPage() {
 
     return (
       <div key={index} className="flex items-center gap-3 py-3 group">
+        <span className="text-xs tracking-wider text-stone-600 w-12 text-right font-medium">
+          {line.liuqin || ''}
+        </span>
         <span className="text-xs tracking-wider text-stone-500 w-14 text-right font-light">
           {line.liushou || ''}
         </span>
@@ -195,6 +198,9 @@ export default function LiuyaoPage() {
           <div className="absolute inset-0 -mx-2 border-2 border-red-500/60 rounded-md bg-red-50/10 pointer-events-none" />
         )}
 
+        <span className="text-xs tracking-wider text-stone-400 w-12 text-right font-medium opacity-0">
+          {mainLine.liuqin || ''}
+        </span>
         <span className="text-xs tracking-wider text-stone-400 w-14 text-right font-light opacity-0">
           {mainLine.liushou || ''}
         </span>
@@ -417,15 +423,78 @@ export default function LiuyaoPage() {
               {/* 顶部装饰线 */}
               <div className="h-1 bg-gradient-to-r from-transparent via-red-600/40 to-transparent" />
 
-              {/* 问事内容 */}
+              {/* 问事内容和基本信息 */}
               <div className="px-8 pt-10 pb-6 border-b border-stone-200/50">
-                <div className="max-w-3xl mx-auto text-center">
-                  <p className="text-xs tracking-[0.3em] text-stone-400 uppercase mb-3 font-light">
-                    所问之事
-                  </p>
-                  <h2 className="text-2xl text-stone-800 leading-relaxed font-light tracking-wide">
-                    {result.question}
-                  </h2>
+                <div className="max-w-3xl mx-auto">
+                  {/* 问事内容 */}
+                  <div className="text-center mb-6">
+                    <p className="text-xs tracking-[0.3em] text-stone-400 uppercase mb-3 font-light">
+                      所问之事
+                    </p>
+                    <h2 className="text-2xl text-stone-800 leading-relaxed font-light tracking-wide">
+                      {result.question}
+                    </h2>
+                  </div>
+
+                  {/* 基本信息 */}
+                  <div className="mt-6 pt-6 border-t border-stone-200/30">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div className="text-center">
+                        <p className="text-stone-400 text-xs mb-1">性别</p>
+                        <p className="text-stone-700">
+                          {result.gender === 'male' ? '男' : result.gender === 'female' ? '女' : '未知'}
+                        </p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-stone-400 text-xs mb-1">排法</p>
+                        <p className="text-stone-700">
+                          {result.method === 'time' ? '时间起卦' : result.method === 'number' ? '数字起卦' : '铜钱起卦'}
+                        </p>
+                      </div>
+                      <div className="text-center md:col-span-2">
+                        <p className="text-stone-400 text-xs mb-1">时间</p>
+                        <p className="text-stone-700">
+                          {new Date(result.timestamp).toLocaleString('zh-CN', {
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* 干支信息 */}
+                    {result.ganzhi && (
+                      <div className="mt-4 pt-4 border-t border-stone-200/30">
+                        <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm">
+                          <div className="flex items-center gap-2">
+                            <span className="text-stone-400 text-xs">年</span>
+                            <span className="text-stone-700 font-medium">{result.ganzhi.year}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-stone-400 text-xs">月</span>
+                            <span className="text-stone-700 font-medium">{result.ganzhi.month}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-stone-400 text-xs">日</span>
+                            <span className="text-stone-700 font-medium">{result.ganzhi.day}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-stone-400 text-xs">时</span>
+                            <span className="text-stone-700 font-medium">{result.ganzhi.hour}</span>
+                          </div>
+                          {result.jiqi?.current && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-stone-400 text-xs">节气</span>
+                              <span className="text-stone-700 font-medium">{result.jiqi.current}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
