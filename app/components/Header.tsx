@@ -65,24 +65,25 @@ export default function Header() {
       }`}
     >
       <div className="mx-auto flex h-16 md:h-20 max-w-7xl items-center justify-between px-4 md:px-8 lg:px-12">
-        {/* Logo */}
-        <Link href="/" className="group shrink-0 flex items-center">
-          <Image
-            src="/yifan_logo.png"
-            alt="易凡文化"
-            width={140}
-            height={140}
-            className="w-32 md:w-36 lg:w-40 h-auto group-hover:scale-105 transition-transform duration-200"
-          />
-        </Link>
+        {/* Left: Logo + Navigation */}
+        <div className="flex items-center gap-8 lg:gap-12 xl:gap-16">
+          <Link href="/" className="group shrink-0 flex items-center">
+            <Image
+              src="/yifan_logo.png"
+              alt="易凡文化"
+              width={140}
+              height={140}
+              className="w-32 md:w-36 lg:w-40 h-auto group-hover:scale-105 transition-transform duration-200"
+            />
+          </Link>
 
-        {/* Center Navigation */}
-        <nav className="hidden md:flex items-center gap-6 lg:gap-10 xl:gap-12">
-          <Link href="/knowledge" className={navLinkClass}>命理学堂</Link>
-          <Link href="/about" className={navLinkClass}>关于我们</Link>
-          <Link href="/faq" className={navLinkClass}>常见问题</Link>
-          <Link href="/pricing" className={navLinkClass}>套餐定价</Link>
-        </nav>
+          <nav className="hidden md:flex items-center gap-6 lg:gap-8 xl:gap-10">
+            <Link href="/knowledge" className={navLinkClass}>命理学堂</Link>
+            <Link href="/about" className={navLinkClass}>关于我们</Link>
+            <Link href="/faq" className={navLinkClass}>常见问题</Link>
+            <Link href="/pricing" className={navLinkClass}>套餐定价</Link>
+          </nav>
+        </div>
 
         {/* Right Actions */}
         {!me ? (
