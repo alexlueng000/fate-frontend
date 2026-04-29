@@ -47,12 +47,12 @@ export default function Header() {
   }
 
   const navLinkClass =
-    'relative text-sm md:text-base font-medium whitespace-nowrap text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors ' +
+    'relative text-sm font-medium whitespace-nowrap text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors ' +
     'after:absolute after:-bottom-1 after:left-0 after:h-0.5 after:w-0 after:bg-[var(--color-primary)] after:rounded-full ' +
     'after:transition-[width] after:duration-300 hover:after:w-full';
 
   const outlineBtnClass =
-    'flex items-center gap-2 h-9 md:h-10 px-4 md:px-5 text-sm md:text-base font-medium rounded-[var(--radius-md)] ' +
+    'flex items-center gap-2 h-9 px-4 text-sm font-medium rounded-[var(--radius-md)] ' +
     'border border-[var(--color-primary)] text-[var(--color-primary)] ' +
     'hover:bg-[var(--color-primary)] hover:text-white hover:shadow-md transition-all duration-200';
 
@@ -64,7 +64,7 @@ export default function Header() {
           : 'bg-transparent'
       }`}
     >
-      <div className="mx-auto flex h-16 md:h-20 max-w-7xl items-center justify-between px-4 md:px-8 lg:px-12">
+      <div className="mx-auto flex h-16 md:h-20 w-full items-center justify-between px-4 md:px-8 lg:px-12">
         {/* Left: Logo + Navigation */}
         <div className="flex items-center gap-8 lg:gap-12 xl:gap-16">
           <Link href="/" className="group shrink-0 flex items-center">
@@ -73,7 +73,7 @@ export default function Header() {
               alt="易凡文化"
               width={140}
               height={140}
-              className="w-32 md:w-36 lg:w-40 h-auto group-hover:scale-105 transition-transform duration-200"
+              className="w-32 md:w-36 h-auto group-hover:scale-105 transition-transform duration-200"
             />
           </Link>
 
@@ -87,10 +87,10 @@ export default function Header() {
 
         {/* Right Actions */}
         {!me ? (
-          <div className="flex items-center gap-3 md:gap-4">
+          <div className="flex items-center gap-3">
             <button
               onClick={goLogin}
-              className="h-9 md:h-10 px-4 md:px-5 text-sm md:text-base font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors"
+              className="h-9 px-4 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors"
             >
               登录
             </button>
@@ -120,12 +120,12 @@ export default function Header() {
                 onClick={() => setMenuOpen((v) => !v)}
                 aria-haspopup="menu"
                 aria-expanded={menuOpen}
-                className="flex h-9 md:h-10 items-center gap-2 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-2.5 md:px-3 hover:border-[var(--color-border-accent)] hover:shadow-sm transition-all"
+                className="flex h-9 items-center gap-2 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-2.5 hover:border-[var(--color-border-accent)] hover:shadow-sm transition-all"
               >
-                <span className="flex h-6 w-6 md:h-7 md:w-7 items-center justify-center rounded-md bg-[var(--color-primary)] text-white text-xs md:text-sm font-semibold">
+                <span className="flex h-6 w-6 items-center justify-center rounded-md bg-[var(--color-primary)] text-white text-xs font-semibold">
                   {(me.nickname || me.username || 'U').slice(0, 1).toUpperCase()}
                 </span>
-                <span className="text-[var(--color-text-primary)] text-sm md:text-base font-medium hidden sm:inline max-w-[80px] md:max-w-[100px] truncate">
+                <span className="text-[var(--color-text-primary)] text-sm font-medium hidden sm:inline max-w-[100px] truncate">
                   {me.nickname || me.username}
                 </span>
                 <ChevronDown
