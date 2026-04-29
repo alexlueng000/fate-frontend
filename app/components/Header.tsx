@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useUser, logout } from '@/app/lib/auth';
-import { ChevronDown, LogOut, User, Settings, LayoutDashboard } from 'lucide-react';
+import { ChevronDown, LogOut, User, Settings, LayoutDashboard, FileEdit, History, MessageSquare } from 'lucide-react';
 
 export default function Header() {
   const router = useRouter();
@@ -139,6 +139,34 @@ export default function Header() {
                   aria-label="用户菜单"
                   className="absolute right-0 mt-2 w-48 overflow-hidden rounded-[var(--radius-lg)] card animate-scale-in shadow-lg"
                 >
+                  <Link
+                    href="/profile/edit"
+                    role="menuitem"
+                    className="flex items-center gap-3 px-4 py-3 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    <FileEdit className="w-4 h-4 shrink-0" />
+                    编辑个人档案
+                  </Link>
+                  <Link
+                    href="/history"
+                    role="menuitem"
+                    className="flex items-center gap-3 px-4 py-3 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    <History className="w-4 h-4 shrink-0" />
+                    我的解读记录
+                  </Link>
+                  <Link
+                    href="/feedback"
+                    role="menuitem"
+                    className="flex items-center gap-3 px-4 py-3 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    <MessageSquare className="w-4 h-4 shrink-0" />
+                    意见反馈
+                  </Link>
+                  <div className="h-px bg-[var(--color-border)]" />
                   <Link
                     href="/account"
                     role="menuitem"
