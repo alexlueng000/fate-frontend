@@ -138,6 +138,8 @@ export default function LiuyaoPage() {
   };
 
   const renderYaoLine = (line: any, index: number, isChangeGua = false) => {
+    if (!line) return null;
+
     const isYang = line.is_yang;
     const isDong = line.is_dong;
 
@@ -200,6 +202,8 @@ export default function LiuyaoPage() {
   };
 
   const renderChangeYaoLine = (mainLine: any, index: number) => {
+    if (!mainLine) return null;
+
     const isYang = mainLine.is_dong ? !mainLine.is_yang : mainLine.is_yang;
     const isDong = mainLine.is_dong;
 
@@ -544,6 +548,7 @@ export default function LiuyaoPage() {
                             本卦
                           </p>
                           {(() => {
+                            if (!result.main_gua) return null;
                             const hexInfo = getHexagramByName(result.main_gua);
                             if (hexInfo) {
                               return (
@@ -558,7 +563,7 @@ export default function LiuyaoPage() {
                       </div>
 
                       {/* 六爻图 */}
-                      {result.lines && result.lines.lines && (
+                      {result.lines && result.lines.lines && Array.isArray(result.lines.lines) && (
                         <div className="relative">
                           <div className="bg-white/60 backdrop-blur-sm rounded-xl p-8 shadow-lg border border-stone-200/50">
                             {[...result.lines.lines].reverse().map((line, index) =>
@@ -582,7 +587,7 @@ export default function LiuyaoPage() {
                     </div>
 
                     {/* 变卦 */}
-                    {result.change_gua && result.lines && result.lines.lines ? (
+                    {result.change_gua && result.lines && result.lines.lines && Array.isArray(result.lines.lines) ? (
                       <div className="relative">
                         {/* 连接箭头 (仅桌面显示) */}
                         <div className="hidden md:block absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
@@ -624,6 +629,7 @@ export default function LiuyaoPage() {
                               变卦
                             </p>
                             {(() => {
+                              if (!result.change_gua) return null;
                               const hexInfo = getHexagramByName(result.change_gua);
                               if (hexInfo) {
                                 return (
@@ -640,7 +646,7 @@ export default function LiuyaoPage() {
                         {/* 六爻图 */}
                         <div className="relative">
                           <div className="bg-stone-100/40 backdrop-blur-sm rounded-xl p-8 shadow-lg border border-stone-200/30">
-                            {[...result.lines.lines].reverse().map((line, index) =>
+                            {Array.isArray(result.lines.lines) && [...result.lines.lines].reverse().map((line, index) =>
                               renderChangeYaoLine(line, result.lines!.lines.length - 1 - index)
                             )}
                           </div>

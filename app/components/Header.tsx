@@ -47,14 +47,14 @@ export default function Header() {
   }
 
   const navLinkClass =
-    'relative text-sm whitespace-nowrap text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors ' +
-    'after:absolute after:-bottom-0.5 after:left-0 after:h-px after:w-0 after:bg-[var(--color-primary)] ' +
-    'after:transition-[width] after:duration-200 hover:after:w-full';
+    'relative text-sm md:text-base font-medium whitespace-nowrap text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors ' +
+    'after:absolute after:-bottom-1 after:left-0 after:h-0.5 after:w-0 after:bg-[var(--color-primary)] after:rounded-full ' +
+    'after:transition-[width] after:duration-300 hover:after:w-full';
 
   const outlineBtnClass =
-    'flex items-center gap-1.5 h-8 px-3 text-sm rounded-[var(--radius-md)] ' +
+    'flex items-center gap-2 h-9 md:h-10 px-4 md:px-5 text-sm md:text-base font-medium rounded-[var(--radius-md)] ' +
     'border border-[var(--color-primary)] text-[var(--color-primary)] ' +
-    'hover:bg-[var(--color-primary)] hover:text-white transition-colors';
+    'hover:bg-[var(--color-primary)] hover:text-white hover:shadow-md transition-all duration-200';
 
   return (
     <header
@@ -64,7 +64,7 @@ export default function Header() {
           : 'bg-transparent'
       }`}
     >
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
+      <div className="mx-auto flex h-16 md:h-20 max-w-7xl items-center justify-between px-4 md:px-8 lg:px-12">
         {/* Logo */}
         <Link href="/" className="group shrink-0 flex items-center">
           <Image
@@ -72,12 +72,12 @@ export default function Header() {
             alt="易凡文化"
             width={140}
             height={140}
-            className="group-hover:scale-105 transition-transform"
+            className="w-32 md:w-36 lg:w-40 h-auto group-hover:scale-105 transition-transform duration-200"
           />
         </Link>
 
         {/* Center Navigation */}
-        <nav className="hidden md:flex items-center gap-8">
+        <nav className="hidden md:flex items-center gap-6 lg:gap-10 xl:gap-12">
           <Link href="/knowledge" className={navLinkClass}>命理学堂</Link>
           <Link href="/about" className={navLinkClass}>关于我们</Link>
           <Link href="/faq" className={navLinkClass}>常见问题</Link>
@@ -86,10 +86,10 @@ export default function Header() {
 
         {/* Right Actions */}
         {!me ? (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3 md:gap-4">
             <button
               onClick={goLogin}
-              className="h-8 px-3 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors"
+              className="h-9 md:h-10 px-4 md:px-5 text-sm md:text-base font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors"
             >
               登录
             </button>
@@ -98,17 +98,17 @@ export default function Header() {
             </button>
           </div>
         ) : (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 md:gap-3">
             {/* 个人中心 */}
             <Link href="/panel" className={outlineBtnClass}>
-              <LayoutDashboard className="w-3.5 h-3.5 shrink-0" />
+              <LayoutDashboard className="w-4 h-4 shrink-0" />
               <span className="hidden sm:inline">个人中心</span>
             </Link>
 
             {/* 管理后台 */}
             {me.is_admin && (
               <Link href="/admin" className={outlineBtnClass}>
-                <Settings className="w-3.5 h-3.5 shrink-0" />
+                <Settings className="w-4 h-4 shrink-0" />
                 <span className="hidden sm:inline">管理后台</span>
               </Link>
             )}
@@ -119,16 +119,16 @@ export default function Header() {
                 onClick={() => setMenuOpen((v) => !v)}
                 aria-haspopup="menu"
                 aria-expanded={menuOpen}
-                className="flex h-8 items-center gap-1 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-2 hover:border-[var(--color-border-accent)] transition-colors"
+                className="flex h-9 md:h-10 items-center gap-2 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-2.5 md:px-3 hover:border-[var(--color-border-accent)] hover:shadow-sm transition-all"
               >
-                <span className="flex h-6 w-6 items-center justify-center rounded-sm bg-[var(--color-primary)] text-white text-xs font-semibold">
+                <span className="flex h-6 w-6 md:h-7 md:w-7 items-center justify-center rounded-md bg-[var(--color-primary)] text-white text-xs md:text-sm font-semibold">
                   {(me.nickname || me.username || 'U').slice(0, 1).toUpperCase()}
                 </span>
-                <span className="text-[var(--color-text-primary)] text-sm hidden sm:inline max-w-[80px] truncate">
+                <span className="text-[var(--color-text-primary)] text-sm md:text-base font-medium hidden sm:inline max-w-[80px] md:max-w-[100px] truncate">
                   {me.nickname || me.username}
                 </span>
                 <ChevronDown
-                  className={`w-3.5 h-3.5 text-[var(--color-text-muted)] transition-transform ${menuOpen ? 'rotate-180' : ''}`}
+                  className={`w-4 h-4 text-[var(--color-text-muted)] transition-transform ${menuOpen ? 'rotate-180' : ''}`}
                 />
               </button>
 
@@ -136,12 +136,12 @@ export default function Header() {
                 <div
                   role="menu"
                   aria-label="用户菜单"
-                  className="absolute right-0 mt-2 w-44 overflow-hidden rounded-[var(--radius-lg)] card animate-scale-in"
+                  className="absolute right-0 mt-2 w-48 overflow-hidden rounded-[var(--radius-lg)] card animate-scale-in shadow-lg"
                 >
                   <Link
                     href="/account"
                     role="menuitem"
-                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors"
+                    className="flex items-center gap-3 px-4 py-3 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors"
                     onClick={() => setMenuOpen(false)}
                   >
                     <User className="w-4 h-4 shrink-0" />
@@ -151,7 +151,7 @@ export default function Header() {
                   <button
                     role="menuitem"
                     onClick={doLogout}
-                    className="flex items-center gap-3 w-full px-4 py-2.5 text-left text-sm text-[var(--color-primary)] hover:bg-[var(--color-bg-hover)] transition-colors"
+                    className="flex items-center gap-3 w-full px-4 py-3 text-left text-sm text-[var(--color-primary)] hover:bg-[var(--color-bg-hover)] transition-colors"
                   >
                     <LogOut className="w-4 h-4 shrink-0" />
                     退出登录
