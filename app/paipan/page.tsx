@@ -239,25 +239,25 @@ export default function Page() {
                         idx === 2 ? 'bg-amber-50 border-amber-200' : 'bg-stone-50 border-stone-200'
                       }`}
                     >
-                      <div className="text-xs text-stone-500 mb-3">{pillar.label}</div>
+                      <div className="text-xs text-stone-500 mb-3 font-sans">{pillar.label}</div>
                       <div className="flex flex-col items-center gap-2">
                         <div className="flex flex-col items-center">
-                          <span className={`text-3xl font-bold ${ganWuxing ? colorClasses(ganWuxing, 'text') : 'text-stone-800'}`}>
+                          <span className={`text-4xl font-serif font-bold ${ganWuxing ? colorClasses(ganWuxing, 'text') : 'text-stone-800'}`}>
                             {pillar.gan}
                           </span>
                           {ganWuxing && (
-                            <span className={`text-xs mt-1 ${ganWuxing ? colorClasses(ganWuxing, 'text') : 'text-stone-500'}`}>
+                            <span className={`text-xs mt-1 font-sans ${ganWuxing ? colorClasses(ganWuxing, 'text') : 'text-stone-500'}`}>
                               ({ganWuxing})
                             </span>
                           )}
                         </div>
                         <div className="w-8 h-px bg-stone-300" />
                         <div className="flex flex-col items-center">
-                          <span className={`text-3xl font-bold ${zhiWuxing ? colorClasses(zhiWuxing, 'text') : 'text-stone-800'}`}>
+                          <span className={`text-4xl font-serif font-bold ${zhiWuxing ? colorClasses(zhiWuxing, 'text') : 'text-stone-800'}`}>
                             {pillar.zhi}
                           </span>
                           {zhiWuxing && (
-                            <span className={`text-xs mt-1 ${zhiWuxing ? colorClasses(zhiWuxing, 'text') : 'text-stone-500'}`}>
+                            <span className={`text-xs mt-1 font-sans ${zhiWuxing ? colorClasses(zhiWuxing, 'text') : 'text-stone-500'}`}>
                               ({zhiWuxing})
                             </span>
                           )}
@@ -327,7 +327,7 @@ export default function Page() {
                       const wx = getWuxing(gan);
                       return (
                         <td key={idx} className={`px-4 py-3 text-center ${idx === 2 ? 'bg-amber-50/30' : ''}`}>
-                          <span className={`text-lg font-bold ${wx ? colorClasses(wx, 'text') : 'text-stone-800'}`}>
+                          <span className={`text-xl font-serif font-bold ${wx ? colorClasses(wx, 'text') : 'text-stone-800'}`}>
                             {gan}
                           </span>
                         </td>
@@ -347,7 +347,7 @@ export default function Page() {
                       const wx = getWuxing(zhi);
                       return (
                         <td key={idx} className={`px-4 py-3 text-center ${idx === 2 ? 'bg-amber-50/30' : ''}`}>
-                          <span className={`text-lg font-bold ${wx ? colorClasses(wx, 'text') : 'text-stone-800'}`}>
+                          <span className={`text-xl font-serif font-bold ${wx ? colorClasses(wx, 'text') : 'text-stone-800'}`}>
                             {zhi}
                           </span>
                         </td>
@@ -368,7 +368,7 @@ export default function Page() {
                         {cangGanList.map((gan, i) => {
                           const wx = getWuxing(gan);
                           return (
-                            <span key={i} className={wx ? colorClasses(wx, 'text') : 'text-stone-800'}>
+                            <span key={i} className={`font-serif ${wx ? colorClasses(wx, 'text') : 'text-stone-800'}`}>
                               {gan}
                               {wx && `(${wx})`}
                               {i < cangGanList.length - 1 ? ' ' : ''}
@@ -442,14 +442,14 @@ export default function Page() {
                     className="flex flex-col items-center gap-2 rounded-2xl bg-stone-50 border border-stone-200 px-4 py-3 min-w-[90px]"
                   >
                     <div className="flex items-center gap-1">
-                      <span className={`text-lg font-bold ${ganWuxing ? colorClasses(ganWuxing, 'text') : 'text-stone-800'}`}>
+                      <span className={`text-xl font-serif font-bold ${ganWuxing ? colorClasses(ganWuxing, 'text') : 'text-stone-800'}`}>
                         {d.pillar[0]}
                       </span>
-                      <span className={`text-lg font-bold ${zhiWuxing ? colorClasses(zhiWuxing, 'text') : 'text-stone-800'}`}>
+                      <span className={`text-xl font-serif font-bold ${zhiWuxing ? colorClasses(zhiWuxing, 'text') : 'text-stone-800'}`}>
                         {d.pillar[1]}
                       </span>
                     </div>
-                    <div className="text-xs text-stone-500">{d.age}岁起</div>
+                    <div className="text-xs text-stone-500 font-sans">{d.age}岁起</div>
                   </div>
                 );
               })}
