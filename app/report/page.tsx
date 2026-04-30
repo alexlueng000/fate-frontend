@@ -6,7 +6,7 @@ import { useRouteGuard } from '@/app/lib/useRouteGuard';
 import { getAuthToken } from '@/app/lib/auth';
 import { api } from '@/app/lib/api';
 import Markdown from '@/app/components/Markdown';
-import { WuxingBadge, WuxingBar, getWuxing, colorClasses, type Wuxing } from '@/app/components/WuXing';
+import { WuxingBadge, getWuxing, colorClasses } from '@/app/components/WuXing';
 import { Paipan } from '@/app/lib/chat/types';
 import { trySSE } from '@/app/lib/chat/sse';
 import { savePaipanLocal, saveConversation, clearActiveConversationId } from '@/app/lib/chat/storage';
@@ -30,6 +30,7 @@ export default function ReportPage() {
   const [aiReport, setAiReport] = useState<string>('');
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [conversationId, setConversationId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -133,9 +134,9 @@ export default function ReportPage() {
               setAiReport(text);
             },
             (meta) => {
-              const metaObj = meta as any;
-              const cid = metaObj?.conversation_id || metaObj?.meta?.conversation_id || '';
-              if (cid) {
+              const metaObj = meta as Record<string, unknown>;
+              const cid = metaObj?.conversation_id || (metaObj?.meta as Record<string, unknown>)?.conversation_id || '';
+              if (cid && typeof cid === 'string') {
                 convId = cid;
                 setConversationId(cid);
               }
@@ -218,8 +219,8 @@ export default function ReportPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F5EFE6]" ref={scrollRef}>
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div className="min-h-screen bg-gradient-to-b from-[#F5EFE6] via-[#FAF6F1] to-[#F5EFE6]" ref={scrollRef}>
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl sm:text-5xl font-bold text-neutral-800 mb-6 tracking-tight">
@@ -229,32 +230,43 @@ export default function ReportPage() {
             {profile?.display_info || '您的八字命盘详细解读'}
           </p>
           <div className="flex items-center justify-center gap-3">
-            <span className="h-px w-16 bg-neutral-300" />
+            <span className="h-px w-16 bg-gradient-to-r from-transparent to-[#a83232]/30" />
             <span className="text-[10px] tracking-[0.3em] text-neutral-400 font-medium">一盏大师</span>
-            <span className="h-px w-16 bg-neutral-300" />
+            <span className="h-px w-16 bg-gradient-to-l from-transparent to-[#a83232]/30" />
           </div>
         </div>
 
         {/* 四柱展示 */}
         {paipan && (
           <div className="bg-[#FAF6F1] border border-[#E0D5C8] rounded-2xl shadow-sm p-6 mb-8">
-            <h3 className="text-sm font-bold text-[#a83232] mb-4 tracking-wide">四柱命盘</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="flex items-center gap-2 mb-5">
+              <div className="w-1 h-4 bg-[#a83232] rounded-full" />
+              <h3 className="text-sm font-bold text-neutral-800 tracking-wide">四柱命盘</h3>
+            </div>
+            <div className="grid grid-cols-4 gap-3 sm:gap-5">
               {[
-                { label: '年柱', pillar: paipan.four_pillars.year },
-                { label: '月柱', pillar: paipan.four_pillars.month },
-                { label: '日柱', pillar: paipan.four_pillars.day },
-                { label: '时柱', pillar: paipan.four_pillars.hour },
-              ].map(({ label, pillar }) => (
+                { label: '年柱', pillar: paipan.four_pillars.year, sublabel: '祖上・家庭' },
+                { label: '月柱', pillar: paipan.four_pillars.month, sublabel: '父母・早年' },
+                { label: '日柱', pillar: paipan.four_pillars.day, sublabel: '本人・婚姻', highlight: true },
+                { label: '时柱', pillar: paipan.four_pillars.hour, sublabel: '子女・晚年' },
+              ].map(({ label, pillar, sublabel, highlight }) => (
                 <div
                   key={label}
-                  className="bg-white border border-[#E0D5C8] rounded-xl p-4 text-center"
+                  className={`rounded-2xl p-4 sm:p-5 text-center flex flex-col items-center gap-2 ${
+                    highlight
+                      ? 'bg-[#a83232]/5 border-2 border-[#a83232]/30 shadow-sm'
+                      : 'bg-white border border-[#E0D5C8]'
+                  }`}
                 >
-                  <div className="text-xs text-neutral-500 mb-2">{label}</div>
-                  <div className="flex items-center justify-center gap-2">
+                  {highlight && (
+                    <div className="text-[9px] tracking-widest text-[#a83232] font-bold -mb-1">日主</div>
+                  )}
+                  <div className={`text-xs font-medium ${highlight ? 'text-[#a83232]' : 'text-neutral-400'}`}>{label}</div>
+                  <div className="flex flex-col items-center gap-1.5">
                     <WuxingBadge char={pillar?.[0] || ''} />
                     <WuxingBadge char={pillar?.[1] || ''} />
                   </div>
+                  <div className="text-[9px] text-neutral-400 mt-1">{sublabel}</div>
                 </div>
               ))}
             </div>
@@ -268,51 +280,15 @@ export default function ReportPage() {
           </div>
         )}
 
-        {/* 五行平衡 */}
-        <div className="bg-[#FAF6F1] border border-[#E0D5C8] rounded-2xl shadow-sm p-6 mb-8">
-          <h3 className="text-sm font-bold text-[#a83232] mb-4 tracking-wide">五行平衡</h3>
-          <div className="space-y-3">
-            {(['木', '火', '土', '金', '水'] as Wuxing[]).map((el) => (
-              <WuxingBar key={el} name={el} percent={20} />
-            ))}
-          </div>
-          <p className="text-xs text-neutral-500 mt-4">
-            * 五行分布数据待后端接口完善
-          </p>
-        </div>
-
-        {/* AI 分析报告 */}
-        <div className="bg-[#FAF6F1] border border-[#E0D5C8] rounded-2xl shadow-sm p-6 sm:p-8 mb-8">
-          <h3 className="text-sm font-bold text-[#a83232] mb-4 tracking-wide">命理解读</h3>
-          {streaming && !aiReport && (
-            <div className="text-center py-8">
-              <div className="inline-block w-6 h-6 border-2 border-[#a83232] border-t-transparent rounded-full animate-spin mb-2" />
-              <p className="text-sm text-neutral-500">AI 正在分析您的命盘...</p>
-            </div>
-          )}
-          {aiReport && (
-            <div className="prose prose-neutral max-w-none">
-              <Markdown content={aiReport} />
-            </div>
-          )}
-          {streaming && aiReport && (
-            <div className="mt-4 text-xs text-neutral-400 flex items-center gap-2">
-              <div className="w-2 h-2 bg-[#a83232] rounded-full animate-pulse" />
-              正在生成中...
-            </div>
-          )}
-          {error && !aiReport && (
-            <div className="text-center py-8 text-red-600">
-              {error}
-            </div>
-          )}
-        </div>
-
-        {/* 大运展示 */}
+        {/* 十年大运 - 移到详细排盘下方 */}
         {paipan && paipan.dayun && paipan.dayun.length > 0 && (
           <div className="bg-[#FAF6F1] border border-[#E0D5C8] rounded-2xl shadow-sm p-6 mb-8">
-            <h3 className="text-sm font-bold text-[#a83232] mb-4 tracking-wide">十年大运</h3>
-            <div className="flex gap-3 overflow-x-auto pb-2">
+            <div className="flex items-center gap-2 mb-6">
+              <div className="w-1 h-4 bg-[#a83232] rounded-full" />
+              <h3 className="text-sm font-bold text-neutral-800 tracking-wide">十年大运</h3>
+              <span className="text-xs text-neutral-400 ml-2">共 {paipan.dayun.length} 步大运</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
               {paipan.dayun.map((d, i) => {
                 const pillar = d.pillar?.join('') || '';
                 const gan = pillar?.[0] || '';
@@ -320,11 +296,31 @@ export default function ReportPage() {
                 return (
                   <div
                     key={i}
-                    className={`shrink-0 rounded-xl border ${colorClasses(el, 'border')} bg-white px-4 py-3 text-xs text-neutral-900 min-w-[160px] shadow-sm`}
+                    className={`relative rounded-xl border-2 ${colorClasses(el, 'border')} bg-gradient-to-br from-white to-neutral-50 p-4 shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5`}
                   >
-                    <div>起运年龄：<span className={`${colorClasses(el, 'text')} font-semibold`}>{d.age}</span></div>
-                    <div className="mt-0.5">起运年份：<span className={`${colorClasses(el, 'text')} font-semibold`}>{d.start_year}</span></div>
-                    <div className="mt-1">大运：<span className={`font-bold ${colorClasses(el, 'text')}`}>{pillar || '—'}</span></div>
+                    {/* 大运序号标签 */}
+                    <div className="absolute -top-2.5 -left-2.5 w-7 h-7 rounded-full bg-[#a83232] text-white text-xs font-bold flex items-center justify-center shadow-md">
+                      {i + 1}
+                    </div>
+
+                    <div className="space-y-2.5 text-sm pt-1">
+                      <div className="flex justify-between items-center">
+                        <span className="text-neutral-500 text-xs">起运年龄</span>
+                        <span className={`${colorClasses(el, 'text')} font-bold text-base`}>{d.age} 岁</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-neutral-500 text-xs">起运年份</span>
+                        <span className={`${colorClasses(el, 'text')} font-semibold`}>{d.start_year}</span>
+                      </div>
+                      <div className={`pt-2.5 border-t ${colorClasses(el, 'border')} border-opacity-20`}>
+                        <div className="text-center">
+                          <div className="text-[10px] text-neutral-400 mb-1.5 tracking-wider">大运干支</div>
+                          <div className={`text-3xl font-bold ${colorClasses(el, 'text')} tracking-wider`}>
+                            {pillar || '—'}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 );
               })}
@@ -332,16 +328,47 @@ export default function ReportPage() {
           </div>
         )}
 
+        {/* AI 分析报告 */}
+        <div className="bg-[#FAF6F1] border border-[#E0D5C8] rounded-2xl shadow-sm p-6 sm:p-8 mb-8">
+          <div className="flex items-center gap-2 mb-5">
+            <div className="w-1 h-4 bg-[#a83232] rounded-full" />
+            <h3 className="text-sm font-bold text-neutral-800 tracking-wide">命理解读</h3>
+          </div>
+          {streaming && !aiReport && (
+            <div className="text-center py-12">
+              <div className="inline-block w-8 h-8 border-3 border-[#a83232] border-t-transparent rounded-full animate-spin mb-3" />
+              <p className="text-sm text-neutral-500">AI 正在分析您的命盘...</p>
+            </div>
+          )}
+          {aiReport && (
+            <div className="prose prose-neutral max-w-none prose-headings:text-neutral-800 prose-p:text-neutral-700 prose-p:leading-relaxed">
+              <Markdown content={aiReport} />
+            </div>
+          )}
+          {streaming && aiReport && (
+            <div className="mt-6 pt-4 border-t border-neutral-200 text-xs text-neutral-400 flex items-center gap-2">
+              <div className="w-2 h-2 bg-[#a83232] rounded-full animate-pulse" />
+              正在生成中...
+            </div>
+          )}
+          {error && !aiReport && (
+            <div className="text-center py-12 text-red-600">
+              {error}
+            </div>
+          )}
+        </div>
+
         {/* 开始对话按钮 */}
-        <div className="text-center">
+        <div className="text-center pb-8">
           <button
             onClick={handleStartChat}
             disabled={streaming}
-            className="px-8 py-4 rounded-xl bg-[#a83232] hover:bg-[#8c2b2b] active:bg-[#7a2626] text-white font-semibold text-base tracking-wide transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
+            className="group relative px-10 py-4 rounded-2xl bg-gradient-to-r from-[#a83232] to-[#8c2b2b] hover:from-[#8c2b2b] hover:to-[#7a2626] active:scale-95 text-white font-semibold text-base tracking-wide transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
           >
-            {streaming ? '分析中...' : '开始对话'}
+            <span className="relative z-10">{streaming ? '分析中...' : '开始对话'}</span>
+            <div className="absolute inset-0 rounded-2xl bg-white opacity-0 group-hover:opacity-10 transition-opacity" />
           </button>
-          <p className="text-xs text-neutral-400 mt-3">
+          <p className="text-xs text-neutral-400 mt-4 tracking-wide">
             与 AI 大师深入探讨您的命理疑问
           </p>
         </div>
