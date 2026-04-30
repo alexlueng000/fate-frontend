@@ -537,6 +537,50 @@ body {
   border: 1px solid rgba(14, 165, 233, 0.25);
 }
 
+/* ==================== Landing Page Additions ==================== */
+
+/* 功能主题色 */
+:root {
+  --color-feature-bazi: var(--color-primary);
+  --color-feature-xinji: var(--color-mist-deep);
+  --color-feature-liuyao: var(--color-gold-dark);
+}
+
+@keyframes slide-in-left {
+  from { opacity: 0; transform: translateX(-30px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(30px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.animate-slide-in-left {
+  animation: slide-in-left 0.6s ease-out forwards;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.6s ease-out forwards;
+}
+
+.feature-card {
+  background: white;
+  border-radius: 1.5rem;
+  padding: 2rem;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--color-border);
+  transition: all 0.3s ease;
+}
+
+.feature-card:hover {
+  box-shadow: 0 12px 40px rgba(60, 40, 20, 0.14);
+}
+
+.feature-card-left-accent {
+  border-left: 4px solid;
+}
+
 /* ==================== Responsive Utilities ==================== */
 @media (max-width: 768px) {
   :root {

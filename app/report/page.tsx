@@ -10,6 +10,7 @@ import { WuxingBadge, WuxingBar, getWuxing, colorClasses, type Wuxing } from '@/
 import { Paipan } from '@/app/lib/chat/types';
 import { trySSE } from '@/app/lib/chat/sse';
 import { savePaipanLocal, saveConversation, clearActiveConversationId } from '@/app/lib/chat/storage';
+import { DetailedPaipanTable } from '@/app/components/chat/DetailedPaipanTable';
 
 interface ProfileBrief {
   id: number;
@@ -257,6 +258,13 @@ export default function ReportPage() {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* 详细排盘 */}
+        {paipan && (
+          <div className="mb-8">
+            <DetailedPaipanTable paipan={paipan} />
           </div>
         )}
 
