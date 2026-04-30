@@ -14,11 +14,9 @@ interface PricingPlan {
   description: string;
   price: number;
   originalPrice?: number;
-  unit: string;
-  quota: number;
   features: string[];
   buttonText: string;
-  buttonStyle: "outline" | "primary" | "secondary";
+  buttonStyle: "outline" | "primary";
   popular?: boolean;
 }
 
@@ -39,16 +37,17 @@ interface PaymentOut {
   status: string;
 }
 
+// 组合套餐
 const plans: PricingPlan[] = [
   {
-    id: "chat_5",
-    name: "体验包",
-    description: "适合新用户体验命理解读",
-    price: 9.9,
-    unit: "5次",
-    quota: 5,
+    id: "basic_combo",
+    name: "基础套餐",
+    description: "适合新用户体验完整功能",
+    price: 99,
     features: [
-      "5次完整八字解读",
+      "10次八字解读",
+      "30天心镜灯情绪追踪",
+      "3次六爻问卦",
       "无限续聊追问",
       "AI智能分析",
       "专业命理知识库",
@@ -58,66 +57,26 @@ const plans: PricingPlan[] = [
     buttonStyle: "outline",
   },
   {
-    id: "chat_20",
-    name: "标准包",
+    id: "premium_combo",
+    name: "高级套餐",
     badge: "最受欢迎",
-    description: "适合日常使用，深度探索命理",
-    price: 29.9,
-    originalPrice: 39.6,
-    unit: "20次",
-    quota: 20,
+    description: "适合深度用户，全面探索命理",
+    price: 299,
+    originalPrice: 398,
     features: [
-      "20次完整八字解读",
+      "50次八字解读",
+      "180天心镜灯情绪追踪",
+      "15次六爻问卦",
       "无限续聊追问",
       "AI智能分析",
       "专业命理知识库",
       "永久有效",
-      "平均每次仅¥1.5",
+      "超值优惠25%",
+      "赠送专属客服",
     ],
     buttonText: "立即购买",
     buttonStyle: "primary",
     popular: true,
-  },
-  {
-    id: "chat_50",
-    name: "超值包",
-    description: "适合深度用户，全面了解命运",
-    price: 59.9,
-    originalPrice: 99,
-    unit: "50次",
-    quota: 50,
-    features: [
-      "50次完整八字解读",
-      "无限续聊追问",
-      "AI智能分析",
-      "专业命理知识库",
-      "永久有效",
-      "平均每次仅¥1.2",
-      "超值优惠40%",
-    ],
-    buttonText: "立即购买",
-    buttonStyle: "outline",
-  },
-  {
-    id: "chat_200",
-    name: "年度包",
-    description: "适合长期用户，全年无忧",
-    price: 199,
-    originalPrice: 396,
-    unit: "200次",
-    quota: 200,
-    features: [
-      "200次完整八字解读",
-      "无限续聊追问",
-      "AI智能分析",
-      "专业命理知识库",
-      "永久有效",
-      "平均每次仅¥1.0",
-      "超值优惠50%",
-      "赠送专属客服",
-    ],
-    buttonText: "立即购买",
-    buttonStyle: "secondary",
   },
 ];
 
@@ -230,27 +189,39 @@ export default function PricingPage() {
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-50 to-white">
       <div className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-28 pb-16">
         {/* 标题 */}
-        <div className="text-center mb-4">
+        <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-slate-900 mb-4">
             选择适合你的套餐
           </h1>
-          <p className="text-lg text-slate-600">
-            开始你的命理探索之旅，
-            <span className="font-semibold text-slate-900">
-              新用户赠送 3 次免费体验
-            </span>
-            ，无需信用卡
+          <p className="text-lg text-slate-600 mb-6">
+            三大功能组合，一站式命理探索体验
           </p>
+          <div className="inline-flex items-center gap-6 text-sm text-slate-600 bg-white rounded-2xl px-8 py-4 shadow-sm">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">☰</span>
+              <span>八字解读</span>
+            </div>
+            <div className="w-px h-6 bg-slate-200"></div>
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">🪷</span>
+              <span>心镜灯</span>
+            </div>
+            <div className="w-px h-6 bg-slate-200"></div>
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">⚊</span>
+              <span>六爻问卦</span>
+            </div>
+          </div>
         </div>
 
         {/* 套餐卡片 */}
-        <div className="mt-16 grid grid-cols-1 gap-6 lg:grid-cols-4 lg:gap-4">
+        <div className="mt-16 grid grid-cols-1 gap-8 lg:grid-cols-2 max-w-5xl mx-auto">
           {plans.map((plan) => (
             <div
               key={plan.id}
-              className={`relative rounded-2xl border-2 bg-white p-6 shadow-sm transition-all hover:shadow-lg ${
+              className={`relative rounded-2xl border-2 bg-white p-8 shadow-sm transition-all hover:shadow-xl ${
                 plan.popular
-                  ? "border-orange-500 scale-105 lg:scale-110"
+                  ? "border-orange-500 scale-105"
                   : "border-slate-200"
               }`}
             >
@@ -262,20 +233,19 @@ export default function PricingPage() {
                 </div>
               )}
 
-              <div className="mb-4">
-                <h3 className="text-xl font-bold text-slate-900">{plan.name}</h3>
+              <div className="mb-6">
+                <h3 className="text-2xl font-bold text-slate-900">{plan.name}</h3>
                 <p className="mt-2 text-sm text-slate-600">{plan.description}</p>
               </div>
 
-              <div className="mb-6">
+              <div className="mb-8">
                 <div className="flex items-baseline">
-                  <span className="text-4xl font-bold text-slate-900">
+                  <span className="text-5xl font-bold text-slate-900">
                     ¥{plan.price}
                   </span>
-                  <span className="ml-2 text-sm text-slate-600">/{plan.unit}</span>
                 </div>
                 {plan.originalPrice && (
-                  <div className="mt-1">
+                  <div className="mt-2">
                     <span className="text-sm text-slate-400 line-through">
                       原价 ¥{plan.originalPrice}
                     </span>
@@ -286,21 +256,19 @@ export default function PricingPage() {
               <button
                 onClick={() => openModal(plan)}
                 disabled={loading === plan.id}
-                className={`w-full rounded-lg px-4 py-3 text-sm font-semibold transition-colors ${
+                className={`w-full rounded-lg px-6 py-4 text-base font-semibold transition-colors mb-8 ${
                   plan.buttonStyle === "primary"
                     ? "bg-orange-500 text-white hover:bg-orange-600 disabled:bg-orange-300"
-                    : plan.buttonStyle === "secondary"
-                    ? "bg-slate-900 text-white hover:bg-slate-800 disabled:bg-slate-400"
                     : "border-2 border-slate-900 text-slate-900 hover:bg-slate-50 disabled:border-slate-300 disabled:text-slate-400"
                 }`}
               >
                 {loading === plan.id ? "处理中..." : plan.buttonText}
               </button>
 
-              <ul className="mt-6 space-y-3">
+              <ul className="space-y-3">
                 {plan.features.map((feature, index) => (
                   <li key={index} className="flex items-start">
-                    <Check className="h-5 w-5 flex-shrink-0 text-orange-500 mr-3" />
+                    <Check className="h-5 w-5 flex-shrink-0 text-orange-500 mr-3 mt-0.5" />
                     <span className="text-sm text-slate-700">{feature}</span>
                   </li>
                 ))}
@@ -317,11 +285,10 @@ export default function PricingPage() {
           <div className="grid gap-6 md:grid-cols-2 max-w-4xl mx-auto">
             <div>
               <h3 className="font-semibold text-slate-900 mb-2">
-                什么是"次数"？
+                套餐包含哪些功能？
               </h3>
               <p className="text-sm text-slate-600">
-                每次开始新的八字解读消耗 1
-                次，但解读后的追问和续聊不消耗次数，可以无限深入探讨。
+                每个套餐都包含八字解读、心镜灯情绪追踪和六爻问卦三大功能，让你全方位探索命理。
               </p>
             </div>
             <div>
@@ -329,7 +296,7 @@ export default function PricingPage() {
                 次数会过期吗？
               </h3>
               <p className="text-sm text-slate-600">
-                不会！购买的次数永久有效，随时可以使用，没有时间限制。
+                不会！购买的次数永久有效，随时可以使用，没有时间限制。心镜灯的天数从激活时开始计算。
               </p>
             </div>
             <div>
@@ -374,7 +341,7 @@ export default function PricingPage() {
               确认购买
             </h2>
             <p className="text-sm text-slate-500 mb-5">
-              {modalPlan.name} · {modalPlan.unit} · ¥{modalPlan.price}
+              {modalPlan.name} · ¥{modalPlan.price}
             </p>
 
             {/* 支付方式选择 */}

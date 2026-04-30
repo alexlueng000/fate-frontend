@@ -23,25 +23,25 @@ export function DisclaimerModal({ open, onAccept }: DisclaimerModalProps) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
       {/* 背景遮罩 - 不可点击关闭 */}
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
 
       {/* 弹窗内容 */}
-      <div className="card relative w-full max-w-2xl animate-scale-in p-6 sm:p-8">
+      <div className="card relative w-full max-w-2xl max-h-[90vh] sm:max-h-[85vh] animate-scale-in flex flex-col">
         {/* 标题 + 图标 */}
-        <div className="flex items-center gap-3 mb-6">
-          <AlertTriangle className="w-6 h-6 text-[var(--color-primary)]" />
-          <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">
+        <div className="flex items-center gap-3 mb-4 sm:mb-6 px-4 sm:px-8 pt-4 sm:pt-8 flex-shrink-0">
+          <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 text-[var(--color-primary)]" />
+          <h2 className="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)]">
             服务声明
           </h2>
         </div>
 
-        {/* 免责声明内容（200-300字） */}
-        <div className="space-y-4 text-[var(--color-text-secondary)] leading-relaxed max-h-[60vh] overflow-y-auto">
+        {/* 免责声明内容（200-300字） - 可滚动区域 */}
+        <div className="space-y-3 sm:space-y-4 text-sm sm:text-base text-[var(--color-text-secondary)] leading-relaxed overflow-y-auto px-4 sm:px-8 flex-1 min-h-0">
           <p>欢迎使用易凡文化！在使用本服务前，请仔细阅读以下声明：</p>
 
-          <div className="space-y-3">
+          <div className="space-y-2 sm:space-y-3">
             <p><strong>1. 服务性质</strong></p>
             <p>本平台提供的八字命理分析基于传统理论与AI技术，仅供娱乐和参考，不构成任何专业建议。</p>
 
@@ -57,10 +57,10 @@ export function DisclaimerModal({ open, onAccept }: DisclaimerModalProps) {
         </div>
 
         {/* 同意按钮 */}
-        <div className="mt-8 flex flex-col gap-3">
+        <div className="mt-4 sm:mt-8 flex flex-col gap-2 sm:gap-3 px-4 sm:px-8 pb-4 sm:pb-8 flex-shrink-0">
           <button
             onClick={onAccept}
-            className="w-full btn btn-primary py-4 text-lg font-semibold"
+            className="w-full btn btn-primary py-3 sm:py-4 text-base sm:text-lg font-semibold"
           >
             我已阅读并同意
           </button>

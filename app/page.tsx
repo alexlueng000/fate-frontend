@@ -410,50 +410,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ========== 用户评价 SECTION ========== */}
-      <section className="py-24 px-6 bg-white">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2
-              className="text-4xl font-bold mb-4"
-              style={{ fontFamily: 'var(--font-display)' }}
-            >
-              <span className="text-[var(--color-text-primary)]">用户</span>
-              <span className="text-gradient-primary">真实评价</span>
-            </h2>
-            <div className="flex items-center justify-center gap-2 text-[var(--color-text-muted)]">
-              <div className="flex">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <Star key={i} className="w-5 h-5 text-[var(--color-gold)] fill-[var(--color-gold)]" />
-                ))}
-              </div>
-              <span>基于 2,000+ 条真实评价</span>
-            </div>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            <TestimonialCard
-              content="作为程序员，本来对这类东西持怀疑态度。但八字分析确实很有逻辑，不是模糊的套话，而是具体到我的情况。心镜灯的情绪追踪也很实用，帮我发现了自己的压力模式。"
-              author="李先生"
-              role="软件工程师"
-              rating={5}
-            />
-            <TestimonialCard
-              content="在考虑是否跳槽时用了易凡文化，八字分析让我看到了自己的优势和当前阶段的能量状态。最终决定还是自己做的，但多了一份信心和清晰。"
-              author="张女士"
-              role="产品经理"
-              rating={5}
-            />
-            <TestimonialCard
-              content="给我妈用了一下，她说比之前找的算命先生讲得还清楚。关键是随时可以问问题，不用担心被忽悠。现在她每天都用心镜灯记录情绪。"
-              author="王同学"
-              role="大学生"
-              rating={4}
-            />
-          </div>
-        </div>
-      </section>
-
       {/* ========== 最终 CTA SECTION ========== */}
       <section className="py-24 px-6 bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-dark)] relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
@@ -599,41 +555,6 @@ function StatCard({ number, suffix, label }: { number: number; suffix: string; l
         {suffix}
       </div>
       <div className="text-[var(--color-text-muted)]">{label}</div>
-    </div>
-  );
-}
-
-function TestimonialCard({
-  content,
-  author,
-  role,
-  rating,
-}: {
-  content: string;
-  author: string;
-  role: string;
-  rating: number;
-}) {
-  return (
-    <div className="p-6 rounded-2xl bg-[var(--color-bg-deep)] hover:bg-white hover:shadow-xl transition-all">
-      <div className="flex gap-1 mb-4">
-        {[...Array(5)].map((_, i) => (
-          <Star
-            key={i}
-            className={`w-4 h-4 ${i < rating ? 'text-[var(--color-gold)] fill-[var(--color-gold)]' : 'text-gray-200'}`}
-          />
-        ))}
-      </div>
-      <p className="text-[var(--color-text-secondary)] mb-6 leading-relaxed">"{content}"</p>
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-gold)] flex items-center justify-center text-white font-medium">
-          {author[0]}
-        </div>
-        <div>
-          <div className="font-medium text-[var(--color-text-primary)]">{author}</div>
-          <div className="text-sm text-[var(--color-text-muted)]">{role}</div>
-        </div>
-      </div>
     </div>
   );
 }
