@@ -229,11 +229,6 @@ export default function ReportPage() {
           <p className="text-sm sm:text-base text-neutral-500 mb-6">
             {profile?.display_info || '您的八字命盘详细解读'}
           </p>
-          <div className="flex items-center justify-center gap-3">
-            <span className="h-px w-16 bg-gradient-to-r from-transparent to-[#a83232]/30" />
-            <span className="text-[10px] tracking-[0.3em] text-neutral-400 font-medium">一盏大师</span>
-            <span className="h-px w-16 bg-gradient-to-l from-transparent to-[#a83232]/30" />
-          </div>
         </div>
 
         {/* 四柱展示 */}

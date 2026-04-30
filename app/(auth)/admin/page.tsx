@@ -78,7 +78,7 @@ export default function AdminPage() {
     {
       href: '/admin/config/system_prompt',
       icon: <MessageSquare className="w-6 h-6" />,
-      title: '系统提示词',
+      title: '对话页提示词',
       description: '编辑对话 AI 使用的系统提示词配置',
       color: 'var(--color-primary)',
     },

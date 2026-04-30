@@ -3,7 +3,11 @@ import { getShiShen } from './shishen';
 import { getChangSheng } from './changsheng';
 import { getNaYin } from './nayin';
 import { getXunKong } from './xunkong';
+import { getDizhiRelations, getTianganRelations } from './dizhi_relations';
+import type { DizhiRelations, TianganRelations } from './dizhi_relations';
 import type { Paipan } from '@/app/lib/chat/types';
+
+export type { DizhiRelations, TianganRelations };
 
 export interface DetailedPaipan extends Paipan {
   cang_gan: {
@@ -37,6 +41,8 @@ export interface DetailedPaipan extends Paipan {
     day: string;
     hour: string;
   };
+  dizhi_relations: DizhiRelations;
+  tiangan_relations: TianganRelations;
 }
 
 export function calculateDetailedPaipan(paipan: Paipan): DetailedPaipan {
@@ -83,5 +89,19 @@ export function calculateDetailedPaipan(paipan: Paipan): DetailedPaipan {
       day: getNaYin(four_pillars.day[0], four_pillars.day[1]),
       hour: getNaYin(four_pillars.hour[0], four_pillars.hour[1]),
     },
+    // 地支关系
+    dizhi_relations: getDizhiRelations([
+      four_pillars.year[1],
+      four_pillars.month[1],
+      four_pillars.day[1],
+      four_pillars.hour[1],
+    ]),
+    // 天干关系
+    tiangan_relations: getTianganRelations([
+      four_pillars.year[0],
+      four_pillars.month[0],
+      four_pillars.day[0],
+      four_pillars.hour[0],
+    ]),
   };
 }

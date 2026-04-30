@@ -8,9 +8,58 @@ interface DetailedPaipanTableProps {
   paipan: Paipan;
 }
 
+const getWuxingColor = (char: string) => {
+  const wuxing = getWuxing(char);
+  if (!wuxing) return 'text-[var(--color-text-primary)]';
+  const colorMap: Record<string, string> = {
+    木: 'text-emerald-600',
+    火: 'text-red-600',
+    土: 'text-amber-600',
+    金: 'text-yellow-600',
+    水: 'text-sky-600',
+  };
+  return colorMap[wuxing];
+};
+
+// 关系标签颜色
+const RELATION_COLORS: Record<string, string> = {
+  冲: 'bg-red-50 text-red-700 border-red-200',
+  合: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  刑: 'bg-orange-50 text-orange-700 border-orange-200',
+  害: 'bg-purple-50 text-purple-700 border-purple-200',
+  三合: 'bg-blue-50 text-blue-700 border-blue-200',
+  三会: 'bg-cyan-50 text-cyan-700 border-cyan-200',
+  半合: 'bg-blue-50 text-blue-600 border-blue-100',
+  天干合: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  天干冲: 'bg-red-50 text-red-700 border-red-200',
+};
+
+function getRelationColor(label: string): string {
+  if (label.includes('三会')) return RELATION_COLORS['三会'];
+  if (label.includes('三合') && !label.includes('半')) return RELATION_COLORS['三合'];
+  if (label.includes('半合')) return RELATION_COLORS['半合'];
+  if (label.includes('冲') && !label.includes('天干')) return RELATION_COLORS['冲'];
+  if (label.includes('合') && !label.includes('半') && !label.includes('三')) return RELATION_COLORS['合'];
+  if (label.includes('刑')) return RELATION_COLORS['刑'];
+  if (label.includes('害')) return RELATION_COLORS['害'];
+  return 'bg-neutral-50 text-neutral-600 border-neutral-200';
+}
+
+function RelationTag({ label }: { label: string }) {
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-md border text-xs font-medium ${getRelationColor(label)}`}>
+      {label}
+    </span>
+  );
+}
+
 export function DetailedPaipanTable({ paipan }: DetailedPaipanTableProps) {
   const detailed = calculateDetailedPaipan(paipan);
-  const { four_pillars, cang_gan, shi_shen_gan, shi_shen_zhi, chang_sheng, xun_kong, na_yin } = detailed;
+  const {
+    four_pillars, cang_gan, shi_shen_gan, shi_shen_zhi,
+    chang_sheng, xun_kong, na_yin,
+    dizhi_relations, tiangan_relations,
+  } = detailed;
 
   const pillars = [
     { name: '年柱', gan: four_pillars.year[0], zhi: four_pillars.year[1] },
@@ -19,18 +68,26 @@ export function DetailedPaipanTable({ paipan }: DetailedPaipanTableProps) {
     { name: '时柱', gan: four_pillars.hour[0], zhi: four_pillars.hour[1] },
   ];
 
-  const getWuxingColor = (char: string) => {
-    const wuxing = getWuxing(char);
-    if (!wuxing) return 'text-[var(--color-text-primary)]';
-    const colorMap = {
-      木: 'text-emerald-600',
-      火: 'text-red-600',
-      土: 'text-amber-600',
-      金: 'text-yellow-600',
-      水: 'text-sky-600',
-    };
-    return colorMap[wuxing];
-  };
+  const hasRelations =
+    dizhi_relations.chong.length > 0 ||
+    dizhi_relations.he.length > 0 ||
+    dizhi_relations.sanhe.length > 0 ||
+    dizhi_relations.sanhui.length > 0 ||
+    dizhi_relations.xing.length > 0 ||
+    dizhi_relations.hai.length > 0 ||
+    tiangan_relations.he.length > 0 ||
+    tiangan_relations.chong.length > 0;
+
+  const allRelations = [
+    ...tiangan_relations.he.map(t => t + '（天干）'),
+    ...tiangan_relations.chong.map(t => t + '（天干）'),
+    ...dizhi_relations.chong,
+    ...dizhi_relations.he,
+    ...dizhi_relations.sanhe,
+    ...dizhi_relations.sanhui,
+    ...dizhi_relations.xing,
+    ...dizhi_relations.hai,
+  ];
 
   return (
     <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] shadow-sm overflow-hidden">
@@ -38,7 +95,7 @@ export function DetailedPaipanTable({ paipan }: DetailedPaipanTableProps) {
       <div className="h-0.5 bg-gradient-to-r from-transparent via-[var(--color-gold)] to-transparent opacity-60" />
 
       {/* 标题栏 */}
-      <div className="flex items-center justify-between px-4 pt-3 pb-2">
+      <div className="px-4 pt-3 pb-2">
         <h3 className="text-sm font-semibold text-[var(--color-text-primary)] tracking-wide">
           详细排盘
         </h3>
@@ -92,34 +149,15 @@ export function DetailedPaipanTable({ paipan }: DetailedPaipanTableProps) {
             {/* 藏干 */}
             <tr className="border-b border-[var(--color-border-subtle)]">
               <td className="px-3 py-2 text-xs font-medium text-[var(--color-text-secondary)]">藏干</td>
-              <td className={`px-3 py-2 text-center text-xs`}>
-                {cang_gan.year.map((gan, i) => (
-                  <span key={i} className={getWuxingColor(gan)}>
-                    {gan}{getWuxing(gan) && `(${getWuxing(gan)})`}{i < cang_gan.year.length - 1 ? ' ' : ''}
-                  </span>
-                ))}
-              </td>
-              <td className={`px-3 py-2 text-center text-xs`}>
-                {cang_gan.month.map((gan, i) => (
-                  <span key={i} className={getWuxingColor(gan)}>
-                    {gan}{getWuxing(gan) && `(${getWuxing(gan)})`}{i < cang_gan.month.length - 1 ? ' ' : ''}
-                  </span>
-                ))}
-              </td>
-              <td className={`px-3 py-2 text-center text-xs bg-amber-50/30`}>
-                {cang_gan.day.map((gan, i) => (
-                  <span key={i} className={getWuxingColor(gan)}>
-                    {gan}{getWuxing(gan) && `(${getWuxing(gan)})`}{i < cang_gan.day.length - 1 ? ' ' : ''}
-                  </span>
-                ))}
-              </td>
-              <td className={`px-3 py-2 text-center text-xs`}>
-                {cang_gan.hour.map((gan, i) => (
-                  <span key={i} className={getWuxingColor(gan)}>
-                    {gan}{getWuxing(gan) && `(${getWuxing(gan)})`}{i < cang_gan.hour.length - 1 ? ' ' : ''}
-                  </span>
-                ))}
-              </td>
+              {[cang_gan.year, cang_gan.month, cang_gan.day, cang_gan.hour].map((cg, idx) => (
+                <td key={idx} className={`px-3 py-2 text-center text-xs ${idx === 2 ? 'bg-amber-50/30' : ''}`}>
+                  {cg.map((gan, i) => (
+                    <span key={i} className={getWuxingColor(gan)}>
+                      {gan}{getWuxing(gan) && `(${getWuxing(gan)})`}{i < cg.length - 1 ? ' ' : ''}
+                    </span>
+                  ))}
+                </td>
+              ))}
             </tr>
 
             {/* 十神（天干）*/}
@@ -168,6 +206,20 @@ export function DetailedPaipanTable({ paipan }: DetailedPaipanTableProps) {
           </tbody>
         </table>
       </div>
+
+      {/* 干支关系区块 */}
+      {hasRelations && (
+        <div className="border-t border-[var(--color-border)] px-4 py-4">
+          <div className="text-xs font-semibold text-[var(--color-text-primary)] mb-3 tracking-wide">
+            干支关系
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {allRelations.map((item, i) => (
+              <RelationTag key={i} label={item} />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
