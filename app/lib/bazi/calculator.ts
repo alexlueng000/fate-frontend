@@ -73,12 +73,12 @@ export function calculateDetailedPaipan(paipan: Paipan): DetailedPaipan {
       day: getShiShen(dayGan, getCangGan(four_pillars.day[1])[0] || ''),
       hour: getShiShen(dayGan, getCangGan(four_pillars.hour[1])[0] || ''),
     },
-    // 十二长生
+    // 十二长生（各柱用自己的天干查本柱地支）
     chang_sheng: {
-      year: getChangSheng(dayGan, four_pillars.year[1]),
-      month: getChangSheng(dayGan, four_pillars.month[1]),
-      day: getChangSheng(dayGan, four_pillars.day[1]),
-      hour: getChangSheng(dayGan, four_pillars.hour[1]),
+      year: getChangSheng(four_pillars.year[0], four_pillars.year[1]),
+      month: getChangSheng(four_pillars.month[0], four_pillars.month[1]),
+      day: getChangSheng(four_pillars.day[0], four_pillars.day[1]),
+      hour: getChangSheng(four_pillars.hour[0], four_pillars.hour[1]),
     },
     // 空亡
     xun_kong: getXunKong(dayGan, dayZhi),
