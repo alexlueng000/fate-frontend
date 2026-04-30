@@ -29,7 +29,6 @@ export default function Page() {
   const [error, setError] = useState<string | null>(null);
   const [birthdayAdjusted, setBirthdayAdjusted] = useState<string | null>(null);
   const [mingpan, setMingpan] = useState<Mingpan | null>(null);
-  const [viewMode, setViewMode] = useState<'simple' | 'detailed'>('simple');
 
   // 提交到后端进行排盘
   const onSubmit = async () => {
@@ -210,219 +209,143 @@ export default function Page() {
         {/* ===== 四柱命盘卡片 ===== */}
         <div className="rounded-3xl bg-white/90 shadow-lg ring-1 ring-black/5">
           <div className="flex items-center justify-between px-6 py-5 border-b border-stone-100">
-            <h2 className="text-lg font-semibold text-[#a83232]">四柱命盘</h2>
-            <div className="flex items-center gap-3">
-              {mingpan && (
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setViewMode('simple')}
-                    className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
-                      viewMode === 'simple'
-                        ? 'bg-stone-100 text-stone-800 font-medium'
-                        : 'text-stone-600 hover:bg-stone-50'
-                    }`}
-                  >
-                    简洁视图
-                  </button>
-                  <button
-                    onClick={() => setViewMode('detailed')}
-                    className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
-                      viewMode === 'detailed'
-                        ? 'bg-[#a83232] text-white font-medium'
-                        : 'text-stone-600 hover:bg-stone-50'
-                    }`}
-                  >
-                    详细视图
-                  </button>
-                </div>
-              )}
-              <button
-                type="button"
-                onClick={goChat}
-                disabled={!mingpan}
-                className="rounded-full bg-[#a83232] px-4 py-2 text-sm font-medium text-white hover:bg-[#8c2b2b] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                title={!mingpan ? '请先提交计算' : '跳转到对话页'}
-              >
-                💬 咨询解读
-              </button>
-            </div>
+            <h2 className="text-lg font-semibold text-[#a83232]">详细排盘</h2>
+            <button
+              type="button"
+              onClick={goChat}
+              disabled={!mingpan}
+              className="rounded-full bg-[#a83232] px-4 py-2 text-sm font-medium text-white hover:bg-[#8c2b2b] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              title={!mingpan ? '请先提交计算' : '跳转到对话页'}
+            >
+              💬 咨询解读
+            </button>
           </div>
 
           <div className="px-6 py-6">
-            {mingpan ? (
-              viewMode === 'simple' ? (
-                // 简洁视图 - 四柱卡片
-                <div className="grid grid-cols-4 gap-4">
-                  {[
-                    { label: '年柱', gan: mingpan.four_pillars.year[0], zhi: mingpan.four_pillars.year[1] },
-                    { label: '月柱', gan: mingpan.four_pillars.month[0], zhi: mingpan.four_pillars.month[1] },
-                    { label: '日柱', gan: mingpan.four_pillars.day[0], zhi: mingpan.four_pillars.day[1] },
-                    { label: '时柱', gan: mingpan.four_pillars.hour[0], zhi: mingpan.four_pillars.hour[1] },
-                  ].map((pillar, idx) => {
-                    const ganWuxing = getWuxing(pillar.gan);
-                    const zhiWuxing = getWuxing(pillar.zhi);
-                    return (
-                      <div
-                        key={idx}
-                        className={`flex flex-col items-center p-4 rounded-2xl border-2 ${
-                          idx === 2 ? 'bg-amber-50 border-amber-200' : 'bg-stone-50 border-stone-200'
-                        }`}
-                      >
-                        <div className="text-xs text-stone-500 mb-3 font-sans">{pillar.label}</div>
-                        <div className="flex flex-col items-center gap-2">
-                          <div className="flex flex-col items-center">
-                            <span className={`text-4xl font-serif font-bold ${ganWuxing ? colorClasses(ganWuxing, 'text') : 'text-stone-800'}`}>
-                              {pillar.gan}
+            {mingpan && detailedPaipan ? (
+              // 详细视图 - 详细排盘表
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-stone-200 bg-stone-50">
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-stone-600">项目</th>
+                      <th className="px-4 py-3 text-center text-xs font-semibold text-stone-600">年柱</th>
+                      <th className="px-4 py-3 text-center text-xs font-semibold text-stone-600">月柱</th>
+                      <th className="px-4 py-3 text-center text-xs font-semibold text-amber-700 bg-amber-50">日柱</th>
+                      <th className="px-4 py-3 text-center text-xs font-semibold text-stone-600">时柱</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {/* 天干 */}
+                    <tr className="border-b border-stone-100">
+                      <td className="px-4 py-3 text-xs font-medium text-stone-700">天干</td>
+                      {[
+                        detailedPaipan.four_pillars.year[0],
+                        detailedPaipan.four_pillars.month[0],
+                        detailedPaipan.four_pillars.day[0],
+                        detailedPaipan.four_pillars.hour[0],
+                      ].map((gan, idx) => {
+                        const wx = getWuxing(gan);
+                        return (
+                          <td key={idx} className={`px-4 py-3 text-center ${idx === 2 ? 'bg-amber-50/30' : ''}`}>
+                            <span className={`text-xl font-serif font-bold ${wx ? colorClasses(wx, 'text') : 'text-stone-800'}`}>
+                              {gan}
                             </span>
-                            {ganWuxing && (
-                              <span className={`text-xs mt-1 font-sans ${ganWuxing ? colorClasses(ganWuxing, 'text') : 'text-stone-500'}`}>
-                                ({ganWuxing})
-                              </span>
-                            )}
-                          </div>
-                          <div className="w-8 h-px bg-stone-300" />
-                          <div className="flex flex-col items-center">
-                            <span className={`text-4xl font-serif font-bold ${zhiWuxing ? colorClasses(zhiWuxing, 'text') : 'text-stone-800'}`}>
-                              {pillar.zhi}
+                          </td>
+                        );
+                      })}
+                    </tr>
+
+                    {/* 地支 */}
+                    <tr className="border-b border-stone-100">
+                      <td className="px-4 py-3 text-xs font-medium text-stone-700">地支</td>
+                      {[
+                        detailedPaipan.four_pillars.year[1],
+                        detailedPaipan.four_pillars.month[1],
+                        detailedPaipan.four_pillars.day[1],
+                        detailedPaipan.four_pillars.hour[1],
+                      ].map((zhi, idx) => {
+                        const wx = getWuxing(zhi);
+                        return (
+                          <td key={idx} className={`px-4 py-3 text-center ${idx === 2 ? 'bg-amber-50/30' : ''}`}>
+                            <span className={`text-xl font-serif font-bold ${wx ? colorClasses(wx, 'text') : 'text-stone-800'}`}>
+                              {zhi}
                             </span>
-                            {zhiWuxing && (
-                              <span className={`text-xs mt-1 font-sans ${zhiWuxing ? colorClasses(zhiWuxing, 'text') : 'text-stone-500'}`}>
-                                ({zhiWuxing})
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                // 详细视图 - 详细排盘表
-                detailedPaipan && (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-stone-200 bg-stone-50">
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-stone-600">项目</th>
-                          <th className="px-4 py-3 text-center text-xs font-semibold text-stone-600">年柱</th>
-                          <th className="px-4 py-3 text-center text-xs font-semibold text-stone-600">月柱</th>
-                          <th className="px-4 py-3 text-center text-xs font-semibold text-amber-700 bg-amber-50">日柱</th>
-                          <th className="px-4 py-3 text-center text-xs font-semibold text-stone-600">时柱</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {/* 天干 */}
-                        <tr className="border-b border-stone-100">
-                          <td className="px-4 py-3 text-xs font-medium text-stone-700">天干</td>
-                          {[
-                            detailedPaipan.four_pillars.year[0],
-                            detailedPaipan.four_pillars.month[0],
-                            detailedPaipan.four_pillars.day[0],
-                            detailedPaipan.four_pillars.hour[0],
-                          ].map((gan, idx) => {
+                          </td>
+                        );
+                      })}
+                    </tr>
+
+                    {/* 藏干 */}
+                    <tr className="border-b border-stone-100">
+                      <td className="px-4 py-3 text-xs font-medium text-stone-700">藏干</td>
+                      {[
+                        detailedPaipan.cang_gan.year,
+                        detailedPaipan.cang_gan.month,
+                        detailedPaipan.cang_gan.day,
+                        detailedPaipan.cang_gan.hour,
+                      ].map((cangGanList, idx) => (
+                        <td key={idx} className={`px-4 py-3 text-center text-xs ${idx === 2 ? 'bg-amber-50/30' : ''}`}>
+                          {cangGanList.map((gan, i) => {
                             const wx = getWuxing(gan);
                             return (
-                              <td key={idx} className={`px-4 py-3 text-center ${idx === 2 ? 'bg-amber-50/30' : ''}`}>
-                                <span className={`text-xl font-serif font-bold ${wx ? colorClasses(wx, 'text') : 'text-stone-800'}`}>
-                                  {gan}
-                                </span>
-                              </td>
+                              <span key={i} className={`font-serif ${wx ? colorClasses(wx, 'text') : 'text-stone-800'}`}>
+                                {gan}
+                                {wx && `(${wx})`}
+                                {i < cangGanList.length - 1 ? ' ' : ''}
+                              </span>
                             );
                           })}
-                        </tr>
+                        </td>
+                      ))}
+                    </tr>
 
-                        {/* 地支 */}
-                        <tr className="border-b border-stone-100">
-                          <td className="px-4 py-3 text-xs font-medium text-stone-700">地支</td>
-                          {[
-                            detailedPaipan.four_pillars.year[1],
-                            detailedPaipan.four_pillars.month[1],
-                            detailedPaipan.four_pillars.day[1],
-                            detailedPaipan.four_pillars.hour[1],
-                          ].map((zhi, idx) => {
-                            const wx = getWuxing(zhi);
-                            return (
-                              <td key={idx} className={`px-4 py-3 text-center ${idx === 2 ? 'bg-amber-50/30' : ''}`}>
-                                <span className={`text-xl font-serif font-bold ${wx ? colorClasses(wx, 'text') : 'text-stone-800'}`}>
-                                  {zhi}
-                                </span>
-                              </td>
-                            );
-                          })}
-                        </tr>
+                    {/* 十神（天干）*/}
+                    <tr className="border-b border-stone-100">
+                      <td className="px-4 py-3 text-xs font-medium text-stone-700">十神（天干）</td>
+                      <td className="px-4 py-3 text-center text-xs text-stone-800">{detailedPaipan.shi_shen_gan.year}</td>
+                      <td className="px-4 py-3 text-center text-xs text-stone-800">{detailedPaipan.shi_shen_gan.month}</td>
+                      <td className="px-4 py-3 text-center text-xs text-stone-800 bg-amber-50/30">{detailedPaipan.shi_shen_gan.day}</td>
+                      <td className="px-4 py-3 text-center text-xs text-stone-800">{detailedPaipan.shi_shen_gan.hour}</td>
+                    </tr>
 
-                        {/* 藏干 */}
-                        <tr className="border-b border-stone-100">
-                          <td className="px-4 py-3 text-xs font-medium text-stone-700">藏干</td>
-                          {[
-                            detailedPaipan.cang_gan.year,
-                            detailedPaipan.cang_gan.month,
-                            detailedPaipan.cang_gan.day,
-                            detailedPaipan.cang_gan.hour,
-                          ].map((cangGanList, idx) => (
-                            <td key={idx} className={`px-4 py-3 text-center text-xs ${idx === 2 ? 'bg-amber-50/30' : ''}`}>
-                              {cangGanList.map((gan, i) => {
-                                const wx = getWuxing(gan);
-                                return (
-                                  <span key={i} className={`font-serif ${wx ? colorClasses(wx, 'text') : 'text-stone-800'}`}>
-                                    {gan}
-                                    {wx && `(${wx})`}
-                                    {i < cangGanList.length - 1 ? ' ' : ''}
-                                  </span>
-                                );
-                              })}
-                            </td>
-                          ))}
-                        </tr>
+                    {/* 十神（地支）*/}
+                    <tr className="border-b border-stone-100">
+                      <td className="px-4 py-3 text-xs font-medium text-stone-700">十神（地支）</td>
+                      <td className="px-4 py-3 text-center text-xs text-stone-800">{detailedPaipan.shi_shen_zhi.year}</td>
+                      <td className="px-4 py-3 text-center text-xs text-stone-800">{detailedPaipan.shi_shen_zhi.month}</td>
+                      <td className="px-4 py-3 text-center text-xs text-stone-800 bg-amber-50/30">{detailedPaipan.shi_shen_zhi.day}</td>
+                      <td className="px-4 py-3 text-center text-xs text-stone-800">{detailedPaipan.shi_shen_zhi.hour}</td>
+                    </tr>
 
-                        {/* 十神（天干）*/}
-                        <tr className="border-b border-stone-100">
-                          <td className="px-4 py-3 text-xs font-medium text-stone-700">十神（天干）</td>
-                          <td className="px-4 py-3 text-center text-xs text-stone-800">{detailedPaipan.shi_shen_gan.year}</td>
-                          <td className="px-4 py-3 text-center text-xs text-stone-800">{detailedPaipan.shi_shen_gan.month}</td>
-                          <td className="px-4 py-3 text-center text-xs text-stone-800 bg-amber-50/30">{detailedPaipan.shi_shen_gan.day}</td>
-                          <td className="px-4 py-3 text-center text-xs text-stone-800">{detailedPaipan.shi_shen_gan.hour}</td>
-                        </tr>
+                    {/* 十二长生 */}
+                    <tr className="border-b border-stone-100">
+                      <td className="px-4 py-3 text-xs font-medium text-stone-700">十二长生</td>
+                      <td className="px-4 py-3 text-center text-xs text-stone-800">{detailedPaipan.chang_sheng.year}</td>
+                      <td className="px-4 py-3 text-center text-xs text-stone-800">{detailedPaipan.chang_sheng.month}</td>
+                      <td className="px-4 py-3 text-center text-xs text-stone-800 bg-amber-50/30">{detailedPaipan.chang_sheng.day}</td>
+                      <td className="px-4 py-3 text-center text-xs text-stone-800">{detailedPaipan.chang_sheng.hour}</td>
+                    </tr>
 
-                        {/* 十神（地支）*/}
-                        <tr className="border-b border-stone-100">
-                          <td className="px-4 py-3 text-xs font-medium text-stone-700">十神（地支）</td>
-                          <td className="px-4 py-3 text-center text-xs text-stone-800">{detailedPaipan.shi_shen_zhi.year}</td>
-                          <td className="px-4 py-3 text-center text-xs text-stone-800">{detailedPaipan.shi_shen_zhi.month}</td>
-                          <td className="px-4 py-3 text-center text-xs text-stone-800 bg-amber-50/30">{detailedPaipan.shi_shen_zhi.day}</td>
-                          <td className="px-4 py-3 text-center text-xs text-stone-800">{detailedPaipan.shi_shen_zhi.hour}</td>
-                        </tr>
+                    {/* 纳音 */}
+                    <tr className="border-b border-stone-100">
+                      <td className="px-4 py-3 text-xs font-medium text-stone-700">纳音</td>
+                      <td className="px-4 py-3 text-center text-xs text-stone-800">{detailedPaipan.na_yin.year}</td>
+                      <td className="px-4 py-3 text-center text-xs text-stone-800">{detailedPaipan.na_yin.month}</td>
+                      <td className="px-4 py-3 text-center text-xs text-stone-800 bg-amber-50/30">{detailedPaipan.na_yin.day}</td>
+                      <td className="px-4 py-3 text-center text-xs text-stone-800">{detailedPaipan.na_yin.hour}</td>
+                    </tr>
 
-                        {/* 十二长生 */}
-                        <tr className="border-b border-stone-100">
-                          <td className="px-4 py-3 text-xs font-medium text-stone-700">十二长生</td>
-                          <td className="px-4 py-3 text-center text-xs text-stone-800">{detailedPaipan.chang_sheng.year}</td>
-                          <td className="px-4 py-3 text-center text-xs text-stone-800">{detailedPaipan.chang_sheng.month}</td>
-                          <td className="px-4 py-3 text-center text-xs text-stone-800 bg-amber-50/30">{detailedPaipan.chang_sheng.day}</td>
-                          <td className="px-4 py-3 text-center text-xs text-stone-800">{detailedPaipan.chang_sheng.hour}</td>
-                        </tr>
-
-                        {/* 纳音 */}
-                        <tr className="border-b border-stone-100">
-                          <td className="px-4 py-3 text-xs font-medium text-stone-700">纳音</td>
-                          <td className="px-4 py-3 text-center text-xs text-stone-800">{detailedPaipan.na_yin.year}</td>
-                          <td className="px-4 py-3 text-center text-xs text-stone-800">{detailedPaipan.na_yin.month}</td>
-                          <td className="px-4 py-3 text-center text-xs text-stone-800 bg-amber-50/30">{detailedPaipan.na_yin.day}</td>
-                          <td className="px-4 py-3 text-center text-xs text-stone-800">{detailedPaipan.na_yin.hour}</td>
-                        </tr>
-
-                        {/* 空亡 */}
-                        <tr>
-                          <td className="px-4 py-3 text-xs font-medium text-stone-700">空亡</td>
-                          <td colSpan={4} className="px-4 py-3 text-center text-xs text-stone-800">
-                            {detailedPaipan.xun_kong || '无'}
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                )
-              )
+                    {/* 空亡 */}
+                    <tr>
+                      <td className="px-4 py-3 text-xs font-medium text-stone-700">空亡</td>
+                      <td colSpan={4} className="px-4 py-3 text-center text-xs text-stone-800">
+                        {detailedPaipan.xun_kong || '无'}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             ) : (
               <div className="text-center py-8 text-stone-500">请先提交计算，生成排盘结果</div>
             )}
