@@ -293,12 +293,7 @@ export default function ReportPage() {
                     key={i}
                     className={`relative rounded-xl border-2 ${colorClasses(el, 'border')} bg-gradient-to-br from-white to-neutral-50 p-4 shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5`}
                   >
-                    {/* 大运序号标签 */}
-                    <div className="absolute -top-2.5 -left-2.5 w-7 h-7 rounded-full bg-[#a83232] text-white text-xs font-bold flex items-center justify-center shadow-md">
-                      {i + 1}
-                    </div>
-
-                    <div className="space-y-2.5 text-sm pt-1">
+                    <div className="space-y-2.5 text-sm">
                       <div className="flex justify-between items-center">
                         <span className="text-neutral-500 text-xs">起运年龄</span>
                         <span className={`${colorClasses(el, 'text')} font-bold text-base`}>{d.age} 岁</span>

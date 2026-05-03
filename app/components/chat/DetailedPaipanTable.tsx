@@ -207,19 +207,6 @@ export function DetailedPaipanTable({ paipan }: DetailedPaipanTableProps) {
         </table>
       </div>
 
-      {/* 干支关系区块 */}
-      {hasRelations && (
-        <div className="border-t border-[var(--color-border)] px-4 py-4">
-          <div className="text-xs font-semibold text-[var(--color-text-primary)] mb-3 tracking-wide">
-            干支关系
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {allRelations.map((item, i) => (
-              <RelationTag key={i} label={item} />
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
