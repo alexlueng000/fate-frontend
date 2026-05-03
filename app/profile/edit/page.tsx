@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useRouteGuard } from '@/app/lib/useRouteGuard';
 import { api } from '@/app/lib/api';
 import { getAuthToken } from '@/app/lib/auth';
@@ -24,6 +24,8 @@ interface UserProfile {
 
 export default function EditProfilePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnTo = searchParams.get('returnTo') || '/panel';
   const loading = useRouteGuard(true, true); // 需要登录和档案
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -137,7 +139,7 @@ export default function EditProfilePage() {
         throw new Error(errorMsg);
       }
 
-      router.push('/profile/view');
+      router.push(returnTo);
     } catch (err) {
       setError(err instanceof Error ? err.message : '更新档案失败');
     } finally {
@@ -208,7 +210,7 @@ export default function EditProfilePage() {
         {/* Header */}
         <div className="mb-8">
           <button
-            onClick={() => router.back()}
+            onClick={() => router.push(returnTo)}
             className="text-neutral-600 hover:text-neutral-900 mb-4 flex items-center gap-2"
           >
             <span>←</span> 返回

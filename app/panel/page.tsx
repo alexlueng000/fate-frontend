@@ -483,7 +483,7 @@ export default function PanelPage() {
               </button>
               <div className="h-px bg-[var(--color-border)]" />
               <button
-                onClick={() => { setShowMenu(false); router.push('/profile/edit'); }}
+                onClick={() => { setShowMenu(false); router.push('/profile/edit?returnTo=/panel'); }}
                 className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] transition-colors text-left"
               >
                 <Edit3 className="w-4 h-4 text-[var(--color-primary)] flex-shrink-0" />

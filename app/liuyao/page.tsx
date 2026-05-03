@@ -47,9 +47,10 @@ const QUESTION_SCENARIOS = [
 
 export default function LiuyaoPage() {
   const { user } = useUser();
-  const [method, setMethod] = useState<'number' | 'coin' | 'time'>('time');
+  const [method, setMethod] = useState<'number' | 'coin' | 'time'>('number');
   const [question, setQuestion] = useState('');
   const [selectedScenario, setSelectedScenario] = useState<string | null>(null);
+  const [gender, setGender] = useState<'male' | 'female'>('male');
   const [numbers, setNumbers] = useState<string[]>(['', '', '']);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<HexagramDetail | null>(null);
@@ -85,6 +86,7 @@ export default function LiuyaoPage() {
       const data: PaipanRequest = {
         question: question.trim(),
         method,
+        gender,
         numbers: method === 'number' ? numbers.map(n => parseInt(n)) : undefined,
       };
 
@@ -282,7 +284,38 @@ export default function LiuyaoPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-8">
-              {/* Step 1: 问事内容 */}
+              {/* Step 1: 性别选择 */}
+              <div>
+                <label className="block text-lg font-medium text-[#1F2937] mb-3">
+                  性别
+                </label>
+                <div className="flex gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setGender('male')}
+                    className={`flex-1 px-6 py-3 rounded-lg border-2 transition-all ${
+                      gender === 'male'
+                        ? 'border-[#B93A2F] bg-[#B93A2F] text-white shadow-md'
+                        : 'border-gray-200 bg-white text-gray-700 hover:border-[#B93A2F]'
+                    }`}
+                  >
+                    男
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setGender('female')}
+                    className={`flex-1 px-6 py-3 rounded-lg border-2 transition-all ${
+                      gender === 'female'
+                        ? 'border-[#B93A2F] bg-[#B93A2F] text-white shadow-md'
+                        : 'border-gray-200 bg-white text-gray-700 hover:border-[#B93A2F]'
+                    }`}
+                  >
+                    女
+                  </button>
+                </div>
+              </div>
+
+              {/* Step 2: 问事内容 */}
               <div>
                 <label className="block text-lg font-medium text-[#1F2937] mb-3">
                   你想问什么事？
@@ -299,7 +332,7 @@ export default function LiuyaoPage() {
                 />
               </div>
 
-              {/* Step 2: 问事场景标签 */}
+              {/* Step 3: 问事场景标签 */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-3">
                   常见问题
@@ -322,12 +355,33 @@ export default function LiuyaoPage() {
                 </div>
               </div>
 
-              {/* Step 3: 起卦方式 */}
+              {/* Step 4: 起卦方式 */}
               <div>
                 <label className="block text-lg font-medium text-[#1F2937] mb-3">
                   选择起卦方式
                 </label>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* 数字起卦 - 移到第一位作为推荐 */}
+                  <button
+                    type="button"
+                    onClick={() => setMethod('number')}
+                    className={`p-4 rounded-lg border-2 transition-all text-left ${
+                      method === 'number'
+                        ? 'border-[#B93A2F] bg-[#B93A2F] text-white shadow-lg'
+                        : 'border-gray-200 bg-white text-gray-700 hover:border-[#B93A2F]'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-semibold text-base">数字起卦</span>
+                      {method === 'number' && (
+                        <span className="text-xs bg-white/20 px-2 py-1 rounded">推荐</span>
+                      )}
+                    </div>
+                    <p className={`text-sm ${method === 'number' ? 'text-white/90' : 'text-gray-500'}`}>
+                      凭第一感觉输入三个数字
+                    </p>
+                  </button>
+
                   {/* 一键起卦 */}
                   <button
                     type="button"
@@ -338,30 +392,9 @@ export default function LiuyaoPage() {
                         : 'border-gray-200 bg-white text-gray-700 hover:border-[#B93A2F]'
                     }`}
                   >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-semibold text-base">一键起卦</span>
-                      {method === 'time' && (
-                        <span className="text-xs bg-white/20 px-2 py-1 rounded">推荐</span>
-                      )}
-                    </div>
+                    <div className="font-semibold text-base mb-2">一键起卦</div>
                     <p className={`text-sm ${method === 'time' ? 'text-white/90' : 'text-gray-500'}`}>
                       根据当前时间自动起卦，适合快速问事
-                    </p>
-                  </button>
-
-                  {/* 数字起卦 */}
-                  <button
-                    type="button"
-                    onClick={() => setMethod('number')}
-                    className={`p-4 rounded-lg border-2 transition-all text-left ${
-                      method === 'number'
-                        ? 'border-[#B93A2F] bg-[#B93A2F] text-white shadow-lg'
-                        : 'border-gray-200 bg-white text-gray-700 hover:border-[#B93A2F]'
-                    }`}
-                  >
-                    <div className="font-semibold text-base mb-2">数字起卦</div>
-                    <p className={`text-sm ${method === 'number' ? 'text-white/90' : 'text-gray-500'}`}>
-                      凭第一感觉输入三个数字
                     </p>
                   </button>
 

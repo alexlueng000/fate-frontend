@@ -101,7 +101,7 @@ export default function ViewProfilePage() {
           <h1 className="text-3xl font-bold text-neutral-900">我的命盘</h1>
           <div className="flex gap-3">
             <button
-              onClick={() => router.push('/profile/edit')}
+              onClick={() => router.push('/profile/edit?returnTo=/profile/view')}
               className="px-5 py-2.5 rounded-xl border-2 border-[#a83232] text-[#a83232] hover:bg-[#a83232]/5 transition-colors font-medium"
             >
               修改资料
