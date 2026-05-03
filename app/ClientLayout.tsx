@@ -38,8 +38,8 @@ function LayoutBody({ children }: { children: ReactNode }) {
     setShowDisclaimer(false);
   };
 
-  // 判断是否显示功能导航（只在三个主功能页面显示）
-  const showFunctionNav = ['/panel', '/xinji', '/liuyao'].some(path =>
+  // 判断是否显示功能导航（只在主功能页面显示）
+  const showFunctionNav = ['/report', '/panel', '/xinji', '/liuyao'].some(path =>
     pathname === path || pathname.startsWith(path + '/')
   );
 

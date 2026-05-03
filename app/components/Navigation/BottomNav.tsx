@@ -34,6 +34,7 @@ export default function BottomNav() {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--color-border)] bg-white shadow-[var(--shadow-lg)]">
       <nav className="flex items-center justify-around max-w-md mx-auto">
+        <BottomNavLink href="/report" icon="📄" label="报告" />
         <BottomNavLink href="/panel" icon="💬" label="八字" />
         <BottomNavLink href="/xinji" icon="📖" label="心迹" />
         <BottomNavLink href="/liuyao" icon="🎲" label="六爻" />
