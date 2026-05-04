@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useRouteGuard } from '@/app/lib/useRouteGuard';
 import { api } from '@/app/lib/api';
@@ -22,7 +22,7 @@ interface UserProfile {
   bazi_hour: string;
 }
 
-export default function EditProfilePage() {
+function EditProfileContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const returnTo = searchParams.get('returnTo') || '/panel';
@@ -383,5 +383,17 @@ export default function EditProfilePage() {
         </div>
       )}
     </main>
+  );
+}
+
+export default function EditProfilePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#F7F3EE] flex items-center justify-center">
+        <div className="text-neutral-600">加载中...</div>
+      </div>
+    }>
+      <EditProfileContent />
+    </Suspense>
   );
 }
