@@ -459,38 +459,69 @@ export default function PanelPage() {
     <div className="h-full flex flex-col bg-[var(--color-bg)]">
 
       {/* Profile status bar */}
-      <div className="flex-shrink-0 flex items-center justify-between gap-3 px-4 py-2 border-b border-[var(--color-border)] bg-[var(--color-bg-elevated)]">
-        <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-medium tracking-widest text-[var(--color-text-muted)] uppercase">当前命盘</p>
-          <p className="text-xs text-[var(--color-text-secondary)] truncate mt-0.5">{profileSummary || '加载中…'}</p>
-        </div>
-        <div className="relative flex-shrink-0" ref={menuRef}>
-          <button
-            onClick={() => setShowMenu(v => !v)}
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-[var(--color-bg-hover)] hover:bg-[var(--color-border)] transition-colors"
-            aria-label="更多操作"
-          >
-            <MoreVertical className="w-4 h-4 text-[var(--color-text-secondary)]" />
-          </button>
-          {showMenu && (
-            <div className="absolute right-0 top-10 z-50 min-w-[148px] rounded-xl overflow-hidden border border-[var(--color-border)] bg-white shadow-lg">
-              <button
-                onClick={() => { setShowMenu(false); router.push('/report'); }}
-                className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] transition-colors text-left"
-              >
-                <FileText className="w-4 h-4 text-[var(--color-primary)] flex-shrink-0" />
-                查看命理报告
-              </button>
-              <div className="h-px bg-[var(--color-border)]" />
-              <button
-                onClick={() => { setShowMenu(false); router.push('/profile/edit?returnTo=/panel'); }}
-                className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] transition-colors text-left"
-              >
-                <Edit3 className="w-4 h-4 text-[var(--color-primary)] flex-shrink-0" />
-                修改资料
-              </button>
+      <div className="flex-shrink-0 px-4 py-3 border-b border-[var(--color-border)] bg-gradient-to-br from-red-50/80 via-amber-50/60 to-orange-50/70">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="h-1 w-1 rounded-full bg-red-600 animate-pulse" />
+              <p className="text-[11px] font-semibold tracking-wider text-red-800/70 uppercase">当前命盘</p>
             </div>
-          )}
+            {profile ? (
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-medium text-red-900/40">性别</span>
+                  <span className="px-2 py-0.5 rounded-md bg-white/80 text-sm font-semibold text-red-900 border border-red-200/50">
+                    {genderLabel}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-medium text-red-900/40">出生</span>
+                  <span className="px-2 py-0.5 rounded-md bg-white/80 text-sm font-semibold text-red-900 border border-red-200/50">
+                    {profile.birth_date}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md bg-white/80 text-sm font-semibold text-red-900 border border-red-200/50">
+                    {profile.birth_time}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-medium text-red-900/40">地点</span>
+                  <span className="px-2 py-0.5 rounded-md bg-white/80 text-sm font-semibold text-red-900 border border-red-200/50">
+                    {profile.birth_location}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-red-900/60">加载中…</p>
+            )}
+          </div>
+          <div className="relative flex-shrink-0" ref={menuRef}>
+            <button
+              onClick={() => setShowMenu(v => !v)}
+              className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/80 hover:bg-white border border-red-200/50 hover:border-red-300 transition-all shadow-sm hover:shadow"
+              aria-label="更多操作"
+            >
+              <MoreVertical className="w-4 h-4 text-red-800" />
+            </button>
+            {showMenu && (
+              <div className="absolute right-0 top-10 z-50 min-w-[148px] rounded-xl overflow-hidden border border-[var(--color-border)] bg-white shadow-lg">
+                <button
+                  onClick={() => { setShowMenu(false); router.push('/report'); }}
+                  className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] transition-colors text-left"
+                >
+                  <FileText className="w-4 h-4 text-[var(--color-primary)] flex-shrink-0" />
+                  查看命理报告
+                </button>
+                <div className="h-px bg-[var(--color-border)]" />
+                <button
+                  onClick={() => { setShowMenu(false); router.push('/profile/edit?returnTo=/panel'); }}
+                  className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] transition-colors text-left"
+                >
+                  <Edit3 className="w-4 h-4 text-[var(--color-primary)] flex-shrink-0" />
+                  修改资料
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

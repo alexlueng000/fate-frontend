@@ -44,6 +44,7 @@ export interface HexagramDetail extends Hexagram {
   jiqi: {
     current?: string;
     next?: string;
+    next_time?: string;
   } | null;
   gua_gong?: string;
   shang_gua?: string;
@@ -52,7 +53,11 @@ export interface HexagramDetail extends Hexagram {
   jieqi?: {
     current?: string;
     next?: string;
+    next_time?: string;
   } | null;
+  lunar_date?: string;
+  shensha?: string;
+  gua_shen?: string;
 }
 
 // 获取认证token

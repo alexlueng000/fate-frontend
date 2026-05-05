@@ -567,6 +567,14 @@ export default function LiuyaoPage() {
                         </div>
                       )}
 
+                      {/* 农历时间 */}
+                      {result.lunar_date && (
+                        <div className="text-stone-600">
+                          <span className="text-stone-400">农历：</span>
+                          {result.lunar_date}
+                        </div>
+                      )}
+
                       {/* 节气信息 */}
                       {(result.jiqi?.current || result.jieqi?.current) && (
                         <div className="text-stone-600">
@@ -574,9 +582,17 @@ export default function LiuyaoPage() {
                           {result.jiqi?.current || result.jieqi?.current}
                           {(result.jiqi?.next || result.jieqi?.next) && (
                             <span className="text-stone-400 ml-2">
-                              (下一节气：{result.jiqi?.next || result.jieqi?.next})
+                              立夏：{(result.jiqi?.next_time || result.jieqi?.next_time) || ''}
                             </span>
                           )}
+                        </div>
+                      )}
+
+                      {/* 神煞信息 */}
+                      {result.shensha && (
+                        <div className="text-stone-600">
+                          <span className="text-stone-400">神煞：</span>
+                          {result.shensha}
                         </div>
                       )}
 
@@ -585,6 +601,14 @@ export default function LiuyaoPage() {
                         <div className="text-stone-600">
                           <span className="text-stone-400">卦宫：</span>
                           {result.gua_gong}
+                        </div>
+                      )}
+
+                      {/* 卦身信息 */}
+                      {result.gua_shen && (
+                        <div className="text-stone-600">
+                          <span className="text-stone-400">卦身：</span>
+                          {result.gua_shen}
                         </div>
                       )}
 
