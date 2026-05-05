@@ -41,7 +41,18 @@ export interface HexagramDetail extends Hexagram {
   location: string;
   solar_time: boolean;
   gua_type: string | null;
-  jiqi: any | null;
+  jiqi: {
+    current?: string;
+    next?: string;
+  } | null;
+  gua_gong?: string;
+  shang_gua?: string;
+  xia_gua?: string;
+  dong_yao?: number;
+  jieqi?: {
+    current?: string;
+    next?: string;
+  } | null;
 }
 
 // 获取认证token

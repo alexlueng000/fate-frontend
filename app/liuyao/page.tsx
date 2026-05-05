@@ -546,15 +546,61 @@ export default function LiuyaoPage() {
                             <span className="text-stone-400 text-xs">时</span>
                             <span className="text-stone-700 font-medium">{result.ganzhi.hour}</span>
                           </div>
-                          {result.jiqi?.current && (
-                            <div className="flex items-center gap-2">
-                              <span className="text-stone-400 text-xs">节气</span>
-                              <span className="text-stone-700 font-medium">{result.jiqi.current}</span>
-                            </div>
-                          )}
                         </div>
                       </div>
                     )}
+
+                    {/* 详细排盘信息 */}
+                    <div className="mt-4 pt-4 border-t border-stone-200/30 space-y-2 text-xs">
+                      {/* 真太阳时 */}
+                      {result.solar_time && (
+                        <div className="text-stone-600">
+                          <span className="text-stone-400">真太阳时：</span>
+                          {new Date(result.timestamp).toLocaleString('zh-CN', {
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit'
+                          })}
+                        </div>
+                      )}
+
+                      {/* 节气信息 */}
+                      {(result.jiqi?.current || result.jieqi?.current) && (
+                        <div className="text-stone-600">
+                          <span className="text-stone-400">节气：</span>
+                          {result.jiqi?.current || result.jieqi?.current}
+                          {(result.jiqi?.next || result.jieqi?.next) && (
+                            <span className="text-stone-400 ml-2">
+                              (下一节气：{result.jiqi?.next || result.jieqi?.next})
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      {/* 卦宫信息 */}
+                      {result.gua_gong && (
+                        <div className="text-stone-600">
+                          <span className="text-stone-400">卦宫：</span>
+                          {result.gua_gong}
+                        </div>
+                      )}
+
+                      {/* 动爻信息 */}
+                      {result.dong_yao && (
+                        <div className="text-stone-600">
+                          <span className="text-stone-400">动爻：</span>
+                          第{result.dong_yao}爻
+                          {result.method === 'number' && result.numbers?.numbers && (
+                            <span className="text-stone-400 ml-2">
+                              (数字起卦：{result.numbers.numbers.join('、')})
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -760,9 +806,44 @@ export default function LiuyaoPage() {
                   <button
                     onClick={handleInterpret}
                     disabled={interpreting}
-                    className="px-10 py-3.5 bg-[#B93A2F] text-white rounded-full hover:bg-[#9a2f26] transition-all duration-300 shadow-lg hover:shadow-xl text-sm tracking-wider font-light disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="group relative px-10 py-3.5 bg-[#B93A2F] text-white rounded-full hover:bg-[#9a2f26] transition-all duration-300 shadow-lg hover:shadow-xl text-sm tracking-wider font-light disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 overflow-hidden"
                   >
-                    {interpreting ? 'AI 解卦中...' : 'AI 解卦'}
+                    {/* 点击波纹效果背景 */}
+                    <span className="absolute inset-0 bg-white/20 rounded-full scale-0 group-active:scale-100 transition-transform duration-500 ease-out" />
+
+                    {/* 加载动画 */}
+                    {interpreting && (
+                      <span className="absolute inset-0 flex items-center justify-center">
+                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      </span>
+                    )}
+
+                    {/* 文字内容 */}
+                    <span className={`relative z-10 flex items-center gap-2 transition-opacity duration-200 ${interpreting ? 'opacity-0' : 'opacity-100'}`}>
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 16 16"
+                        fill="none"
+                        className="transition-transform group-hover:scale-110 duration-300"
+                      >
+                        <path
+                          d="M8 2L8 8M8 8L8 14M8 8L14 8M8 8L2 8"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                        />
+                        <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5" opacity="0.3" />
+                      </svg>
+                      AI 解卦
+                    </span>
+
+                    {/* 加载文字 */}
+                    {interpreting && (
+                      <span className="relative z-10 animate-pulse">
+                        AI 解卦中...
+                      </span>
+                    )}
                   </button>
                 </div>
               </div>
@@ -770,13 +851,21 @@ export default function LiuyaoPage() {
 
             {/* AI解卦结果 */}
             {interpretation && (
-              <div id="interpretation-result" className="mt-8 bg-white rounded-2xl shadow-xl border border-stone-200/50 overflow-hidden">
+              <div
+                id="interpretation-result"
+                className="mt-8 bg-white rounded-2xl shadow-xl border border-stone-200/50 overflow-hidden animate-fade-in-up"
+                style={{
+                  animation: 'fadeInUp 0.6s ease-out forwards',
+                }}
+              >
                 <div className="h-1 bg-gradient-to-r from-transparent via-amber-600/40 to-transparent" />
                 <div className="px-8 py-10">
                   <div className="max-w-3xl mx-auto">
                     <div className="mb-6 text-center">
-                      <h3 className="text-2xl font-serif text-stone-800 tracking-wide">
+                      <h3 className="text-2xl font-serif text-stone-800 tracking-wide flex items-center justify-center gap-3">
+                        <span className="inline-block w-8 h-px bg-gradient-to-r from-transparent to-amber-600/40" />
                         AI 解卦
+                        <span className="inline-block w-8 h-px bg-gradient-to-l from-transparent to-amber-600/40" />
                       </h3>
                     </div>
                     <MarkdownView content={interpretation} />
@@ -784,6 +873,19 @@ export default function LiuyaoPage() {
                 </div>
               </div>
             )}
+
+            <style jsx>{`
+              @keyframes fadeInUp {
+                from {
+                  opacity: 0;
+                  transform: translateY(20px);
+                }
+                to {
+                  opacity: 1;
+                  transform: translateY(0);
+                }
+              }
+            `}</style>
           </div>
         )}
 
