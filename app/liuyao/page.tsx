@@ -203,10 +203,10 @@ export default function LiuyaoPage() {
     );
   };
 
-  const renderChangeYaoLine = (mainLine: any, index: number) => {
-    if (!mainLine) return null;
+  const renderChangeYaoLine = (mainLine: any, changeLine: any, index: number) => {
+    if (!mainLine || !changeLine) return null;
 
-    const isYang = mainLine.is_dong ? !mainLine.is_yang : mainLine.is_yang;
+    const isYang = changeLine.is_yang;
     const isDong = mainLine.is_dong;
 
     return (
@@ -216,13 +216,13 @@ export default function LiuyaoPage() {
           <div className="absolute inset-0 -mx-2 border-2 border-red-500/60 rounded-md bg-red-50/10 pointer-events-none" />
         )}
 
-        {/* 左侧：六亲 + 六兽（透明占位） */}
-        <div className="flex items-center gap-2 w-20 justify-end opacity-0">
-          <span className="text-xs tracking-wider text-stone-400 font-medium">
-            {mainLine.liuqin || ''}
+        {/* 左侧：六亲 + 六兽 */}
+        <div className="flex items-center gap-2 w-20 justify-end">
+          <span className="text-xs tracking-wider text-stone-500 font-medium">
+            {changeLine.liuqin || ''}
           </span>
           <span className="text-xs tracking-wider text-stone-400 font-light">
-            {mainLine.liushou || ''}
+            {changeLine.liushou || ''}
           </span>
         </div>
 
@@ -247,13 +247,13 @@ export default function LiuyaoPage() {
           )}
         </div>
 
-        {/* 右侧：地支 + 五行（透明占位） */}
-        <div className="flex items-center gap-2 w-16 opacity-0">
+        {/* 右侧：地支 + 五行 */}
+        <div className="flex items-center gap-2 w-16">
           <span className="text-xs tracking-wider text-stone-400 font-light">
-            {mainLine.dizhi || ''}
+            {changeLine.dizhi || ''}
           </span>
-          <span className="text-xs tracking-wider text-stone-400 font-medium">
-            {mainLine.wuxing || ''}
+          <span className="text-xs tracking-wider text-stone-500 font-medium">
+            {changeLine.wuxing || ''}
           </span>
         </div>
       </div>
@@ -690,7 +690,7 @@ export default function LiuyaoPage() {
                     </div>
 
                     {/* 变卦 */}
-                    {result.change_gua && result.lines && result.lines.lines && Array.isArray(result.lines.lines) ? (
+                    {result.change_gua && result.lines && result.lines.lines && Array.isArray(result.lines.lines) && result.change_lines && result.change_lines.lines && Array.isArray(result.change_lines.lines) ? (
                       <div className="relative">
                         {/* 连接箭头 (仅桌面显示) */}
                         <div className="hidden md:block absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
@@ -749,9 +749,11 @@ export default function LiuyaoPage() {
                         {/* 六爻图 */}
                         <div className="relative">
                           <div className="bg-stone-100/40 backdrop-blur-sm rounded-xl p-8 shadow-lg border border-stone-200/30">
-                            {Array.isArray(result.lines.lines) && [...result.lines.lines].reverse().map((line, index) =>
-                              renderChangeYaoLine(line, result.lines!.lines.length - 1 - index)
-                            )}
+                            {Array.isArray(result.change_lines.lines) && [...result.change_lines.lines].reverse().map((changeLine, index) => {
+                              const originalIndex = result.change_lines!.lines.length - 1 - index;
+                              const mainLine = result.lines!.lines[originalIndex];
+                              return renderChangeYaoLine(mainLine, changeLine, originalIndex);
+                            })}
                           </div>
 
                           {/* 变化说明 */}
@@ -827,76 +829,120 @@ export default function LiuyaoPage() {
                       重新起卦
                     </span>
                   </button>
-                  <button
-                    onClick={handleInterpret}
-                    disabled={interpreting}
-                    className="group relative px-10 py-3.5 bg-[#B93A2F] text-white rounded-full hover:bg-[#9a2f26] transition-all duration-300 shadow-lg hover:shadow-xl text-sm tracking-wider font-light disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 overflow-hidden"
-                  >
-                    {/* 点击波纹效果背景 */}
-                    <span className="absolute inset-0 bg-white/20 rounded-full scale-0 group-active:scale-100 transition-transform duration-500 ease-out" />
-
-                    {/* 加载动画 */}
-                    {interpreting && (
-                      <span className="absolute inset-0 flex items-center justify-center">
-                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      </span>
-                    )}
-
-                    {/* 文字内容 */}
-                    <span className={`relative z-10 flex items-center gap-2 transition-opacity duration-200 ${interpreting ? 'opacity-0' : 'opacity-100'}`}>
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 16 16"
-                        fill="none"
-                        className="transition-transform group-hover:scale-110 duration-300"
-                      >
-                        <path
-                          d="M8 2L8 8M8 8L8 14M8 8L14 8M8 8L2 8"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                        />
-                        <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5" opacity="0.3" />
-                      </svg>
-                      AI 解卦
-                    </span>
-
-                    {/* 加载文字 */}
-                    {interpreting && (
-                      <span className="relative z-10 animate-pulse">
-                        AI 解卦中...
-                      </span>
-                    )}
-                  </button>
                 </div>
               </div>
             </div>
 
-            {/* AI解卦结果 */}
-            {interpretation && (
-              <div
-                id="interpretation-result"
-                className="mt-8 bg-white rounded-2xl shadow-xl border border-stone-200/50 overflow-hidden animate-fade-in-up"
-                style={{
-                  animation: 'fadeInUp 0.6s ease-out forwards',
-                }}
-              >
-                <div className="h-1 bg-gradient-to-r from-transparent via-amber-600/40 to-transparent" />
-                <div className="px-8 py-10">
-                  <div className="max-w-3xl mx-auto">
-                    <div className="mb-6 text-center">
-                      <h3 className="text-2xl font-serif text-stone-800 tracking-wide flex items-center justify-center gap-3">
-                        <span className="inline-block w-8 h-px bg-gradient-to-r from-transparent to-amber-600/40" />
-                        AI 解卦
-                        <span className="inline-block w-8 h-px bg-gradient-to-l from-transparent to-amber-600/40" />
-                      </h3>
-                    </div>
-                    <MarkdownView content={interpretation} />
+            {/* AI解卦区域 - 始终显示 */}
+            <div
+              id="interpretation-result"
+              className="mt-8 bg-white rounded-2xl shadow-xl border border-stone-200/50 overflow-hidden"
+            >
+              <div className="h-1 bg-gradient-to-r from-transparent via-amber-600/40 to-transparent" />
+              <div className="px-8 py-10">
+                <div className="max-w-3xl mx-auto">
+                  {/* 标题 */}
+                  <div className="mb-6 text-center">
+                    <h3 className="text-2xl font-serif text-stone-800 tracking-wide flex items-center justify-center gap-3">
+                      <span className="inline-block w-8 h-px bg-gradient-to-r from-transparent to-amber-600/40" />
+                      AI 解卦
+                      <span className="inline-block w-8 h-px bg-gradient-to-l from-transparent to-amber-600/40" />
+                    </h3>
                   </div>
+
+                  {/* 内容区域 */}
+                  {!interpretation && !interpreting ? (
+                    /* 未开始解卦 - 显示按钮 */
+                    <div className="text-center py-12">
+                      <div className="mb-6">
+                        <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-amber-100 to-amber-50 flex items-center justify-center">
+                          <svg
+                            width="40"
+                            height="40"
+                            viewBox="0 0 40 40"
+                            fill="none"
+                            className="text-amber-600"
+                          >
+                            <path
+                              d="M20 10V20M20 20V30M20 20H30M20 20H10"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                            />
+                            <circle cx="20" cy="20" r="15" stroke="currentColor" strokeWidth="2" opacity="0.3" />
+                          </svg>
+                        </div>
+                        <p className="text-stone-500 text-sm mb-2">卦象已成，点击下方按钮开始解读</p>
+                        <p className="text-stone-400 text-xs">AI 将结合卦象、动爻和问题为你深度分析</p>
+                      </div>
+                      <button
+                        onClick={handleInterpret}
+                        className="group relative px-12 py-4 bg-gradient-to-r from-[#B93A2F] to-[#9a2f26] text-white rounded-full hover:shadow-2xl transition-all duration-300 shadow-lg text-base tracking-wider font-light active:scale-95 overflow-hidden"
+                      >
+                        <span className="absolute inset-0 bg-white/10 rounded-full scale-0 group-hover:scale-100 transition-transform duration-500 ease-out" />
+                        <span className="relative z-10 flex items-center gap-3">
+                          <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 20 20"
+                            fill="none"
+                            className="transition-transform group-hover:rotate-90 duration-300"
+                          >
+                            <path
+                              d="M10 4V10M10 10V16M10 10H16M10 10H4"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                            />
+                            <circle cx="10" cy="10" r="8" stroke="currentColor" strokeWidth="1.5" opacity="0.3" />
+                          </svg>
+                          开始 AI 解卦
+                        </span>
+                      </button>
+                    </div>
+                  ) : interpreting ? (
+                    /* 解卦中 - 显示优雅的加载动画 */
+                    <div className="text-center py-16">
+                      <div className="relative w-24 h-24 mx-auto mb-6">
+                        {/* 外圈旋转 */}
+                        <div className="absolute inset-0 rounded-full border-4 border-amber-100"></div>
+                        <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-amber-500 animate-spin"></div>
+
+                        {/* 内圈反向旋转 */}
+                        <div className="absolute inset-3 rounded-full border-4 border-amber-50"></div>
+                        <div className="absolute inset-3 rounded-full border-4 border-transparent border-b-amber-400 animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
+
+                        {/* 中心图标 */}
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <svg
+                            width="32"
+                            height="32"
+                            viewBox="0 0 32 32"
+                            fill="none"
+                            className="text-amber-600 animate-pulse"
+                          >
+                            <path
+                              d="M16 8V16M16 16V24M16 16H24M16 16H8"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                            />
+                          </svg>
+                        </div>
+                      </div>
+
+                      <p className="text-stone-600 text-base mb-2 animate-pulse">AI 正在解读卦象...</p>
+                      <p className="text-stone-400 text-sm">分析卦象结构、动爻变化与问题关联</p>
+                    </div>
+                  ) : (
+                    /* 解卦完成 - 显示结果 */
+                    <div className="animate-fade-in">
+                      <MarkdownView content={interpretation} />
+                    </div>
+                  )}
                 </div>
               </div>
-            )}
+            </div>
 
             <style jsx>{`
               @keyframes fadeInUp {
@@ -907,6 +953,17 @@ export default function LiuyaoPage() {
                 to {
                   opacity: 1;
                   transform: translateY(0);
+                }
+              }
+              .animate-fade-in {
+                animation: fadeIn 0.5s ease-out forwards;
+              }
+              @keyframes fadeIn {
+                from {
+                  opacity: 0;
+                }
+                to {
+                  opacity: 1;
                 }
               }
             `}</style>

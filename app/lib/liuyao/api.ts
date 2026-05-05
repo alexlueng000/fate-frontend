@@ -58,6 +58,7 @@ export interface HexagramDetail extends Hexagram {
   lunar_date?: string;
   shensha?: string;
   gua_shen?: string;
+  change_lines?: { lines: HexagramLine[] } | null;
 }
 
 // 获取认证token
