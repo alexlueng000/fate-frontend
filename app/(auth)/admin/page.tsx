@@ -3,7 +3,143 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Settings, MessageSquare, Zap, BookOpen, Ticket, ChevronRight, ArrowLeft, Shield, BarChart3, MessageCircle, ThumbsDown } from 'lucide-react';
+import {
+  Settings,
+  MessageSquare,
+  Zap,
+  BookOpen,
+  Ticket,
+  ArrowLeft,
+  Shield,
+  BarChart3,
+  MessageCircle,
+  ThumbsDown,
+  FileText,
+  Sparkles,
+  type LucideIcon,
+} from 'lucide-react';
+
+type Tone = 'primary' | 'gold' | 'mist';
+
+interface MenuItem {
+  href: string;
+  icon: LucideIcon;
+  title: string;
+  description: string;
+  tone: Tone;
+}
+
+interface MenuSection {
+  title: string;
+  description: string;
+  items: MenuItem[];
+}
+
+const SECTIONS: MenuSection[] = [
+  {
+    title: '运营数据',
+    description: '平台使用情况与用户反馈',
+    items: [
+      {
+        href: '/admin/dashboard',
+        icon: BarChart3,
+        title: '数据概览',
+        description: '用户、对话、消息统计',
+        tone: 'mist',
+      },
+      {
+        href: '/admin/ratings',
+        icon: ThumbsDown,
+        title: '消息评价',
+        description: 'AI 回复的点赞与点踩',
+        tone: 'primary',
+      },
+      {
+        href: '/admin/feedbacks',
+        icon: MessageCircle,
+        title: '用户反馈',
+        description: '查看和回复用户反馈',
+        tone: 'mist',
+      },
+    ],
+  },
+  {
+    title: '用户与安全',
+    description: '准入控制与内容安全',
+    items: [
+      {
+        href: '/admin/invitation-codes',
+        icon: Ticket,
+        title: '邀请码管理',
+        description: '创建与管理注册邀请码',
+        tone: 'gold',
+      },
+      {
+        href: '/admin/sensitive-words',
+        icon: Shield,
+        title: '敏感词管理',
+        description: 'AI 响应敏感词过滤规则',
+        tone: 'primary',
+      },
+    ],
+  },
+  {
+    title: 'AI 配置',
+    description: '提示词、按钮与知识库',
+    items: [
+      {
+        href: '/admin/config/system_prompt',
+        icon: MessageSquare,
+        title: '对话页提示词',
+        description: '对话 AI 的系统提示词',
+        tone: 'primary',
+      },
+      {
+        href: '/admin/config/report_system_prompt',
+        icon: FileText,
+        title: '报告页提示词',
+        description: '命理分析报告专用提示词',
+        tone: 'primary',
+      },
+      {
+        href: '/admin/config/liuyao_system_prompt',
+        icon: Sparkles,
+        title: '六爻提示词',
+        description: '六爻解卦多轮对话提示词',
+        tone: 'gold',
+      },
+      {
+        href: '/admin/config/quick_buttons',
+        icon: Zap,
+        title: '快捷按钮',
+        description: '用户界面快捷操作配置',
+        tone: 'gold',
+      },
+      {
+        href: '/admin/config/knowledge_base',
+        icon: BookOpen,
+        title: '知识库管理',
+        description: 'RAG 知识库内容维护',
+        tone: 'mist',
+      },
+    ],
+  },
+];
+
+const TONE_STYLES: Record<Tone, { bg: string; icon: string }> = {
+  primary: {
+    bg: 'bg-[var(--color-primary)]/10',
+    icon: 'text-[var(--color-primary)]',
+  },
+  gold: {
+    bg: 'bg-[var(--color-gold)]/15',
+    icon: 'text-[var(--color-gold-dark)]',
+  },
+  mist: {
+    bg: 'bg-[var(--color-mist-light)]',
+    icon: 'text-[var(--color-mist-deep)]',
+  },
+};
 
 export default function AdminPage() {
   const router = useRouter();
@@ -39,137 +175,86 @@ export default function AdminPage() {
     );
   }
 
-  const menuItems = [
-    {
-      href: '/admin/dashboard',
-      icon: <BarChart3 className="w-6 h-6" />,
-      title: '数据概览',
-      description: '查看用户、对话、消息等统计数据',
-      color: '#3b82f6',
-    },
-    {
-      href: '/admin/ratings',
-      icon: <ThumbsDown className="w-6 h-6" />,
-      title: '消息评价',
-      description: '查看用户对 AI 回复的点赞和点踩',
-      color: '#ef4444',
-    },
-    {
-      href: '/admin/feedbacks',
-      icon: <MessageCircle className="w-6 h-6" />,
-      title: '用户反馈',
-      description: '查看和回复用户反馈信息',
-      color: '#10b981',
-    },
-    {
-      href: '/admin/invitation-codes',
-      icon: <Ticket className="w-6 h-6" />,
-      title: '邀请码管理',
-      description: '创建和管理用户注册邀请码',
-      color: '#22c55e',
-    },
-    {
-      href: '/admin/sensitive-words',
-      icon: <Shield className="w-6 h-6" />,
-      title: '敏感词管理',
-      description: '管理 AI 响应的敏感词过滤规则',
-      color: '#f59e0b',
-    },
-    {
-      href: '/admin/config/system_prompt',
-      icon: <MessageSquare className="w-6 h-6" />,
-      title: '对话页提示词',
-      description: '编辑对话 AI 使用的系统提示词配置',
-      color: 'var(--color-primary)',
-    },
-    {
-      href: '/admin/config/report_system_prompt',
-      icon: <MessageSquare className="w-6 h-6" />,
-      title: '报告页提示词',
-      description: '编辑命理分析报告页专用 AI 提示词',
-      color: '#7c3aed',
-    },
-    {
-      href: '/admin/config/liuyao_system_prompt',
-      icon: <MessageSquare className="w-6 h-6" />,
-      title: '六爻提示词',
-      description: '编辑六爻多轮对话与解卦专用 AI 提示词',
-      color: '#0ea5e9',
-    },
-    {
-      href: '/admin/config/quick_buttons',
-      icon: <Zap className="w-6 h-6" />,
-      title: '快捷按钮',
-      description: '管理用户界面的快捷操作按钮',
-      color: 'var(--color-gold)',
-    },
-    {
-      href: '/admin/config/knowledge_base',
-      icon: <BookOpen className="w-6 h-6" />,
-      title: '知识库管理',
-      description: '管理 RAG 知识库内容',
-      color: 'var(--color-tech)',
-    },
-  ];
-
   return (
     <main className="min-h-screen pt-20 pb-12 px-4">
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         {/* Back Link */}
         <Link
           href="/account"
-          className="inline-flex items-center gap-2 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors mb-8"
+          className="inline-flex items-center gap-2 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors mb-6"
         >
           <ArrowLeft className="w-4 h-4" />
           返回账户
         </Link>
 
         {/* Header */}
-        <div className="text-center mb-12">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-gold)] flex items-center justify-center mx-auto mb-4">
-            <Settings className="w-8 h-8 text-white" />
+        <div className="flex items-center gap-4 mb-10">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-gold)] flex items-center justify-center shadow-sm shrink-0">
+            <Settings className="w-6 h-6 text-white" />
           </div>
-          <h1
-            className="text-3xl font-bold text-[var(--color-text-primary)] mb-2"
-            style={{ fontFamily: 'var(--font-display)' }}
-          >
-            管理后台
-          </h1>
-          <p className="text-[var(--color-text-muted)]">
-            欢迎，{me?.username}！管理系统配置和内容
-          </p>
+          <div className="min-w-0">
+            <h1
+              className="text-2xl font-bold text-[var(--color-text-primary)] leading-tight"
+              style={{ fontFamily: 'var(--font-display)' }}
+            >
+              管理后台
+            </h1>
+            <p className="text-sm text-[var(--color-text-muted)] mt-0.5">
+              欢迎，{me?.username}！管理系统配置和内容
+            </p>
+          </div>
         </div>
 
-        {/* Menu Items */}
-        <div className="space-y-4">
-          {menuItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="card card-hover p-6 flex items-center gap-4 group"
-            >
-              <div
-                className="w-12 h-12 rounded-xl flex items-center justify-center text-white transition-transform group-hover:scale-110"
-                style={{ backgroundColor: item.color }}
-              >
-                {item.icon}
+        {/* Sections */}
+        <div className="space-y-9">
+          {SECTIONS.map((section) => (
+            <section key={section.title}>
+              <div className="flex items-baseline gap-3 mb-3">
+                <div className="w-1 h-4 rounded-full bg-[var(--color-primary)]" />
+                <h2
+                  className="text-base font-semibold text-[var(--color-text-primary)] tracking-wide"
+                  style={{ fontFamily: 'var(--font-display)' }}
+                >
+                  {section.title}
+                </h2>
+                <span className="text-xs text-[var(--color-text-hint)]">
+                  {section.description}
+                </span>
               </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
-                  {item.title}
-                </h3>
-                <p className="text-sm text-[var(--color-text-muted)]">
-                  {item.description}
-                </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {section.items.map((item) => {
+                  const Icon = item.icon;
+                  const tone = TONE_STYLES[item.tone];
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className="group card card-hover p-4 flex items-center gap-3.5"
+                    >
+                      <div
+                        className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 ${tone.bg}`}
+                      >
+                        <Icon className={`w-5 h-5 ${tone.icon}`} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-sm font-semibold text-[var(--color-text-primary)] leading-tight">
+                          {item.title}
+                        </h3>
+                        <p className="text-xs text-[var(--color-text-muted)] mt-1 leading-snug line-clamp-1">
+                          {item.description}
+                        </p>
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
-              <ChevronRight className="w-5 h-5 text-[var(--color-text-hint)] group-hover:text-[var(--color-gold)] transition-colors" />
-            </Link>
+            </section>
           ))}
         </div>
 
         {/* Footer */}
         <div className="mt-12 text-center">
-          <p className="text-sm text-[var(--color-text-hint)]">
+          <p className="text-xs text-[var(--color-text-hint)]">
             易凡文化 · 管理控制台
           </p>
         </div>
