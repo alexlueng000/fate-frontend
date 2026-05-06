@@ -90,6 +90,13 @@ export default function AdminPage() {
       color: '#7c3aed',
     },
     {
+      href: '/admin/config/liuyao_system_prompt',
+      icon: <MessageSquare className="w-6 h-6" />,
+      title: '六爻提示词',
+      description: '编辑六爻多轮对话与解卦专用 AI 提示词',
+      color: '#0ea5e9',
+    },
+    {
       href: '/admin/config/quick_buttons',
       icon: <Zap className="w-6 h-6" />,
       title: '快捷按钮',
