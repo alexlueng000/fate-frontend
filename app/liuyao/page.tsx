@@ -56,6 +56,48 @@ const QUESTION_SCENARIOS = [
   },
 ];
 
+// ===== 排盘信息 chip 主题色 =====
+type DetailTheme = 'sky' | 'violet' | 'emerald' | 'rose' | 'amber' | 'fuchsia' | 'orange';
+
+const DETAIL_THEME: Record<DetailTheme, { bg: string; ring: string; dot: string; label: string; icon: string }> = {
+  sky:     { bg: 'bg-sky-50/70',     ring: 'ring-sky-200/70',     dot: 'bg-sky-400',     label: 'text-sky-700',     icon: 'text-sky-500' },
+  violet:  { bg: 'bg-violet-50/70',  ring: 'ring-violet-200/70',  dot: 'bg-violet-400',  label: 'text-violet-700',  icon: 'text-violet-500' },
+  emerald: { bg: 'bg-emerald-50/70', ring: 'ring-emerald-200/70', dot: 'bg-emerald-400', label: 'text-emerald-700', icon: 'text-emerald-500' },
+  rose:    { bg: 'bg-rose-50/70',    ring: 'ring-rose-200/70',    dot: 'bg-rose-400',    label: 'text-rose-700',    icon: 'text-rose-500' },
+  amber:   { bg: 'bg-amber-50/70',   ring: 'ring-amber-200/70',   dot: 'bg-amber-400',   label: 'text-amber-700',   icon: 'text-amber-500' },
+  fuchsia: { bg: 'bg-fuchsia-50/70', ring: 'ring-fuchsia-200/70', dot: 'bg-fuchsia-400', label: 'text-fuchsia-700', icon: 'text-fuchsia-500' },
+  orange:  { bg: 'bg-orange-50/70',  ring: 'ring-orange-200/70',  dot: 'bg-orange-400',  label: 'text-orange-700',  icon: 'text-orange-500' },
+};
+
+function DetailChip({
+  theme, icon, label, value, sub,
+}: {
+  theme: DetailTheme;
+  icon: string;
+  label: string;
+  value: string;
+  sub?: string;
+}) {
+  const t = DETAIL_THEME[theme];
+  return (
+    <div className={`group flex items-center gap-3 rounded-xl px-4 py-3 ring-1 ${t.ring} ${t.bg} transition-all hover:shadow-sm`}>
+      <div className={`shrink-0 w-9 h-9 rounded-lg ${t.bg} ring-1 ${t.ring} flex items-center justify-center text-lg ${t.icon}`}>
+        <span aria-hidden>{icon}</span>
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5 mb-0.5">
+          <span className={`w-1 h-1 rounded-full ${t.dot}`} />
+          <span className={`text-[10px] tracking-[0.2em] uppercase font-medium ${t.label}`}>{label}</span>
+        </div>
+        <div className="text-sm text-stone-800 font-medium truncate" title={value}>{value}</div>
+        {sub && (
+          <div className="text-[11px] text-stone-500 mt-0.5 truncate" title={sub}>{sub}</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function LiuyaoPage() {
   const { user } = useUser();
   const [method, setMethod] = useState<'number' | 'coin' | 'time'>('number');
@@ -749,85 +791,86 @@ export default function LiuyaoPage() {
                   </div>
 
 
-                  {/* 详细排盘信息 - 直接展示 */}
-                  <div className="mt-6 space-y-2.5">
-                    {/* 真太阳时 */}
+                  {/* 详细排盘信息 - 主题色卡片网格 */}
+                  <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-3">
                     {result.solar_time && (
-                      <div className="flex items-center justify-between px-4 py-3 bg-white/40 rounded-lg">
-                        <span className="text-sm text-stone-600">真太阳时</span>
-                        <span className="text-sm text-stone-800 font-medium">
-                          {new Date(result.timestamp).toLocaleString('zh-CN', {
-                            year: 'numeric',
-                            month: '2-digit',
-                            day: '2-digit',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            second: '2-digit'
-                          })}
-                        </span>
-                      </div>
+                      <DetailChip
+                        theme="sky"
+                        icon="☀"
+                        label="真太阳时"
+                        value={new Date(result.timestamp).toLocaleString('zh-CN', {
+                          year: 'numeric',
+                          month: '2-digit',
+                          day: '2-digit',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          second: '2-digit',
+                        })}
+                      />
                     )}
 
-                    {/* 农历时间 */}
                     {result.lunar_date && (
-                      <div className="flex items-center justify-between px-4 py-3 bg-white/40 rounded-lg">
-                        <span className="text-sm text-stone-600">农历</span>
-                        <span className="text-sm text-stone-800 font-medium">{result.lunar_date}</span>
-                      </div>
+                      <DetailChip
+                        theme="violet"
+                        icon="☾"
+                        label="农历"
+                        value={result.lunar_date}
+                      />
                     )}
 
-                    {/* 节气信息 */}
                     {(result.jiqi?.current || result.jieqi?.current) && (
-                      <div className="flex items-center justify-between px-4 py-3 bg-white/40 rounded-lg">
-                        <span className="text-sm text-stone-600">节气</span>
-                        <span className="text-sm text-stone-800 font-medium">
-                          {result.jiqi?.current || result.jieqi?.current}
-                          {(result.jiqi?.next || result.jieqi?.next) && (
-                            <span className="text-stone-500 text-xs ml-2">
-                              下一节气：{(result.jiqi?.next_time || result.jieqi?.next_time) || ''}
-                            </span>
-                          )}
-                        </span>
-                      </div>
+                      <DetailChip
+                        theme="emerald"
+                        icon="❀"
+                        label="节气"
+                        value={result.jiqi?.current || result.jieqi?.current || ''}
+                        sub={
+                          (result.jiqi?.next_time || result.jieqi?.next_time)
+                            ? `下一节气：${result.jiqi?.next_time || result.jieqi?.next_time}`
+                            : undefined
+                        }
+                      />
                     )}
 
-                    {/* 神煞信息 */}
                     {result.shensha && (
-                      <div className="flex items-center justify-between px-4 py-3 bg-white/40 rounded-lg">
-                        <span className="text-sm text-stone-600">神煞</span>
-                        <span className="text-sm text-stone-800 font-medium">{result.shensha}</span>
-                      </div>
+                      <DetailChip
+                        theme="rose"
+                        icon="✦"
+                        label="神煞"
+                        value={result.shensha}
+                      />
                     )}
 
-                    {/* 卦宫信息 */}
                     {result.gua_gong && (
-                      <div className="flex items-center justify-between px-4 py-3 bg-white/40 rounded-lg">
-                        <span className="text-sm text-stone-600">卦宫</span>
-                        <span className="text-sm text-stone-800 font-medium">{result.gua_gong}</span>
-                      </div>
+                      <DetailChip
+                        theme="amber"
+                        icon="☰"
+                        label="卦宫"
+                        value={result.gua_gong}
+                      />
                     )}
 
-                    {/* 卦身信息 */}
                     {result.gua_shen && (
-                      <div className="flex items-center justify-between px-4 py-3 bg-white/40 rounded-lg">
-                        <span className="text-sm text-stone-600">卦身</span>
-                        <span className="text-sm text-stone-800 font-medium">{result.gua_shen}</span>
-                      </div>
+                      <DetailChip
+                        theme="fuchsia"
+                        icon="◉"
+                        label="卦身"
+                        value={result.gua_shen}
+                      />
                     )}
 
-                    {/* 动爻信息 */}
                     {result.dong_yao && (
-                      <div className="flex items-center justify-between px-4 py-3 bg-white/40 rounded-lg">
-                        <span className="text-sm text-stone-600">动爻</span>
-                        <span className="text-sm text-stone-800 font-medium">
-                          第{result.dong_yao}爻
-                          {result.method === 'number' && result.numbers?.numbers && (
-                            <span className="text-stone-500 text-xs ml-2">
-                              (数字：{result.numbers.numbers.join('、')})
-                            </span>
-                          )}
-                        </span>
-                      </div>
+                      <DetailChip
+                        theme="orange"
+                        icon="↯"
+                        label="动爻"
+                        value={`第${result.dong_yao}爻`}
+                        sub={
+                          result.method === 'number' && result.numbers?.numbers
+                            ? `数字：${result.numbers.numbers.join('、')}`
+                            : undefined
+                        }
+                      />
                     )}
                   </div>
                 </div>
@@ -902,25 +945,35 @@ export default function LiuyaoPage() {
                     {/* 变卦 */}
                     {result.change_gua && result.lines && result.lines.lines && Array.isArray(result.lines.lines) && result.change_lines && result.change_lines.lines && Array.isArray(result.change_lines.lines) ? (
                       <div className="relative">
-                        {/* 连接箭头 (仅桌面显示) */}
+                        {/* 连接箭头 (仅桌面显示) - 圆形渐变徽章 */}
                         <div className="hidden md:block absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
-                          <div className="flex flex-col items-center gap-2">
-                            <svg
-                              width="32"
-                              height="32"
-                              viewBox="0 0 32 32"
-                              fill="none"
-                              className="text-red-600/40"
+                          <div className="flex flex-col items-center gap-1.5">
+                            <div className="relative w-12 h-12">
+                              {/* 外层光晕 */}
+                              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-amber-200/60 via-rose-200/50 to-red-200/40 blur-md animate-pulse" />
+                              {/* 主体徽章 */}
+                              <div className="relative w-12 h-12 rounded-full bg-gradient-to-br from-amber-50 via-white to-rose-50 ring-2 ring-amber-300/60 shadow-lg flex items-center justify-center">
+                                <svg
+                                  width="22"
+                                  height="22"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  className="text-red-600/80"
+                                >
+                                  <path
+                                    d="M5 12H19M19 12L13 6M19 12L13 18"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                </svg>
+                              </div>
+                            </div>
+                            <span
+                              className="text-[10px] tracking-[0.4em] text-red-700/70 font-medium px-2 py-0.5 rounded-full bg-amber-50/80 ring-1 ring-amber-200/60"
+                              style={{ fontFamily: "'Noto Serif SC', serif" }}
                             >
-                              <path
-                                d="M8 16H24M24 16L18 10M24 16L18 22"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              />
-                            </svg>
-                            <span className="text-[10px] tracking-widest text-red-600/60 uppercase font-light">
                               变
                             </span>
                           </div>
@@ -1127,14 +1180,62 @@ export default function LiuyaoPage() {
                   ) : (
                     /* 已开始 - 完整对话区 */
                     <div className="animate-fade-in space-y-4">
-                      <MessageList
-                        scrollRef={chatScrollRef}
-                        messages={msgs}
-                        Markdown={MarkdownView}
-                        onQuestionClick={handleQuestionClick}
-                        loading={sending || booting}
-                        containerClassName="rounded-xl border border-stone-200/60 bg-white/80 max-h-[640px]"
-                      />
+                      {(() => {
+                        const last = msgs[msgs.length - 1];
+                        const initialLoading =
+                          booting &&
+                          (msgs.length === 0 ||
+                            (last?.role === 'assistant' &&
+                              last?.streaming &&
+                              !last?.content));
+                        if (initialLoading) {
+                          return (
+                            <div className="rounded-xl border border-stone-200/60 bg-white/80 px-6 py-14 text-center">
+                              <div className="relative w-20 h-20 mx-auto mb-6">
+                                <div className="absolute inset-0 rounded-full border-4 border-amber-100" />
+                                <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-amber-500 animate-spin" />
+                                <div className="absolute inset-3 rounded-full border-4 border-amber-50" />
+                                <div
+                                  className="absolute inset-3 rounded-full border-4 border-transparent border-b-amber-400 animate-spin"
+                                  style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <svg
+                                    width="28"
+                                    height="28"
+                                    viewBox="0 0 32 32"
+                                    fill="none"
+                                    className="text-amber-600 animate-pulse"
+                                  >
+                                    <path
+                                      d="M16 8V16M16 16V24M16 16H24M16 16H8"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                    />
+                                  </svg>
+                                </div>
+                              </div>
+                              <p className="text-stone-600 text-base mb-1.5 animate-pulse">
+                                AI 正在解读卦象…
+                              </p>
+                              <p className="text-stone-400 text-sm">
+                                分析卦象结构、动爻变化与问题关联
+                              </p>
+                            </div>
+                          );
+                        }
+                        return (
+                          <MessageList
+                            scrollRef={chatScrollRef}
+                            messages={msgs}
+                            Markdown={MarkdownView}
+                            onQuestionClick={handleQuestionClick}
+                            loading={sending || booting}
+                            containerClassName="rounded-xl border border-stone-200/60 bg-white/80 max-h-[640px]"
+                          />
+                        );
+                      })()}
                       <QuickActions
                         disabled={sending || booting || !conversationId}
                         buttons={LIUYAO_QUICK_BUTTONS}
