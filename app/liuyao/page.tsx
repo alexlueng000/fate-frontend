@@ -1,10 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useUser } from '@/app/lib/auth';
 import { liuyaoApi, PaipanRequest, HexagramDetail } from '@/app/lib/liuyao/api';
 import { getHexagramByName } from '@/app/lib/hexagram';
+import {
+  LIUYAO_ACTIVE_CONV_KEY,
+  LIUYAO_QUICK_BUTTONS,
+  LiuyaoQuickKind,
+} from '@/app/lib/liuyao/constants';
 import MarkdownView from '@/app/components/Markdown';
+import { MessageList } from '@/app/components/chat/MessageList';
+import { InputArea } from '@/app/components/chat/InputArea';
+import { QuickActions } from '@/app/components/chat/QuickActions';
+import { Msg, normalizeMarkdown } from '@/app/lib/chat/types';
+import { parseSuggestedQuestions } from '@/app/lib/chat/parser';
+import { saveConversation, loadConversation } from '@/app/lib/chat/storage';
 
 // 问事场景配置
 const QUESTION_SCENARIOS = [
@@ -54,8 +65,60 @@ export default function LiuyaoPage() {
   const [numbers, setNumbers] = useState<string[]>(['', '', '']);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<HexagramDetail | null>(null);
-  const [interpretation, setInterpretation] = useState<string>('');
-  const [interpreting, setInterpreting] = useState(false);
+
+  // ===== AI 多轮对话状态 =====
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [msgs, setMsgs] = useState<Msg[]>([]);
+  const [input, setInput] = useState('');
+  const [sending, setSending] = useState(false);
+  const [booting, setBooting] = useState(false);
+  const chatScrollRef = useRef<HTMLDivElement | null>(null);
+
+  function readConvId(meta: unknown): string {
+    if (typeof meta !== 'object' || meta === null) return '';
+    const v = (meta as Record<string, unknown>)['conversation_id'];
+    return typeof v === 'string' ? v : '';
+  }
+
+  // 自动滚动对话区
+  useEffect(() => {
+    chatScrollRef.current?.scrollTo({
+      top: chatScrollRef.current.scrollHeight,
+      behavior: 'smooth',
+    });
+  }, [msgs, sending, booting]);
+
+  // 起卦/换卦时尝试恢复对应的对话
+  useEffect(() => {
+    if (!result?.hexagram_id) {
+      setConversationId(null);
+      setMsgs([]);
+      return;
+    }
+    try {
+      const cid = localStorage.getItem(LIUYAO_ACTIVE_CONV_KEY(result.hexagram_id));
+      if (cid) {
+        const cached = loadConversation(cid);
+        if (cached?.length) {
+          setConversationId(cid);
+          setMsgs(cached);
+          return;
+        }
+      }
+    } catch {}
+    setConversationId(null);
+    setMsgs([]);
+  }, [result?.hexagram_id]);
+
+  // 持久化
+  useEffect(() => {
+    if (conversationId) saveConversation(conversationId, msgs);
+  }, [conversationId, msgs]);
+
+  const canSend = useMemo(
+    () => !!conversationId && !!input.trim() && !sending && !booting,
+    [conversationId, input, sending, booting],
+  );
 
   const currentPlaceholder = selectedScenario
     ? QUESTION_SCENARIOS.find(s => s.id === selectedScenario)?.placeholder
@@ -92,7 +155,10 @@ export default function LiuyaoPage() {
 
       const hexagram = await liuyaoApi.paipan(data);
       setResult(hexagram);
-      setInterpretation('');
+      // 切换卦象时清空对话状态，由 useEffect 根据新 hexagram_id 决定是否恢复
+      setConversationId(null);
+      setMsgs([]);
+      setInput('');
     } catch (error: any) {
       console.error('排盘失败:', error);
       alert(error.message || '排盘失败，请重试');
@@ -101,41 +167,179 @@ export default function LiuyaoPage() {
     }
   };
 
-  const handleInterpret = async () => {
-    if (!result) return;
+  // ===== AI 对话相关 handler =====
 
-    console.log('开始解卦，hexagram_id:', result.hexagram_id);
-    setInterpreting(true);
-    setInterpretation('');
+  const finalizeAssistant = (idx: number) => {
+    setMsgs((prev) => {
+      if (idx < 0 || idx >= prev.length) return prev;
+      const next = [...prev];
+      const { questions, cleanedContent } = parseSuggestedQuestions(next[idx].content || '');
+      const normalized = normalizeMarkdown(cleanedContent);
+      next[idx] = {
+        ...next[idx],
+        content: normalized,
+        streaming: false,
+        suggestedQuestions: questions,
+      };
+      return next;
+    });
+  };
+
+  const handleStartChat = async () => {
+    if (!result?.hexagram_id) return;
+
+    setBooting(true);
+
+    let assistantIdx = -1;
+    setMsgs(() => {
+      const next: Msg[] = [{ role: 'assistant', content: '', streaming: true }];
+      assistantIdx = 0;
+      return next;
+    });
 
     try {
-      await liuyaoApi.interpretHexagram(
+      await liuyaoApi.startChat(
         result.hexagram_id,
-        (chunk) => {
-          console.log('收到chunk:', chunk);
-          setInterpretation(prev => prev + chunk);
-        },
-        () => {
-          console.log('解卦完成');
-          setInterpreting(false);
-          // 滚动到解卦结果
-          setTimeout(() => {
-            const resultElement = document.getElementById('interpretation-result');
-            if (resultElement) {
-              resultElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        (delta) => {
+          setMsgs((prev) => {
+            const next = [...prev];
+            if (assistantIdx >= 0 && assistantIdx < next.length) {
+              next[assistantIdx] = { ...next[assistantIdx], content: delta };
             }
-          }, 100);
+            return next;
+          });
         },
-        (error) => {
-          console.error('解卦失败:', error);
-          alert('解卦失败，请重试');
-          setInterpreting(false);
-        }
+        (meta) => {
+          const cid = readConvId(meta);
+          if (cid && result?.hexagram_id) {
+            setConversationId(cid);
+            try {
+              localStorage.setItem(LIUYAO_ACTIVE_CONV_KEY(result.hexagram_id), cid);
+            } catch {}
+          }
+        },
       );
+      finalizeAssistant(assistantIdx);
     } catch (error: any) {
-      console.error('解卦失败:', error);
-      alert(error.message || '解卦失败，请重试');
-      setInterpreting(false);
+      console.error('开启对话失败:', error);
+      alert(error?.message || '开启对话失败，请重试');
+      setMsgs([]);
+      setConversationId(null);
+    } finally {
+      setBooting(false);
+    }
+  };
+
+  const sendStream = async (
+    runner: (
+      onDelta: (text: string) => void,
+      onMeta: (meta: unknown) => void,
+    ) => Promise<void>,
+  ) => {
+    let assistantIdx = -1;
+    setMsgs((prev) => {
+      const next: Msg[] = [...prev, { role: 'assistant', content: '', streaming: true }];
+      assistantIdx = next.length - 1;
+      return next;
+    });
+
+    try {
+      await runner(
+        (delta) => {
+          setMsgs((prev) => {
+            if (assistantIdx < 0 || assistantIdx >= prev.length) return prev;
+            const next = [...prev];
+            next[assistantIdx] = { ...next[assistantIdx], content: delta };
+            return next;
+          });
+        },
+        () => {},
+      );
+      finalizeAssistant(assistantIdx);
+    } catch (error: any) {
+      console.error('对话失败:', error);
+      setMsgs((prev) => {
+        if (assistantIdx < 0 || assistantIdx >= prev.length) return prev;
+        const next = [...prev];
+        next[assistantIdx] = {
+          ...next[assistantIdx],
+          content: '抱歉，AI 服务暂时不可用，请稍后再试。',
+          streaming: false,
+        };
+        return next;
+      });
+    }
+  };
+
+  const send = async () => {
+    if (!conversationId || !result?.hexagram_id) return;
+    const content = input.trim();
+    if (!content) return;
+    setMsgs((m) => [...m, { role: 'user', content }]);
+    setInput('');
+    setSending(true);
+    try {
+      await sendStream((onDelta, onMeta) =>
+        liuyaoApi.sendChat(result.hexagram_id, conversationId, content, onDelta, onMeta),
+      );
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const sendQuick = async (label: string, kindRaw: string) => {
+    if (!conversationId || !result?.hexagram_id) return;
+    const kind = kindRaw as LiuyaoQuickKind;
+    setMsgs((m) => [...m, { role: 'user', content: `${label}分析` }]);
+    setSending(true);
+    try {
+      await sendStream((onDelta, onMeta) =>
+        liuyaoApi.quickChat(result.hexagram_id, conversationId, kind, onDelta, onMeta),
+      );
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleQuestionClick = async (question: string) => {
+    if (!conversationId || sending || !result?.hexagram_id) return;
+    setMsgs((m) => [...m, { role: 'user', content: question }]);
+    setSending(true);
+    try {
+      await sendStream((onDelta, onMeta) =>
+        liuyaoApi.sendChat(result.hexagram_id, conversationId, question, onDelta, onMeta),
+      );
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const onInputKeyDown = (ev: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (ev.key === 'Enter' && !ev.shiftKey) {
+      ev.preventDefault();
+      if (canSend) void send();
+    }
+  };
+
+  const regenerate = async () => {
+    if (!conversationId || !result?.hexagram_id) return;
+    setSending(true);
+    try {
+      const data = await liuyaoApi.regenerateChat(result.hexagram_id, conversationId);
+      const newReply = normalizeMarkdown(data.reply || '');
+      setMsgs((prev) => {
+        const lastIdx = [...prev].map((m, i) => ({ m, i }))
+          .reverse()
+          .find((x) => x.m.role === 'assistant')?.i;
+        if (lastIdx == null) return prev;
+        const next = [...prev];
+        next[lastIdx] = { role: 'assistant', content: newReply };
+        return next;
+      });
+    } catch (e: any) {
+      alert(e?.message || '重新生成失败');
+    } finally {
+      setSending(false);
     }
   };
 
@@ -545,95 +749,87 @@ export default function LiuyaoPage() {
                   </div>
 
 
-                  {/* 详细排盘信息 - 折叠式展示 */}
-                  <details className="mt-4 group">
-                    <summary className="cursor-pointer text-center py-2 text-xs text-stone-500 hover:text-amber-600 transition-colors flex items-center justify-center gap-2">
-                      <span>查看详细信息</span>
-                      <svg className="w-4 h-4 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </summary>
-                    <div className="mt-3 pt-3 border-t border-stone-200/30 space-y-2 text-xs">
-                      {/* 真太阳时 */}
-                      {result.solar_time && (
-                        <div className="flex items-center justify-between px-3 py-2 bg-white/40 rounded">
-                          <span className="text-stone-500">真太阳时</span>
-                          <span className="text-stone-700 font-medium">
-                            {new Date(result.timestamp).toLocaleString('zh-CN', {
-                              year: 'numeric',
-                              month: '2-digit',
-                              day: '2-digit',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                              second: '2-digit'
-                            })}
-                          </span>
-                        </div>
-                      )}
+                  {/* 详细排盘信息 - 直接展示 */}
+                  <div className="mt-6 space-y-2.5">
+                    {/* 真太阳时 */}
+                    {result.solar_time && (
+                      <div className="flex items-center justify-between px-4 py-3 bg-white/40 rounded-lg">
+                        <span className="text-sm text-stone-600">真太阳时</span>
+                        <span className="text-sm text-stone-800 font-medium">
+                          {new Date(result.timestamp).toLocaleString('zh-CN', {
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit'
+                          })}
+                        </span>
+                      </div>
+                    )}
 
-                      {/* 农历时间 */}
-                      {result.lunar_date && (
-                        <div className="flex items-center justify-between px-3 py-2 bg-white/40 rounded">
-                          <span className="text-stone-500">农历</span>
-                          <span className="text-stone-700 font-medium">{result.lunar_date}</span>
-                        </div>
-                      )}
+                    {/* 农历时间 */}
+                    {result.lunar_date && (
+                      <div className="flex items-center justify-between px-4 py-3 bg-white/40 rounded-lg">
+                        <span className="text-sm text-stone-600">农历</span>
+                        <span className="text-sm text-stone-800 font-medium">{result.lunar_date}</span>
+                      </div>
+                    )}
 
-                      {/* 节气信息 */}
-                      {(result.jiqi?.current || result.jieqi?.current) && (
-                        <div className="flex items-center justify-between px-3 py-2 bg-white/40 rounded">
-                          <span className="text-stone-500">节气</span>
-                          <span className="text-stone-700 font-medium">
-                            {result.jiqi?.current || result.jieqi?.current}
-                            {(result.jiqi?.next || result.jieqi?.next) && (
-                              <span className="text-stone-500 text-[10px] ml-2">
-                                下一节气：{(result.jiqi?.next_time || result.jieqi?.next_time) || ''}
-                              </span>
-                            )}
-                          </span>
-                        </div>
-                      )}
+                    {/* 节气信息 */}
+                    {(result.jiqi?.current || result.jieqi?.current) && (
+                      <div className="flex items-center justify-between px-4 py-3 bg-white/40 rounded-lg">
+                        <span className="text-sm text-stone-600">节气</span>
+                        <span className="text-sm text-stone-800 font-medium">
+                          {result.jiqi?.current || result.jieqi?.current}
+                          {(result.jiqi?.next || result.jieqi?.next) && (
+                            <span className="text-stone-500 text-xs ml-2">
+                              下一节气：{(result.jiqi?.next_time || result.jieqi?.next_time) || ''}
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                    )}
 
-                      {/* 神煞信息 */}
-                      {result.shensha && (
-                        <div className="flex items-center justify-between px-3 py-2 bg-white/40 rounded">
-                          <span className="text-stone-500">神煞</span>
-                          <span className="text-stone-700 font-medium">{result.shensha}</span>
-                        </div>
-                      )}
+                    {/* 神煞信息 */}
+                    {result.shensha && (
+                      <div className="flex items-center justify-between px-4 py-3 bg-white/40 rounded-lg">
+                        <span className="text-sm text-stone-600">神煞</span>
+                        <span className="text-sm text-stone-800 font-medium">{result.shensha}</span>
+                      </div>
+                    )}
 
-                      {/* 卦宫信息 */}
-                      {result.gua_gong && (
-                        <div className="flex items-center justify-between px-3 py-2 bg-white/40 rounded">
-                          <span className="text-stone-500">卦宫</span>
-                          <span className="text-stone-700 font-medium">{result.gua_gong}</span>
-                        </div>
-                      )}
+                    {/* 卦宫信息 */}
+                    {result.gua_gong && (
+                      <div className="flex items-center justify-between px-4 py-3 bg-white/40 rounded-lg">
+                        <span className="text-sm text-stone-600">卦宫</span>
+                        <span className="text-sm text-stone-800 font-medium">{result.gua_gong}</span>
+                      </div>
+                    )}
 
-                      {/* 卦身信息 */}
-                      {result.gua_shen && (
-                        <div className="flex items-center justify-between px-3 py-2 bg-white/40 rounded">
-                          <span className="text-stone-500">卦身</span>
-                          <span className="text-stone-700 font-medium">{result.gua_shen}</span>
-                        </div>
-                      )}
+                    {/* 卦身信息 */}
+                    {result.gua_shen && (
+                      <div className="flex items-center justify-between px-4 py-3 bg-white/40 rounded-lg">
+                        <span className="text-sm text-stone-600">卦身</span>
+                        <span className="text-sm text-stone-800 font-medium">{result.gua_shen}</span>
+                      </div>
+                    )}
 
-                      {/* 动爻信息 */}
-                      {result.dong_yao && (
-                        <div className="flex items-center justify-between px-3 py-2 bg-white/40 rounded">
-                          <span className="text-stone-500">动爻</span>
-                          <span className="text-stone-700 font-medium">
-                            第{result.dong_yao}爻
-                            {result.method === 'number' && result.numbers?.numbers && (
-                              <span className="text-stone-500 text-[10px] ml-2">
-                                (数字：{result.numbers.numbers.join('、')})
-                              </span>
-                            )}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </details>
+                    {/* 动爻信息 */}
+                    {result.dong_yao && (
+                      <div className="flex items-center justify-between px-4 py-3 bg-white/40 rounded-lg">
+                        <span className="text-sm text-stone-600">动爻</span>
+                        <span className="text-sm text-stone-800 font-medium">
+                          第{result.dong_yao}爻
+                          {result.method === 'number' && result.numbers?.numbers && (
+                            <span className="text-stone-500 text-xs ml-2">
+                              (数字：{result.numbers.numbers.join('、')})
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -826,7 +1022,9 @@ export default function LiuyaoPage() {
                   <button
                     onClick={() => {
                       setResult(null);
-                      setInterpretation('');
+                      setConversationId(null);
+                      setMsgs([]);
+                      setInput('');
                     }}
                     className="group px-10 py-3.5 bg-white text-stone-700 border border-stone-300 rounded-full hover:border-red-600 hover:text-red-600 transition-all duration-300 shadow-sm hover:shadow-md text-sm tracking-wider font-light"
                   >
@@ -876,7 +1074,7 @@ export default function LiuyaoPage() {
                   </div>
 
                   {/* 内容区域 */}
-                  {!interpretation && !interpreting ? (
+                  {!conversationId && msgs.length === 0 ? (
                     /* 未开始解卦 - 显示按钮 */
                     <div className="text-center py-12">
                       <div className="mb-6">
@@ -898,11 +1096,12 @@ export default function LiuyaoPage() {
                           </svg>
                         </div>
                         <p className="text-stone-500 text-sm mb-2">卦象已成，点击下方按钮开始解读</p>
-                        <p className="text-stone-400 text-xs">AI 将结合卦象、动爻和问题为你深度分析</p>
+                        <p className="text-stone-400 text-xs">AI 将结合卦象、动爻和问题为你深度分析，并支持追问</p>
                       </div>
                       <button
-                        onClick={handleInterpret}
-                        className="group relative px-12 py-4 bg-gradient-to-r from-[#B93A2F] to-[#9a2f26] text-white rounded-full hover:shadow-2xl transition-all duration-300 shadow-lg text-base tracking-wider font-light active:scale-95 overflow-hidden"
+                        onClick={handleStartChat}
+                        disabled={booting}
+                        className="group relative px-12 py-4 bg-gradient-to-r from-[#B93A2F] to-[#9a2f26] text-white rounded-full hover:shadow-2xl transition-all duration-300 shadow-lg text-base tracking-wider font-light active:scale-95 overflow-hidden disabled:opacity-60 disabled:cursor-not-allowed"
                       >
                         <span className="absolute inset-0 bg-white/10 rounded-full scale-0 group-hover:scale-100 transition-transform duration-500 ease-out" />
                         <span className="relative z-10 flex items-center gap-3">
@@ -921,48 +1120,37 @@ export default function LiuyaoPage() {
                             />
                             <circle cx="10" cy="10" r="8" stroke="currentColor" strokeWidth="1.5" opacity="0.3" />
                           </svg>
-                          开始 AI 解卦
+                          {booting ? '启动中…' : '开始 AI 解卦'}
                         </span>
                       </button>
                     </div>
-                  ) : interpreting ? (
-                    /* 解卦中 - 显示优雅的加载动画 */
-                    <div className="text-center py-16">
-                      <div className="relative w-24 h-24 mx-auto mb-6">
-                        {/* 外圈旋转 */}
-                        <div className="absolute inset-0 rounded-full border-4 border-amber-100"></div>
-                        <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-amber-500 animate-spin"></div>
-
-                        {/* 内圈反向旋转 */}
-                        <div className="absolute inset-3 rounded-full border-4 border-amber-50"></div>
-                        <div className="absolute inset-3 rounded-full border-4 border-transparent border-b-amber-400 animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
-
-                        {/* 中心图标 */}
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <svg
-                            width="32"
-                            height="32"
-                            viewBox="0 0 32 32"
-                            fill="none"
-                            className="text-amber-600 animate-pulse"
-                          >
-                            <path
-                              d="M16 8V16M16 16V24M16 16H24M16 16H8"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                            />
-                          </svg>
-                        </div>
-                      </div>
-
-                      <p className="text-stone-600 text-base mb-2 animate-pulse">AI 正在解读卦象...</p>
-                      <p className="text-stone-400 text-sm">分析卦象结构、动爻变化与问题关联</p>
-                    </div>
                   ) : (
-                    /* 解卦完成 - 显示结果 */
-                    <div className="animate-fade-in">
-                      <MarkdownView content={interpretation} />
+                    /* 已开始 - 完整对话区 */
+                    <div className="animate-fade-in space-y-4">
+                      <MessageList
+                        scrollRef={chatScrollRef}
+                        messages={msgs}
+                        Markdown={MarkdownView}
+                        onQuestionClick={handleQuestionClick}
+                        loading={sending || booting}
+                        containerClassName="rounded-xl border border-stone-200/60 bg-white/80 max-h-[640px]"
+                      />
+                      <QuickActions
+                        disabled={sending || booting || !conversationId}
+                        buttons={LIUYAO_QUICK_BUTTONS}
+                        onClick={sendQuick}
+                      />
+                      <InputArea
+                        value={input}
+                        onChange={setInput}
+                        onKeyDown={onInputKeyDown}
+                        canSend={canSend}
+                        sending={sending}
+                        disabled={booting || !conversationId}
+                        onSend={send}
+                        onRegenerate={regenerate}
+                        placeholder="基于此卦继续追问，例如：现在主动联系合适吗？"
+                      />
                     </div>
                   )}
                 </div>

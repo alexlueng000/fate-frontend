@@ -459,48 +459,36 @@ export default function PanelPage() {
     <div className="h-full flex flex-col bg-[var(--color-bg)]">
 
       {/* Profile status bar */}
-      <div className="flex-shrink-0 px-4 py-3 border-b border-[var(--color-border)] bg-gradient-to-br from-red-50/80 via-amber-50/60 to-orange-50/70">
-        <div className="flex items-start justify-between gap-3">
+      <div className="flex-shrink-0 px-4 py-3 border-b border-[var(--color-border)] bg-white/50">
+        <div className="flex items-center justify-between gap-3">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 mb-2">
-              <div className="h-1 w-1 rounded-full bg-red-600 animate-pulse" />
-              <p className="text-[11px] font-semibold tracking-wider text-red-800/70 uppercase">当前命盘</p>
+              <div className="h-1.5 w-1.5 rounded-full bg-[var(--color-primary)] animate-pulse" />
+              <p className="text-[10px] font-medium tracking-wide text-[var(--color-text-muted)] uppercase">当前命盘</p>
             </div>
             {profile ? (
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-medium text-red-900/40">性别</span>
-                  <span className="px-2 py-0.5 rounded-md bg-white/80 text-sm font-semibold text-red-900 border border-red-200/50">
-                    {genderLabel}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-medium text-red-900/40">出生</span>
-                  <span className="px-2 py-0.5 rounded-md bg-white/80 text-sm font-semibold text-red-900 border border-red-200/50">
-                    {profile.birth_date}
-                  </span>
-                  <span className="px-2 py-0.5 rounded-md bg-white/80 text-sm font-semibold text-red-900 border border-red-200/50">
-                    {profile.birth_time}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-medium text-red-900/40">地点</span>
-                  <span className="px-2 py-0.5 rounded-md bg-white/80 text-sm font-semibold text-red-900 border border-red-200/50">
-                    {profile.birth_location}
-                  </span>
-                </div>
+              <div className="flex flex-wrap items-center gap-2 text-sm">
+                <span className="text-[var(--color-text-secondary)]">性别</span>
+                <span className="font-medium text-[var(--color-text-primary)]">{genderLabel}</span>
+                <span className="text-[var(--color-text-hint)]">·</span>
+                <span className="text-[var(--color-text-secondary)]">出生</span>
+                <span className="font-medium text-[var(--color-text-primary)]">{profile.birth_date}</span>
+                <span className="font-medium text-[var(--color-text-primary)]">{profile.birth_time}</span>
+                <span className="text-[var(--color-text-hint)]">·</span>
+                <span className="text-[var(--color-text-secondary)]">地点</span>
+                <span className="font-medium text-[var(--color-text-primary)]">{profile.birth_location}</span>
               </div>
             ) : (
-              <p className="text-sm text-red-900/60">加载中…</p>
+              <p className="text-sm text-[var(--color-text-muted)]">加载中…</p>
             )}
           </div>
           <div className="relative flex-shrink-0" ref={menuRef}>
             <button
               onClick={() => setShowMenu(v => !v)}
-              className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/80 hover:bg-white border border-red-200/50 hover:border-red-300 transition-all shadow-sm hover:shadow"
+              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[var(--color-bg-hover)] transition-colors"
               aria-label="更多操作"
             >
-              <MoreVertical className="w-4 h-4 text-red-800" />
+              <MoreVertical className="w-4 h-4 text-[var(--color-text-secondary)]" />
             </button>
             {showMenu && (
               <div className="absolute right-0 top-10 z-50 min-w-[148px] rounded-xl overflow-hidden border border-[var(--color-border)] bg-white shadow-lg">

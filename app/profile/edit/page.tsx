@@ -7,6 +7,7 @@ import { api } from '@/app/lib/api';
 import { getAuthToken } from '@/app/lib/auth';
 import { PrettyDateField } from '@/app/components/Calender';
 import { IOSWheelTime } from '@/app/components/TimePicker';
+import { clearAllChatData } from '@/app/lib/chat/storage';
 
 interface UserProfile {
   id: number;
@@ -139,7 +140,11 @@ function EditProfileContent() {
         throw new Error(errorMsg);
       }
 
-      router.push(returnTo);
+      // 档案关键字段已变更：后端会重算命盘并作废旧的 ai_report，
+      // 这里清掉前端聊天缓存（避免续接到基于旧八字的对话），
+      // 然后跳到 /report 自动触发新报告流式生成。
+      clearAllChatData();
+      router.push('/report');
     } catch (err) {
       setError(err instanceof Error ? err.message : '更新档案失败');
     } finally {
