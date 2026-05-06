@@ -199,48 +199,41 @@ export default function RegisterPage() {
       {/* Register Card */}
       <div className="relative w-full max-w-md card p-6 animate-scale-in">
         {/* Header */}
-        <div className="text-center mb-4">
-          <Link href="/" className="inline-flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-gold)] flex items-center justify-center shadow-lg">
-              <span className="text-white text-lg font-bold" style={{ fontFamily: 'var(--font-display)' }}>
-                盏
-              </span>
-            </div>
-          </Link>
+        <div className="text-center mb-6">
           <h1
-            className="text-xl font-bold text-[var(--color-text-primary)] mb-1"
+            className="text-2xl font-bold text-[var(--color-text-primary)] mb-1"
             style={{ fontFamily: 'var(--font-display)' }}
           >
             创建账户
           </h1>
-          <p className="text-xs text-[var(--color-text-muted)]">
+          <p className="text-sm text-[var(--color-text-muted)]">
             使用邀请码注册
           </p>
         </div>
 
         {/* Error/Success Alert */}
         {err && (
-          <div className="mb-3 rounded-xl border border-[var(--color-primary)]/30 bg-[var(--color-primary)]/10 px-4 py-2.5 text-sm text-[var(--color-primary)]">
+          <div className="mb-4 rounded-lg border border-[var(--color-primary)]/30 bg-[var(--color-primary)]/10 px-3 py-2 text-sm text-[var(--color-primary)]">
             {err}
           </div>
         )}
         {ok && (
-          <div className="mb-3 rounded-xl border border-green-500/30 bg-green-500/10 px-4 py-2.5 text-sm text-green-400">
+          <div className="mb-4 rounded-lg border border-green-500/30 bg-green-500/10 px-3 py-2 text-sm text-green-400">
             {ok}
           </div>
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {/* Invitation Code - First and prominent */}
           <div>
-            <label className="block text-xs text-[var(--color-text-secondary)] mb-1.5">
+            <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1.5">
               邀请码 <span className="text-[var(--color-primary)]">*</span>
             </label>
             <div className="relative">
-              <Ticket className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
+              <Ticket className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-hint)]" />
               <input
-                className="input !pl-12 !pr-12"
+                className="w-full h-10 pl-10 pr-10 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-elevated)] text-[var(--color-text-primary)] text-sm placeholder:text-[var(--color-text-hint)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)] transition-all"
                 value={invitationCode}
                 onChange={(e) => {
                   setInvitationCode(e.target.value.toUpperCase());
@@ -251,27 +244,27 @@ export default function RegisterPage() {
                 placeholder="请输入邀请码"
                 autoComplete="off"
               />
-              <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                {codeValidating && <Loader2 className="w-5 h-5 animate-spin text-[var(--color-text-hint)]" />}
-                {!codeValidating && codeValid === true && <CheckCircle className="w-5 h-5 text-green-500" />}
-                {!codeValidating && codeValid === false && <XCircle className="w-5 h-5 text-[var(--color-primary)]" />}
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                {codeValidating && <Loader2 className="w-4 h-4 animate-spin text-[var(--color-text-hint)]" />}
+                {!codeValidating && codeValid === true && <CheckCircle className="w-4 h-4 text-green-500" />}
+                {!codeValidating && codeValid === false && <XCircle className="w-4 h-4 text-[var(--color-primary)]" />}
               </div>
             </div>
             {codeError && (
-              <p className="mt-1 text-xs text-[var(--color-primary)]">{codeError}</p>
+              <p className="mt-1.5 text-xs text-[var(--color-primary)]">{codeError}</p>
             )}
             {codeValid === true && (
-              <p className="mt-1 text-xs text-green-500">邀请码有效</p>
+              <p className="mt-1.5 text-xs text-green-500">邀请码有效</p>
             )}
           </div>
 
           {/* Email */}
           <div>
-            <label className="block text-xs text-[var(--color-text-secondary)] mb-1.5">邮箱</label>
+            <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1.5">邮箱</label>
             <div className="relative">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-hint)]" />
               <input
-                className="input !pl-12"
+                className="w-full h-10 pl-10 pr-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-elevated)] text-[var(--color-text-primary)] text-sm placeholder:text-[var(--color-text-hint)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)] transition-all"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
@@ -280,17 +273,17 @@ export default function RegisterPage() {
               />
             </div>
             {!emailOk && email.length > 0 && (
-              <p className="mt-1 text-xs text-[var(--color-primary)]">邮箱格式不正确</p>
+              <p className="mt-1.5 text-xs text-[var(--color-primary)]">邮箱格式不正确</p>
             )}
           </div>
 
           {/* Username */}
           <div>
-            <label className="block text-xs text-[var(--color-text-secondary)] mb-1.5">用户名</label>
+            <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1.5">用户名</label>
             <div className="relative">
-              <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
+              <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-hint)]" />
               <input
-                className="input !pl-12"
+                className="w-full h-10 pl-10 pr-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-elevated)] text-[var(--color-text-primary)] text-sm placeholder:text-[var(--color-text-hint)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)] transition-all"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="请输入用户名"
@@ -301,11 +294,11 @@ export default function RegisterPage() {
 
           {/* Password */}
           <div>
-            <label className="block text-xs text-[var(--color-text-secondary)] mb-1.5">密码</label>
+            <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1.5">密码</label>
             <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-hint)]" />
               <input
-                className="input !pl-12 pr-12"
+                className="w-full h-10 pl-10 pr-10 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-elevated)] text-[var(--color-text-primary)] text-sm placeholder:text-[var(--color-text-hint)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)] transition-all"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 type={showPw ? 'text' : 'password'}
@@ -314,16 +307,16 @@ export default function RegisterPage() {
               />
               <button
                 type="button"
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--color-text-hint)] hover:text-[var(--color-text-secondary)]"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-text-hint)] hover:text-[var(--color-text-secondary)] transition-colors"
                 onClick={() => setShowPw((v) => !v)}
               >
-                {showPw ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
             <div className="mt-2">
-              <div className="h-1.5 w-full rounded-full bg-[var(--color-bg-elevated)] overflow-hidden">
+              <div className="h-1 w-full rounded-full bg-[var(--color-bg-elevated)] overflow-hidden">
                 <div
-                  className="h-full transition-all"
+                  className="h-full transition-all duration-300"
                   style={{
                     width: `${(pwStrength.score / 4) * 100}%`,
                     backgroundColor: pwStrength.score >= 3 ? '#22c55e' : pwStrength.score === 2 ? '#f59e0b' : '#ef4444',
@@ -335,14 +328,14 @@ export default function RegisterPage() {
           </div>
 
           {/* Agreement */}
-          <label className="flex items-start gap-3 text-sm cursor-pointer">
+          <label className="flex items-start gap-2.5 text-sm cursor-pointer">
             <input
               type="checkbox"
-              className="mt-0.5 w-4 h-4 rounded border-[var(--color-border)] bg-[var(--color-bg-elevated)] accent-[var(--color-primary)]"
+              className="mt-0.5 w-4 h-4 rounded border-[var(--color-border)] bg-[var(--color-bg-elevated)] accent-[var(--color-primary)] cursor-pointer"
               checked={agree}
               onChange={(e) => setAgree(e.target.checked)}
             />
-            <span className="text-[var(--color-text-muted)]">
+            <span className="text-xs text-[var(--color-text-muted)] leading-relaxed">
               我已阅读并同意
               <Link href="/terms" className="mx-1 text-[var(--color-gold)] hover:underline">服务条款</Link>
               与
@@ -354,25 +347,25 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={!canSubmit}
-            className="w-full btn btn-primary py-3 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full h-11 rounded-lg bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary)]/90 hover:from-[var(--color-primary)]/90 hover:to-[var(--color-primary)]/80 text-white font-medium text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
           >
             {submitting ? (
               <>
-                <Loader2 className="w-5 h-5 animate-spin" />
+                <Loader2 className="w-4 h-4 animate-spin" />
                 注册中…
               </>
             ) : (
               <>
-                <Sparkles className="w-5 h-5" />
+                <Sparkles className="w-4 h-4" />
                 注册
               </>
             )}
           </button>
 
           {/* Footer */}
-          <p className="text-sm text-center text-[var(--color-text-muted)]">
+          <p className="text-sm text-center text-[var(--color-text-muted)] pt-2">
             已有账号？
-            <Link href="/login" className="ml-1 text-[var(--color-gold)] hover:text-[var(--color-gold-light)] transition-colors">
+            <Link href="/login" className="ml-1 text-[var(--color-gold)] hover:text-[var(--color-gold-light)] transition-colors font-medium">
               去登录
             </Link>
           </p>

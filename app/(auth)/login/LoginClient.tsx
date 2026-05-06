@@ -95,13 +95,6 @@ export default function LoginClient() {
       <div className="relative w-full max-w-md card p-6 animate-scale-in">
         {/* Header */}
         <div className="text-center mb-4">
-          <Link href="/" className="inline-flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-gold)] flex items-center justify-center shadow-lg">
-              <span className="text-white text-lg font-bold" style={{ fontFamily: 'var(--font-display)' }}>
-                盏
-              </span>
-            </div>
-          </Link>
           <h1
             className="text-xl font-bold text-[var(--color-text-primary)] mb-1"
             style={{ fontFamily: 'var(--font-display)' }}

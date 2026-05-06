@@ -432,6 +432,14 @@ export default function LiuyaoPage() {
                           const newNumbers = [...numbers];
                           newNumbers[index] = e.target.value;
                           setNumbers(newNumbers);
+
+                          // 自动跳转到下一个输入框
+                          if (e.target.value && index < 2) {
+                            const nextInput = e.target.parentElement?.children[index + 1] as HTMLInputElement;
+                            if (nextInput) {
+                              nextInput.focus();
+                            }
+                          }
                         }}
                         placeholder={`第${index + 1}个数字`}
                         className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B93A2F] focus:border-transparent text-center text-lg"
@@ -485,147 +493,147 @@ export default function LiuyaoPage() {
               <div className="h-1 bg-gradient-to-r from-transparent via-red-600/40 to-transparent" />
 
               {/* 问事内容和基本信息 */}
-              <div className="px-8 pt-10 pb-6 border-b border-stone-200/50">
-                <div className="max-w-3xl mx-auto">
-                  {/* 问事内容 */}
-                  <div className="text-center mb-6">
-                    <p className="text-xs tracking-[0.3em] text-stone-400 uppercase mb-3 font-light">
-                      所问之事
-                    </p>
-                    <h2 className="text-2xl text-stone-800 leading-relaxed font-light tracking-wide">
+              <div className="px-8 pt-10 pb-8 border-b border-stone-200/50">
+                <div className="max-w-4xl mx-auto">
+                  {/* 问事内容 - 更突出的展示 */}
+                  <div className="text-center mb-8">
+                    <div className="inline-flex items-center gap-3 mb-4">
+                      <div className="h-px w-12 bg-gradient-to-r from-transparent to-amber-400/40"></div>
+                      <p className="text-xs tracking-[0.4em] text-amber-600/70 uppercase font-light">
+                        所问之事
+                      </p>
+                      <div className="h-px w-12 bg-gradient-to-l from-transparent to-amber-400/40"></div>
+                    </div>
+                    <h2 className="text-3xl md:text-4xl text-stone-800 leading-relaxed font-medium tracking-wide mb-2">
                       {result.question}
                     </h2>
+                    <div className="mt-4 inline-block px-4 py-1.5 rounded-full bg-amber-50 border border-amber-200/50">
+                      <p className="text-xs text-amber-700">
+                        {new Date(result.timestamp).toLocaleString('zh-CN', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </p>
+                    </div>
                   </div>
 
-                  {/* 基本信息 */}
-                  <div className="mt-6 pt-6 border-t border-stone-200/30">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                      <div className="text-center">
-                        <p className="text-stone-400 text-xs mb-1">性别</p>
-                        <p className="text-stone-700">
-                          {result.gender === 'male' ? '男' : result.gender === 'female' ? '女' : '未知'}
-                        </p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-stone-400 text-xs mb-1">排法</p>
-                        <p className="text-stone-700">
-                          {result.method === 'time' ? '时间起卦' : result.method === 'number' ? '数字起卦' : '铜钱起卦'}
-                        </p>
-                      </div>
-                      <div className="text-center md:col-span-2">
-                        <p className="text-stone-400 text-xs mb-1">时间</p>
-                        <p className="text-stone-700">
-                          {new Date(result.timestamp).toLocaleString('zh-CN', {
-                            year: 'numeric',
-                            month: '2-digit',
-                            day: '2-digit',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </p>
-                      </div>
+                  {/* 基本信息 - 卡片式布局 */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="bg-white/60 rounded-lg p-3 text-center border border-stone-200/50">
+                      <p className="text-[10px] tracking-wider text-stone-400 uppercase mb-1.5">性别</p>
+                      <p className="text-base text-stone-800 font-medium">
+                        {result.gender === 'male' ? '男' : result.gender === 'female' ? '女' : '未知'}
+                      </p>
                     </div>
+                    <div className="bg-white/60 rounded-lg p-3 text-center border border-stone-200/50">
+                      <p className="text-[10px] tracking-wider text-stone-400 uppercase mb-1.5">排法</p>
+                      <p className="text-base text-stone-800 font-medium">
+                        {result.method === 'time' ? '时间' : result.method === 'number' ? '数字' : '铜钱'}
+                      </p>
+                    </div>
+                    <div className="bg-white/60 rounded-lg p-3 text-center border border-stone-200/50 md:col-span-2">
+                      <p className="text-[10px] tracking-wider text-stone-400 uppercase mb-1.5">干支</p>
+                      {result.ganzhi && (
+                        <p className="text-sm text-stone-800 font-medium tracking-wide">
+                          {result.ganzhi.year} {result.ganzhi.month} {result.ganzhi.day} {result.ganzhi.hour}
+                        </p>
+                      )}
+                    </div>
+                  </div>
 
-                    {/* 干支信息 */}
-                    {result.ganzhi && (
-                      <div className="mt-4 pt-4 border-t border-stone-200/30">
-                        <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm">
-                          <div className="flex items-center gap-2">
-                            <span className="text-stone-400 text-xs">年</span>
-                            <span className="text-stone-700 font-medium">{result.ganzhi.year}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-stone-400 text-xs">月</span>
-                            <span className="text-stone-700 font-medium">{result.ganzhi.month}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-stone-400 text-xs">日</span>
-                            <span className="text-stone-700 font-medium">{result.ganzhi.day}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-stone-400 text-xs">时</span>
-                            <span className="text-stone-700 font-medium">{result.ganzhi.hour}</span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
 
-                    {/* 详细排盘信息 */}
-                    <div className="mt-4 pt-4 border-t border-stone-200/30 space-y-2 text-xs">
+                  {/* 详细排盘信息 - 折叠式展示 */}
+                  <details className="mt-4 group">
+                    <summary className="cursor-pointer text-center py-2 text-xs text-stone-500 hover:text-amber-600 transition-colors flex items-center justify-center gap-2">
+                      <span>查看详细信息</span>
+                      <svg className="w-4 h-4 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </summary>
+                    <div className="mt-3 pt-3 border-t border-stone-200/30 space-y-2 text-xs">
                       {/* 真太阳时 */}
                       {result.solar_time && (
-                        <div className="text-stone-600">
-                          <span className="text-stone-400">真太阳时：</span>
-                          {new Date(result.timestamp).toLocaleString('zh-CN', {
-                            year: 'numeric',
-                            month: '2-digit',
-                            day: '2-digit',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            second: '2-digit'
-                          })}
+                        <div className="flex items-center justify-between px-3 py-2 bg-white/40 rounded">
+                          <span className="text-stone-500">真太阳时</span>
+                          <span className="text-stone-700 font-medium">
+                            {new Date(result.timestamp).toLocaleString('zh-CN', {
+                              year: 'numeric',
+                              month: '2-digit',
+                              day: '2-digit',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              second: '2-digit'
+                            })}
+                          </span>
                         </div>
                       )}
 
                       {/* 农历时间 */}
                       {result.lunar_date && (
-                        <div className="text-stone-600">
-                          <span className="text-stone-400">农历：</span>
-                          {result.lunar_date}
+                        <div className="flex items-center justify-between px-3 py-2 bg-white/40 rounded">
+                          <span className="text-stone-500">农历</span>
+                          <span className="text-stone-700 font-medium">{result.lunar_date}</span>
                         </div>
                       )}
 
                       {/* 节气信息 */}
                       {(result.jiqi?.current || result.jieqi?.current) && (
-                        <div className="text-stone-600">
-                          <span className="text-stone-400">节气：</span>
-                          {result.jiqi?.current || result.jieqi?.current}
-                          {(result.jiqi?.next || result.jieqi?.next) && (
-                            <span className="text-stone-400 ml-2">
-                              立夏：{(result.jiqi?.next_time || result.jieqi?.next_time) || ''}
-                            </span>
-                          )}
+                        <div className="flex items-center justify-between px-3 py-2 bg-white/40 rounded">
+                          <span className="text-stone-500">节气</span>
+                          <span className="text-stone-700 font-medium">
+                            {result.jiqi?.current || result.jieqi?.current}
+                            {(result.jiqi?.next || result.jieqi?.next) && (
+                              <span className="text-stone-500 text-[10px] ml-2">
+                                下一节气：{(result.jiqi?.next_time || result.jieqi?.next_time) || ''}
+                              </span>
+                            )}
+                          </span>
                         </div>
                       )}
 
                       {/* 神煞信息 */}
                       {result.shensha && (
-                        <div className="text-stone-600">
-                          <span className="text-stone-400">神煞：</span>
-                          {result.shensha}
+                        <div className="flex items-center justify-between px-3 py-2 bg-white/40 rounded">
+                          <span className="text-stone-500">神煞</span>
+                          <span className="text-stone-700 font-medium">{result.shensha}</span>
                         </div>
                       )}
 
                       {/* 卦宫信息 */}
                       {result.gua_gong && (
-                        <div className="text-stone-600">
-                          <span className="text-stone-400">卦宫：</span>
-                          {result.gua_gong}
+                        <div className="flex items-center justify-between px-3 py-2 bg-white/40 rounded">
+                          <span className="text-stone-500">卦宫</span>
+                          <span className="text-stone-700 font-medium">{result.gua_gong}</span>
                         </div>
                       )}
 
                       {/* 卦身信息 */}
                       {result.gua_shen && (
-                        <div className="text-stone-600">
-                          <span className="text-stone-400">卦身：</span>
-                          {result.gua_shen}
+                        <div className="flex items-center justify-between px-3 py-2 bg-white/40 rounded">
+                          <span className="text-stone-500">卦身</span>
+                          <span className="text-stone-700 font-medium">{result.gua_shen}</span>
                         </div>
                       )}
 
                       {/* 动爻信息 */}
                       {result.dong_yao && (
-                        <div className="text-stone-600">
-                          <span className="text-stone-400">动爻：</span>
-                          第{result.dong_yao}爻
-                          {result.method === 'number' && result.numbers?.numbers && (
-                            <span className="text-stone-400 ml-2">
-                              (数字起卦：{result.numbers.numbers.join('、')})
-                            </span>
-                          )}
+                        <div className="flex items-center justify-between px-3 py-2 bg-white/40 rounded">
+                          <span className="text-stone-500">动爻</span>
+                          <span className="text-stone-700 font-medium">
+                            第{result.dong_yao}爻
+                            {result.method === 'number' && result.numbers?.numbers && (
+                              <span className="text-stone-500 text-[10px] ml-2">
+                                (数字：{result.numbers.numbers.join('、')})
+                              </span>
+                            )}
+                          </span>
                         </div>
                       )}
                     </div>
-                  </div>
+                  </details>
                 </div>
               </div>
 
@@ -668,22 +676,28 @@ export default function LiuyaoPage() {
                       {/* 六爻图 */}
                       {result.lines && result.lines.lines && Array.isArray(result.lines.lines) && (
                         <div className="relative">
-                          <div className="bg-white/60 backdrop-blur-sm rounded-xl p-8 shadow-lg border border-stone-200/50">
-                            {[...result.lines.lines].reverse().map((line, index) =>
-                              renderYaoLine(line, result.lines!.lines.length - 1 - index, false)
-                            )}
+                          <div className="bg-gradient-to-br from-white/80 to-white/60 backdrop-blur-sm rounded-2xl p-6 md:p-8 shadow-xl border border-stone-200/50 relative overflow-hidden">
+                            {/* 装饰性背景 */}
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-amber-100/20 rounded-full blur-3xl"></div>
+                            <div className="absolute bottom-0 left-0 w-24 h-24 bg-red-100/20 rounded-full blur-2xl"></div>
+
+                            <div className="relative z-10">
+                              {[...result.lines.lines].reverse().map((line, index) =>
+                                renderYaoLine(line, result.lines!.lines.length - 1 - index, false)
+                              )}
+                            </div>
                           </div>
 
-                          {/* 世应爻标注 */}
-                          <div className="mt-6 flex justify-center gap-8 text-xs tracking-wider text-stone-500">
-                            <span className="flex items-center gap-2">
-                              <span className="w-2 h-2 rounded-full bg-amber-500/60" />
-                              世爻：第{result.shi_yao}爻
-                            </span>
-                            <span className="flex items-center gap-2">
-                              <span className="w-2 h-2 rounded-full bg-sky-500/60" />
-                              应爻：第{result.ying_yao}爻
-                            </span>
+                          {/* 世应爻标注 - 优化样式 */}
+                          <div className="mt-5 flex justify-center gap-6">
+                            <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 rounded-full border border-amber-200/50">
+                              <span className="w-2 h-2 rounded-full bg-amber-500 shadow-sm" />
+                              <span className="text-xs text-amber-800 font-medium">世爻：第{result.shi_yao}爻</span>
+                            </div>
+                            <div className="flex items-center gap-2 px-4 py-2 bg-sky-50 rounded-full border border-sky-200/50">
+                              <span className="w-2 h-2 rounded-full bg-sky-500 shadow-sm" />
+                              <span className="text-xs text-sky-800 font-medium">应爻：第{result.ying_yao}爻</span>
+                            </div>
                           </div>
                         </div>
                       )}
@@ -748,19 +762,30 @@ export default function LiuyaoPage() {
 
                         {/* 六爻图 */}
                         <div className="relative">
-                          <div className="bg-stone-100/40 backdrop-blur-sm rounded-xl p-8 shadow-lg border border-stone-200/30">
-                            {Array.isArray(result.change_lines.lines) && [...result.change_lines.lines].reverse().map((changeLine, index) => {
-                              const originalIndex = result.change_lines!.lines.length - 1 - index;
-                              const mainLine = result.lines!.lines[originalIndex];
-                              return renderChangeYaoLine(mainLine, changeLine, originalIndex);
-                            })}
+                          <div className="bg-gradient-to-br from-stone-100/60 to-stone-50/40 backdrop-blur-sm rounded-2xl p-6 md:p-8 shadow-xl border border-stone-200/40 relative overflow-hidden">
+                            {/* 装饰性背景 */}
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-stone-200/20 rounded-full blur-3xl"></div>
+                            <div className="absolute bottom-0 left-0 w-24 h-24 bg-stone-300/20 rounded-full blur-2xl"></div>
+
+                            <div className="relative z-10">
+                              {Array.isArray(result.change_lines.lines) && [...result.change_lines.lines].reverse().map((changeLine, index) => {
+                                const originalIndex = result.change_lines!.lines.length - 1 - index;
+                                const mainLine = result.lines!.lines[originalIndex];
+                                return renderChangeYaoLine(mainLine, changeLine, originalIndex);
+                              })}
+                            </div>
                           </div>
 
                           {/* 变化说明 */}
-                          <div className="mt-6 text-center">
-                            <p className="text-xs text-stone-400 tracking-wide font-light">
-                              动爻变化后的卦象
-                            </p>
+                          <div className="mt-5 text-center">
+                            <div className="inline-flex items-center gap-2 px-4 py-2 bg-stone-100/60 rounded-full border border-stone-200/50">
+                              <svg className="w-3 h-3 text-stone-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                              </svg>
+                              <span className="text-xs text-stone-600 font-light tracking-wide">
+                                动爻变化后的卦象
+                              </span>
+                            </div>
                           </div>
                         </div>
                       </div>
