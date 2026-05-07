@@ -1,6 +1,6 @@
 import { Msg, Paipan } from './types';
 
-const LS_ACTIVE = 'chat:active';
+const LS_ACTIVE = 'chat:active:bazi'; // 八字专用，避免与六爻冲突
 const LS_CONV_PREFIX = 'chat:conv:'; // + conversation_id
 const LS_LAST_PAIPAN = 'chat:last_paipan';
 
@@ -32,7 +32,7 @@ export function getActiveConversationId(): string | null {
 }
 export function clearActiveConversationId() {
   try {
-    localStorage.removeItem(LS_ACTIVE);
+    localStorage.removeItem(LS_ACTIVE); // 只清除八字的活跃会话
     sessionStorage.removeItem('conversation_id');
   } catch {}
 }
@@ -52,7 +52,7 @@ export function loadPaipanLocal(): Paipan | null {
 
 export function clearAllChatData() {
   try {
-    // 清理活跃会话 ID
+    // 清理八字活跃会话 ID（不影响六爻）
     localStorage.removeItem(LS_ACTIVE);
     // 清理排盘数据
     localStorage.removeItem(LS_LAST_PAIPAN);

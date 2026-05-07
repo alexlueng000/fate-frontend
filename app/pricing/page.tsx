@@ -30,7 +30,7 @@ const plans: PricingPlan[] = [
       "10 次八字 AI 解读（含开场与追问）",
       "30 天心镜灯情绪追踪",
       "3 次六爻 AI 解读（含起卦与追问）",
-      "DeepSeek 智能分析",
+      "AI智能分析",
       "专业命理知识库",
       "次数永久有效",
     ],
@@ -48,7 +48,7 @@ const plans: PricingPlan[] = [
       "50 次八字 AI 解读（含开场与追问）",
       "180 天心镜灯情绪追踪",
       "15 次六爻 AI 解读（含起卦与追问）",
-      "DeepSeek 智能分析",
+      "AI智能分析",
       "专业命理知识库",
       "次数永久有效",
       "超值优惠 25%",
@@ -137,12 +137,12 @@ export default function PricingPage() {
             <div
               key={plan.id}
               className={`relative rounded-2xl border-2 bg-white p-8 shadow-sm transition-all hover:shadow-xl ${
-                plan.popular ? "border-orange-500 scale-105" : "border-slate-200"
+                plan.popular ? "border-[var(--color-primary)] scale-105" : "border-slate-200"
               }`}
             >
               {plan.badge && (
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                  <span className="inline-flex items-center rounded-full bg-orange-500 px-4 py-1 text-xs font-semibold text-white">
+                  <span className="inline-flex items-center rounded-full bg-[var(--color-primary)] px-4 py-1 text-xs font-semibold text-white">
                     {plan.badge}
                   </span>
                 </div>
@@ -172,7 +172,7 @@ export default function PricingPage() {
                 onClick={() => openModal(plan)}
                 className={`w-full rounded-lg px-6 py-4 text-base font-semibold transition-colors mb-8 ${
                   plan.buttonStyle === "primary"
-                    ? "bg-orange-500 text-white hover:bg-orange-600"
+                    ? "bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)]"
                     : "border-2 border-slate-900 text-slate-900 hover:bg-slate-50"
                 }`}
               >
@@ -182,7 +182,7 @@ export default function PricingPage() {
               <ul className="space-y-3">
                 {plan.features.map((feature, index) => (
                   <li key={index} className="flex items-start">
-                    <Check className="h-5 w-5 flex-shrink-0 text-orange-500 mr-3 mt-0.5" />
+                    <Check className="h-5 w-5 flex-shrink-0 text-[var(--color-primary)] mr-3 mt-0.5" />
                     <span className="text-sm text-slate-700">{feature}</span>
                   </li>
                 ))}
@@ -270,7 +270,7 @@ export default function PricingPage() {
                     closeModal();
                     router.push("/panel");
                   }}
-                  className="w-full rounded-xl bg-orange-500 py-3 text-sm font-semibold text-white hover:bg-orange-600 transition-colors"
+                  className="w-full rounded-xl bg-[var(--color-primary)] py-3 text-sm font-semibold text-white hover:bg-[var(--color-primary-hover)] transition-colors"
                 >
                   去使用
                 </button>
@@ -299,7 +299,7 @@ export default function PricingPage() {
                 <button
                   onClick={handlePay}
                   disabled={paying}
-                  className="w-full rounded-xl bg-orange-500 py-3 text-sm font-semibold text-white hover:bg-orange-600 disabled:bg-orange-300 transition-colors"
+                  className="w-full rounded-xl bg-[var(--color-primary)] py-3 text-sm font-semibold text-white hover:bg-[var(--color-primary-hover)] disabled:bg-[var(--color-primary)] disabled:opacity-50 transition-colors"
                 >
                   {paying ? "处理中..." : `模拟支付 ¥${modalPlan.price}`}
                 </button>
