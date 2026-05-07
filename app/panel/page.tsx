@@ -12,7 +12,8 @@ import { InputArea } from '@/app/components/chat/InputArea';
 import { Msg, QUICK_BUTTONS, normalizeMarkdown } from '@/app/lib/chat/types';
 import { parseSuggestedQuestions } from '@/app/lib/chat/parser';
 import { api, pickReply } from '@/app/lib/chat/api';
-import { trySSE } from '@/app/lib/chat/sse';
+import { trySSE, QuotaExhaustedError } from '@/app/lib/chat/sse';
+import { getMyQuotas } from '@/app/lib/api';
 import {
   saveConversation, loadConversation, getActiveConversationId,
   repairCorruptedConversations,
@@ -83,14 +84,38 @@ export default function PanelPage() {
   }, [msgs, loading, booting]);
 
   // Quota
+  const refreshQuota = async () => {
+    try {
+      const data = await getMyQuotas();
+      setQuota({ remaining: data.chat.remaining, is_unlimited: data.chat.is_unlimited });
+    } catch { /* 静默 */ }
+  };
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
     if (!token) return;
-    fetch('/api/quota/me', { headers: { Authorization: `Bearer ${token}` }, credentials: 'include' })
-      .then(r => r.ok ? r.json() : null)
-      .then(data => { if (data) setQuota({ remaining: data.remaining, is_unlimited: data.is_unlimited }); })
-      .catch(() => {});
+    void refreshQuota();
   }, []);
+
+  const handleQuotaExhausted = (e: QuotaExhaustedError) => {
+    setErr(null);
+    setMsgs(prev => {
+      const card: Msg = {
+        role: 'assistant',
+        content: `### 八字次数已用完\n\n${e.detail}\n\n[前往充值 →](/pricing)`,
+        meta: { kind: 'quota_exhausted' },
+      };
+      const next = [...prev];
+      for (let i = next.length - 1; i >= 0; i--) {
+        if (next[i].role === 'assistant' && next[i].streaming) {
+          next[i] = card;
+          return next;
+        }
+      }
+      next.push(card);
+      return next;
+    });
+    void refreshQuota();
+  };
 
   // Quick buttons from admin
   function parseQbValue(v: unknown): { items?: Array<{ label: string; prompt: string; order?: number; active?: boolean }>; maxCount?: number } {
@@ -340,8 +365,11 @@ export default function PanelPage() {
     setMsgs(m => [...m, { role: 'user', content }]);
     setInput('');
     setLoading(true);
-    try { await sendStream(content); }
-    catch (e: unknown) { setErr(e instanceof Error ? e.message : String(e)); }
+    try { await sendStream(content); void refreshQuota(); }
+    catch (e: unknown) {
+      if (e instanceof QuotaExhaustedError) handleQuotaExhausted(e);
+      else setErr(e instanceof Error ? e.message : String(e));
+    }
     finally { setLoading(false); }
   };
 
@@ -388,8 +416,11 @@ export default function PanelPage() {
     setErr(null);
     setMsgs(m => [...m, { role: 'user', content: `${label}分析` }]);
     setLoading(true);
-    try { await sendStream(fullPrompt); }
-    catch (e: unknown) { setErr(e instanceof Error ? e.message : String(e)); }
+    try { await sendStream(fullPrompt); void refreshQuota(); }
+    catch (e: unknown) {
+      if (e instanceof QuotaExhaustedError) handleQuotaExhausted(e);
+      else setErr(e instanceof Error ? e.message : String(e));
+    }
     finally { setLoading(false); }
   };
 
@@ -398,8 +429,11 @@ export default function PanelPage() {
     setErr(null);
     setMsgs(m => [...m, { role: 'user', content: question }]);
     setLoading(true);
-    try { await sendStream(question); }
-    catch (e: unknown) { setErr(e instanceof Error ? e.message : String(e)); }
+    try { await sendStream(question); void refreshQuota(); }
+    catch (e: unknown) {
+      if (e instanceof QuotaExhaustedError) handleQuotaExhausted(e);
+      else setErr(e instanceof Error ? e.message : String(e));
+    }
     finally { setLoading(false); }
   };
 

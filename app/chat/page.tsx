@@ -17,12 +17,13 @@ import {
 } from '@/app/lib/chat/types';
 import { parseSuggestedQuestions } from '@/app/lib/chat/parser';
 import { api, pickReply } from '@/app/lib/chat/api';
-import { trySSE } from '@/app/lib/chat/sse';
+import { trySSE, QuotaExhaustedError } from '@/app/lib/chat/sse';
 import {
   saveConversation, loadConversation, getActiveConversationId,
   savePaipanLocal, loadPaipanLocal, repairCorruptedConversations,
 } from '@/app/lib/chat/storage';
 import { historyApi } from '@/app/lib/history/api';
+import { getMyQuotas } from '@/app/lib/api';
 
 export default function ChatPage() {
   const router = useRouter();
@@ -57,18 +58,21 @@ export default function ChatPage() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [msgs, sending, booting]);
 
-  // 获取配额
+  // 获取配额（chat 配额=八字）
+  const refreshQuota = async () => {
+    try {
+      const data = await getMyQuotas();
+      setQuota({ remaining: data.chat.remaining, is_unlimited: data.chat.is_unlimited });
+    } catch {
+      // 静默失败：不阻塞聊天主流程
+    }
+  };
+
   useEffect(() => {
     if (loading) return;
     const token = getAuthToken();
     if (!token) return;
-    fetch(api('/quota/me'), {
-      headers: { Authorization: `Bearer ${token}` },
-      credentials: 'include',
-    })
-      .then(r => r.ok ? r.json() : null)
-      .then(data => { if (data) setQuota({ remaining: data.remaining, is_unlimited: data.is_unlimited }); })
-      .catch(() => {});
+    void refreshQuota();
   }, [loading]);
 
   // Bootstrap：从档案启动会话或恢复旧会话
@@ -231,7 +235,11 @@ export default function ChatPage() {
         }
       } catch (e: unknown) {
         if (!alive) return;
-        setErr(e instanceof Error ? e.message : String(e));
+        if (e instanceof QuotaExhaustedError) {
+          handleQuotaExhausted(e);
+        } else {
+          setErr(e instanceof Error ? e.message : String(e));
+        }
       } finally {
         if (alive) setBooting(false);
       }
@@ -320,6 +328,31 @@ export default function ChatPage() {
     }
   };
 
+  const handleQuotaExhausted = (e: QuotaExhaustedError) => {
+    setErr(null);
+    setMsgs((prev) => {
+      const next = [...prev];
+      // 替换最后一条空助手消息为充值引导卡
+      for (let i = next.length - 1; i >= 0; i--) {
+        if (next[i].role === 'assistant' && next[i].streaming) {
+          next[i] = {
+            role: 'assistant',
+            content: `### 八字次数已用完\n\n${e.detail}\n\n[前往充值 →](/pricing)`,
+            meta: { kind: 'quota_exhausted' },
+          };
+          return next;
+        }
+      }
+      next.push({
+        role: 'assistant',
+        content: `### 八字次数已用完\n\n${e.detail}\n\n[前往充值 →](/pricing)`,
+        meta: { kind: 'quota_exhausted' },
+      });
+      return next;
+    });
+    void refreshQuota();
+  };
+
   const send = async () => {
     if (!conversationId) {
       setErr('缺少会话，请刷新页面重试');
@@ -335,8 +368,13 @@ export default function ChatPage() {
 
     try {
       await sendStream(content);
+      void refreshQuota();
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : String(e));
+      if (e instanceof QuotaExhaustedError) {
+        handleQuotaExhausted(e);
+      } else {
+        setErr(e instanceof Error ? e.message : String(e));
+      }
     } finally {
       setSending(false);
     }
@@ -384,8 +422,13 @@ export default function ChatPage() {
     setSending(true);
     try {
       await sendStream(fullPrompt);
+      void refreshQuota();
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : String(e));
+      if (e instanceof QuotaExhaustedError) {
+        handleQuotaExhausted(e);
+      } else {
+        setErr(e instanceof Error ? e.message : String(e));
+      }
     } finally {
       setSending(false);
     }
@@ -398,8 +441,13 @@ export default function ChatPage() {
     setSending(true);
     try {
       await sendStream(question);
+      void refreshQuota();
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : String(e));
+      if (e instanceof QuotaExhaustedError) {
+        handleQuotaExhausted(e);
+      } else {
+        setErr(e instanceof Error ? e.message : String(e));
+      }
     } finally {
       setSending(false);
     }

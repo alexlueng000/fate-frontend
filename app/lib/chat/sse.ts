@@ -1,4 +1,16 @@
 // trySSE.ts
+
+/** 配额耗尽错误。前端可按 instanceof 分支显示充值引导。 */
+export class QuotaExhaustedError extends Error {
+  status = 429;
+  detail: string;
+  constructor(detail: string) {
+    super(detail || '配额已用完');
+    this.name = 'QuotaExhaustedError';
+    this.detail = detail;
+  }
+}
+
 export async function trySSE(
   url: string,
   body: unknown,
@@ -24,6 +36,21 @@ export async function trySSE(
     body: JSON.stringify(body),
     signal: opts?.signal,            // ✅ 透传 signal
   });
+
+  // 配额耗尽：抛出可识别的错误，避免被一次性兜底覆盖
+  if (res.status === 429) {
+    let detail = '配额已用完';
+    try {
+      const txt = await res.text();
+      try {
+        const obj = JSON.parse(txt);
+        detail = (obj && (obj.detail || obj.message)) || txt || detail;
+      } catch {
+        detail = txt || detail;
+      }
+    } catch { /* ignore */ }
+    throw new QuotaExhaustedError(typeof detail === 'string' ? detail : '配额已用完');
+  }
 
   const ct = res.headers.get('content-type') || '';
   if (!res.ok || !ct.includes('text/event-stream') || !res.body) {

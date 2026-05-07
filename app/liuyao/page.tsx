@@ -18,6 +18,8 @@ import { QuickActions } from '@/app/components/chat/QuickActions';
 import { Msg, normalizeMarkdown } from '@/app/lib/chat/types';
 import { parseSuggestedQuestions } from '@/app/lib/chat/parser';
 import { saveConversation, loadConversation } from '@/app/lib/chat/storage';
+import { QuotaExhaustedError } from '@/app/lib/chat/sse';
+import { getMyQuotas } from '@/app/lib/api';
 
 // 问事场景配置
 const QUESTION_SCENARIOS = [
@@ -119,6 +121,41 @@ export default function LiuyaoPage() {
   const [sending, setSending] = useState(false);
   const [booting, setBooting] = useState(false);
   const chatScrollRef = useRef<HTMLDivElement | null>(null);
+
+  // 六爻配额（liuyao_chat）
+  const [liuyaoQuota, setLiuyaoQuota] = useState<{ remaining: number; is_unlimited: boolean } | null>(null);
+  const refreshLiuyaoQuota = async () => {
+    try {
+      const data = await getMyQuotas();
+      setLiuyaoQuota({
+        remaining: data.liuyao_chat.remaining,
+        is_unlimited: data.liuyao_chat.is_unlimited,
+      });
+    } catch { /* 静默 */ }
+  };
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!localStorage.getItem('auth_token')) return;
+    void refreshLiuyaoQuota();
+  }, []);
+
+  // 配额耗尽时把当前流式助手消息替换为充值引导
+  const handleLiuyaoQuotaExhausted = (e: QuotaExhaustedError, assistantIdx: number) => {
+    const card: Msg = {
+      role: 'assistant',
+      content: `### 六爻次数已用完\n\n${e.detail}\n\n[前往充值 →](/pricing)`,
+      meta: { kind: 'quota_exhausted' },
+    };
+    setMsgs((prev) => {
+      if (assistantIdx >= 0 && assistantIdx < prev.length) {
+        const next = [...prev];
+        next[assistantIdx] = card;
+        return next;
+      }
+      return [...prev, card];
+    });
+    void refreshLiuyaoQuota();
+  };
 
   function readConvId(meta: unknown): string {
     if (typeof meta !== 'object' || meta === null) return '';
@@ -324,11 +361,17 @@ export default function LiuyaoPage() {
         },
       );
       finalizeAssistant(assistantIdx);
+      void refreshLiuyaoQuota();
     } catch (error: any) {
-      console.error('开启对话失败:', error);
-      alert(error?.message || '开启对话失败，请重试');
-      setMsgs([]);
-      setConversationId(null);
+      if (error instanceof QuotaExhaustedError) {
+        handleLiuyaoQuotaExhausted(error, assistantIdx);
+        setConversationId(null);
+      } else {
+        console.error('开启对话失败:', error);
+        alert(error?.message || '开启对话失败，请重试');
+        setMsgs([]);
+        setConversationId(null);
+      }
     } finally {
       setBooting(false);
     }
@@ -361,6 +404,10 @@ export default function LiuyaoPage() {
       );
       finalizeAssistant(assistantIdx);
     } catch (error: any) {
+      if (error instanceof QuotaExhaustedError) {
+        handleLiuyaoQuotaExhausted(error, assistantIdx);
+        return;
+      }
       console.error('对话失败:', error);
       setMsgs((prev) => {
         if (assistantIdx < 0 || assistantIdx >= prev.length) return prev;
@@ -1313,6 +1360,7 @@ export default function LiuyaoPage() {
                         onSend={send}
                         onRegenerate={regenerate}
                         placeholder="基于此卦继续追问，例如：现在主动联系合适吗？"
+                        quota={liuyaoQuota}
                       />
                     </div>
                   )}
