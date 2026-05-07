@@ -10,9 +10,10 @@ interface NavLinkProps {
   children: ReactNode;
   className?: string;
   vertical?: boolean;
+  collapsed?: boolean;
 }
 
-export default function NavLink({ href, icon, children, className = '', vertical = false }: NavLinkProps) {
+export default function NavLink({ href, icon, children, className = '', vertical = false, collapsed = false }: NavLinkProps) {
   const pathname = usePathname();
   const isActive = pathname === href || pathname.startsWith(href + '/');
 
@@ -20,6 +21,7 @@ export default function NavLink({ href, icon, children, className = '', vertical
     return (
       <Link
         href={href}
+        title={collapsed ? String(children) : undefined}
         className={`
           flex flex-col items-center gap-1.5 px-2 py-3 rounded-xl transition-all text-center
           ${isActive
@@ -30,7 +32,9 @@ export default function NavLink({ href, icon, children, className = '', vertical
         `}
       >
         {icon && <span className="text-2xl leading-none">{icon}</span>}
-        <span className="text-[11px] font-medium leading-tight lg:text-xs">{children}</span>
+        {!collapsed && (
+          <span className="text-[11px] font-medium leading-tight lg:text-xs">{children}</span>
+        )}
       </Link>
     );
   }

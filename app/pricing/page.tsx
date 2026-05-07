@@ -27,13 +27,12 @@ const plans: PricingPlan[] = [
     description: "适合新用户体验完整功能",
     price: 99,
     features: [
-      "10次八字解读",
-      "30天心镜灯情绪追踪",
-      "3次六爻问卦",
-      "无限续聊追问",
-      "AI智能分析",
+      "10 次八字 AI 解读（含开场与追问）",
+      "30 天心镜灯情绪追踪",
+      "3 次六爻 AI 解读（含起卦与追问）",
+      "DeepSeek 智能分析",
       "专业命理知识库",
-      "永久有效",
+      "次数永久有效",
     ],
     buttonText: "立即购买",
     buttonStyle: "outline",
@@ -46,14 +45,13 @@ const plans: PricingPlan[] = [
     price: 299,
     originalPrice: 398,
     features: [
-      "50次八字解读",
-      "180天心镜灯情绪追踪",
-      "15次六爻问卦",
-      "无限续聊追问",
-      "AI智能分析",
+      "50 次八字 AI 解读（含开场与追问）",
+      "180 天心镜灯情绪追踪",
+      "15 次六爻 AI 解读（含起卦与追问）",
+      "DeepSeek 智能分析",
       "专业命理知识库",
-      "永久有效",
-      "超值优惠25%",
+      "次数永久有效",
+      "超值优惠 25%",
       "赠送专属客服",
     ],
     buttonText: "立即购买",
@@ -200,10 +198,10 @@ export default function PricingPage() {
           <div className="grid gap-6 md:grid-cols-2 max-w-4xl mx-auto">
             <div>
               <h3 className="font-semibold text-slate-900 mb-2">
-                套餐包含哪些功能？
+                "1 次解读" 怎么算？
               </h3>
               <p className="text-sm text-slate-600">
-                每个套餐都包含八字解读、心镜灯情绪追踪和六爻问卦三大功能，让你全方位探索命理。
+                每次让 AI 生成一段解读都算 1 次:首次开场、点击快捷分析、输入框追问都是。重新生成上一段回复 <span className="font-medium">不</span>额外计费。
               </p>
             </div>
             <div>
@@ -211,7 +209,7 @@ export default function PricingPage() {
                 次数会过期吗？
               </h3>
               <p className="text-sm text-slate-600">
-                不会！购买的次数永久有效，随时可以使用，没有时间限制。心镜灯的天数从激活时开始计算。
+                不会。购买的八字 / 六爻次数永久有效,随时使用。心镜灯的天数从首次启用当日开始计算。
               </p>
             </div>
             <div>
@@ -219,7 +217,7 @@ export default function PricingPage() {
                 当前为什么是模拟支付？
               </h3>
               <p className="text-sm text-slate-600">
-                正式的微信/支付宝支付通道仍在接入中。在此期间，套餐次数会在你点击购买后立即到账，方便测试与体验。
+                正式的微信 / 支付宝通道仍在接入中。在此期间,套餐次数会在你点击购买后立即到账,方便测试与体验。
               </p>
             </div>
             <div>
@@ -227,7 +225,7 @@ export default function PricingPage() {
                 可以退款吗？
               </h3>
               <p className="text-sm text-slate-600">
-                未使用的次数支持 7 天内无理由退款，已使用的次数不支持退款。
+                未使用的次数支持 7 天内无理由退款;已使用的次数不支持退款。
               </p>
             </div>
           </div>

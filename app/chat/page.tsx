@@ -23,7 +23,7 @@ import {
   savePaipanLocal, loadPaipanLocal, repairCorruptedConversations,
 } from '@/app/lib/chat/storage';
 import { historyApi } from '@/app/lib/history/api';
-import { getMyQuotas } from '@/app/lib/api';
+import { QuotaChip } from '@/app/components/QuotaChip';
 
 export default function ChatPage() {
   const router = useRouter();
@@ -37,7 +37,7 @@ export default function ChatPage() {
   const [booting, setBooting] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [paipan, setPaipan] = useState<Paipan | null>(null);
-  const [quota, setQuota] = useState<{ remaining: number; is_unlimited: boolean } | null>(null);
+  const [quotaRefreshKey, setQuotaRefreshKey] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const mountedRef = useRef(true);
 
@@ -58,22 +58,10 @@ export default function ChatPage() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [msgs, sending, booting]);
 
-  // 获取配额（chat 配额=八字）
+  // 触发顶部 QuotaChip 重取（每次发送/购买后调用）
   const refreshQuota = async () => {
-    try {
-      const data = await getMyQuotas();
-      setQuota({ remaining: data.chat.remaining, is_unlimited: data.chat.is_unlimited });
-    } catch {
-      // 静默失败：不阻塞聊天主流程
-    }
+    setQuotaRefreshKey((k) => k + 1);
   };
-
-  useEffect(() => {
-    if (loading) return;
-    const token = getAuthToken();
-    if (!token) return;
-    void refreshQuota();
-  }, [loading]);
 
   // Bootstrap：从档案启动会话或恢复旧会话
   useEffect(() => {
@@ -552,6 +540,7 @@ export default function ChatPage() {
         <ChatHeader
           conversationId={conversationId}
           onBack={() => router.push('/')}
+          rightExtra={<QuotaChip type="chat" refreshKey={quotaRefreshKey} />}
         />
 
         <MessageList
@@ -593,7 +582,6 @@ export default function ChatPage() {
           disabled={booting || !conversationId}
           onSend={send}
           onRegenerate={regenerate}
-          quota={quota}
         />
       </div>
     </main>

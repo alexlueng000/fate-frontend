@@ -424,12 +424,12 @@ export default function LandingPage() {
           >
             准备好认识真实的自己了吗？
           </h2>
-          <p className="text-xl text-white/80 mb-4">免费注册，立即开始你的自我探索之旅</p>
+          <p className="text-xl text-white/80 mb-4">注册即可体验，套餐解锁更多次数</p>
           <ul className="inline-flex flex-col items-start gap-2 mb-10 text-white/90 text-sm">
-            <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-white/70" />完整八字分析报告</li>
+            <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-white/70" />完整八字命盘 + AI 解读</li>
             <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-white/70" />每日情绪追踪记录</li>
-            <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-white/70" />3 次免费六爻问事</li>
-            <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-white/70" />AI 深度解读对话</li>
+            <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-white/70" />六爻问事 · 一事一卦</li>
+            <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-white/70" />套餐次数永久有效</li>
           </ul>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
@@ -441,10 +441,11 @@ export default function LandingPage() {
               <ChevronRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
             </Link>
             <Link
-              href="/login"
+              href="/pricing"
               className="inline-flex items-center gap-3 px-10 py-5 bg-white/10 text-white text-xl font-bold rounded-2xl border border-white/30 hover:bg-white/20 transition-all"
             >
-              已有账号？立即登录
+              查看套餐定价
+              <ChevronRight className="w-6 h-6" />
             </Link>
           </div>
           <p className="mt-6 text-white/50 text-xs">

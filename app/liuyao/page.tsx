@@ -19,7 +19,7 @@ import { Msg, normalizeMarkdown } from '@/app/lib/chat/types';
 import { parseSuggestedQuestions } from '@/app/lib/chat/parser';
 import { saveConversation, loadConversation } from '@/app/lib/chat/storage';
 import { QuotaExhaustedError } from '@/app/lib/chat/sse';
-import { getMyQuotas } from '@/app/lib/api';
+import { QuotaChip } from '@/app/components/QuotaChip';
 
 // 问事场景配置
 const QUESTION_SCENARIOS = [
@@ -122,22 +122,11 @@ export default function LiuyaoPage() {
   const [booting, setBooting] = useState(false);
   const chatScrollRef = useRef<HTMLDivElement | null>(null);
 
-  // 六爻配额（liuyao_chat）
-  const [liuyaoQuota, setLiuyaoQuota] = useState<{ remaining: number; is_unlimited: boolean } | null>(null);
+  // 六爻配额刷新触发器（具体次数由顶部 QuotaChip 自取）
+  const [quotaRefreshKey, setQuotaRefreshKey] = useState(0);
   const refreshLiuyaoQuota = async () => {
-    try {
-      const data = await getMyQuotas();
-      setLiuyaoQuota({
-        remaining: data.liuyao_chat.remaining,
-        is_unlimited: data.liuyao_chat.is_unlimited,
-      });
-    } catch { /* 静默 */ }
+    setQuotaRefreshKey((k) => k + 1);
   };
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (!localStorage.getItem('auth_token')) return;
-    void refreshLiuyaoQuota();
-  }, []);
 
   // 配额耗尽时把当前流式助手消息替换为充值引导
   const handleLiuyaoQuotaExhausted = (e: QuotaExhaustedError, assistantIdx: number) => {
@@ -616,218 +605,245 @@ export default function LiuyaoPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FFF9EA]">
-      <div className="max-w-4xl mx-auto px-4 py-8 md:py-12">
-        {/* 标题区域 */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-serif text-[#1F2937] mb-3 tracking-wide">
-            六爻问事
-          </h1>
-          <p className="text-lg text-gray-600 font-light">
-            一事一卦，看趋势、看风险、看下一步
-          </p>
+    <div className="min-h-screen relative overflow-hidden bg-[#f8f6f1]">
+      {/* 噪点纹理 */}
+      <div className="fixed inset-0 opacity-[0.03] pointer-events-none">
+        <div className="absolute inset-0" style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' /%3E%3C/svg%3E")`,
+        }} />
+      </div>
+
+      {/* 流动渐变光晕 */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-0 right-0 w-[800px] h-[800px] rounded-full bg-gradient-radial from-amber-200/15 to-transparent blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] rounded-full bg-gradient-radial from-stone-300/15 to-transparent blur-3xl" />
+      </div>
+
+      <div className="relative max-w-4xl mx-auto px-4 py-10 md:py-14">
+        {/* 顶部右侧：剩余次数 chip */}
+        <div className="flex justify-end mb-6">
+          <QuotaChip type="liuyao_chat" refreshKey={quotaRefreshKey} />
         </div>
 
+        {/* 标题区域 */}
+        <header className="mb-10 text-center">
+          <div className="inline-block relative">
+            <h1 className="text-5xl md:text-6xl font-serif text-slate-800 mb-3 tracking-wide relative">
+              六爻问事
+              <div className="absolute -bottom-2 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-slate-400 to-transparent" />
+            </h1>
+          </div>
+          <p className="mt-6 text-sm text-slate-600 font-light tracking-[0.25em]">
+            一事一卦 · 看趋势 · 看风险 · 看下一步
+          </p>
+        </header>
+
         {!result ? (
-          /* 起卦表单 */
-          <div className="bg-white rounded-lg shadow-lg p-6 md:p-10 border border-gray-100">
-            {/* 引导语 */}
-            <div className="text-center mb-8 pb-6 border-b border-gray-100">
-              <p className="text-gray-600 text-base leading-relaxed">
-                静心想一件你最想确认的事，然后开始起卦
-              </p>
-            </div>
+          /* 起卦表单 - 心镜风格 */
+          <div className="relative max-w-2xl mx-auto">
+            {/* 装饰性角线 */}
+            <div className="absolute -top-3 -left-3 w-16 h-16 border-l-2 border-t-2 border-slate-300 opacity-60 pointer-events-none" />
+            <div className="absolute -bottom-3 -right-3 w-16 h-16 border-r-2 border-b-2 border-slate-300 opacity-60 pointer-events-none" />
 
-            <form onSubmit={handleSubmit} className="space-y-8">
-              {/* Step 1: 性别选择 */}
-              <div>
-                <label className="block text-lg font-medium text-[#1F2937] mb-3">
-                  性别
-                </label>
-                <div className="flex gap-4">
-                  <button
-                    type="button"
-                    onClick={() => setGender('male')}
-                    className={`flex-1 px-6 py-3 rounded-lg border-2 transition-all ${
-                      gender === 'male'
-                        ? 'border-[#B93A2F] bg-[#B93A2F] text-white shadow-md'
-                        : 'border-gray-200 bg-white text-gray-700 hover:border-[#B93A2F]'
-                    }`}
-                  >
-                    男
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setGender('female')}
-                    className={`flex-1 px-6 py-3 rounded-lg border-2 transition-all ${
-                      gender === 'female'
-                        ? 'border-[#B93A2F] bg-[#B93A2F] text-white shadow-md'
-                        : 'border-gray-200 bg-white text-gray-700 hover:border-[#B93A2F]'
-                    }`}
-                  >
-                    女
-                  </button>
-                </div>
-              </div>
-
-              {/* Step 2: 问事内容 */}
-              <div>
-                <label className="block text-lg font-medium text-[#1F2937] mb-3">
-                  你想问什么事？
-                </label>
-                <p className="text-sm text-gray-500 mb-3">
-                  请只问一件具体的事，问题越明确，解读越准确
+            <div className="relative bg-white/80 backdrop-blur-sm p-7 md:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+              {/* 引导语 */}
+              <div className="text-center mb-8 pb-6 border-b border-slate-200/60">
+                <p className="text-slate-600 text-sm font-light tracking-wide leading-relaxed">
+                  静心想一件你最想确认的事，然后开始起卦
                 </p>
-                <textarea
-                  value={question}
-                  onChange={(e) => setQuestion(e.target.value)}
-                  placeholder={currentPlaceholder}
-                  className="w-full h-28 p-4 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[#B93A2F] focus:border-transparent transition-all text-base"
-                  disabled={!user}
-                />
               </div>
 
-              {/* Step 3: 问事场景标签 */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  常见问题
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {QUESTION_SCENARIOS.map((scenario) => (
+              <form onSubmit={handleSubmit} className="space-y-7">
+                {/* Step 1: 性别 */}
+                <div>
+                  <label className="block text-[11px] tracking-[0.3em] uppercase text-slate-500 font-medium mb-3">
+                    性别
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
                     <button
-                      key={scenario.id}
                       type="button"
-                      onClick={() => handleScenarioClick(scenario.id)}
-                      className={`px-4 py-2 rounded-full text-sm transition-all ${
-                        selectedScenario === scenario.id
-                          ? 'bg-[#B93A2F] text-white shadow-md'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      onClick={() => setGender('male')}
+                      className={`px-5 py-2.5 text-sm font-light tracking-[0.2em] transition-all border ${
+                        gender === 'male'
+                          ? 'border-slate-800 bg-slate-800 text-white'
+                          : 'border-slate-200 bg-white/50 text-slate-600 hover:border-slate-400 hover:bg-white'
                       }`}
                     >
-                      {scenario.label}
+                      男
                     </button>
-                  ))}
+                    <button
+                      type="button"
+                      onClick={() => setGender('female')}
+                      className={`px-5 py-2.5 text-sm font-light tracking-[0.2em] transition-all border ${
+                        gender === 'female'
+                          ? 'border-slate-800 bg-slate-800 text-white'
+                          : 'border-slate-200 bg-white/50 text-slate-600 hover:border-slate-400 hover:bg-white'
+                      }`}
+                    >
+                      女
+                    </button>
+                  </div>
                 </div>
-              </div>
 
-              {/* Step 4: 起卦方式 */}
-              <div>
-                <label className="block text-lg font-medium text-[#1F2937] mb-3">
-                  选择起卦方式
-                </label>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {/* 数字起卦 - 移到第一位作为推荐 */}
-                  <button
-                    type="button"
-                    onClick={() => setMethod('number')}
-                    className={`p-4 rounded-lg border-2 transition-all text-left ${
-                      method === 'number'
-                        ? 'border-[#B93A2F] bg-[#B93A2F] text-white shadow-lg'
-                        : 'border-gray-200 bg-white text-gray-700 hover:border-[#B93A2F]'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-semibold text-base">数字起卦</span>
-                      {method === 'number' && (
-                        <span className="text-xs bg-white/20 px-2 py-1 rounded">推荐</span>
-                      )}
-                    </div>
-                    <p className={`text-sm ${method === 'number' ? 'text-white/90' : 'text-gray-500'}`}>
-                      凭第一感觉输入三个数字
-                    </p>
-                  </button>
-
-                  {/* 一键起卦 */}
-                  <button
-                    type="button"
-                    onClick={() => setMethod('time')}
-                    className={`p-4 rounded-lg border-2 transition-all text-left ${
-                      method === 'time'
-                        ? 'border-[#B93A2F] bg-[#B93A2F] text-white shadow-lg'
-                        : 'border-gray-200 bg-white text-gray-700 hover:border-[#B93A2F]'
-                    }`}
-                  >
-                    <div className="font-semibold text-base mb-2">一键起卦</div>
-                    <p className={`text-sm ${method === 'time' ? 'text-white/90' : 'text-gray-500'}`}>
-                      根据当前时间自动起卦，适合快速问事
-                    </p>
-                  </button>
-
-                  {/* 铜钱起卦 */}
-                  <button
-                    type="button"
-                    onClick={() => setMethod('coin')}
-                    className={`p-4 rounded-lg border-2 transition-all text-left ${
-                      method === 'coin'
-                        ? 'border-[#B93A2F] bg-[#B93A2F] text-white shadow-lg'
-                        : 'border-gray-200 bg-white text-gray-700 hover:border-[#B93A2F]'
-                    }`}
-                  >
-                    <div className="font-semibold text-base mb-2">铜钱起卦</div>
-                    <p className={`text-sm ${method === 'coin' ? 'text-white/90' : 'text-gray-500'}`}>
-                      模拟传统铜钱起卦，更有仪式感
-                    </p>
-                  </button>
-                </div>
-              </div>
-
-              {/* 数字输入（仅在选择数字起卦时显示） */}
-              {method === 'number' && (
-                <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    请输入三个数字
+                {/* Step 2: 所问之事 */}
+                <div>
+                  <label className="block text-[11px] tracking-[0.3em] uppercase text-slate-500 font-medium mb-2">
+                    所问之事
                   </label>
-                  <div className="grid grid-cols-3 gap-4">
-                    {numbers.map((num, index) => (
-                      <input
-                        key={index}
-                        type="number"
-                        value={num}
-                        onChange={(e) => {
-                          const newNumbers = [...numbers];
-                          newNumbers[index] = e.target.value;
-                          setNumbers(newNumbers);
+                  <p className="text-xs text-slate-400 mb-3 font-light">
+                    请只问一件具体的事，问题越明确，解读越准确
+                  </p>
+                  <textarea
+                    value={question}
+                    onChange={(e) => setQuestion(e.target.value)}
+                    placeholder={currentPlaceholder}
+                    className="w-full h-24 p-3 bg-white/60 border border-slate-200 resize-none focus:outline-none focus:border-slate-500 focus:bg-white transition-all text-sm font-light leading-relaxed text-slate-800 placeholder:text-slate-400"
+                    disabled={!user}
+                  />
+                </div>
 
-                          // 自动跳转到下一个输入框
-                          if (e.target.value && index < 2) {
-                            const nextInput = e.target.parentElement?.children[index + 1] as HTMLInputElement;
-                            if (nextInput) {
-                              nextInput.focus();
-                            }
-                          }
-                        }}
-                        placeholder={`第${index + 1}个数字`}
-                        className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B93A2F] focus:border-transparent text-center text-lg"
-                        min="1"
-                      />
+                {/* Step 3: 常见问题 */}
+                <div>
+                  <label className="block text-[11px] tracking-[0.3em] uppercase text-slate-500 font-medium mb-3">
+                    常见问题
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {QUESTION_SCENARIOS.map((scenario) => (
+                      <button
+                        key={scenario.id}
+                        type="button"
+                        onClick={() => handleScenarioClick(scenario.id)}
+                        className={`px-3 py-1.5 text-xs font-light tracking-wider transition-all border ${
+                          selectedScenario === scenario.id
+                            ? 'border-slate-800 bg-slate-800 text-white'
+                            : 'border-slate-200 bg-white/40 text-slate-600 hover:border-slate-400 hover:bg-white/80'
+                        }`}
+                      >
+                        {scenario.label}
+                      </button>
                     ))}
                   </div>
-                  <p className="text-xs text-gray-500 mt-3 text-center">
-                    不必刻意思考，凭第一感觉输入即可
-                  </p>
                 </div>
-              )}
 
-              {/* 提交按钮 */}
-              <div className="flex justify-center pt-4">
-                {user ? (
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="px-16 py-4 bg-[#B93A2F] text-white text-lg font-medium rounded-lg hover:bg-[#9a2f26] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
-                  >
-                    {loading ? '解卦中...' : '立即解卦'}
-                  </button>
-                ) : (
-                  <div className="text-gray-500 text-center">
-                    <p className="mb-3">请先登录以使用六爻问事功能</p>
-                    <a href="/login" className="text-[#B93A2F] hover:underline">
-                      前往登录
-                    </a>
+                {/* Step 4: 起卦方式 */}
+                <div>
+                  <label className="block text-[11px] tracking-[0.3em] uppercase text-slate-500 font-medium mb-3">
+                    起卦方式
+                  </label>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    {/* 数字起卦 - 推荐 */}
+                    <button
+                      type="button"
+                      onClick={() => setMethod('number')}
+                      className={`relative p-4 text-left transition-all border ${
+                        method === 'number'
+                          ? 'border-slate-800 bg-slate-800 text-white'
+                          : 'border-slate-200 bg-white/50 text-slate-600 hover:border-slate-400 hover:bg-white'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-sm font-medium tracking-wide">数字起卦</span>
+                        {method === 'number' && (
+                          <span className="text-[10px] tracking-widest bg-white/15 px-1.5 py-0.5">推荐</span>
+                        )}
+                      </div>
+                      <p className={`text-xs font-light leading-relaxed ${method === 'number' ? 'text-white/75' : 'text-slate-400'}`}>
+                        凭第一感觉输入三个数字
+                      </p>
+                    </button>
+
+                    {/* 一键起卦 */}
+                    <button
+                      type="button"
+                      onClick={() => setMethod('time')}
+                      className={`p-4 text-left transition-all border ${
+                        method === 'time'
+                          ? 'border-slate-800 bg-slate-800 text-white'
+                          : 'border-slate-200 bg-white/50 text-slate-600 hover:border-slate-400 hover:bg-white'
+                      }`}
+                    >
+                      <div className="text-sm font-medium tracking-wide mb-1.5">一键起卦</div>
+                      <p className={`text-xs font-light leading-relaxed ${method === 'time' ? 'text-white/75' : 'text-slate-400'}`}>
+                        根据当前时间自动起卦
+                      </p>
+                    </button>
+
+                    {/* 铜钱起卦 */}
+                    <button
+                      type="button"
+                      onClick={() => setMethod('coin')}
+                      className={`p-4 text-left transition-all border ${
+                        method === 'coin'
+                          ? 'border-slate-800 bg-slate-800 text-white'
+                          : 'border-slate-200 bg-white/50 text-slate-600 hover:border-slate-400 hover:bg-white'
+                      }`}
+                    >
+                      <div className="text-sm font-medium tracking-wide mb-1.5">铜钱起卦</div>
+                      <p className={`text-xs font-light leading-relaxed ${method === 'coin' ? 'text-white/75' : 'text-slate-400'}`}>
+                        模拟传统铜钱起卦
+                      </p>
+                    </button>
+                  </div>
+                </div>
+
+                {/* 数字输入 */}
+                {method === 'number' && (
+                  <div className="bg-slate-50/60 p-5 border border-slate-200/60">
+                    <label className="block text-[11px] tracking-[0.3em] uppercase text-slate-500 font-medium mb-3">
+                      请输入三个数字
+                    </label>
+                    <div className="grid grid-cols-3 gap-3">
+                      {numbers.map((num, index) => (
+                        <input
+                          key={index}
+                          type="number"
+                          value={num}
+                          onChange={(e) => {
+                            const newNumbers = [...numbers];
+                            newNumbers[index] = e.target.value;
+                            setNumbers(newNumbers);
+
+                            if (e.target.value && index < 2) {
+                              const nextInput = e.target.parentElement?.children[index + 1] as HTMLInputElement;
+                              if (nextInput) {
+                                nextInput.focus();
+                              }
+                            }
+                          }}
+                          placeholder={`第 ${index + 1} 个`}
+                          className="p-2.5 bg-white border border-slate-200 focus:outline-none focus:border-slate-500 text-center text-base font-light text-slate-800 placeholder:text-slate-400 placeholder:text-xs"
+                          min="1"
+                        />
+                      ))}
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-3 text-center font-light tracking-wide">
+                      不必刻意思考，凭第一感觉输入即可
+                    </p>
                   </div>
                 )}
-              </div>
-            </form>
+
+                {/* 提交按钮 */}
+                <div className="flex justify-center pt-3">
+                  {user ? (
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="group/btn relative overflow-hidden px-12 py-3 bg-slate-800 text-white text-sm font-light tracking-[0.3em] transition-all duration-300 hover:bg-slate-900 hover:tracking-[0.4em] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:tracking-[0.3em]"
+                    >
+                      <span className="relative z-10">{loading ? '解卦中…' : '立即解卦'}</span>
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover/btn:translate-x-[100%] transition-transform duration-700" />
+                    </button>
+                  ) : (
+                    <div className="text-slate-500 text-center text-sm font-light">
+                      <p className="mb-2">请先登录以使用六爻问事功能</p>
+                      <a href="/login" className="text-slate-800 underline underline-offset-4 hover:text-slate-900 tracking-wider">
+                        前往登录
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </form>
+            </div>
           </div>
         ) : (
           /* 卦象结果 - 双卦象展示 */
@@ -1360,7 +1376,6 @@ export default function LiuyaoPage() {
                         onSend={send}
                         onRegenerate={regenerate}
                         placeholder="基于此卦继续追问，例如：现在主动联系合适吗？"
-                        quota={liuyaoQuota}
                       />
                     </div>
                   )}
@@ -1394,27 +1409,30 @@ export default function LiuyaoPage() {
           </div>
         )}
 
-        {/* 价值说明卡片 */}
+        {/* 价值说明卡片 - 心镜风格 */}
         {!result && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
-            <div className="bg-white rounded-lg p-6 shadow-md border border-gray-100 hover:shadow-lg transition-shadow">
-              <div className="text-4xl mb-4">📋</div>
-              <h3 className="font-semibold text-[#1F2937] text-lg mb-2">一事一问</h3>
-              <p className="text-sm text-gray-600 leading-relaxed">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-12 max-w-3xl mx-auto">
+            <div className="group relative bg-white/60 backdrop-blur-sm p-6 transition-all duration-500 hover:bg-white hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:-translate-y-0.5">
+              <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-slate-300 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="text-3xl mb-3 opacity-40 group-hover:opacity-60 transition-opacity">📋</div>
+              <h3 className="font-serif text-base text-slate-800 mb-1.5 tracking-wide">一事一问</h3>
+              <p className="text-xs text-slate-600 font-light leading-relaxed">
                 六爻适合判断具体事情，不建议一次问多个问题
               </p>
             </div>
-            <div className="bg-white rounded-lg p-6 shadow-md border border-gray-100 hover:shadow-lg transition-shadow">
-              <div className="text-4xl mb-4">📊</div>
-              <h3 className="font-semibold text-[#1F2937] text-lg mb-2">看清趋势</h3>
-              <p className="text-sm text-gray-600 leading-relaxed">
+            <div className="group relative bg-white/60 backdrop-blur-sm p-6 transition-all duration-500 hover:bg-white hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:-translate-y-0.5">
+              <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-slate-300 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="text-3xl mb-3 opacity-40 group-hover:opacity-60 transition-opacity">📊</div>
+              <h3 className="font-serif text-base text-slate-800 mb-1.5 tracking-wide">看清趋势</h3>
+              <p className="text-xs text-slate-600 font-light leading-relaxed">
                 不只判断吉凶，还会分析阻力、机会和变化方向
               </p>
             </div>
-            <div className="bg-white rounded-lg p-6 shadow-md border border-gray-100 hover:shadow-lg transition-shadow">
-              <div className="text-4xl mb-4">💡</div>
-              <h3 className="font-semibold text-[#1F2937] text-lg mb-2">给出建议</h3>
-              <p className="text-sm text-gray-600 leading-relaxed">
+            <div className="group relative bg-white/60 backdrop-blur-sm p-6 transition-all duration-500 hover:bg-white hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:-translate-y-0.5">
+              <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-slate-300 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="text-3xl mb-3 opacity-40 group-hover:opacity-60 transition-opacity">💡</div>
+              <h3 className="font-serif text-base text-slate-800 mb-1.5 tracking-wide">给出建议</h3>
+              <p className="text-xs text-slate-600 font-light leading-relaxed">
                 根据卦象生成下一步行动建议，帮助你做决策
               </p>
             </div>

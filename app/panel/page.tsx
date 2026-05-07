@@ -13,7 +13,7 @@ import { Msg, QUICK_BUTTONS, normalizeMarkdown } from '@/app/lib/chat/types';
 import { parseSuggestedQuestions } from '@/app/lib/chat/parser';
 import { api, pickReply } from '@/app/lib/chat/api';
 import { trySSE, QuotaExhaustedError } from '@/app/lib/chat/sse';
-import { getMyQuotas } from '@/app/lib/api';
+import { QuotaChip } from '@/app/components/QuotaChip';
 import {
   saveConversation, loadConversation, getActiveConversationId,
   repairCorruptedConversations,
@@ -52,7 +52,7 @@ export default function PanelPage() {
 
   const [qbLoading, setQbLoading] = useState(true);
   const [quickButtons, setQuickButtons] = useState<Array<{ label: string; prompt: string }>>(QUICK_BUTTONS);
-  const [quota, setQuota] = useState<{ remaining: number; is_unlimited: boolean } | null>(null);
+  const [quotaRefreshKey, setQuotaRefreshKey] = useState(0);
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -83,18 +83,10 @@ export default function PanelPage() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [msgs, loading, booting]);
 
-  // Quota
+  // 触发顶部 QuotaChip 重取（每次发送/购买后调用）
   const refreshQuota = async () => {
-    try {
-      const data = await getMyQuotas();
-      setQuota({ remaining: data.chat.remaining, is_unlimited: data.chat.is_unlimited });
-    } catch { /* 静默 */ }
+    setQuotaRefreshKey((k) => k + 1);
   };
-  useEffect(() => {
-    const token = localStorage.getItem('auth_token');
-    if (!token) return;
-    void refreshQuota();
-  }, []);
 
   const handleQuotaExhausted = (e: QuotaExhaustedError) => {
     setErr(null);
@@ -516,6 +508,9 @@ export default function PanelPage() {
               <p className="text-sm text-[var(--color-text-muted)]">加载中…</p>
             )}
           </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <QuotaChip type="chat" refreshKey={quotaRefreshKey} />
+          </div>
           <div className="relative flex-shrink-0" ref={menuRef}>
             <button
               onClick={() => setShowMenu(v => !v)}
@@ -595,7 +590,6 @@ export default function PanelPage() {
           onStop={() => {}}
           onClear={clearChat}
           confirmClear={true}
-          quota={quota}
           placeholder="问我一个你现在最关心的问题…"
         />
       </div>
