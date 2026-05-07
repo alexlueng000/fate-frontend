@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useUser } from '@/app/lib/auth';
 import { liuyaoApi, PaipanRequest, HexagramDetail } from '@/app/lib/liuyao/api';
+import { historyApi } from '@/app/lib/history/api';
 import { getHexagramByName } from '@/app/lib/hexagram';
 import {
   LIUYAO_ACTIVE_CONV_KEY,
@@ -99,7 +101,9 @@ function DetailChip({
 }
 
 export default function LiuyaoPage() {
+  const router = useRouter();
   const { user } = useUser();
+  const [restoringFromHistory, setRestoringFromHistory] = useState(false);
   const [method, setMethod] = useState<'number' | 'coin' | 'time'>('number');
   const [question, setQuestion] = useState('');
   const [selectedScenario, setSelectedScenario] = useState<string | null>(null);
@@ -130,8 +134,66 @@ export default function LiuyaoPage() {
     });
   }, [msgs, sending, booting]);
 
+  // 从 URL ?conv_id=xxx 恢复历史会话（一次性，仅 mount 后跑一次）
+  useEffect(() => {
+    const urlConvId = new URLSearchParams(window.location.search).get('conv_id');
+    if (!urlConvId) return;
+    let alive = true;
+
+    (async () => {
+      setRestoringFromHistory(true);
+      try {
+        const detail = await historyApi.detail(Number(urlConvId));
+        if (!alive) return;
+        if (detail.type !== 'liuyao') {
+          router.replace(`/chat?conv_id=${detail.id}`);
+          return;
+        }
+        if (!detail.hexagram) {
+          throw new Error('卦象数据缺失');
+        }
+
+        // 设置卦象（包含 lines / change_lines / ganzhi 等完整字段）
+        setResult(detail.hexagram as HexagramDetail);
+
+        const cid = `conv_${detail.id}`;
+        // 过滤掉后端注入的开场 user 消息（"请基于以下卦象做第一次解读：..."）
+        const filtered = detail.messages.filter((m, idx) => {
+          if (idx === 0 && m.role === 'user' && m.content.startsWith('请基于以下卦象做第一次解读')) {
+            return false;
+          }
+          return m.role === 'user' || m.role === 'assistant';
+        });
+        const restoredMsgs: Msg[] = filtered.map((m) => ({
+          role: m.role as 'user' | 'assistant',
+          content: m.content,
+          meta: { messageId: m.id },
+        }));
+
+        setConversationId(cid);
+        setMsgs(restoredMsgs);
+        try {
+          saveConversation(cid, restoredMsgs);
+          if (detail.hexagram?.hexagram_id) {
+            localStorage.setItem(LIUYAO_ACTIVE_CONV_KEY(detail.hexagram.hexagram_id), cid);
+          }
+        } catch {}
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : '加载历史会话失败';
+        alert(msg);
+      } finally {
+        if (alive) setRestoringFromHistory(false);
+      }
+    })();
+
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // 起卦/换卦时尝试恢复对应的对话
   useEffect(() => {
+    // 从 URL 恢复期间跳过此 effect，避免覆盖刚恢复的 msgs
+    if (restoringFromHistory) return;
     if (!result?.hexagram_id) {
       setConversationId(null);
       setMsgs([]);
@@ -150,7 +212,7 @@ export default function LiuyaoPage() {
     } catch {}
     setConversationId(null);
     setMsgs([]);
-  }, [result?.hexagram_id]);
+  }, [result?.hexagram_id, restoringFromHistory]);
 
   // 持久化
   useEffect(() => {

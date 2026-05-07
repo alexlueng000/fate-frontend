@@ -22,6 +22,7 @@ import {
   saveConversation, loadConversation, getActiveConversationId,
   savePaipanLocal, loadPaipanLocal, repairCorruptedConversations,
 } from '@/app/lib/chat/storage';
+import { historyApi } from '@/app/lib/history/api';
 
 export default function ChatPage() {
   const router = useRouter();
@@ -86,6 +87,57 @@ export default function ChatPage() {
         }
       } catch (e) {
         console.warn('[Storage] Failed to repair conversations:', e);
+      }
+
+      // 优先：从 URL ?conv_id=xxx 恢复历史会话
+      const urlConvId = new URLSearchParams(window.location.search).get('conv_id');
+      if (urlConvId) {
+        try {
+          const detail = await historyApi.detail(Number(urlConvId));
+          if (!alive) return;
+          if (detail.type !== 'bazi') {
+            // 类型不匹配：六爻会话误进 /chat，跳到正确的页
+            router.replace(`/liuyao?conv_id=${detail.id}`);
+            return;
+          }
+
+          const cid = `conv_${detail.id}`;
+          // 命盘快照（恢复历史时优先用会话当时的快照）
+          if (detail.profile?.bazi_chart) {
+            const chart = detail.profile.bazi_chart as Record<string, unknown>;
+            const mingpan = (chart?.mingpan as Record<string, unknown> | undefined) ?? chart;
+            if (mingpan && (mingpan as { four_pillars?: unknown }).four_pillars) {
+              const p = mingpan as unknown as Paipan;
+              setPaipan(p);
+              try { savePaipanLocal(p); } catch {}
+            }
+          }
+
+          // 过滤掉后端注入的开场 user 消息（"我的命盘信息如下：..."）
+          const filtered = detail.messages.filter((m, idx) => {
+            if (idx === 0 && m.role === 'user' && m.content.startsWith('我的命盘信息如下')) {
+              return false;
+            }
+            return m.role === 'user' || m.role === 'assistant';
+          });
+          const restoredMsgs: Msg[] = filtered.map((m) => ({
+            role: m.role as 'user' | 'assistant',
+            content: m.content,
+            meta: { messageId: m.id },
+          }));
+
+          setConversationId(cid);
+          setMsgs(restoredMsgs);
+          sessionStorage.setItem('conversation_id', cid);
+          saveConversation(cid, restoredMsgs);
+          setBooting(false);
+          return;
+        } catch (e) {
+          if (!alive) return;
+          setErr(e instanceof Error ? e.message : '加载历史会话失败');
+          setBooting(false);
+          return;
+        }
       }
 
       // 尝试恢复旧会话
@@ -186,7 +238,7 @@ export default function ChatPage() {
     })();
 
     return () => { alive = false; };
-  }, [loading]);
+  }, [loading, router]);
 
   // 持久化消息
   useEffect(() => {

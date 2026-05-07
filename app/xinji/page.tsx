@@ -5,6 +5,8 @@ import { emotionApi, WeeklyChart, EmotionRecord } from '@/app/lib/emotion/api';
 import { useUser } from '@/app/lib/auth';
 import DialogFlow from './components/DialogFlow';
 import CharacterProfileView from './components/CharacterProfileView';
+import JieqiHeader from './components/JieqiHeader';
+import PersonaCard from './components/PersonaCard';
 import { useRouter } from 'next/navigation';
 
 export default function XinjiPage() {
@@ -93,7 +95,7 @@ export default function XinjiPage() {
         )}
 
         {/* Header with calligraphic feel */}
-        <header className="mb-16 text-center">
+        <header className="mb-10 text-center">
           <div className="inline-block relative">
             <h1 className="text-6xl font-serif text-slate-800 mb-3 tracking-wide relative">
               心镜灯
@@ -106,6 +108,12 @@ export default function XinjiPage() {
             <span className="text-sm font-light">{weekday}</span>
           </div>
         </header>
+
+        {/* 镜厅：节气·天色 + 天性小像 */}
+        <section className="mb-14 max-w-2xl mx-auto space-y-6">
+          <JieqiHeader />
+          {user && <PersonaCard />}
+        </section>
 
         {/* Main hero section - asymmetric layout */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 mb-12">
