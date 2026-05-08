@@ -22,7 +22,7 @@ export default function SideNav() {
 
   return (
     <aside
-      className={`hidden sm:flex flex-col border-r border-[var(--color-border)] bg-white flex-shrink-0 transition-[width] duration-200 ${
+      className={`group relative hidden sm:flex flex-col border-r border-[var(--color-border)] bg-white flex-shrink-0 transition-[width] duration-200 ${
         collapsed ? 'w-14' : 'w-20 lg:w-44'
       }`}
     >
@@ -46,9 +46,9 @@ export default function SideNav() {
         onClick={toggle}
         aria-label={collapsed ? '展开侧边栏' : '收起侧边栏'}
         title={collapsed ? '展开' : '收起'}
-        className="flex items-center justify-center h-9 mx-2 mb-3 rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-primary)] transition-colors"
+        className="absolute top-6 -right-3 z-10 flex items-center justify-center w-6 h-6 rounded-full border border-[var(--color-border)] bg-white text-[var(--color-text-secondary)] shadow-sm opacity-0 group-hover:opacity-100 hover:bg-[var(--color-primary)] hover:text-white hover:border-[var(--color-primary)] transition-all duration-150"
       >
-        {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+        {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
       </button>
     </aside>
   );

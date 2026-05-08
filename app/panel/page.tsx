@@ -8,6 +8,7 @@ import Markdown from '@/app/components/Markdown';
 import { QuickActions } from '@/app/components/chat/QuickActions';
 import { MessageList } from '@/app/components/chat/MessageList';
 import { InputArea } from '@/app/components/chat/InputArea';
+import { MiniPillars } from '@/app/components/chat/MiniPillars';
 
 import { Msg, QUICK_BUTTONS, normalizeMarkdown } from '@/app/lib/chat/types';
 import { parseSuggestedQuestions } from '@/app/lib/chat/parser';
@@ -27,6 +28,14 @@ interface Profile {
   birth_date: string;
   birth_time: string;
   birth_location: string;
+  calendar?: string;
+}
+
+interface FourPillarsData {
+  year?: string[];
+  month?: string[];
+  day?: string[];
+  hour?: string[];
 }
 
 export default function PanelPage() {
@@ -48,6 +57,7 @@ export default function PanelPage() {
   const [err, setErr] = useState<string | null>(null);
 
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [fourPillars, setFourPillars] = useState<FourPillarsData | null>(null);
   const [showMenu, setShowMenu] = useState(false);
 
   const [qbLoading, setQbLoading] = useState(true);
@@ -216,6 +226,37 @@ export default function PanelPage() {
   useEffect(() => {
     if (conversationId) saveConversation(conversationId, msgs);
   }, [conversationId, msgs]);
+
+  // Fetch four pillars after profile loads
+  useEffect(() => {
+    if (!profile) return;
+    let alive = true;
+    (async () => {
+      try {
+        const gender = profile.gender === 'male' || profile.gender === '男' ? '男' :
+                       profile.gender === 'female' || profile.gender === '女' ? '女' : profile.gender;
+        const birthTime = (profile.birth_time || '').slice(0, 5); // HH:MM
+        const res = await fetch(api('/bazi/calc_paipan'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            gender,
+            calendar: profile.calendar || 'gregorian',
+            birth_date: profile.birth_date,
+            birth_time: birthTime,
+            birthplace: profile.birth_location,
+            use_true_solar: true,
+          }),
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        const fp = data?.mingpan?.four_pillars;
+        if (alive && fp) setFourPillars(fp);
+      } catch { /* ignore – header will keep showing skeleton */ }
+    })();
+    return () => { alive = false; };
+  }, [profile]);
 
   const canSend = useMemo(
     () => !!conversationId && !!input.trim() && !loading && !booting,
@@ -477,68 +518,81 @@ export default function PanelPage() {
   // ===== Profile summary =====
   const genderLabel = profile?.gender === 'male' || profile?.gender === '男' ? '男' :
     profile?.gender === 'female' || profile?.gender === '女' ? '女' : (profile?.gender ?? '');
-  const profileSummary = profile
-    ? `${genderLabel} · ${profile.birth_date} ${profile.birth_time} · ${profile.birth_location}`
-    : '';
 
   return (
     <div className="h-full flex flex-col bg-[var(--color-bg)]">
 
       {/* Profile status bar */}
-      <div className="flex-shrink-0 px-4 py-3 border-b border-[var(--color-border)] bg-white/50">
-        <div className="flex items-center justify-between gap-3">
+      <div className="flex-shrink-0 relative border-b border-[var(--color-border)] bg-gradient-to-b from-white to-white/40">
+        {/* gold accent */}
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[var(--color-gold)]/50 to-transparent" />
+
+        <div className="px-4 py-2.5 flex items-center gap-3 sm:gap-4">
+          {/* Left: label + birth meta */}
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-1.5 mb-1">
               <div className="h-1.5 w-1.5 rounded-full bg-[var(--color-primary)] animate-pulse" />
-              <p className="text-[10px] font-medium tracking-wide text-[var(--color-text-muted)] uppercase">当前命盘</p>
+              <p className="text-[10px] font-medium tracking-wider text-[var(--color-text-muted)] uppercase">当前命盘</p>
             </div>
             {profile ? (
-              <div className="flex flex-wrap items-center gap-2 text-sm">
-                <span className="text-[var(--color-text-secondary)]">性别</span>
-                <span className="font-medium text-[var(--color-text-primary)]">{genderLabel}</span>
+              <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[12px] sm:text-[13px] text-[var(--color-text-secondary)]">
+                <span className="inline-flex items-center px-1.5 py-px rounded bg-[var(--color-bg-hover)] text-[var(--color-text-primary)] font-medium">
+                  {genderLabel}
+                </span>
+                <span className="text-[var(--color-text-primary)] font-medium tabular-nums">{profile.birth_date}</span>
+                <span className="text-[var(--color-text-primary)] font-medium tabular-nums">
+                  {profile.birth_time?.slice(0, 5)}
+                </span>
                 <span className="text-[var(--color-text-hint)]">·</span>
-                <span className="text-[var(--color-text-secondary)]">出生</span>
-                <span className="font-medium text-[var(--color-text-primary)]">{profile.birth_date}</span>
-                <span className="font-medium text-[var(--color-text-primary)]">{profile.birth_time}</span>
-                <span className="text-[var(--color-text-hint)]">·</span>
-                <span className="text-[var(--color-text-secondary)]">地点</span>
-                <span className="font-medium text-[var(--color-text-primary)]">{profile.birth_location}</span>
+                <span className="truncate">{profile.birth_location}</span>
               </div>
             ) : (
-              <p className="text-sm text-[var(--color-text-muted)]">加载中…</p>
+              <p className="text-xs text-[var(--color-text-muted)]">加载中…</p>
             )}
           </div>
+
+          {/* Center: four pillars (hidden on smallest screens, shown on sm+) */}
+          <div className="hidden sm:block flex-shrink-0">
+            <MiniPillars fourPillars={fourPillars} loading={!fourPillars && !!profile} />
+          </div>
+
+          {/* Right: quota + menu */}
           <div className="flex items-center gap-2 flex-shrink-0">
             <QuotaChip type="chat" refreshKey={quotaRefreshKey} />
+            <div className="relative" ref={menuRef}>
+              <button
+                onClick={() => setShowMenu(v => !v)}
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[var(--color-bg-hover)] transition-colors"
+                aria-label="更多操作"
+              >
+                <MoreVertical className="w-4 h-4 text-[var(--color-text-secondary)]" />
+              </button>
+              {showMenu && (
+                <div className="absolute right-0 top-10 z-50 min-w-[148px] rounded-xl overflow-hidden border border-[var(--color-border)] bg-white shadow-lg">
+                  <button
+                    onClick={() => { setShowMenu(false); router.push('/report'); }}
+                    className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] transition-colors text-left"
+                  >
+                    <FileText className="w-4 h-4 text-[var(--color-primary)] flex-shrink-0" />
+                    查看命理报告
+                  </button>
+                  <div className="h-px bg-[var(--color-border)]" />
+                  <button
+                    onClick={() => { setShowMenu(false); router.push('/profile/edit?returnTo=/panel'); }}
+                    className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] transition-colors text-left"
+                  >
+                    <Edit3 className="w-4 h-4 text-[var(--color-primary)] flex-shrink-0" />
+                    修改资料
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
-          <div className="relative flex-shrink-0" ref={menuRef}>
-            <button
-              onClick={() => setShowMenu(v => !v)}
-              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[var(--color-bg-hover)] transition-colors"
-              aria-label="更多操作"
-            >
-              <MoreVertical className="w-4 h-4 text-[var(--color-text-secondary)]" />
-            </button>
-            {showMenu && (
-              <div className="absolute right-0 top-10 z-50 min-w-[148px] rounded-xl overflow-hidden border border-[var(--color-border)] bg-white shadow-lg">
-                <button
-                  onClick={() => { setShowMenu(false); router.push('/report'); }}
-                  className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] transition-colors text-left"
-                >
-                  <FileText className="w-4 h-4 text-[var(--color-primary)] flex-shrink-0" />
-                  查看命理报告
-                </button>
-                <div className="h-px bg-[var(--color-border)]" />
-                <button
-                  onClick={() => { setShowMenu(false); router.push('/profile/edit?returnTo=/panel'); }}
-                  className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] transition-colors text-left"
-                >
-                  <Edit3 className="w-4 h-4 text-[var(--color-primary)] flex-shrink-0" />
-                  修改资料
-                </button>
-              </div>
-            )}
-          </div>
+        </div>
+
+        {/* Mobile: pillars row below meta line */}
+        <div className="sm:hidden px-4 pb-2.5">
+          <MiniPillars fourPillars={fourPillars} loading={!fourPillars && !!profile} />
         </div>
       </div>
 
