@@ -490,13 +490,13 @@ export default function LiuyaoPage() {
     const isDong = line.is_dong;
 
     return (
-      <div key={index} className="flex items-center gap-3 py-3 group">
+      <div key={index} className="flex items-center gap-2 md:gap-3 py-2 md:py-3 group">
         {/* 左侧：六亲 + 六兽 */}
-        <div className="flex items-center gap-2 w-20 justify-end">
-          <span className="text-xs tracking-wider text-stone-600 font-medium">
+        <div className="flex items-center gap-1 md:gap-2 w-14 md:w-20 justify-end">
+          <span className="text-[10px] md:text-xs tracking-wider text-stone-600 font-medium">
             {line.liuqin || ''}
           </span>
-          <span className="text-xs tracking-wider text-stone-500 font-light">
+          <span className="text-[10px] md:text-xs tracking-wider text-stone-500 font-light">
             {line.liushou || ''}
           </span>
         </div>
@@ -535,11 +535,11 @@ export default function LiuyaoPage() {
         </div>
 
         {/* 右侧：地支 + 五行 */}
-        <div className="flex items-center gap-2 w-16">
-          <span className="text-xs tracking-wider text-stone-500 font-light">
+        <div className="flex items-center gap-1 md:gap-2 w-12 md:w-16">
+          <span className="text-[10px] md:text-xs tracking-wider text-stone-500 font-light">
             {line.dizhi || ''}
           </span>
-          <span className="text-xs tracking-wider text-stone-600 font-medium">
+          <span className="text-[10px] md:text-xs tracking-wider text-stone-600 font-medium">
             {line.wuxing || ''}
           </span>
         </div>
@@ -551,21 +551,16 @@ export default function LiuyaoPage() {
     if (!mainLine || !changeLine) return null;
 
     const isYang = changeLine.is_yang;
-    const isDong = mainLine.is_dong;
+    // 变卦中不显示动爻标注，因为变卦是动爻变化后的静态结果
 
     return (
-      <div key={index} className="flex items-center gap-3 py-3 relative">
-        {/* 动爻红框标注 */}
-        {isDong && (
-          <div className="absolute inset-0 -mx-2 border-2 border-red-500/60 rounded-md bg-red-50/10 pointer-events-none" />
-        )}
-
+      <div key={index} className="flex items-center gap-2 md:gap-3 py-2 md:py-3 relative">
         {/* 左侧：六亲 + 六兽 */}
-        <div className="flex items-center gap-2 w-20 justify-end">
-          <span className="text-xs tracking-wider text-stone-500 font-medium">
+        <div className="flex items-center gap-1 md:gap-2 w-14 md:w-20 justify-end">
+          <span className="text-[10px] md:text-xs tracking-wider text-stone-500 font-medium">
             {changeLine.liuqin || ''}
           </span>
-          <span className="text-xs tracking-wider text-stone-400 font-light">
+          <span className="text-[10px] md:text-xs tracking-wider text-stone-400 font-light">
             {changeLine.liushou || ''}
           </span>
         </div>
@@ -592,11 +587,11 @@ export default function LiuyaoPage() {
         </div>
 
         {/* 右侧：地支 + 五行 */}
-        <div className="flex items-center gap-2 w-16">
-          <span className="text-xs tracking-wider text-stone-400 font-light">
+        <div className="flex items-center gap-1 md:gap-2 w-12 md:w-16">
+          <span className="text-[10px] md:text-xs tracking-wider text-stone-400 font-light">
             {changeLine.dizhi || ''}
           </span>
-          <span className="text-xs tracking-wider text-stone-500 font-medium">
+          <span className="text-[10px] md:text-xs tracking-wider text-stone-500 font-medium">
             {changeLine.wuxing || ''}
           </span>
         </div>
@@ -1002,23 +997,23 @@ export default function LiuyaoPage() {
               </div>
 
               {/* 双卦象展示区 */}
-              <div className="px-8 py-12">
+              <div className="px-4 md:px-8 py-8 md:py-12">
                 <div className="max-w-5xl mx-auto">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16">
                     {/* 本卦 */}
                     <div className="relative">
                       {/* 卦名 */}
-                      <div className="text-center mb-8">
+                      <div className="text-center mb-6 md:mb-8">
                         <div className="inline-block relative">
                           <h3
-                            className="text-5xl font-serif text-stone-900 tracking-wider relative z-10"
+                            className="text-3xl md:text-4xl font-serif text-stone-900 tracking-wider relative z-10"
                             style={{ fontFamily: "'Noto Serif SC', serif" }}
                           >
                             {result.main_gua}
                           </h3>
-                          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-24 h-px bg-gradient-to-r from-transparent via-stone-300 to-transparent" />
+                          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-16 md:w-24 h-px bg-gradient-to-r from-transparent via-stone-300 to-transparent" />
                         </div>
-                        <div className="mt-4 flex flex-col items-center gap-1">
+                        <div className="mt-3 md:mt-4 flex flex-col items-center gap-1">
                           <p className="text-xs tracking-[0.25em] text-stone-500 uppercase font-light">
                             本卦
                           </p>
@@ -1040,7 +1035,7 @@ export default function LiuyaoPage() {
                       {/* 六爻图 */}
                       {result.lines && result.lines.lines && Array.isArray(result.lines.lines) && (
                         <div className="relative">
-                          <div className="bg-gradient-to-br from-white/80 to-white/60 backdrop-blur-sm rounded-2xl p-6 md:p-8 shadow-xl border border-stone-200/50 relative overflow-hidden">
+                          <div className="bg-gradient-to-br from-white/80 to-white/60 backdrop-blur-sm rounded-xl md:rounded-2xl p-4 md:p-8 shadow-xl border border-stone-200/50 relative overflow-hidden">
                             {/* 装饰性背景 */}
                             <div className="absolute top-0 right-0 w-32 h-32 bg-amber-100/20 rounded-full blur-3xl"></div>
                             <div className="absolute bottom-0 left-0 w-24 h-24 bg-red-100/20 rounded-full blur-2xl"></div>
@@ -1053,12 +1048,12 @@ export default function LiuyaoPage() {
                           </div>
 
                           {/* 世应爻标注 - 优化样式 */}
-                          <div className="mt-5 flex justify-center gap-6">
-                            <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 rounded-full border border-amber-200/50">
+                          <div className="mt-4 md:mt-5 flex flex-wrap justify-center gap-3 md:gap-6">
+                            <div className="flex items-center gap-2 px-3 md:px-4 py-1.5 md:py-2 bg-amber-50 rounded-full border border-amber-200/50">
                               <span className="w-2 h-2 rounded-full bg-amber-500 shadow-sm" />
                               <span className="text-xs text-amber-800 font-medium">世爻：第{result.shi_yao}爻</span>
                             </div>
-                            <div className="flex items-center gap-2 px-4 py-2 bg-sky-50 rounded-full border border-sky-200/50">
+                            <div className="flex items-center gap-2 px-3 md:px-4 py-1.5 md:py-2 bg-sky-50 rounded-full border border-sky-200/50">
                               <span className="w-2 h-2 rounded-full bg-sky-500 shadow-sm" />
                               <span className="text-xs text-sky-800 font-medium">应爻：第{result.ying_yao}爻</span>
                             </div>
@@ -1105,17 +1100,17 @@ export default function LiuyaoPage() {
                         </div>
 
                         {/* 卦名 */}
-                        <div className="text-center mb-8">
+                        <div className="text-center mb-6 md:mb-8">
                           <div className="inline-block relative">
                             <h3
-                              className="text-5xl font-serif text-stone-800 tracking-wider relative z-10"
+                              className="text-3xl md:text-4xl font-serif text-stone-800 tracking-wider relative z-10"
                               style={{ fontFamily: "'Noto Serif SC', serif" }}
                             >
                               {result.change_gua}
                             </h3>
-                            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-24 h-px bg-gradient-to-r from-transparent via-stone-300 to-transparent" />
+                            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-16 md:w-24 h-px bg-gradient-to-r from-transparent via-stone-300 to-transparent" />
                           </div>
-                          <div className="mt-4 flex flex-col items-center gap-1">
+                          <div className="mt-3 md:mt-4 flex flex-col items-center gap-1">
                             <p className="text-xs tracking-[0.25em] text-stone-400 uppercase font-light">
                               变卦
                             </p>
@@ -1136,7 +1131,7 @@ export default function LiuyaoPage() {
 
                         {/* 六爻图 */}
                         <div className="relative">
-                          <div className="bg-gradient-to-br from-stone-100/60 to-stone-50/40 backdrop-blur-sm rounded-2xl p-6 md:p-8 shadow-xl border border-stone-200/40 relative overflow-hidden">
+                          <div className="bg-gradient-to-br from-stone-100/60 to-stone-50/40 backdrop-blur-sm rounded-xl md:rounded-2xl p-4 md:p-8 shadow-xl border border-stone-200/40 relative overflow-hidden">
                             {/* 装饰性背景 */}
                             <div className="absolute top-0 right-0 w-32 h-32 bg-stone-200/20 rounded-full blur-3xl"></div>
                             <div className="absolute bottom-0 left-0 w-24 h-24 bg-stone-300/20 rounded-full blur-2xl"></div>
@@ -1151,8 +1146,8 @@ export default function LiuyaoPage() {
                           </div>
 
                           {/* 变化说明 */}
-                          <div className="mt-5 text-center">
-                            <div className="inline-flex items-center gap-2 px-4 py-2 bg-stone-100/60 rounded-full border border-stone-200/50">
+                          <div className="mt-4 md:mt-5 text-center">
+                            <div className="inline-flex items-center gap-2 px-3 md:px-4 py-1.5 md:py-2 bg-stone-100/60 rounded-full border border-stone-200/50">
                               <svg className="w-3 h-3 text-stone-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                               </svg>
