@@ -12,11 +12,11 @@ const DIZHI_WUXING: Record<string, string> = {
 };
 
 const WUXING_TEXT: Record<string, string> = {
-  木: 'text-emerald-600',
-  火: 'text-red-600',
-  土: 'text-amber-600',
-  金: 'text-gray-600',
-  水: 'text-sky-600',
+  木: 'text-[var(--color-wuxing-wood)]',
+  火: 'text-[var(--color-wuxing-fire)]',
+  土: 'text-[var(--color-wuxing-earth)]',
+  金: 'text-[var(--color-wuxing-metal)]',
+  水: 'text-[var(--color-wuxing-water)]',
 };
 
 interface FourPillars {
@@ -51,7 +51,7 @@ export function MiniPillars({ fourPillars, loading }: MiniPillarsProps) {
   ];
 
   return (
-    <div className="flex items-stretch gap-1.5 sm:gap-2">
+    <div className="flex items-stretch gap-2">
       {PILLAR_LABELS.map((label, i) => {
         const { gan, zhi } = pillars[i];
         const isDay = i === 2;
@@ -59,7 +59,7 @@ export function MiniPillars({ fourPillars, loading }: MiniPillarsProps) {
         return (
           <div
             key={label}
-            className={`relative flex flex-col items-center justify-center min-w-[44px] sm:min-w-[52px] px-2 py-1.5 rounded-lg border transition-colors ${
+            className={`relative flex flex-col items-center justify-center min-w-[44px] sm:min-w-[52px] px-2 py-1.5 rounded-[4px] border transition-colors ${
               isDay
                 ? 'border-[var(--color-gold)]/60 bg-[var(--color-gold)]/8 ring-1 ring-[var(--color-gold)]/30'
                 : 'border-[var(--color-border)] bg-white hover:border-[var(--color-border-accent)]'

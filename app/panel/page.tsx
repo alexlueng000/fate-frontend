@@ -523,7 +523,8 @@ export default function PanelPage() {
     <div className="h-full flex flex-col bg-[var(--color-bg)]">
 
       {/* Profile status bar */}
-      <div className="flex-shrink-0 relative border-b border-[var(--color-border)] bg-gradient-to-b from-white to-white/40">
+      <header className="flex-shrink-0 relative border-b border-[var(--color-border)] bg-gradient-to-b from-[var(--color-bg-elevated)] to-[var(--color-bg)]/40">
+        <h1 className="sr-only">八字对话 · 当前命盘</h1>
         {/* gold accent */}
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[var(--color-gold)]/50 to-transparent" />
 
@@ -535,7 +536,7 @@ export default function PanelPage() {
               <p className="text-[10px] font-medium tracking-wider text-[var(--color-text-muted)] uppercase">当前命盘</p>
             </div>
             {profile ? (
-              <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[12px] sm:text-[13px] text-[var(--color-text-secondary)]">
+              <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] sm:text-[13px] text-[var(--color-text-secondary)]">
                 <span className="inline-flex items-center px-1.5 py-px rounded bg-[var(--color-bg-hover)] text-[var(--color-text-primary)] font-medium">
                   {genderLabel}
                 </span>
@@ -556,13 +557,13 @@ export default function PanelPage() {
             <div className="relative" ref={menuRef}>
               <button
                 onClick={() => setShowMenu(v => !v)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[var(--color-bg-hover)] transition-colors"
+                className="w-11 h-11 flex items-center justify-center rounded-lg hover:bg-[var(--color-bg-hover)] transition-colors focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)]"
                 aria-label="更多操作"
               >
                 <MoreVertical className="w-4 h-4 text-[var(--color-text-secondary)]" />
               </button>
               {showMenu && (
-                <div className="absolute right-0 top-10 z-50 min-w-[148px] rounded-xl overflow-hidden border border-[var(--color-border)] bg-white shadow-lg">
+                <div className="absolute right-0 top-10 z-50 min-w-[148px] rounded-[4px] overflow-hidden border border-[var(--color-border)] bg-[var(--color-bg-elevated)] shadow-[var(--shadow-lg)]">
                   <button
                     onClick={() => { setShowMenu(false); router.push('/report'); }}
                     className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] transition-colors text-left"
@@ -588,7 +589,7 @@ export default function PanelPage() {
         <div className="px-4 pb-2.5">
           <MiniPillars fourPillars={fourPillars} loading={!fourPillars && !!profile} />
         </div>
-      </div>
+      </header>
 
       {/* Quota strip — sits below profile/pillars row */}
       <QuotaBar type="chat" refreshKey={quotaRefreshKey} />
@@ -615,7 +616,7 @@ export default function PanelPage() {
             </div>
           )}
           {err && (
-            <div className="rounded-xl border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-600">
+            <div className="rounded-[4px] border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-600">
               {err}
             </div>
           )}

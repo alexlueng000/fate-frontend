@@ -28,7 +28,7 @@ const TONE: Record<State, {
   cta: string;
 }> = {
   unlimited: {
-    rowBg: 'bg-gradient-to-r from-[var(--color-gold)]/10 via-white to-white hover:from-[var(--color-gold)]/15',
+    rowBg: 'bg-gradient-to-r from-[var(--color-gold)]/10 via-[var(--color-bg-elevated)] to-[var(--color-bg-elevated)] hover:from-[var(--color-gold)]/15',
     iconBg: 'bg-[var(--color-gold)]/15',
     iconText: 'text-[var(--color-gold-dark)]',
     countText: 'text-[var(--color-text-secondary)]',
@@ -36,7 +36,7 @@ const TONE: Record<State, {
     cta: 'text-[var(--color-gold-dark)]',
   },
   normal: {
-    rowBg: 'bg-gradient-to-r from-[var(--color-primary)]/[0.04] via-white to-white hover:from-[var(--color-primary)]/[0.08]',
+    rowBg: 'bg-gradient-to-r from-[var(--color-primary)]/[0.04] via-[var(--color-bg-elevated)] to-[var(--color-bg-elevated)] hover:from-[var(--color-primary)]/[0.08]',
     iconBg: 'bg-[var(--color-primary)]/10',
     iconText: 'text-[var(--color-primary)]',
     countText: 'text-[var(--color-text-primary)]',
@@ -44,7 +44,7 @@ const TONE: Record<State, {
     cta: 'text-[var(--color-primary)]',
   },
   low: {
-    rowBg: 'bg-gradient-to-r from-amber-50 via-white to-white hover:from-amber-100',
+    rowBg: 'bg-gradient-to-r from-amber-50 via-[var(--color-bg-elevated)] to-[var(--color-bg-elevated)] hover:from-amber-100',
     iconBg: 'bg-amber-100',
     iconText: 'text-amber-700',
     countText: 'text-amber-800',
@@ -52,7 +52,7 @@ const TONE: Record<State, {
     cta: 'text-amber-700',
   },
   empty: {
-    rowBg: 'bg-gradient-to-r from-red-50 via-white to-white hover:from-red-100',
+    rowBg: 'bg-gradient-to-r from-red-50 via-[var(--color-bg-elevated)] to-[var(--color-bg-elevated)] hover:from-red-100',
     iconBg: 'bg-red-100',
     iconText: 'text-red-600',
     countText: 'text-red-700',
@@ -89,7 +89,7 @@ export function QuotaBar({ type, refreshKey = 0, className = '' }: QuotaBarProps
   // skeleton 一行，避免布局跳动
   if (!data) {
     return (
-      <div className={`px-4 py-2 border-b border-[var(--color-border)] bg-white/40 ${className}`}>
+      <div className={`px-4 py-2 border-b border-[var(--color-border)] bg-[var(--color-bg-elevated)]/40 ${className}`}>
         <div className="h-3.5 w-48 rounded bg-[var(--color-bg-hover)] animate-pulse" />
       </div>
     );
@@ -144,8 +144,8 @@ export function QuotaBar({ type, refreshKey = 0, className = '' }: QuotaBarProps
             )}
           </div>
 
-          {!unlimited && !empty && (
-            <div className="hidden sm:block flex-1 max-w-[220px] h-1.5 rounded-full bg-[var(--color-bg-hover)] overflow-hidden">
+          {!unlimited && (
+            <div className="flex-1 max-w-[220px] h-1.5 rounded-full bg-[var(--color-bg-hover)] overflow-hidden">
               <div
                 className={`h-full rounded-full transition-[width] duration-500 ease-out ${t.fill}`}
                 style={{ width: `${pct}%` }}
@@ -155,7 +155,7 @@ export function QuotaBar({ type, refreshKey = 0, className = '' }: QuotaBarProps
         </div>
 
         {/* CTA */}
-        <span className={`flex-shrink-0 inline-flex items-center gap-1 text-[12px] sm:text-sm font-semibold ${t.cta} group-hover:gap-1.5 transition-all`}>
+        <span className={`flex-shrink-0 inline-flex items-center gap-1 text-[12px] sm:text-sm font-semibold ${t.cta} transition-all`}>
           {ctaText}
           <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
         </span>
