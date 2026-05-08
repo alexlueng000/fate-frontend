@@ -551,11 +551,6 @@ export default function PanelPage() {
             )}
           </div>
 
-          {/* Center: four pillars (hidden on smallest screens, shown on sm+) */}
-          <div className="hidden sm:block flex-shrink-0">
-            <MiniPillars fourPillars={fourPillars} loading={!fourPillars && !!profile} />
-          </div>
-
           {/* Right: more menu */}
           <div className="flex items-center gap-2 flex-shrink-0">
             <div className="relative" ref={menuRef}>
@@ -589,8 +584,8 @@ export default function PanelPage() {
           </div>
         </div>
 
-        {/* Mobile: pillars row below meta line */}
-        <div className="sm:hidden px-4 pb-2.5">
+        {/* Pillars row sits below the meta line on every screen size */}
+        <div className="px-4 pb-2.5">
           <MiniPillars fourPillars={fourPillars} loading={!fourPillars && !!profile} />
         </div>
       </div>
