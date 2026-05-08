@@ -14,7 +14,7 @@ import { Msg, QUICK_BUTTONS, normalizeMarkdown } from '@/app/lib/chat/types';
 import { parseSuggestedQuestions } from '@/app/lib/chat/parser';
 import { api, pickReply } from '@/app/lib/chat/api';
 import { trySSE, QuotaExhaustedError } from '@/app/lib/chat/sse';
-import { QuotaChip } from '@/app/components/QuotaChip';
+import { QuotaBar } from '@/app/components/QuotaBar';
 import {
   saveConversation, loadConversation, getActiveConversationId,
   repairCorruptedConversations,
@@ -93,7 +93,7 @@ export default function PanelPage() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [msgs, loading, booting]);
 
-  // 触发顶部 QuotaChip 重取（每次发送/购买后调用）
+  // 触发 QuotaBar 重取（每次发送/购买后调用）
   const refreshQuota = async () => {
     setQuotaRefreshKey((k) => k + 1);
   };
@@ -556,9 +556,8 @@ export default function PanelPage() {
             <MiniPillars fourPillars={fourPillars} loading={!fourPillars && !!profile} />
           </div>
 
-          {/* Right: quota + menu */}
+          {/* Right: more menu */}
           <div className="flex items-center gap-2 flex-shrink-0">
-            <QuotaChip type="chat" refreshKey={quotaRefreshKey} />
             <div className="relative" ref={menuRef}>
               <button
                 onClick={() => setShowMenu(v => !v)}
@@ -595,6 +594,9 @@ export default function PanelPage() {
           <MiniPillars fourPillars={fourPillars} loading={!fourPillars && !!profile} />
         </div>
       </div>
+
+      {/* Quota strip — sits below profile/pillars row */}
+      <QuotaBar type="chat" refreshKey={quotaRefreshKey} />
 
       {/* Messages — flex-1, MessageList owns the scroll */}
       <MessageList
