@@ -1,10 +1,10 @@
 @import "tailwindcss";
 
-/* ==================== 东方克制设计系统 ==================== */
-/* Oriental Restrained Theme — 朱砂红 + 宣纸白 + 墨灰 + 茶金 + 雾青 */
+/* ==================== Modern Wall-Facing 现代面壁 设计系统 ==================== */
+/* 见项目根 DESIGN.md / PRODUCT.md */
 
 :root {
-  /* === 一级：品牌层 - 朱砂红 === */
+  /* === Primary · 朱砂红（单一品牌口令，单页占比 ≤10%） === */
   --color-primary: #B54434;
   --color-primary-hover: #9F3A2C;
   --color-primary-active: #8C3226;
@@ -12,25 +12,25 @@
   --color-primary-deeper: #96382B;
   --color-primary-glow: rgba(181, 68, 52, 0.12);
 
-  /* === 四级：点缀层 - 茶金（非亮金） === */
+  /* === Secondary · 茶金（克制点缀） === */
   --color-gold: #B08A57;
   --color-gold-light: #C5A06A;
   --color-gold-dark: #927044;
-  --color-gold-glow: rgba(176, 138, 87, 0.12);
+  --color-gold-glow: rgba(176, 138, 87, 0.10);
 
-  /* === 四级：点缀层 - 雾青（中和暖色） === */
+  /* === Tertiary · 雾青（中性补偿；与朱砂不同时强调） === */
   --color-mist: #A7B3AE;
   --color-mist-light: #E6ECE8;
   --color-mist-deep: #6F7C76;
 
-  /* 五行色系 (Wu Xing) - 保留原色系 */
-  --wuxing-wood: #10B981;
-  --wuxing-fire: #EF4444;
-  --wuxing-earth: #F59E0B;
-  --wuxing-metal: #6B7280;
-  --wuxing-water: #0EA5E9;
+  /* === Wuxing 五行属性色（OKLCH 降饱和；属性语义而非装饰） === */
+  --color-wuxing-wood: oklch(60% 0.08 155);
+  --color-wuxing-fire: oklch(58% 0.10 25);
+  --color-wuxing-earth: oklch(68% 0.07 75);
+  --color-wuxing-metal: oklch(65% 0.012 80);
+  --color-wuxing-water: oklch(58% 0.06 230);
 
-  /* === 二级：空间层 - 宣纸白暖米白 === */
+  /* === Background · 宣纸白（暖米白逐层） === */
   --color-bg: #F7F3EE;
   --color-bg-alt: #F1EAE2;
   --color-bg-deep: #EFE7DE;
@@ -38,7 +38,7 @@
   --color-bg-card: #FBF8F4;
   --color-bg-hover: #EAE6DE;
 
-  /* === 三级：内容层 - 墨灰（非纯黑） === */
+  /* === Text · 墨灰（暖偏，不用 #000） === */
   --color-text-primary: #2A2522;
   --color-text-body: #4B433D;
   --color-text-secondary: #7A7068;
@@ -46,25 +46,19 @@
   --color-text-hint: #B8AEA6;
   --color-text-inverse: #FFF7F0;
 
-  /* === 边框 - 暖灰 === */
+  /* === Border · 暖灰描边 === */
   --color-border: #E2D8CE;
   --color-border-strong: #D2C4B7;
   --color-border-subtle: rgba(210, 196, 183, 0.5);
   --color-border-accent: rgba(181, 68, 52, 0.2);
 
-  /* === 渐变（克制，去掉装饰性渐变） === */
-  --gradient-bg: linear-gradient(180deg, #F7F3EE 0%, #F1EAE2 100%);
-  --gradient-card: linear-gradient(135deg, #FBF8F4 0%, #F7F3EE 100%);
-  --gradient-primary: #B54434;
-  --gradient-gold: #B08A57;
-
-  /* === 阴影 - 暖灰色系（非冷黑） === */
+  /* === Shadow · 暖咖灰（rgba 60,40,20，不用冷黑） === */
   --shadow-sm: 0 1px 4px rgba(60, 40, 20, 0.06);
   --shadow-md: 0 2px 12px rgba(60, 40, 20, 0.08);
   --shadow-lg: 0 6px 24px rgba(60, 40, 20, 0.10);
-  --shadow-inner: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  --shadow-inner: inset 0 1px 0 rgba(255, 247, 240, 0.6);
 
-  /* === 圆角（大幅削减，方正克制） === */
+  /* === Radius · 方正克制（≤4px；圆形元素例外） === */
   --radius-sm: 2px;
   --radius-md: 3px;
   --radius-lg: 4px;
@@ -76,9 +70,19 @@
   --font-display: "Noto Serif SC", "Source Han Serif SC", "STSong", serif;
   --font-body: "Inter", "Noto Sans SC", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", "Fira Code", monospace;
+
+  /* === Motion · ease-out-quart 系列 === */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 200ms;
+  --duration-base: 250ms;
+
+  /* === Landing 功能主题色（向后兼容） === */
+  --color-feature-bazi: var(--color-primary);
+  --color-feature-xinji: var(--color-mist-deep);
+  --color-feature-liuyao: var(--color-gold-dark);
 }
 
-/* ==================== Tailwind Theme Integration ==================== */
+/* ==================== Tailwind v4 Theme Integration ==================== */
 @theme inline {
   --color-background: var(--color-bg);
   --color-foreground: var(--color-text-primary);
@@ -88,12 +92,11 @@
 }
 
 /* ==================== Base Styles ==================== */
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 html {
   scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
@@ -107,23 +110,10 @@ body {
 }
 
 /* ==================== Custom Scrollbar ==================== */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--color-bg-deep);
-}
-
-::-webkit-scrollbar-thumb {
-  background: #C8BDB4;
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #B0A49A;
-}
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--color-bg-deep); }
+::-webkit-scrollbar-thumb { background: #C8BDB4; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #B0A49A; }
 
 /* ==================== Selection ==================== */
 ::selection {
@@ -131,178 +121,50 @@ body {
   color: var(--color-text-primary);
 }
 
-/* ==================== Animations ==================== */
+/* ==================== Animations · State-Only ==================== */
+/* 装饰动效 (rotate-slow / pulse-glow / shimmer / float) 已 deprecated */
+
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(32px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
-
-@keyframes pulse-glow {
-  0%, 100% {
-    opacity: 0.4;
-    filter: blur(20px);
-  }
-  50% {
-    opacity: 0.6;
-    filter: blur(30px);
-  }
-}
-
-@keyframes rotate-slow {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-@keyframes typing {
-  from {
-    width: 0;
-  }
-  to {
-    width: 100%;
-  }
+  from { opacity: 0; transform: scale(0.98); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
 @keyframes blink {
-  0%, 50% {
-    opacity: 1;
-  }
-  51%, 100% {
-    opacity: 0;
-  }
+  0%, 50%   { opacity: 1; }
+  51%, 100% { opacity: 0; }
 }
 
-/* Animation Classes */
-.animate-fade-in {
-  animation: fadeIn 0.5s ease-out forwards;
-}
+.animate-fade-in    { animation: fadeIn  500ms var(--ease-out) both; }
+.animate-slide-up   { animation: slideUp 600ms var(--ease-out) both; }
+.animate-scale-in   { animation: scaleIn 400ms var(--ease-out) both; }
 
-.animate-slide-up {
-  animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.animate-slide-down {
-  animation: slideDown 0.5s ease-out forwards;
-}
-
-.animate-scale-in {
-  animation: scaleIn 0.4s ease-out forwards;
-}
-
-.animate-float {
-  animation: float 6s ease-in-out infinite;
-}
-
-.animate-pulse-glow {
-  animation: pulse-glow 3s ease-in-out infinite;
-}
-
-.animate-rotate-slow {
-  animation: rotate-slow 60s linear infinite;
-}
-
-.animate-shimmer {
-  background: linear-gradient(90deg, transparent, rgba(255, 36, 66, 0.05), transparent);
-  background-size: 200% 100%;
-  animation: shimmer 2s infinite;
-}
-
-/* Staggered Animation Delays */
 .delay-100 { animation-delay: 100ms; }
 .delay-200 { animation-delay: 200ms; }
 .delay-300 { animation-delay: 300ms; }
 .delay-400 { animation-delay: 400ms; }
 .delay-500 { animation-delay: 500ms; }
-.delay-600 { animation-delay: 600ms; }
-.delay-700 { animation-delay: 700ms; }
-.delay-800 { animation-delay: 800ms; }
 
-/* ==================== Utility Classes ==================== */
-
-/* Glass Effect - 简化，减少 blur */
-.glass {
-  background: rgba(251, 248, 244, 0.85);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid var(--color-border);
+/* ==================== Reduced Motion 兜底 ==================== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
-.glass-subtle {
-  background: rgba(251, 248, 244, 0.6);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-}
-
-/* Gradient Text */
-.text-gradient-primary {
-  color: var(--color-primary);
-}
-
-.text-gradient-gold {
-  color: var(--color-gold);
-}
-
-/* Card Styles */
+/* ==================== Card · 方正 4px 圆角 ==================== */
 .card {
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
@@ -311,7 +173,9 @@ body {
 }
 
 .card-hover {
-  transition: all 0.25s ease;
+  transition: border-color var(--duration-base) var(--ease-out),
+              transform var(--duration-base) var(--ease-out),
+              box-shadow var(--duration-base) var(--ease-out);
 }
 
 .card-hover:hover {
@@ -320,19 +184,31 @@ body {
   box-shadow: var(--shadow-lg);
 }
 
-/* Button Base */
+/* ==================== Buttons ==================== */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
+  min-height: 44px;
+  font-family: var(--font-body);
   font-weight: 500;
-  border-radius: 6px;
-  transition: all 0.2s ease;
+  font-size: 1rem;
+  border-radius: var(--radius-md);
+  transition: background var(--duration-fast) var(--ease-out),
+              color var(--duration-fast) var(--ease-out),
+              border-color var(--duration-fast) var(--ease-out),
+              transform var(--duration-fast) var(--ease-out),
+              box-shadow var(--duration-fast) var(--ease-out);
   cursor: pointer;
   border: none;
   outline: none;
+  text-decoration: none;
+}
+
+.btn:focus-visible {
+  box-shadow: 0 0 0 3px var(--color-primary-glow);
 }
 
 .btn:active {
@@ -341,14 +217,19 @@ body {
 
 .btn-primary {
   background: var(--color-primary);
-  color: #FFF8F2;
+  color: var(--color-text-inverse);
   box-shadow: var(--shadow-md);
 }
 
 .btn-primary:hover {
   background: var(--color-primary-hover);
-  box-shadow: var(--shadow-md);
   transform: translateY(-1px);
+  box-shadow: var(--shadow-lg);
+}
+
+.btn-primary:active {
+  background: var(--color-primary-active);
+  transform: scale(0.98);
 }
 
 .btn-secondary {
@@ -358,13 +239,15 @@ body {
 }
 
 .btn-secondary:hover {
-  background: rgba(181, 68, 52, 0.04);
+  background: var(--color-bg-hover);
   border-color: var(--color-primary);
 }
 
 .btn-ghost {
   background: transparent;
   color: var(--color-text-secondary);
+  min-height: 44px;
+  padding: 0.5rem 1rem;
 }
 
 .btn-ghost:hover {
@@ -372,89 +255,64 @@ body {
   color: var(--color-text-primary);
 }
 
-/* Input Styles */
+/* ==================== Input ==================== */
 .input {
   width: 100%;
-  padding-top: 0.75rem;
-  padding-bottom: 0.75rem;
-  padding-left: 1rem;
-  padding-right: 1rem;
+  padding: 0.75rem 1rem;
   background: var(--color-bg-elevated);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   color: var(--color-text-primary);
+  font-family: var(--font-body);
   font-size: 1rem;
-  transition: all 0.2s ease;
+  line-height: 1.5;
+  transition: border-color var(--duration-fast) var(--ease-out),
+              box-shadow var(--duration-fast) var(--ease-out);
 }
 
 .input:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(181, 68, 52, 0.12);
+  box-shadow: 0 0 0 3px var(--color-primary-glow);
 }
 
 .input::placeholder {
   color: var(--color-text-hint);
 }
 
-/* Decorative Elements */
+/* ==================== Decorative Elements (clean) ==================== */
 .ornament-line {
   height: 1px;
-  background: linear-gradient(90deg, transparent, var(--color-primary), transparent);
+  background: var(--color-border-accent);
 }
 
 .ornament-dot {
-  width: 6px;
-  height: 6px;
+  width: 4px;
+  height: 4px;
   background: var(--color-primary);
   border-radius: 50%;
 }
 
-/* Noise Texture Overlay - 更淡 */
-.noise-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  opacity: 0.015;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-  z-index: 9999;
-}
-
 /* ==================== Markdown Override ==================== */
-@import 'highlight.js/styles/github.css';
+@import "highlight.js/styles/github.css";
 
-/* Markdown 容器基础样式 - 与 Markdown.tsx 组件配合使用 */
 .msg-md {
-  color: #4B433D;
+  color: var(--color-text-body);
   line-height: 1.7;
   font-size: 0.875rem;
   word-wrap: break-word;
   overflow-wrap: break-word;
 }
 
-/* 确保列表标记正确显示 */
-.msg-md ul {
-  list-style: disc;
-}
-
-.msg-md ol {
-  list-style: decimal;
-}
-
-/* 强制覆盖 Tailwind 的 reset 样式 */
-.msg-md * {
-  box-sizing: border-box;
-}
+.msg-md ul { list-style: disc; }
+.msg-md ol { list-style: decimal; }
+.msg-md * { box-sizing: border-box; }
 
 .msg-md strong {
-  color: #D4380D;
+  color: var(--color-primary);
   font-weight: 600;
 }
 
-/* 修复标题换行问题 - 强制 CJK 文字不在字符间断行 */
 .msg-md h1,
 .msg-md h2,
 .msg-md h3,
@@ -469,7 +327,6 @@ body {
   hyphens: none !important;
 }
 
-/* h3 下划线使用伪元素实现，确保在整个标题块底部 */
 .msg-md h3 {
   position: relative;
   border-bottom: none !important;
@@ -477,7 +334,7 @@ body {
 }
 
 .msg-md h3::after {
-  content: '';
+  content: "";
   position: absolute;
   left: 0;
   right: 0;
@@ -486,17 +343,7 @@ body {
   background-color: rgba(181, 68, 52, 0.18);
 }
 
-/* ==================== Bagua Pattern Background ==================== */
-.bagua-pattern {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  opacity: 0.03;
-  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23B54434' fill-opacity='1'%3E%3Cpath d='M30 30c0-11.046-8.954-20-20-20v40c11.046 0 20-8.954 20-20zm0 0c0 11.046 8.954 20 20 20V10c-11.046 0-20 8.954-20 20z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-  pointer-events: none;
-}
-
-/* ==================== Five Elements Badges ==================== */
+/* ==================== Wuxing Badges (OKLCH 降饱和) ==================== */
 .wuxing-badge {
   display: inline-flex;
   align-items: center;
@@ -505,86 +352,12 @@ body {
   border-radius: var(--radius-full);
   font-size: 0.875rem;
   font-weight: 500;
-}
-
-.wuxing-wood {
-  background: rgba(16, 185, 129, 0.08);
-  color: #059669;
-  border: 1px solid rgba(16, 185, 129, 0.25);
-}
-
-.wuxing-fire {
-  background: rgba(239, 68, 68, 0.08);
-  color: #DC2626;
-  border: 1px solid rgba(239, 68, 68, 0.25);
-}
-
-.wuxing-earth {
-  background: rgba(245, 158, 11, 0.08);
-  color: #D97706;
-  border: 1px solid rgba(245, 158, 11, 0.25);
-}
-
-.wuxing-metal {
-  background: rgba(107, 114, 128, 0.08);
-  color: #4B5563;
-  border: 1px solid rgba(107, 114, 128, 0.25);
-}
-
-.wuxing-water {
-  background: rgba(14, 165, 233, 0.08);
-  color: #0284C7;
-  border: 1px solid rgba(14, 165, 233, 0.25);
-}
-
-/* ==================== Landing Page Additions ==================== */
-
-/* 功能主题色 */
-:root {
-  --color-feature-bazi: var(--color-primary);
-  --color-feature-xinji: var(--color-mist-deep);
-  --color-feature-liuyao: var(--color-gold-dark);
-}
-
-@keyframes slide-in-left {
-  from { opacity: 0; transform: translateX(-30px); }
-  to   { opacity: 1; transform: translateX(0); }
-}
-
-@keyframes slide-in-right {
-  from { opacity: 0; transform: translateX(30px); }
-  to   { opacity: 1; transform: translateX(0); }
-}
-
-.animate-slide-in-left {
-  animation: slide-in-left 0.6s ease-out forwards;
-}
-
-.animate-slide-in-right {
-  animation: slide-in-right 0.6s ease-out forwards;
-}
-
-.feature-card {
-  background: white;
-  border-radius: 1.5rem;
-  padding: 2rem;
-  box-shadow: var(--shadow-lg);
+  background: var(--color-bg-elevated);
   border: 1px solid var(--color-border);
-  transition: all 0.3s ease;
 }
 
-.feature-card:hover {
-  box-shadow: 0 12px 40px rgba(60, 40, 20, 0.14);
-}
-
-.feature-card-left-accent {
-  border-left: 4px solid;
-}
-
-/* ==================== Responsive Utilities ==================== */
-@media (max-width: 768px) {
-  :root {
-    --radius-xl: 4px;
-    --radius-2xl: 4px;
-  }
-}
+.wuxing-wood  { color: var(--color-wuxing-wood);  border-color: color-mix(in oklch, var(--color-wuxing-wood)  25%, transparent); }
+.wuxing-fire  { color: var(--color-wuxing-fire);  border-color: color-mix(in oklch, var(--color-wuxing-fire)  25%, transparent); }
+.wuxing-earth { color: var(--color-wuxing-earth); border-color: color-mix(in oklch, var(--color-wuxing-earth) 25%, transparent); }
+.wuxing-metal { color: var(--color-wuxing-metal); border-color: color-mix(in oklch, var(--color-wuxing-metal) 25%, transparent); }
+.wuxing-water { color: var(--color-wuxing-water); border-color: color-mix(in oklch, var(--color-wuxing-water) 25%, transparent); }

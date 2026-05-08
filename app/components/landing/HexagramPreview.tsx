@@ -1,116 +1,160 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from "react";
 
-// 本卦：风火家人（坎上离下，简化示例）
-const BEN_GUA = [1, 1, 0, 1, 1, 1]; // 1=阳, 0=阴，从下到上
-const BIAN_GUA = [1, 1, 0, 0, 1, 1]; // 第4爻变爻
+const BEN_GUA = [1, 1, 0, 1, 1, 1];
+const BIAN_GUA = [1, 1, 0, 0, 1, 1];
 
-const GUA_NAME_BEN = '风火家人';
-const GUA_NAME_BIAN = '天火同人';
+const GUA_BEN = { name: "风火家人", note: "本卦" };
+const GUA_BIAN = { name: "天火同人", note: "变卦" };
+
+const MOVING_LINE_INDEX = 3;
 
 function Yao({ yang, moving, revealed }: { yang: boolean; moving?: boolean; revealed: boolean }) {
   return (
-    <div className={`flex items-center justify-center gap-1 transition-all duration-500 ${revealed ? 'opacity-100' : 'opacity-0 translate-y-2'}`}>
+    <div
+      className={`flex items-center justify-center gap-1 transition-all duration-500 ${
+        revealed ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1"
+      }`}
+    >
       {yang ? (
-        <div className={`h-2 rounded-full bg-current ${moving ? 'opacity-70' : ''}`} style={{ width: '100%' }} />
+        <div
+          className="h-[6px] w-full"
+          style={{
+            background: "currentColor",
+            opacity: moving ? 0.7 : 1,
+          }}
+        />
       ) : (
-        <div className="flex gap-1 w-full">
-          <div className="flex-1 h-2 rounded-full bg-current" />
-          <div className="w-2" />
-          <div className="flex-1 h-2 rounded-full bg-current" />
+        <div className="flex w-full gap-2">
+          <div className="flex-1 h-[6px]" style={{ background: "currentColor" }} />
+          <div className="flex-1 h-[6px]" style={{ background: "currentColor" }} />
         </div>
       )}
     </div>
   );
 }
 
+function useReducedMotion() {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const onChange = () => setReduced(mq.matches);
+    onChange();
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+  return reduced;
+}
+
 export default function HexagramPreview() {
-  const [phase, setPhase] = useState<'ben' | 'bian'>('ben');
+  const [phase, setPhase] = useState<"ben" | "bian">("ben");
   const [revealedCount, setRevealedCount] = useState(0);
+  const reduced = useReducedMotion();
 
   useEffect(() => {
+    if (reduced) {
+      setRevealedCount(6);
+      return;
+    }
     setRevealedCount(0);
     const timers: ReturnType<typeof setTimeout>[] = [];
     for (let i = 0; i < 6; i++) {
-      timers.push(setTimeout(() => setRevealedCount(i + 1), i * 200 + 300));
+      timers.push(setTimeout(() => setRevealedCount(i + 1), i * 150 + 200));
     }
     return () => timers.forEach(clearTimeout);
-  }, [phase]);
+  }, [phase, reduced]);
 
-  useEffect(() => {
-    const t = setTimeout(() => setPhase((p) => (p === 'ben' ? 'bian' : 'ben')), 3500);
-    return () => clearTimeout(t);
-  }, [phase]);
-
-  const gua = phase === 'ben' ? BEN_GUA : BIAN_GUA;
-  const guaName = phase === 'ben' ? GUA_NAME_BEN : GUA_NAME_BIAN;
-  const movingLine = 3; // 第4爻（0-indexed: 3）为动爻
+  const gua = phase === "ben" ? BEN_GUA : BIAN_GUA;
+  const meta = phase === "ben" ? GUA_BEN : GUA_BIAN;
+  const accent =
+    phase === "ben"
+      ? "var(--color-gold-dark)"
+      : "var(--color-mist-deep)";
 
   return (
-    <div className="space-y-4">
-      <div className="text-xs text-[var(--color-text-muted)] text-center mb-2">卦象演示（示例）</div>
-
-      {/* 卦象 */}
-      <div className="flex gap-6 justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div
-            className="w-28 space-y-2 p-3 rounded-xl transition-all duration-500"
-            style={{
-              color: phase === 'ben' ? 'var(--color-gold-dark)' : 'var(--color-mist-deep)',
-              background: phase === 'ben' ? 'rgba(176,138,87,0.1)' : 'rgba(167,179,174,0.1)',
-            }}
-          >
-            {[...gua].reverse().map((yang, i) => (
-              <Yao
-                key={i}
-                yang={yang === 1}
-                moving={phase === 'ben' && (5 - i) === movingLine}
-                revealed={revealedCount > i}
-              />
-            ))}
-          </div>
-          <div className="text-xs font-medium" style={{ color: phase === 'ben' ? 'var(--color-gold-dark)' : 'var(--color-mist-deep)' }}>
-            {guaName}
-          </div>
-          <div className="text-xs text-[var(--color-text-hint)]">
-            {phase === 'ben' ? '本卦' : '变卦'}
-          </div>
-        </div>
-
-        {phase === 'bian' && (
-          <div className="flex items-center text-[var(--color-text-hint)] text-xl self-center -mt-6">→</div>
-        )}
+    <div className="w-full max-w-md space-y-5">
+      <div className="text-[0.6875rem] uppercase tracking-[0.12em] text-[var(--color-text-muted)] text-center">
+        卦象演示
       </div>
 
-      {/* 解读摘要 */}
-      <div className="p-3 rounded-xl bg-[var(--color-bg-deep)] space-y-2">
-        <div className="text-xs font-medium text-[var(--color-text-primary)]">
-          {phase === 'ben' ? '卦象分析' : '变卦提示'}
+      {/* 卦象本体 */}
+      <div className="flex flex-col items-center gap-3">
+        <div
+          className="w-28 space-y-2.5 p-3 transition-colors duration-500"
+          style={{
+            color: accent,
+            background: "color-mix(in oklch, currentColor 7%, var(--color-bg-elevated))",
+            borderRadius: "var(--radius-md)",
+          }}
+          role="presentation"
+          aria-label={`${meta.name}`}
+        >
+          {[...gua].reverse().map((yang, i) => (
+            <Yao
+              key={i}
+              yang={yang === 1}
+              moving={phase === "ben" && 5 - i === MOVING_LINE_INDEX}
+              revealed={revealedCount > i}
+            />
+          ))}
         </div>
-        <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed">
-          {phase === 'ben'
-            ? '此卦主"家"，问事结果以内部协调为先，宜稳不宜急，第四爻动，需关注关键变数。'
-            : '变为天火同人，格局开阔，原有阻碍趋于化解，合作与沟通将带来转机。'}
-        </p>
-      </div>
 
-      {/* 行动建议 */}
-      <div className="flex gap-2">
-        {['趋势向好', '3-7日', '主动沟通'].map((tag) => (
+        <div className="flex items-baseline gap-2">
           <span
+            className="text-[1.25rem] font-medium"
+            style={{ fontFamily: "var(--font-display)", color: accent }}
+          >
+            {meta.name}
+          </span>
+          <span className="text-[0.75rem] text-[var(--color-text-hint)]">{meta.note}</span>
+        </div>
+
+        {/* 切换按钮 · 替代自动切换 */}
+        <button
+          type="button"
+          onClick={() => setPhase((p) => (p === "ben" ? "bian" : "ben"))}
+          className="btn btn-ghost text-[0.8125rem]"
+          style={{ minHeight: "36px", padding: "0.4rem 0.875rem" }}
+        >
+          {phase === "ben" ? "查看变卦 →" : "← 回到本卦"}
+        </button>
+      </div>
+
+      {/* 解读摘要 · 编辑型 */}
+      <section
+        className="border-t border-[var(--color-border)] pt-4 space-y-2"
+      >
+        <div className="text-[0.6875rem] uppercase tracking-[0.12em] text-[var(--color-text-muted)]">
+          {phase === "ben" ? "卦象分析" : "变卦提示"}
+        </div>
+        <p
+          className="text-[0.9375rem] text-[var(--color-text-body)] leading-relaxed"
+          style={{ fontFamily: "var(--font-display)" }}
+        >
+          {phase === "ben"
+            ? "此卦主家，问事以内部协调为先，宜稳不宜急。第四爻动，需关注关键变数。"
+            : "变为天火同人，格局开阔，原有阻碍趋于化解，合作与沟通将带来转机。"}
+        </p>
+      </section>
+
+      {/* 行动建议 · 排版式 */}
+      <ul className="grid grid-cols-3 gap-1.5 text-center text-[0.75rem]">
+        {["趋势向好", "三至七日", "主动沟通"].map((tag) => (
+          <li
             key={tag}
-            className="flex-1 text-center px-2 py-1 rounded text-xs"
+            className="py-1.5"
             style={{
-              background: 'rgba(176,138,87,0.12)',
-              color: 'var(--color-gold-dark)',
-              border: '1px solid rgba(176,138,87,0.25)',
+              background: "var(--color-bg-elevated)",
+              color: "var(--color-gold-dark)",
+              border: "1px solid color-mix(in oklch, var(--color-gold-dark) 22%, transparent)",
+              borderRadius: "var(--radius-sm)",
             }}
           >
             {tag}
-          </span>
+          </li>
         ))}
-      </div>
+      </ul>
     </div>
   );
 }

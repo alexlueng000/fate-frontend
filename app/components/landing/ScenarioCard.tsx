@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 interface ScenarioCardProps {
   persona: string;
@@ -6,7 +6,8 @@ interface ScenarioCardProps {
   scenario: string;
   features: string[];
   tags: string[];
-  accentColor: string;
+  /** Deprecated: kept for backward compatibility, no longer used. */
+  accentColor?: string;
 }
 
 export default function ScenarioCard({
@@ -15,63 +16,45 @@ export default function ScenarioCard({
   scenario,
   features,
   tags,
-  accentColor,
 }: ScenarioCardProps) {
   return (
-    <div
-      className="relative bg-white rounded-2xl shadow-md border border-[var(--color-border)] overflow-hidden group hover:-translate-y-1 hover:shadow-xl transition-all duration-300"
-    >
-      {/* 左侧色条 */}
-      <div
-        className="absolute left-0 top-0 bottom-0 w-1 group-hover:w-1.5 transition-all duration-300"
-        style={{ background: accentColor }}
-      />
+    <article className="card card-hover relative flex flex-col gap-5 p-6 md:p-7">
+      {/* 引语本体 · 思源宋体 · 阅读型 */}
+      <blockquote
+        className="text-[var(--color-text-body)] leading-[1.75] text-[1rem] md:text-[1.0625rem]"
+        style={{ fontFamily: "var(--font-display)" }}
+      >
+        {scenario}
+      </blockquote>
 
-      <div className="p-6 pl-7">
-        {/* 人物信息 */}
-        <div className="flex items-center gap-3 mb-4">
-          <div
-            className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0"
-            style={{ background: accentColor }}
-          >
-            {persona[0]}
-          </div>
-          <div>
-            <div className="font-medium text-[var(--color-text-primary)] text-sm">{persona}</div>
-            <div className="text-xs text-[var(--color-text-muted)]">{role}</div>
-          </div>
+      {/* 署名 */}
+      <footer className="flex flex-col gap-2 pt-1">
+        <div className="text-[0.9375rem] font-medium text-[var(--color-text-primary)]">
+          {persona}
+          <span className="ml-2 text-[var(--color-text-muted)] font-normal">{role}</span>
         </div>
 
-        {/* 场景文字 */}
-        <p className="text-[var(--color-text-secondary)] text-sm leading-relaxed mb-4">
-          "{scenario}"
-        </p>
-
-        {/* 使用功能 */}
-        <div className="flex flex-wrap gap-1.5 mb-3">
-          {features.map((f) => (
-            <span
-              key={f}
-              className="px-2.5 py-0.5 rounded-full text-xs font-medium"
-              style={{ background: `${accentColor}18`, color: accentColor, border: `1px solid ${accentColor}30` }}
-            >
+        {/* 关联功能 · 排版式标记，不用色块 */}
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.8125rem] text-[var(--color-text-muted)]">
+          <span className="text-[var(--color-text-hint)]">基于</span>
+          {features.map((f, i) => (
+            <span key={f} className="text-[var(--color-text-secondary)]">
               {f}
+              {i < features.length - 1 && <span className="ml-2 text-[var(--color-text-hint)]">·</span>}
             </span>
           ))}
+          {tags.length > 0 && (
+            <>
+              <span className="mx-1 h-3 w-px bg-[var(--color-border-strong)]" aria-hidden="true" />
+              {tags.map((t) => (
+                <span key={t} className="text-[var(--color-text-muted)]">
+                  {t}
+                </span>
+              ))}
+            </>
+          )}
         </div>
-
-        {/* 标签 */}
-        <div className="flex flex-wrap gap-1.5">
-          {tags.map((t) => (
-            <span
-              key={t}
-              className="text-xs text-[var(--color-text-muted)]"
-            >
-              {t}
-            </span>
-          ))}
-        </div>
-      </div>
-    </div>
+      </footer>
+    </article>
   );
 }

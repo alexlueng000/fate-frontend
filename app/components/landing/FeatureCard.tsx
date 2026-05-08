@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 
 interface FeatureCardProps {
   id: string;
@@ -13,8 +13,10 @@ interface FeatureCardProps {
   visual: React.ReactNode;
   ctaText: string;
   ctaLink: string;
+  /** 仅用于 subtitle 的功能识别字色，不再用作背景。 */
   themeColor: string;
-  themeBg: string;
+  /** Deprecated: themeBg 大色块违反 Restrained 策略，不再使用。 */
+  themeBg?: string;
   reversed?: boolean;
 }
 
@@ -29,78 +31,98 @@ export default function FeatureCard({
   ctaText,
   ctaLink,
   themeColor,
-  themeBg,
   reversed = false,
 }: FeatureCardProps) {
   const textContent = (
-    <div className="space-y-6 flex flex-col justify-center">
+    <div className="flex flex-col justify-center gap-7">
       {/* 标题 */}
-      <div>
+      <header className="space-y-2">
         <h3
-          className="text-2xl md:text-3xl font-bold mb-2"
-          style={{ fontFamily: 'var(--font-display)', color: 'var(--color-text-primary)' }}
+          className="text-[1.625rem] md:text-[1.75rem] lg:text-[2rem] font-medium leading-[1.25] text-[var(--color-text-primary)]"
+          style={{ fontFamily: "var(--font-display)" }}
         >
           {title}
         </h3>
-        <p className="text-lg font-medium" style={{ color: themeColor }}>
+        <p
+          className="text-[0.9375rem] font-medium tracking-wide"
+          style={{ color: themeColor, fontFamily: "var(--font-body)" }}
+        >
           {subtitle}
         </p>
-      </div>
+      </header>
 
-      {/* 痛点 */}
-      <div className="space-y-2">
+      {/* 痛点 · 用户原话 */}
+      <ul className="flex flex-col gap-1.5">
         {painPoints.map((p) => (
-          <p key={p} className="text-[var(--color-text-secondary)] text-sm italic">
-            "{p}"
-          </p>
+          <li
+            key={p}
+            className="text-[0.9375rem] text-[var(--color-text-secondary)] leading-relaxed"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
+            {p}
+          </li>
         ))}
-      </div>
+      </ul>
 
       {/* 解决方案 */}
-      <div>
-        <p className="text-[var(--color-text-secondary)] mb-3">{solution.intro}</p>
-        <ul className="space-y-1.5">
-          {solution.points.map((pt) => (
-            <li key={pt} className="flex items-start gap-2 text-sm text-[var(--color-text-secondary)]">
-              <span className="mt-0.5 flex-shrink-0" style={{ color: themeColor }}>•</span>
-              {pt}
+      <div className="space-y-2">
+        <p className="text-[1rem] text-[var(--color-text-body)] leading-relaxed">
+          {solution.intro}
+        </p>
+        <ul className="space-y-1.5 pl-0">
+          {solution.points.map((pt, idx) => (
+            <li
+              key={pt}
+              className="grid grid-cols-[auto_1fr] items-baseline gap-3 text-[0.9375rem] text-[var(--color-text-body)] leading-relaxed"
+            >
+              <span
+                className="font-mono text-[0.75rem] text-[var(--color-text-hint)] tabular-nums"
+                aria-hidden="true"
+              >
+                {String(idx + 1).padStart(2, "0")}
+              </span>
+              <span>{pt}</span>
             </li>
           ))}
         </ul>
       </div>
 
-      {/* 价值主张 */}
-      <p className="text-sm text-[var(--color-text-muted)] border-l-2 pl-3" style={{ borderColor: themeColor }}>
+      {/* 价值主张 · 编辑型注脚 */}
+      <p
+        className="text-[0.9375rem] text-[var(--color-text-secondary)] leading-relaxed"
+        style={{ fontFamily: "var(--font-display)" }}
+      >
         {value}
       </p>
 
       {/* CTA */}
-      <Link
-        href={ctaLink}
-        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-md font-medium text-sm group w-fit transition-all hover:-translate-y-0.5"
-        style={{ background: themeColor, color: 'white' }}
-      >
-        {ctaText}
-        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-      </Link>
+      <div>
+        <Link href={ctaLink} className="btn btn-primary group">
+          {ctaText}
+          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+        </Link>
+      </div>
     </div>
   );
 
   const visualContent = (
     <div
-      className="rounded-2xl p-6 shadow-md border border-[var(--color-border)]"
-      style={{ background: themeBg }}
+      className="card flex items-center justify-center p-6 md:p-8"
+      style={{ minHeight: "320px" }}
     >
       {visual}
     </div>
   );
 
   return (
-    <div id={id} className="grid md:grid-cols-2 gap-10 md:gap-16 items-center">
+    <div
+      id={id}
+      className="grid items-center gap-10 md:gap-14 lg:gap-20 md:grid-cols-2"
+    >
       {reversed ? (
         <>
-          {visualContent}
-          {textContent}
+          <div className="md:order-1">{visualContent}</div>
+          <div className="md:order-2">{textContent}</div>
         </>
       ) : (
         <>

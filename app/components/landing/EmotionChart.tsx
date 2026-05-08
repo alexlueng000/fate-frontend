@@ -1,79 +1,120 @@
-'use client';
+"use client";
 
-const DAYS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+const DAYS = ["一", "二", "三", "四", "五", "六", "日"];
 const SCORES = [62, 48, 71, 55, 80, 88, 74];
-const EMOTIONS = ['平静', '焦虑', '愉悦', '疲惫', '充实', '放松', '满足'];
-const TAGS = ['工作压力', '家庭温暖', '创意灵感', '身体疲惫', '期待', '感恩'];
+const TAGS = ["工作压力", "家庭温暖", "创意灵感", "身体疲惫", "期待", "感恩"];
 
 const MAX = 100;
-const W = 280;
-const H = 120;
-const PAD = 16;
+const W = 320;
+const H = 140;
+const PAD_X = 18;
+const PAD_Y = 24;
 
 export default function EmotionChart() {
-  const xs = SCORES.map((_, i) => PAD + (i / (SCORES.length - 1)) * (W - PAD * 2));
-  const ys = SCORES.map((s) => H - PAD - (s / MAX) * (H - PAD * 2));
+  const xs = SCORES.map((_, i) => PAD_X + (i / (SCORES.length - 1)) * (W - PAD_X * 2));
+  const ys = SCORES.map((s) => H - PAD_Y - (s / MAX) * (H - PAD_Y * 2));
 
-  const pathD = xs.map((x, i) => `${i === 0 ? 'M' : 'L'}${x},${ys[i]}`).join(' ');
-  const areaD = `${pathD} L${xs[xs.length - 1]},${H - PAD} L${xs[0]},${H - PAD} Z`;
+  const pathD = xs.map((x, i) => `${i === 0 ? "M" : "L"}${x},${ys[i]}`).join(" ");
+  const areaD = `${pathD} L${xs[xs.length - 1]},${H - PAD_Y} L${xs[0]},${H - PAD_Y} Z`;
+
+  const todayScore = SCORES[SCORES.length - 1];
+  const avg = Math.round(SCORES.reduce((a, b) => a + b, 0) / SCORES.length);
 
   return (
-    <div className="space-y-4">
-      <div className="text-xs text-[var(--color-text-muted)] text-center mb-2">本周情绪曲线（示例）</div>
+    <div className="w-full max-w-md space-y-5">
+      <div className="text-[0.6875rem] uppercase tracking-[0.12em] text-[var(--color-text-muted)] text-center">
+        本周情绪曲线
+      </div>
 
       {/* 折线图 */}
-      <div className="bg-[var(--color-bg-deep)] rounded-xl p-3">
-        <svg viewBox={`0 0 ${W} ${H}`} className="w-full">
+      <div
+        className="border border-[var(--color-border)] p-3"
+        style={{ background: "var(--color-bg-deep)", borderRadius: "var(--radius-md)" }}
+      >
+        <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="本周情绪指数曲线">
           {/* 横向网格线 */}
           {[25, 50, 75].map((y) => (
             <line
               key={y}
-              x1={PAD} y1={H - PAD - (y / MAX) * (H - PAD * 2)}
-              x2={W - PAD} y2={H - PAD - (y / MAX) * (H - PAD * 2)}
-              stroke="rgba(167,179,174,0.3)" strokeWidth="1" strokeDasharray="4 3"
+              x1={PAD_X}
+              y1={H - PAD_Y - (y / MAX) * (H - PAD_Y * 2)}
+              x2={W - PAD_X}
+              y2={H - PAD_Y - (y / MAX) * (H - PAD_Y * 2)}
+              stroke="var(--color-border)"
+              strokeWidth="1"
+              strokeDasharray="3 4"
             />
           ))}
+
           {/* 面积 */}
-          <path d={areaD} fill="rgba(167,179,174,0.15)" />
+          <path d={areaD} fill="color-mix(in oklch, var(--color-mist-deep) 14%, transparent)" />
+
           {/* 折线 */}
-          <path d={pathD} fill="none" stroke="var(--color-mist-deep)" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+          <path
+            d={pathD}
+            fill="none"
+            stroke="var(--color-mist-deep)"
+            strokeWidth="1.5"
+            strokeLinejoin="round"
+            strokeLinecap="round"
+          />
+
           {/* 数据点 */}
           {xs.map((x, i) => (
             <g key={i}>
-              <circle cx={x} cy={ys[i]} r={4} fill="var(--color-mist-deep)" />
-              <circle cx={x} cy={ys[i]} r={2} fill="white" />
+              <circle cx={x} cy={ys[i]} r={3.5} fill="var(--color-mist-deep)" />
+              <circle cx={x} cy={ys[i]} r={1.5} fill="var(--color-bg-elevated)" />
             </g>
           ))}
+
           {/* X 轴标签 */}
           {xs.map((x, i) => (
-            <text key={i} x={x} y={H - 2} textAnchor="middle" fontSize="8" fill="#9B9087">
+            <text
+              key={i}
+              x={x}
+              y={H - 6}
+              textAnchor="middle"
+              fontSize="11"
+              fill="var(--color-text-muted)"
+              fontFamily="var(--font-display)"
+            >
               {DAYS[i]}
             </text>
           ))}
         </svg>
       </div>
 
-      {/* 今日情绪 */}
-      <div className="flex items-center gap-3 p-3 bg-[var(--color-bg-deep)] rounded-xl">
-        <div className="w-10 h-10 rounded-full bg-[var(--color-mist-light)] flex items-center justify-center text-2xl">
-          😌
-        </div>
-        <div>
-          <div className="text-sm font-medium text-[var(--color-text-primary)]">今日状态：满足</div>
-          <div className="text-xs text-[var(--color-text-muted)]">情绪指数 74 · 高于本周均值</div>
-        </div>
-      </div>
+      {/* 今日状态 · 排版式 */}
+      <section
+        className="grid grid-cols-[auto_1fr_auto] items-baseline gap-3 border-t border-[var(--color-border)] pt-4"
+      >
+        <span
+          className="text-[0.6875rem] uppercase tracking-[0.12em] text-[var(--color-text-muted)]"
+        >
+          今日
+        </span>
+        <span
+          className="text-[1rem] font-medium text-[var(--color-text-primary)]"
+          style={{ fontFamily: "var(--font-display)" }}
+        >
+          满 · 情绪指数 {todayScore}
+        </span>
+        <span className="text-[0.75rem] text-[var(--color-text-hint)] tabular-nums">
+          周均 {avg}
+        </span>
+      </section>
 
-      {/* 情绪标签云 */}
+      {/* 情绪标签 */}
       <div className="flex flex-wrap gap-1.5">
-        {TAGS.map((tag, i) => (
+        {TAGS.map((tag) => (
           <span
             key={tag}
-            className="px-2 py-0.5 rounded-full text-xs"
+            className="px-2.5 py-1 text-[0.75rem]"
             style={{
-              background: i % 2 === 0 ? 'rgba(167,179,174,0.2)' : 'var(--color-bg-deep)',
-              color: 'var(--color-mist-deep)',
-              border: '1px solid rgba(167,179,174,0.3)',
+              background: "var(--color-bg-elevated)",
+              color: "var(--color-mist-deep)",
+              border: "1px solid color-mix(in oklch, var(--color-mist-deep) 20%, transparent)",
+              borderRadius: "var(--radius-full)",
             }}
           >
             {tag}

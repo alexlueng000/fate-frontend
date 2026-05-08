@@ -1,96 +1,151 @@
-'use client';
+"use client";
 
 const PILLARS = [
-  { label: '年柱', tian: '甲', di: '子', tian_wx: 'wood', di_wx: 'water' },
-  { label: '月柱', tian: '丁', di: '卯', tian_wx: 'fire', di_wx: 'wood' },
-  { label: '日柱', tian: '庚', di: '午', tian_wx: 'metal', di_wx: 'fire' },
-  { label: '时柱', tian: '壬', di: '戌', tian_wx: 'water', di_wx: 'earth' },
-];
+  { label: "YEAR",  zh: "年柱", tian: "甲", di: "子", tian_wx: "wood",  di_wx: "water" },
+  { label: "MONTH", zh: "月柱", tian: "丁", di: "卯", tian_wx: "fire",  di_wx: "wood"  },
+  { label: "DAY",   zh: "日柱", tian: "庚", di: "午", tian_wx: "metal", di_wx: "fire"  },
+  { label: "HOUR",  zh: "时柱", tian: "壬", di: "戌", tian_wx: "water", di_wx: "earth" },
+] as const;
 
-const WX_COLOR: Record<string, string> = {
-  wood: '#059669',
-  fire: '#DC2626',
-  earth: '#D97706',
-  metal: '#6B7280',
-  water: '#0284C7',
+type Wuxing = "wood" | "fire" | "earth" | "metal" | "water";
+
+const WX_VAR: Record<Wuxing, string> = {
+  wood:  "var(--color-wuxing-wood)",
+  fire:  "var(--color-wuxing-fire)",
+  earth: "var(--color-wuxing-earth)",
+  metal: "var(--color-wuxing-metal)",
+  water: "var(--color-wuxing-water)",
 };
 
-const WX_BG: Record<string, string> = {
-  wood: 'rgba(16,185,129,0.08)',
-  fire: 'rgba(239,68,68,0.08)',
-  earth: 'rgba(245,158,11,0.08)',
-  metal: 'rgba(107,114,128,0.08)',
-  water: 'rgba(14,165,233,0.08)',
-};
+const wxBg = (wx: Wuxing) =>
+  `color-mix(in oklch, ${WX_VAR[wx]} 8%, var(--color-bg-elevated))`;
 
 export default function BaziPreview() {
   return (
-    <div className="space-y-4">
-      <div className="text-xs text-[var(--color-text-muted)] text-center mb-2">示例命盘</div>
-
-      {/* 四柱 */}
-      <div className="grid grid-cols-4 gap-2">
-        {PILLARS.map((p) => (
-          <div key={p.label} className="flex flex-col items-center gap-1">
-            <div className="text-xs text-[var(--color-text-muted)]">{p.label}</div>
-            <div
-              className="w-12 h-12 rounded-lg flex items-center justify-center text-xl font-bold"
-              style={{ background: WX_BG[p.tian_wx], color: WX_COLOR[p.tian_wx] }}
-            >
-              {p.tian}
-            </div>
-            <div
-              className="w-12 h-12 rounded-lg flex items-center justify-center text-xl font-bold"
-              style={{ background: WX_BG[p.di_wx], color: WX_COLOR[p.di_wx] }}
-            >
-              {p.di}
-            </div>
-          </div>
-        ))}
+    <div className="w-full max-w-md space-y-5">
+      <div className="text-[0.6875rem] uppercase tracking-[0.12em] text-[var(--color-text-muted)] text-center">
+        示例命盘
       </div>
 
-      {/* 大运时间轴 */}
-      <div className="mt-4">
-        <div className="text-xs text-[var(--color-text-muted)] mb-2">大运流年</div>
-        <div className="flex gap-1 overflow-hidden">
-          {['22岁', '32岁', '42岁', '52岁', '62岁'].map((age, i) => (
-            <div
-              key={age}
-              className="flex-1 text-center py-1.5 rounded text-xs font-medium"
-              style={{
-                background: i === 1 ? 'var(--color-primary)' : 'var(--color-bg-deep)',
-                color: i === 1 ? 'white' : 'var(--color-text-secondary)',
-              }}
-            >
-              {age}
-            </div>
-          ))}
-        </div>
-        <div className="text-xs text-[var(--color-text-hint)] text-center mt-1">▲ 当前大运</div>
-      </div>
+      {/* 四柱表格 · 编辑型 */}
+      <table className="w-full border-collapse">
+        <thead>
+          <tr>
+            {PILLARS.map((p) => (
+              <th
+                key={p.label}
+                className="border-b border-[var(--color-border)] pb-2 text-[0.6875rem] font-medium uppercase tracking-[0.08em] text-[var(--color-text-muted)]"
+                scope="col"
+              >
+                {p.label}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            {PILLARS.map((p) => (
+              <td
+                key={p.label + "-tian"}
+                className="border-r border-[var(--color-border)] py-3 text-center last:border-r-0"
+                style={{ background: wxBg(p.tian_wx as Wuxing) }}
+              >
+                <span
+                  className="text-[1.625rem] font-medium leading-none"
+                  style={{ fontFamily: "var(--font-display)", color: WX_VAR[p.tian_wx as Wuxing] }}
+                >
+                  {p.tian}
+                </span>
+              </td>
+            ))}
+          </tr>
+          <tr>
+            {PILLARS.map((p) => (
+              <td
+                key={p.label + "-di"}
+                className="border-r border-t border-[var(--color-border)] py-2.5 text-center last:border-r-0"
+                style={{ background: wxBg(p.di_wx as Wuxing) }}
+              >
+                <span
+                  className="text-[1.125rem] leading-none"
+                  style={{ fontFamily: "var(--font-display)", color: WX_VAR[p.di_wx as Wuxing] }}
+                >
+                  {p.di}
+                </span>
+              </td>
+            ))}
+          </tr>
+        </tbody>
+      </table>
 
-      {/* 五行能量条 */}
-      <div className="mt-4 space-y-1.5">
-        <div className="text-xs text-[var(--color-text-muted)] mb-2">五行分布</div>
-        {[
-          { label: '木', pct: 25, wx: 'wood' },
-          { label: '火', pct: 38, wx: 'fire' },
-          { label: '土', pct: 12, wx: 'earth' },
-          { label: '金', pct: 13, wx: 'metal' },
-          { label: '水', pct: 12, wx: 'water' },
-        ].map((item) => (
-          <div key={item.label} className="flex items-center gap-2">
-            <span className="text-xs w-4" style={{ color: WX_COLOR[item.wx] }}>{item.label}</span>
-            <div className="flex-1 h-1.5 bg-[var(--color-bg-deep)] rounded-full overflow-hidden">
+      {/* 大运流年 · 时间轴 */}
+      <section className="space-y-2">
+        <h4 className="text-[0.6875rem] uppercase tracking-[0.12em] text-[var(--color-text-muted)]">
+          大运流年
+        </h4>
+        <ol className="grid grid-cols-5 gap-1">
+          {["22岁", "32岁", "42岁", "52岁", "62岁"].map((age, i) => {
+            const active = i === 1;
+            return (
+              <li
+                key={age}
+                className="text-center py-1.5 text-[0.75rem] font-medium border"
+                style={{
+                  background: active ? "var(--color-primary)" : "var(--color-bg-deep)",
+                  color: active ? "var(--color-text-inverse)" : "var(--color-text-secondary)",
+                  borderColor: active ? "var(--color-primary)" : "var(--color-border)",
+                  borderRadius: "var(--radius-sm)",
+                }}
+              >
+                {age}
+              </li>
+            );
+          })}
+        </ol>
+        <p className="text-[0.6875rem] text-[var(--color-text-hint)] text-center">
+          当前大运
+        </p>
+      </section>
+
+      {/* 五行分布 · 排版式条 */}
+      <section className="space-y-2">
+        <h4 className="text-[0.6875rem] uppercase tracking-[0.12em] text-[var(--color-text-muted)]">
+          五行分布
+        </h4>
+        <ul className="space-y-1.5">
+          {[
+            { label: "木", pct: 25, wx: "wood"  as Wuxing },
+            { label: "火", pct: 38, wx: "fire"  as Wuxing },
+            { label: "土", pct: 12, wx: "earth" as Wuxing },
+            { label: "金", pct: 13, wx: "metal" as Wuxing },
+            { label: "水", pct: 12, wx: "water" as Wuxing },
+          ].map((it) => (
+            <li key={it.label} className="grid grid-cols-[1.25rem_1fr_2rem] items-center gap-2">
+              <span
+                className="text-[0.875rem]"
+                style={{ fontFamily: "var(--font-display)", color: WX_VAR[it.wx] }}
+              >
+                {it.label}
+              </span>
               <div
-                className="h-full rounded-full transition-all duration-700"
-                style={{ width: `${item.pct}%`, background: WX_COLOR[item.wx] }}
-              />
-            </div>
-            <span className="text-xs text-[var(--color-text-hint)] w-7 text-right">{item.pct}%</span>
-          </div>
-        ))}
-      </div>
+                className="h-[3px] overflow-hidden"
+                style={{ background: "var(--color-bg-deep)" }}
+              >
+                <div
+                  className="h-full transition-all duration-700"
+                  style={{
+                    width: `${it.pct}%`,
+                    background: WX_VAR[it.wx],
+                  }}
+                />
+              </div>
+              <span className="text-[0.75rem] text-[var(--color-text-hint)] tabular-nums text-right">
+                {it.pct}%
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   );
 }
