@@ -8,22 +8,22 @@ export default function JieqiHeader() {
 
   return (
     <div className="text-center">
-      <p className="text-[11px] tracking-[0.3em] text-slate-400 mb-8">
+      <p className="text-[11px] tracking-[0.3em] text-[var(--color-text-hint)] mb-8">
         天地有节气 · 人心有潮汐 · 所有记录只留在你这里
       </p>
 
       <div className="space-y-3">
-        <p className="text-xl sm:text-2xl font-serif text-slate-800 leading-relaxed">
+        <p className="text-xl sm:text-2xl font-[var(--font-display)] text-[var(--color-text-primary)] leading-relaxed">
           {solarTerm.sentence}
         </p>
-        <p className="text-base sm:text-lg font-light text-slate-600 leading-relaxed">
+        <p className="text-base sm:text-lg font-light text-[var(--color-text-secondary)] leading-relaxed">
           {tod.sentence}
         </p>
       </div>
 
-      <div className="mt-7 inline-flex items-center gap-3 text-xs text-slate-400 tracking-widest">
+      <div className="mt-7 inline-flex items-center gap-3 text-xs text-[var(--color-text-muted)]">
         <span>{solarTerm.label}</span>
-        <span className="w-1 h-1 rounded-full bg-slate-300" />
+        <span className="w-1 h-1 rounded-full bg-[var(--color-border)]" />
         <span>{tod.label}</span>
       </div>
     </div>
