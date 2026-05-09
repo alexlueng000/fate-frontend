@@ -9,8 +9,8 @@ import { getHexagramByName } from '@/app/lib/hexagram';
 import {
   LIUYAO_ACTIVE_CONV_KEY,
   LIUYAO_QUICK_BUTTONS,
-  LiuyaoQuickKind,
 } from '@/app/lib/liuyao/constants';
+import { api } from '@/app/lib/api';
 import MarkdownView from '@/app/components/Markdown';
 import { MessageList } from '@/app/components/chat/MessageList';
 import { InputArea } from '@/app/components/chat/InputArea';
@@ -122,6 +122,10 @@ export default function LiuyaoPage() {
   const [booting, setBooting] = useState(false);
   const chatScrollRef = useRef<HTMLDivElement | null>(null);
 
+  // 快捷按钮（管理后台 liuyao_quick_buttons 配置；加载失败回退到常量默认值）
+  const [liuyaoQuickButtons, setLiuyaoQuickButtons] =
+    useState<Array<{ label: string; prompt: string }>>(LIUYAO_QUICK_BUTTONS);
+
   // 六爻配额刷新触发器（具体次数由顶部 QuotaChip 自取）
   const [quotaRefreshKey, setQuotaRefreshKey] = useState(0);
   const refreshLiuyaoQuota = async () => {
@@ -151,6 +155,28 @@ export default function LiuyaoPage() {
     const v = (meta as Record<string, unknown>)['conversation_id'];
     return typeof v === 'string' ? v : '';
   }
+
+  // 加载管理后台配置的快捷按钮（label + prompt）
+  useEffect(() => {
+    (async () => {
+      try {
+        const resp = await fetch(api('/admin/config?key=liuyao_quick_buttons'), {
+          credentials: 'include',
+          cache: 'no-store',
+        });
+        if (!resp.ok) return;
+        const data = await resp.json();
+        const raw = data?.value_json;
+        const parsed = typeof raw === 'string' ? (JSON.parse(raw) as { items?: unknown }) : raw;
+        const items = Array.isArray(parsed?.items) ? parsed.items : [];
+        const filtered = (items as Array<{ label?: unknown; prompt?: unknown; order?: unknown; active?: unknown }>)
+          .filter((it) => it?.active !== false && typeof it?.label === 'string' && typeof it?.prompt === 'string')
+          .sort((a, b) => ((a?.order as number) ?? 0) - ((b?.order as number) ?? 0))
+          .map((it) => ({ label: it.label as string, prompt: it.prompt as string }));
+        if (filtered.length > 0) setLiuyaoQuickButtons(filtered);
+      } catch { /* keep defaults */ }
+    })();
+  }, []);
 
   // 自动滚动对话区
   useEffect(() => {
@@ -427,14 +453,13 @@ export default function LiuyaoPage() {
     }
   };
 
-  const sendQuick = async (label: string, kindRaw: string) => {
+  const sendQuick = async (label: string, prompt: string) => {
     if (!conversationId || !result?.hexagram_id) return;
-    const kind = kindRaw as LiuyaoQuickKind;
-    setMsgs((m) => [...m, { role: 'user', content: `${label}分析` }]);
+    setMsgs((m) => [...m, { role: 'user', content: label }]);
     setSending(true);
     try {
       await sendStream((onDelta, onMeta) =>
-        liuyaoApi.quickChat(result.hexagram_id, conversationId, kind, onDelta, onMeta),
+        liuyaoApi.quickChat(result.hexagram_id, conversationId, label, prompt, onDelta, onMeta),
       );
     } finally {
       setSending(false);
@@ -1358,7 +1383,7 @@ export default function LiuyaoPage() {
                       })()}
                       <QuickActions
                         disabled={sending || booting || !conversationId}
-                        buttons={LIUYAO_QUICK_BUTTONS}
+                        buttons={liuyaoQuickButtons}
                         onClick={sendQuick}
                       />
                       <InputArea

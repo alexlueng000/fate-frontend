@@ -188,18 +188,19 @@ export const liuyaoApi = {
   },
 
   /**
-   * 快捷分析：人物画像 / 应期。
+   * 快捷分析：label + prompt 由管理后台 (liuyao_quick_buttons) 配置。
    */
   async quickChat(
     hexagramId: string,
     conversationId: string,
-    kind: 'character' | 'timing',
+    label: string,
+    prompt: string,
     onChunk: (text: string) => void,
     onMeta?: (meta: unknown) => void,
   ): Promise<void> {
     return trySSE(
       api(`/liuyao/${hexagramId}/chat/quick`),
-      { conversation_id: conversationId, kind },
+      { conversation_id: conversationId, label, prompt },
       onChunk,
       onMeta,
     );

@@ -116,6 +116,13 @@ const SECTIONS: MenuSection[] = [
         tone: 'gold',
       },
       {
+        href: '/admin/config/liuyao_quick_buttons',
+        icon: Zap,
+        title: '六爻快捷按钮',
+        description: '六爻分析快捷操作配置',
+        tone: 'gold',
+      },
+      {
         href: '/admin/config/knowledge_base',
         icon: BookOpen,
         title: '知识库管理',
