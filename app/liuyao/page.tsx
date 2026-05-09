@@ -208,7 +208,7 @@ export default function LiuyaoPage() {
         // 设置卦象（包含 lines / change_lines / ganzhi 等完整字段）
         setResult(detail.hexagram as HexagramDetail);
 
-        const cid = `conv_${detail.id}`;
+        const cid = `liuyao_conv_${detail.id}`;
         // 过滤掉后端注入的开场 user 消息（"请基于以下卦象做第一次解读：..."）
         const filtered = detail.messages.filter((m, idx) => {
           if (idx === 0 && m.role === 'user' && m.content.startsWith('请基于以下卦象做第一次解读')) {

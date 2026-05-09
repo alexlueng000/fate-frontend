@@ -93,7 +93,7 @@ export default function ChatPage() {
             return;
           }
 
-          const cid = `conv_${detail.id}`;
+          const cid = `bazi_conv_${detail.id}`;
           // 命盘快照（恢复历史时优先用会话当时的快照）
           if (detail.profile?.bazi_chart) {
             const chart = detail.profile.bazi_chart as Record<string, unknown>;
