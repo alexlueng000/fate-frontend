@@ -3,11 +3,32 @@ import { Msg, Paipan } from './types';
 const LS_ACTIVE = 'chat:active:bazi'; // 八字专用，避免与六爻冲突
 const LS_CONV_PREFIX = 'chat:conv:'; // + conversation_id
 const LS_LAST_PAIPAN = 'chat:last_paipan';
+const LIUYAO_ACTIVE_PREFIX = 'liuyao:active_conv:';
 
-export function saveConversation(conversationId: string, messages: Msg[]) {
+interface SaveConversationOptions {
+  setActive?: boolean;
+}
+
+function isKnownLiuyaoConversationId(conversationId: string): boolean {
+  try {
+    return Object.keys(localStorage).some((key) =>
+      key.startsWith(LIUYAO_ACTIVE_PREFIX) && localStorage.getItem(key) === conversationId
+    );
+  } catch {
+    return false;
+  }
+}
+
+export function saveConversation(
+  conversationId: string,
+  messages: Msg[],
+  options: SaveConversationOptions = {},
+) {
   try {
     localStorage.setItem(`${LS_CONV_PREFIX}${conversationId}`, JSON.stringify(messages));
-    localStorage.setItem(LS_ACTIVE, conversationId);
+    if (options.setActive !== false) {
+      localStorage.setItem(LS_ACTIVE, conversationId);
+    }
   } catch {}
 }
 export function loadConversation(conversationId: string): Msg[] | null {
@@ -25,7 +46,12 @@ export function loadConversation(conversationId: string): Msg[] | null {
 }
 export function getActiveConversationId(): string | null {
   try {
-    return localStorage.getItem(LS_ACTIVE);
+    const active = localStorage.getItem(LS_ACTIVE);
+    if (active && isKnownLiuyaoConversationId(active)) {
+      localStorage.removeItem(LS_ACTIVE);
+      return null;
+    }
+    return active;
   } catch {
     return null;
   }

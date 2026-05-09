@@ -225,7 +225,7 @@ export default function LiuyaoPage() {
         setConversationId(cid);
         setMsgs(restoredMsgs);
         try {
-          saveConversation(cid, restoredMsgs);
+          saveConversation(cid, restoredMsgs, { setActive: false });
           if (detail.hexagram?.hexagram_id) {
             localStorage.setItem(LIUYAO_ACTIVE_CONV_KEY(detail.hexagram.hexagram_id), cid);
           }
@@ -268,7 +268,7 @@ export default function LiuyaoPage() {
 
   // 持久化
   useEffect(() => {
-    if (conversationId) saveConversation(conversationId, msgs);
+    if (conversationId) saveConversation(conversationId, msgs, { setActive: false });
   }, [conversationId, msgs]);
 
   const canSend = useMemo(
