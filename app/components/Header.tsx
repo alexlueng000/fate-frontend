@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useUser, logout } from '@/app/lib/auth';
@@ -19,10 +19,18 @@ import {
   FileText,
   BookOpen,
   Dices,
+  type LucideIcon,
 } from 'lucide-react';
+
+type MobileNavLink = {
+  href: string;
+  label: string;
+  icon?: LucideIcon;
+};
 
 export default function Header() {
   const router = useRouter();
+  const pathname = usePathname();
   const { user: me } = useUser();
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -74,21 +82,22 @@ export default function Header() {
     'border border-[var(--color-primary)] text-[var(--color-primary)] ' +
     'hover:bg-[var(--color-primary)] hover:text-white hover:shadow-md transition-all duration-200';
 
-  const NAV_LINKS = [
+  const NAV_LINKS: MobileNavLink[] = [
     { href: '/knowledge', label: '命理学堂' },
     { href: '/about', label: '关于我们' },
     { href: '/faq', label: '常见问题' },
     { href: '/pricing', label: '套餐定价' },
   ];
 
-  const MOBILE_NAV_LINKS = [
+  const MOBILE_APP_LINKS: MobileNavLink[] = [
     { href: '/report', label: '命理报告', icon: FileText },
     { href: '/panel', label: '八字对话', icon: LayoutDashboard },
     { href: '/history', label: '解读记录', icon: History },
     { href: '/xinji', label: '心镜灯', icon: BookOpen },
     { href: '/liuyao', label: '六爻玄机', icon: Dices },
-    ...NAV_LINKS,
   ];
+
+  const isActivePath = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
   return (
     <>
@@ -232,9 +241,17 @@ export default function Header() {
 
             {/* 汉堡菜单 — only visible below lg */}
             <button
-              className="lg:hidden flex items-center justify-center w-9 h-9 rounded-md text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] transition-colors ml-1"
-              onClick={() => setMobileNavOpen((v) => !v)}
+              className={`lg:hidden flex items-center justify-center w-9 h-9 rounded-md transition-colors ml-1 ${
+                mobileNavOpen
+                  ? 'bg-[var(--color-bg-hover)] text-[var(--color-primary)]'
+                  : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)]'
+              }`}
+              onClick={() => {
+                setMenuOpen(false);
+                setMobileNavOpen((v) => !v);
+              }}
               aria-label="导航菜单"
+              aria-expanded={mobileNavOpen}
             >
               {mobileNavOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
@@ -252,28 +269,66 @@ export default function Header() {
       {/* ── Mobile Nav Drawer ── */}
       {mobileNavOpen && (
         <div
-          className="fixed inset-0 z-40 lg:hidden"
+          className="fixed inset-x-0 bottom-0 top-16 z-[45] lg:hidden"
           onClick={() => setMobileNavOpen(false)}
         >
-          <div className="absolute inset-0 bg-black/20" />
+          <div className="absolute inset-0 bg-[rgba(42,37,34,0.32)]" />
           <nav
-            className="absolute top-16 left-0 right-0 glass border-b border-[var(--color-border)] shadow-lg animate-slide-down"
+            aria-label="移动端导航"
+            className="absolute left-0 right-0 top-0 max-h-[calc(100dvh-4rem)] overflow-y-auto border-b border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4 shadow-[0_12px_32px_rgba(60,40,20,0.14)] animate-slide-down"
             onClick={(e) => e.stopPropagation()}
           >
-            {MOBILE_NAV_LINKS.map((l) => {
-              const Icon = 'icon' in l ? l.icon : null;
-              return (
-              <Link
-                key={l.href}
-                href={l.href}
-                className="flex min-h-12 items-center gap-3 px-6 py-3 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] hover:bg-[var(--color-bg-hover)] border-b border-[var(--color-border-subtle)] transition-colors"
-                onClick={() => setMobileNavOpen(false)}
-              >
-                {Icon && <Icon className="h-4 w-4 shrink-0" strokeWidth={1.5} />}
-                {l.label}
-              </Link>
-              );
-            })}
+            <div className="mb-3 text-xs font-medium tracking-[0.04em] text-[var(--color-text-muted)]">
+              常用功能
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {MOBILE_APP_LINKS.map((l) => {
+                const Icon = l.icon;
+                const active = isActivePath(l.href);
+                return (
+                  <Link
+                    key={l.href}
+                    href={l.href}
+                    aria-current={active ? 'page' : undefined}
+                    className={`flex min-h-16 items-center gap-3 rounded-[4px] border px-3 py-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)] ${
+                      active
+                        ? 'border-[var(--color-primary)] bg-[var(--color-primary)] text-[var(--color-text-inverse)]'
+                        : 'border-[var(--color-border)] bg-[var(--color-bg)] text-[var(--color-text-primary)] hover:border-[var(--color-border-accent)] hover:bg-[var(--color-bg-hover)]'
+                    }`}
+                    onClick={() => setMobileNavOpen(false)}
+                  >
+                    {Icon && <Icon className="h-5 w-5 shrink-0" strokeWidth={1.5} />}
+                    <span>{l.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+
+            <div className="mt-5 border-t border-[var(--color-border)] pt-4">
+              <div className="mb-2 text-xs font-medium tracking-[0.04em] text-[var(--color-text-muted)]">
+                了解更多
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {NAV_LINKS.map((l) => {
+                  const active = isActivePath(l.href);
+                  return (
+                    <Link
+                      key={l.href}
+                      href={l.href}
+                      aria-current={active ? 'page' : undefined}
+                      className={`flex min-h-11 items-center rounded-[3px] px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)] ${
+                        active
+                          ? 'bg-[var(--color-bg-hover)] text-[var(--color-primary)]'
+                          : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-primary)]'
+                      }`}
+                      onClick={() => setMobileNavOpen(false)}
+                    >
+                      {l.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
           </nav>
         </div>
       )}
