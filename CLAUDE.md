@@ -102,10 +102,17 @@ type Paipan = {
 - Explicit `unknown` handling before type assertions
 
 ### UI Conventions
-- Primary red: `#a83232` / `#8c2b2b` (hover)
-- Background: `#fff7e8` (cream/parchment)
-- Accent gold: `#e5c07b`, `#f0d9a6`
-- Rounded elements: `rounded-2xl`, `rounded-3xl`
+
+**视觉规范以项目根 `DESIGN.md` 与 `PRODUCT.md` 为唯一来源**，本文件不再单独维护色值 / 圆角 / 字体规范。所有 token 已在 `app/globals.css` 中定义为 CSS variables（`--color-primary`、`--color-bg`、`--shadow-md`、`--radius-lg` 等），新代码必须通过这些变量或预置组件类（`.btn`、`.btn-primary`、`.input`、`.card`、`.wuxing-*`）消费。
+
+关键约束摘要（详见根 DESIGN.md）：
+- Primary 朱砂红 `var(--color-primary)` (#B54434)，单页占比 ≤10%
+- 圆角 ≤4px（按钮 3px / 卡片 4px / pill 9999px）
+- 阴影用暖咖灰 `var(--shadow-sm|md|lg)`，禁止 `rgba(0,0,0,...)` / `#000` / `#fff`
+- 中文字 `font-serif`（已映射 Noto Serif SC），英文 `font-sans`（Inter）
+- 禁止：glassmorphism、gradient text、装饰动效（pulse/shimmer/rotate）、side-stripe border、嵌套卡、emoji 装饰、Tailwind 默认色板（slate/amber/sky/rose/violet/fuchsia/emerald/orange）
+- 所有 interactive 元素：触控 ≥44×44px、`focus-visible:ring-2 ring-[var(--color-primary)]/24`、toggle 组带 `aria-pressed`
+
 - All interactive pages use `'use client'` directive
 
 ### Five Elements (WuXing)

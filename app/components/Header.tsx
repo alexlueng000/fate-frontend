@@ -16,6 +16,9 @@ import {
   MessageSquare,
   Menu,
   X,
+  FileText,
+  BookOpen,
+  Dices,
 } from 'lucide-react';
 
 export default function Header() {
@@ -76,6 +79,15 @@ export default function Header() {
     { href: '/about', label: '关于我们' },
     { href: '/faq', label: '常见问题' },
     { href: '/pricing', label: '套餐定价' },
+  ];
+
+  const MOBILE_NAV_LINKS = [
+    { href: '/report', label: '命理报告', icon: FileText },
+    { href: '/panel', label: '八字对话', icon: LayoutDashboard },
+    { href: '/history', label: '解读记录', icon: History },
+    { href: '/xinji', label: '心镜灯', icon: BookOpen },
+    { href: '/liuyao', label: '六爻玄机', icon: Dices },
+    ...NAV_LINKS,
   ];
 
   return (
@@ -248,16 +260,20 @@ export default function Header() {
             className="absolute top-16 left-0 right-0 glass border-b border-[var(--color-border)] shadow-lg animate-slide-down"
             onClick={(e) => e.stopPropagation()}
           >
-            {NAV_LINKS.map((l) => (
+            {MOBILE_NAV_LINKS.map((l) => {
+              const Icon = 'icon' in l ? l.icon : null;
+              return (
               <Link
                 key={l.href}
                 href={l.href}
-                className="flex items-center px-6 py-4 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] hover:bg-[var(--color-bg-hover)] border-b border-[var(--color-border-subtle)] transition-colors"
+                className="flex min-h-12 items-center gap-3 px-6 py-3 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] hover:bg-[var(--color-bg-hover)] border-b border-[var(--color-border-subtle)] transition-colors"
                 onClick={() => setMobileNavOpen(false)}
               >
+                {Icon && <Icon className="h-4 w-4 shrink-0" strokeWidth={1.5} />}
                 {l.label}
               </Link>
-            ))}
+              );
+            })}
           </nav>
         </div>
       )}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ChevronLeft, ChevronRight, FileText, MessageSquare, BookOpen, Dices } from 'lucide-react';
+import { ChevronLeft, ChevronRight, FileText, MessageSquare, BookOpen, Dices, History } from 'lucide-react';
 import NavLink from './NavLink';
 
 const STORAGE_KEY = 'sidenav_collapsed';
@@ -32,6 +32,9 @@ export default function SideNav() {
         </NavLink>
         <NavLink href="/panel" icon={<MessageSquare size={20} strokeWidth={1.5} />} vertical collapsed={collapsed}>
           八字对话
+        </NavLink>
+        <NavLink href="/history" icon={<History size={20} strokeWidth={1.5} />} vertical collapsed={collapsed}>
+          解读记录
         </NavLink>
         <NavLink href="/xinji" icon={<BookOpen size={20} strokeWidth={1.5} />} vertical collapsed={collapsed}>
           心镜灯
