@@ -27,20 +27,23 @@ export default function SideNav() {
       }`}
     >
       <nav aria-label="主导航" className="flex flex-col gap-1 p-3 pt-4 flex-1">
-        <NavLink href="/report" icon={<FileText size={20} strokeWidth={1.5} />} vertical collapsed={collapsed}>
-          命理报告
-        </NavLink>
         <NavLink href="/panel" icon={<MessageSquare size={20} strokeWidth={1.5} />} vertical collapsed={collapsed}>
           八字对话
-        </NavLink>
-        <NavLink href="/history" icon={<History size={20} strokeWidth={1.5} />} vertical collapsed={collapsed}>
-          解读记录
         </NavLink>
         <NavLink href="/xinji" icon={<BookOpen size={20} strokeWidth={1.5} />} vertical collapsed={collapsed}>
           心镜灯
         </NavLink>
         <NavLink href="/liuyao" icon={<Dices size={20} strokeWidth={1.5} />} vertical collapsed={collapsed}>
           六爻玄机
+        </NavLink>
+      </nav>
+
+      <nav aria-label="辅助导航" className="flex flex-col gap-1 border-t border-[var(--color-border)] p-3">
+        <NavLink href="/report" icon={<FileText size={20} strokeWidth={1.5} />} vertical collapsed={collapsed}>
+          命理报告
+        </NavLink>
+        <NavLink href="/history" icon={<History size={20} strokeWidth={1.5} />} vertical collapsed={collapsed}>
+          解读记录
         </NavLink>
       </nav>
 

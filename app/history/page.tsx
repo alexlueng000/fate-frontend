@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Trash2, MessageCircle, Sparkles, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Trash2, MessageCircle, Sparkles, Loader2, ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
 
 import { useRouteGuard } from '@/app/lib/useRouteGuard';
 import {
@@ -104,6 +104,14 @@ export default function HistoryPage() {
     router.push(`${path}?conv_id=${item.id}`);
   };
 
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      router.back();
+      return;
+    }
+    router.push('/panel');
+  };
+
   const handleDelete = async (e: React.MouseEvent, item: ConversationListItem) => {
     e.stopPropagation();
     if (!window.confirm('确定删除这条记录？删除后将无法恢复。')) return;
@@ -139,6 +147,14 @@ export default function HistoryPage() {
     <main className="min-h-screen pt-20 pb-12 bg-[#F7F3EE]">
       <div className="mx-auto w-full max-w-3xl px-4 sm:px-6">
         <header className="mb-6">
+          <button
+            type="button"
+            onClick={handleBack}
+            className="mb-5 inline-flex min-h-11 items-center gap-2 rounded-[3px] px-3 text-sm font-medium text-neutral-600 transition-colors hover:bg-white hover:text-[#a83232] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(168,50,50,0.12)]"
+          >
+            <ArrowLeft className="h-4 w-4" strokeWidth={1.5} />
+            返回
+          </button>
           <h1 className="text-2xl sm:text-3xl font-semibold text-neutral-800">我的解读记录</h1>
           <p className="text-sm text-neutral-500 mt-1">回顾过往解读，点击卡片继续追问</p>
         </header>
