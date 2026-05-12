@@ -247,7 +247,7 @@ export default function ChatPage() {
     [conversationId, input, sending, booting],
   );
 
-  const sendStream = async (content: string) => {
+  const sendStream = async (content: string, displayMessage?: string) => {
     if (!conversationId) throw new Error('缺少会话，请刷新页面重试');
 
     let assistantIndex = -1;
@@ -269,7 +269,7 @@ export default function ChatPage() {
     try {
       await trySSE(
         api('/chat'),
-        { conversation_id: conversationId, message: content },
+        { conversation_id: conversationId, message: content, display_message: displayMessage },
         append,
         (meta) => {
           if (!mountedRef.current) return;
@@ -302,7 +302,7 @@ export default function ChatPage() {
       const res = await fetch(api('/chat'), {
         method: 'POST',
         headers,
-        body: JSON.stringify({ conversation_id: conversationId, message: content }),
+        body: JSON.stringify({ conversation_id: conversationId, message: content, display_message: displayMessage }),
       });
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
@@ -409,7 +409,7 @@ export default function ChatPage() {
     setMsgs((m) => [...m, { role: 'user', content: `${label}分析` }]);
     setSending(true);
     try {
-      await sendStream(fullPrompt);
+      await sendStream(fullPrompt, `${label}分析`);
       void refreshQuota();
     } catch (e: unknown) {
       if (e instanceof QuotaExhaustedError) {

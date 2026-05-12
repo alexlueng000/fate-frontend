@@ -46,6 +46,31 @@ function displayTitle(item: ConversationListItem, type: HistoryType): string {
   return item.title || '六爻问事';
 }
 
+function safePreview(text: string | null, fallback: string): string | null {
+  if (!text) return null;
+  const content = text.trim();
+  if (!content) return null;
+
+  if (content.startsWith('我的命盘信息如下')) return null;
+
+  const leakMarkers = [
+    'system prompt',
+    '系统提示',
+    '系统prompt',
+    '需引导用户',
+    '结合原局',
+    '用子平和盲派深度分析',
+    '请基于当前命盘',
+    '本命盘锚点',
+    '重要规则：',
+  ];
+  if (leakMarkers.some((marker) => content.includes(marker))) {
+    return fallback;
+  }
+
+  return content;
+}
+
 export default function HistoryPage() {
   const router = useRouter();
   const loading = useRouteGuard(true, false);
@@ -206,76 +231,80 @@ export default function HistoryPage() {
           <EmptyState type={activeTab} onPrimary={() => router.push(activeTab === 'bazi' ? '/panel' : '/liuyao')} />
         ) : (
           <ul className="space-y-3">
-            {items.map((item) => (
-              <li
-                key={item.id}
-                onClick={() => handleOpen(item)}
-                className="group cursor-pointer rounded-2xl bg-white border border-neutral-200 p-4 sm:p-5 hover:border-[#a83232]/40 hover:shadow-md transition-all"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 mb-1.5">
-                      {activeTab === 'bazi' ? (
-                        <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
-                      ) : (
-                        <MessageCircle className="w-4 h-4 text-amber-600 shrink-0" />
-                      )}
-                      <h2 className="text-base font-medium text-neutral-800 truncate">
-                        {displayTitle(item, activeTab)}
-                      </h2>
-                    </div>
-
-                    {/* 六爻：本卦 → 变卦 */}
-                    {activeTab === 'liuyao' && item.hexagram && (
-                      <div className="text-xs text-neutral-600 mb-1.5">
-                        <span className="px-2 py-0.5 rounded bg-amber-50 border border-amber-200/60 mr-1.5">
-                          {item.hexagram.main_gua || '—'}
-                        </span>
-                        {item.hexagram.change_gua && (
-                          <>
-                            <span className="text-neutral-400">→</span>
-                            <span className="px-2 py-0.5 rounded bg-stone-50 border border-stone-200/60 ml-1.5">
-                              {item.hexagram.change_gua}
-                            </span>
-                          </>
-                        )}
-                      </div>
-                    )}
-
-                    {/* 最后消息预览 */}
-                    {(item.last_user_message || item.last_assistant_preview) && (
-                      <div className="text-sm text-neutral-500 line-clamp-2 mb-1.5">
-                        {item.last_user_message ? (
-                          <>
-                            <span className="text-neutral-400">问：</span>
-                            {item.last_user_message}
-                          </>
+            {items.map((item) => {
+              const userPreview = safePreview(item.last_user_message, activeTab === 'bazi' ? '快捷分析' : '六爻追问');
+              const assistantPreview = safePreview(item.last_assistant_preview, activeTab === 'bazi' ? '八字解读记录' : '六爻解读记录');
+              return (
+                <li
+                  key={item.id}
+                  onClick={() => handleOpen(item)}
+                  className="group cursor-pointer rounded-2xl bg-white border border-neutral-200 p-4 sm:p-5 hover:border-[#a83232]/40 hover:shadow-md transition-all"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        {activeTab === 'bazi' ? (
+                          <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
                         ) : (
-                          item.last_assistant_preview
+                          <MessageCircle className="w-4 h-4 text-amber-600 shrink-0" />
                         )}
+                        <h2 className="text-base font-medium text-neutral-800 truncate">
+                          {displayTitle(item, activeTab)}
+                        </h2>
                       </div>
-                    )}
 
-                    <div className="text-xs text-neutral-400">
-                      {formatRelative(item.updated_at)}
+                      {/* 六爻：本卦 → 变卦 */}
+                      {activeTab === 'liuyao' && item.hexagram && (
+                        <div className="text-xs text-neutral-600 mb-1.5">
+                          <span className="px-2 py-0.5 rounded bg-amber-50 border border-amber-200/60 mr-1.5">
+                            {item.hexagram.main_gua || '—'}
+                          </span>
+                          {item.hexagram.change_gua && (
+                            <>
+                              <span className="text-neutral-400">→</span>
+                              <span className="px-2 py-0.5 rounded bg-stone-50 border border-stone-200/60 ml-1.5">
+                                {item.hexagram.change_gua}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      )}
+
+                      {/* 最后消息预览 */}
+                      {(userPreview || assistantPreview) && (
+                        <div className="text-sm text-neutral-500 line-clamp-2 mb-1.5">
+                          {userPreview ? (
+                            <>
+                              <span className="text-neutral-400">问：</span>
+                              {userPreview}
+                            </>
+                          ) : (
+                            assistantPreview
+                          )}
+                        </div>
+                      )}
+
+                      <div className="text-xs text-neutral-400">
+                        {formatRelative(item.updated_at)}
+                      </div>
                     </div>
-                  </div>
 
-                  <button
-                    onClick={(e) => handleDelete(e, item)}
-                    disabled={deleting === item.id}
-                    aria-label="删除"
-                    className="shrink-0 p-2 rounded-lg text-neutral-400 hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
-                  >
-                    {deleting === item.id ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Trash2 className="w-4 h-4" />
-                    )}
-                  </button>
-                </div>
-              </li>
-            ))}
+                    <button
+                      onClick={(e) => handleDelete(e, item)}
+                      disabled={deleting === item.id}
+                      aria-label="删除"
+                      className="shrink-0 p-2 rounded-lg text-neutral-400 hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+                    >
+                      {deleting === item.id ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         )}
 
