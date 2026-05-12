@@ -88,6 +88,16 @@ export default function PanelPage() {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
+  // Close menu on Escape key
+  useEffect(() => {
+    if (!showMenu) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowMenu(false);
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [showMenu]);
+
   // Auto scroll
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
@@ -509,60 +519,69 @@ export default function PanelPage() {
     <div className="h-full flex flex-col bg-[var(--color-bg)]">
 
       {/* Profile status bar */}
-      <header className="flex-shrink-0 relative border-b border-[var(--color-border)] bg-gradient-to-b from-[var(--color-bg-elevated)] to-[var(--color-bg)]/40">
+      <header className="flex-shrink-0 border-b border-[var(--color-border)] bg-[var(--color-bg-elevated)]">
         <h1 className="sr-only">八字对话 · 当前命盘</h1>
-        {/* gold accent */}
-        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[var(--color-gold)]/50 to-transparent" />
 
-        <div className="px-4 py-2.5 flex items-center gap-3 sm:gap-4">
-          {/* Left: label + birth meta */}
+        <div className="px-4 pt-3 pb-2 flex items-start gap-3 sm:gap-4">
+          {/* Left: eyebrow + birth meta */}
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5 mb-1">
-              <div className="h-1.5 w-1.5 rounded-full bg-[var(--color-primary)] animate-pulse" />
-              <p className="text-[10px] font-medium tracking-wider text-[var(--color-text-muted)] uppercase">当前命盘</p>
-            </div>
+            <p className="font-sans text-[10px] font-medium tracking-[0.18em] uppercase text-[var(--color-text-muted)] mb-1.5">
+              当前命盘
+            </p>
             {profile ? (
-              <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] sm:text-[13px] text-[var(--color-text-secondary)]">
-                <span className="inline-flex items-center px-1.5 py-px rounded bg-[var(--color-bg-hover)] text-[var(--color-text-primary)] font-medium">
-                  {genderLabel}
-                </span>
+              <p className="font-serif text-[13px] sm:text-[14px] leading-[1.5] text-[var(--color-text-body)] truncate">
+                <span className="text-[var(--color-text-primary)] font-medium">{genderLabel}</span>
+                <span className="mx-1.5 text-[var(--color-text-hint)]">·</span>
                 <span className="text-[var(--color-text-primary)] font-medium tabular-nums">{profile.birth_date}</span>
+                <span className="mx-1 text-[var(--color-text-hint)]">·</span>
                 <span className="text-[var(--color-text-primary)] font-medium tabular-nums">
                   {profile.birth_time?.slice(0, 5)}
                 </span>
-                <span className="text-[var(--color-text-hint)]">·</span>
-                <span className="truncate">{profile.birth_location}</span>
-              </div>
+                <span className="mx-1.5 text-[var(--color-text-hint)]">·</span>
+                <span className="text-[var(--color-text-secondary)]">{profile.birth_location}</span>
+              </p>
             ) : (
-              <p className="text-xs text-[var(--color-text-muted)]">加载中…</p>
+              <p className="font-sans text-xs text-[var(--color-text-muted)]">加载中…</p>
             )}
           </div>
 
           {/* Right: more menu */}
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center flex-shrink-0 -mt-0.5">
             <div className="relative" ref={menuRef}>
               <button
                 onClick={() => setShowMenu(v => !v)}
-                className="w-11 h-11 flex items-center justify-center rounded-lg hover:bg-[var(--color-bg-hover)] transition-colors focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)]"
+                onKeyDown={(e) => { if (e.key === 'Escape') setShowMenu(false); }}
+                className="w-11 h-11 flex items-center justify-center rounded-[var(--radius-md)] hover:bg-[var(--color-bg-hover)] transition-colors focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[var(--color-primary-glow)]"
                 aria-label="更多操作"
+                aria-haspopup="menu"
+                aria-expanded={showMenu}
+                aria-controls="panel-header-menu"
               >
                 <MoreVertical className="w-4 h-4 text-[var(--color-text-secondary)]" />
               </button>
               {showMenu && (
-                <div className="absolute right-0 top-10 z-50 min-w-[148px] rounded-[4px] overflow-hidden border border-[var(--color-border)] bg-[var(--color-bg-elevated)] shadow-[var(--shadow-lg)]">
+                <div
+                  id="panel-header-menu"
+                  role="menu"
+                  aria-orientation="vertical"
+                  onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); setShowMenu(false); } }}
+                  className="absolute right-0 top-11 z-50 min-w-[152px] rounded-[var(--radius-lg)] overflow-hidden border border-[var(--color-border)] bg-[var(--color-bg-elevated)] shadow-[var(--shadow-lg)]"
+                >
                   <button
+                    role="menuitem"
                     onClick={() => { setShowMenu(false); router.push('/report'); }}
-                    className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] transition-colors text-left"
+                    className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] focus-visible:bg-[var(--color-bg-hover)] focus-visible:outline-none transition-colors text-left"
                   >
-                    <FileText className="w-4 h-4 text-[var(--color-primary)] flex-shrink-0" />
+                    <FileText className="w-4 h-4 text-[var(--color-text-muted)] flex-shrink-0" aria-hidden />
                     查看命理报告
                   </button>
-                  <div className="h-px bg-[var(--color-border)]" />
+                  <div className="h-px bg-[var(--color-border)]" role="separator" />
                   <button
+                    role="menuitem"
                     onClick={() => { setShowMenu(false); router.push('/profile/edit?returnTo=/panel'); }}
-                    className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] transition-colors text-left"
+                    className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] focus-visible:bg-[var(--color-bg-hover)] focus-visible:outline-none transition-colors text-left"
                   >
-                    <Edit3 className="w-4 h-4 text-[var(--color-primary)] flex-shrink-0" />
+                    <Edit3 className="w-4 h-4 text-[var(--color-text-muted)] flex-shrink-0" aria-hidden />
                     修改资料
                   </button>
                 </div>
@@ -572,7 +591,7 @@ export default function PanelPage() {
         </div>
 
         {/* Pillars row sits below the meta line on every screen size */}
-        <div className="px-4 pb-2.5">
+        <div className="px-4 pb-3 pt-1">
           <MiniPillars fourPillars={fourPillars} loading={!fourPillars && !!profile} />
         </div>
       </header>
@@ -602,7 +621,10 @@ export default function PanelPage() {
             </div>
           )}
           {err && (
-            <div className="rounded-[4px] border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-600">
+            <div
+              role="alert"
+              className="rounded-[var(--radius-sm)] border border-[var(--color-primary)]/25 bg-[var(--color-primary)]/5 px-3 py-2 text-xs text-[var(--color-primary-deeper)]"
+            >
               {err}
             </div>
           )}
