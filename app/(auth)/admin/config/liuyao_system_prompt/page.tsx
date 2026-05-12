@@ -20,6 +20,12 @@ type RevisionDetail = {
   comment?: string | null;
 };
 
+class HttpError extends Error {
+  constructor(public status: number, message: string) {
+    super(message);
+  }
+}
+
 function parseValue(v: unknown): PromptConfigValue {
   if (!v) return {};
   if (typeof v === 'string') {
@@ -56,7 +62,7 @@ async function getConfig(key: string): Promise<ConfigResp> {
   });
   if (!resp.ok) {
     const text = await resp.text().catch(() => '');
-    throw new Error(`加载失败（HTTP ${resp.status}）：${text || '服务器返回错误'}`);
+    throw new HttpError(resp.status, `加载失败（HTTP ${resp.status}）：${text || '服务器返回错误'}`);
   }
   return resp.json();
 }
@@ -157,11 +163,14 @@ export default function LiuyaoSystemPromptPage() {
         setContent(parsed.content ?? '');
         setNotes(parsed.notes ?? '');
         setRevs(await getRevisions(CONFIG_KEY));
-      } catch (e: any) {
-        // Key 还没建过，先空白
+      } catch (e: unknown) {
         setContent('');
         setNotes('');
-        setMsg('尚未配置六爻提示词，可在此创建首个版本（保存后立即生效，不需重启）。');
+        if (e instanceof HttpError && e.status === 404) {
+          setMsg('尚未配置六爻提示词，可在此创建首个版本（保存后立即生效，不需重启）。');
+        } else {
+          setMsg(e instanceof Error ? e.message : '加载失败');
+        }
       } finally {
         setLoading(false);
       }
@@ -183,8 +192,8 @@ export default function LiuyaoSystemPromptPage() {
       setOkInfo(res);
       setOkOpen(true);
       setTimeout(() => setOkOpen(false), 2500);
-    } catch (e: any) {
-      setMsg(e?.message || '保存失败');
+    } catch (e: unknown) {
+      setMsg(e instanceof Error ? e.message : '保存失败');
     } finally { setBusy(false); }
   }
 
@@ -202,8 +211,8 @@ export default function LiuyaoSystemPromptPage() {
       setOkInfo(res);
       setOkOpen(true);
       setTimeout(() => setOkOpen(false), 2500);
-    } catch (e: any) {
-      setMsg(e?.message || '回滚失败');
+    } catch (e: unknown) {
+      setMsg(e instanceof Error ? e.message : '回滚失败');
     } finally { setBusy(false); }
   }
 
@@ -212,8 +221,8 @@ export default function LiuyaoSystemPromptPage() {
     setDetailOpen(true);
     try {
       setDetailRev(await getRevisionDetail(CONFIG_KEY, v));
-    } catch (e: any) {
-      setMsg(e?.message || '加载版本详情失败');
+    } catch (e: unknown) {
+      setMsg(e instanceof Error ? e.message : '加载版本详情失败');
       setDetailOpen(false);
     } finally {
       setDetailLoading(false);
