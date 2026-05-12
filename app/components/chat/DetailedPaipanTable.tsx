@@ -1,57 +1,53 @@
 'use client';
 
 import { calculateDetailedPaipan } from '@/app/lib/bazi/calculator';
-import { getWuxing } from '@/app/components/WuXing';
+import { getWuxing, wuxingColor } from '@/app/components/WuXing';
 import type { Paipan } from '@/app/lib/chat/types';
 
 interface DetailedPaipanTableProps {
   paipan: Paipan;
 }
 
-const getWuxingColor = (char: string) => {
-  const wuxing = getWuxing(char);
-  if (!wuxing) return 'text-[var(--color-text-primary)]';
-  const colorMap: Record<string, string> = {
-    木: 'text-emerald-600',
-    火: 'text-red-600',
-    土: 'text-amber-600',
-    金: 'text-yellow-600',
-    水: 'text-sky-600',
-  };
-  return colorMap[wuxing];
-};
+// Binary semantic palette: friendly (协同) vs hostile (对抗).
+// Eight-way Tailwind palette violated DESIGN.md and overwhelmed the table.
+type RelationTone = 'friendly' | 'hostile' | 'neutral';
 
-// 关系标签颜色
-const RELATION_COLORS: Record<string, string> = {
-  冲: 'bg-red-50 text-red-700 border-red-200',
-  合: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  刑: 'bg-orange-50 text-orange-700 border-orange-200',
-  害: 'bg-purple-50 text-purple-700 border-purple-200',
-  三合: 'bg-blue-50 text-blue-700 border-blue-200',
-  三会: 'bg-cyan-50 text-cyan-700 border-cyan-200',
-  半合: 'bg-blue-50 text-blue-600 border-blue-100',
-  天干合: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  天干冲: 'bg-red-50 text-red-700 border-red-200',
-};
-
-function getRelationColor(label: string): string {
-  if (label.includes('三会')) return RELATION_COLORS['三会'];
-  if (label.includes('三合') && !label.includes('半')) return RELATION_COLORS['三合'];
-  if (label.includes('半合')) return RELATION_COLORS['半合'];
-  if (label.includes('冲') && !label.includes('天干')) return RELATION_COLORS['冲'];
-  if (label.includes('合') && !label.includes('半') && !label.includes('三')) return RELATION_COLORS['合'];
-  if (label.includes('刑')) return RELATION_COLORS['刑'];
-  if (label.includes('害')) return RELATION_COLORS['害'];
-  return 'bg-neutral-50 text-neutral-600 border-neutral-200';
+function relationTone(label: string): RelationTone {
+  if (/(冲|刑|害)/.test(label)) return 'hostile';
+  if (/(合|会)/.test(label)) return 'friendly';
+  return 'neutral';
 }
+
+const TONE_STYLE: Record<RelationTone, React.CSSProperties> = {
+  friendly: {
+    color: 'var(--color-gold-dark)',
+    background: 'var(--color-gold-glow)',
+    borderColor: 'color-mix(in oklch, var(--color-gold) 30%, transparent)',
+  },
+  hostile: {
+    color: 'var(--color-primary)',
+    background: 'var(--color-primary-glow)',
+    borderColor: 'var(--color-border-accent)',
+  },
+  neutral: {
+    color: 'var(--color-text-secondary)',
+    background: 'var(--color-bg)',
+    borderColor: 'var(--color-border)',
+  },
+};
 
 function RelationTag({ label }: { label: string }) {
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-md border text-xs font-medium ${getRelationColor(label)}`}>
+    <span
+      className="inline-flex items-center px-2 py-0.5 rounded-[var(--radius-md)] border text-xs font-medium"
+      style={TONE_STYLE[relationTone(label)]}
+    >
       {label}
     </span>
   );
 }
+
+const DAY_HIGHLIGHT = 'bg-[var(--color-primary-glow)]';
 
 export function DetailedPaipanTable({ paipan }: DetailedPaipanTableProps) {
   const detailed = calculateDetailedPaipan(paipan);
@@ -90,18 +86,16 @@ export function DetailedPaipanTable({ paipan }: DetailedPaipanTableProps) {
   ];
 
   return (
-    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] shadow-sm overflow-hidden">
-      {/* 顶部金色装饰线 */}
-      <div className="h-0.5 bg-gradient-to-r from-transparent via-[var(--color-gold)] to-transparent opacity-60" />
+    <div className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-bg-card)] shadow-[var(--shadow-sm)] overflow-hidden">
+      {/* Hairline gold accent */}
+      <div className="h-px bg-gradient-to-r from-transparent via-[var(--color-gold)] to-transparent opacity-50" />
 
-      {/* 标题栏 */}
       <div className="px-4 pt-3 pb-2">
-        <h3 className="text-sm font-semibold text-[var(--color-text-primary)] tracking-wide">
+        <h3 className="font-serif text-sm font-semibold text-[var(--color-text-primary)] tracking-wide">
           详细排盘
         </h3>
       </div>
 
-      {/* 表格 */}
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
@@ -113,7 +107,9 @@ export function DetailedPaipanTable({ paipan }: DetailedPaipanTableProps) {
                 <th
                   key={idx}
                   className={`px-3 py-2 text-center text-xs font-medium ${
-                    idx === 2 ? 'bg-amber-50 text-amber-800' : 'bg-[var(--color-bg)] text-[var(--color-text-muted)]'
+                    idx === 2
+                      ? `${DAY_HIGHLIGHT} text-[var(--color-primary)]`
+                      : 'bg-[var(--color-bg)] text-[var(--color-text-muted)]'
                   }`}
                 >
                   {pillar.name}
@@ -126,8 +122,11 @@ export function DetailedPaipanTable({ paipan }: DetailedPaipanTableProps) {
             <tr className="border-b border-[var(--color-border-subtle)]">
               <td className="px-3 py-2 text-xs font-medium text-[var(--color-text-secondary)]">天干</td>
               {pillars.map((pillar, idx) => (
-                <td key={idx} className={`px-3 py-2 text-center ${idx === 2 ? 'bg-amber-50/30' : ''}`}>
-                  <span className={`text-lg font-bold ${getWuxingColor(pillar.gan)}`}>
+                <td key={idx} className={`px-3 py-2 text-center ${idx === 2 ? DAY_HIGHLIGHT : ''}`}>
+                  <span
+                    className="text-lg font-bold font-serif"
+                    style={{ color: wuxingColor(getWuxing(pillar.gan)) }}
+                  >
                     {pillar.gan}
                   </span>
                 </td>
@@ -138,8 +137,11 @@ export function DetailedPaipanTable({ paipan }: DetailedPaipanTableProps) {
             <tr className="border-b border-[var(--color-border-subtle)]">
               <td className="px-3 py-2 text-xs font-medium text-[var(--color-text-secondary)]">地支</td>
               {pillars.map((pillar, idx) => (
-                <td key={idx} className={`px-3 py-2 text-center ${idx === 2 ? 'bg-amber-50/30' : ''}`}>
-                  <span className={`text-lg font-bold ${getWuxingColor(pillar.zhi)}`}>
+                <td key={idx} className={`px-3 py-2 text-center ${idx === 2 ? DAY_HIGHLIGHT : ''}`}>
+                  <span
+                    className="text-lg font-bold font-serif"
+                    style={{ color: wuxingColor(getWuxing(pillar.zhi)) }}
+                  >
                     {pillar.zhi}
                   </span>
                 </td>
@@ -150,12 +152,15 @@ export function DetailedPaipanTable({ paipan }: DetailedPaipanTableProps) {
             <tr className="border-b border-[var(--color-border-subtle)]">
               <td className="px-3 py-2 text-xs font-medium text-[var(--color-text-secondary)]">藏干</td>
               {[cang_gan.year, cang_gan.month, cang_gan.day, cang_gan.hour].map((cg, idx) => (
-                <td key={idx} className={`px-3 py-2 text-center text-xs ${idx === 2 ? 'bg-amber-50/30' : ''}`}>
-                  {cg.map((gan, i) => (
-                    <span key={i} className={getWuxingColor(gan)}>
-                      {gan}{getWuxing(gan) && `(${getWuxing(gan)})`}{i < cg.length - 1 ? ' ' : ''}
-                    </span>
-                  ))}
+                <td key={idx} className={`px-3 py-2 text-center text-xs ${idx === 2 ? DAY_HIGHLIGHT : ''}`}>
+                  {cg.map((gan, i) => {
+                    const el = getWuxing(gan);
+                    return (
+                      <span key={i} style={{ color: wuxingColor(el) }}>
+                        {gan}{el && `(${el})`}{i < cg.length - 1 ? ' ' : ''}
+                      </span>
+                    );
+                  })}
                 </td>
               ))}
             </tr>
@@ -165,7 +170,7 @@ export function DetailedPaipanTable({ paipan }: DetailedPaipanTableProps) {
               <td className="px-3 py-2 text-xs font-medium text-[var(--color-text-secondary)]">十神（天干）</td>
               <td className="px-3 py-2 text-center text-xs">{shi_shen_gan.year}</td>
               <td className="px-3 py-2 text-center text-xs">{shi_shen_gan.month}</td>
-              <td className="px-3 py-2 text-center text-xs bg-amber-50/30">{shi_shen_gan.day}</td>
+              <td className={`px-3 py-2 text-center text-xs ${DAY_HIGHLIGHT}`}>{shi_shen_gan.day}</td>
               <td className="px-3 py-2 text-center text-xs">{shi_shen_gan.hour}</td>
             </tr>
 
@@ -174,7 +179,7 @@ export function DetailedPaipanTable({ paipan }: DetailedPaipanTableProps) {
               <td className="px-3 py-2 text-xs font-medium text-[var(--color-text-secondary)]">十神（地支）</td>
               <td className="px-3 py-2 text-center text-xs">{shi_shen_zhi.year}</td>
               <td className="px-3 py-2 text-center text-xs">{shi_shen_zhi.month}</td>
-              <td className="px-3 py-2 text-center text-xs bg-amber-50/30">{shi_shen_zhi.day}</td>
+              <td className={`px-3 py-2 text-center text-xs ${DAY_HIGHLIGHT}`}>{shi_shen_zhi.day}</td>
               <td className="px-3 py-2 text-center text-xs">{shi_shen_zhi.hour}</td>
             </tr>
 
@@ -183,7 +188,7 @@ export function DetailedPaipanTable({ paipan }: DetailedPaipanTableProps) {
               <td className="px-3 py-2 text-xs font-medium text-[var(--color-text-secondary)]">十二长生</td>
               <td className="px-3 py-2 text-center text-xs">{chang_sheng.year}</td>
               <td className="px-3 py-2 text-center text-xs">{chang_sheng.month}</td>
-              <td className="px-3 py-2 text-center text-xs bg-amber-50/30">{chang_sheng.day}</td>
+              <td className={`px-3 py-2 text-center text-xs ${DAY_HIGHLIGHT}`}>{chang_sheng.day}</td>
               <td className="px-3 py-2 text-center text-xs">{chang_sheng.hour}</td>
             </tr>
 
@@ -192,14 +197,14 @@ export function DetailedPaipanTable({ paipan }: DetailedPaipanTableProps) {
               <td className="px-3 py-2 text-xs font-medium text-[var(--color-text-secondary)]">纳音</td>
               <td className="px-3 py-2 text-center text-xs">{na_yin.year}</td>
               <td className="px-3 py-2 text-center text-xs">{na_yin.month}</td>
-              <td className="px-3 py-2 text-center text-xs bg-amber-50/30">{na_yin.day}</td>
+              <td className={`px-3 py-2 text-center text-xs ${DAY_HIGHLIGHT}`}>{na_yin.day}</td>
               <td className="px-3 py-2 text-center text-xs">{na_yin.hour}</td>
             </tr>
 
             {/* 空亡 */}
             <tr>
               <td className="px-3 py-2 text-xs font-medium text-[var(--color-text-secondary)]">空亡</td>
-              <td colSpan={4} className="px-3 py-2 text-center text-xs">
+              <td colSpan={4} className="px-3 py-2 text-center text-xs text-[var(--color-text-body)]">
                 {xun_kong || '无'}
               </td>
             </tr>
@@ -207,6 +212,11 @@ export function DetailedPaipanTable({ paipan }: DetailedPaipanTableProps) {
         </table>
       </div>
 
+      {hasRelations && (
+        <div className="px-4 py-3 border-t border-[var(--color-border-subtle)] flex flex-wrap gap-1.5">
+          {allRelations.map((r, i) => <RelationTag key={i} label={r} />)}
+        </div>
+      )}
     </div>
   );
 }

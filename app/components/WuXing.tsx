@@ -22,6 +22,21 @@ export function getWuxing(char: string): Wuxing | null {
   return (GAN_WUXING[char] as Wuxing) || (ZHI_WUXING[char] as Wuxing) || null;
 }
 
+// On-brand wuxing color via OKLCH tokens (globals.css).
+// Prefer this over colorClasses() for new code; colorClasses uses banned Tailwind defaults.
+const WUXING_VAR: Record<Wuxing, string> = {
+  木: 'var(--color-wuxing-wood)',
+  火: 'var(--color-wuxing-fire)',
+  土: 'var(--color-wuxing-earth)',
+  金: 'var(--color-wuxing-metal)',
+  水: 'var(--color-wuxing-water)',
+};
+
+export function wuxingColor(el: Wuxing | null | undefined): string {
+  return el ? WUXING_VAR[el] : 'var(--color-text-primary)';
+}
+
+/** @deprecated use wuxingColor() — Tailwind defaults violate DESIGN.md */
 export function colorClasses(el: Wuxing, variant: 'text' | 'bg' | 'border' = 'text') {
   const map: Record<Wuxing, { text: string; bg: string; border: string }> = {
     木: { text: 'text-emerald-800', bg: 'bg-emerald-100', border: 'border-emerald-200' },
