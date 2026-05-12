@@ -12,7 +12,7 @@ import { MiniPillars } from '@/app/components/chat/MiniPillars';
 
 import { Msg, QUICK_BUTTONS, normalizeMarkdown } from '@/app/lib/chat/types';
 import { parseSuggestedQuestions } from '@/app/lib/chat/parser';
-import { api, pickReply } from '@/app/lib/chat/api';
+import { api, fetchQuickButtons, pickReply } from '@/app/lib/chat/api';
 import { trySSE, QuotaExhaustedError } from '@/app/lib/chat/sse';
 import { QuotaBar } from '@/app/components/QuotaBar';
 import {
@@ -120,24 +120,10 @@ export default function PanelPage() {
   };
 
   // Quick buttons from admin
-  function parseQbValue(v: unknown): { items?: Array<{ label: string; prompt: string; order?: number; active?: boolean }>; maxCount?: number } {
-    if (!v) return {};
-    if (typeof v === 'string') { try { return JSON.parse(v); } catch { return {}; } }
-    return v as ReturnType<typeof parseQbValue>;
-  }
-
   useEffect(() => {
     (async () => {
       try {
-        const resp = await fetch(api('/admin/config?key=quick_buttons'), { credentials: 'include', cache: 'no-store' });
-        if (!resp.ok) throw new Error();
-        const data = await resp.json();
-        const parsed = parseQbValue(data.value_json);
-        const list = Array.isArray(parsed.items) ? parsed.items : [];
-        const filtered = list.filter(it => it?.active !== false && it?.label && it?.prompt);
-        const sorted = filtered.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-        const sliced = sorted.slice(0, Math.max(1, parsed.maxCount ?? 12));
-        if (sliced.length > 0) setQuickButtons(sliced.map(({ label, prompt }) => ({ label, prompt })));
+        setQuickButtons(await fetchQuickButtons());
       } catch { /* use defaults */ }
       finally { setQbLoading(false); }
     })();

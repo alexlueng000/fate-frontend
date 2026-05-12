@@ -7,7 +7,8 @@ import { api } from '@/app/lib/api';
 const CONFIG_KEY = 'liuyao_system_prompt';
 
 type Me = { id: number; username?: string; is_admin?: boolean };
-type ConfigResp = { key: string; version: number; value_json: any };
+type PromptConfigValue = { content?: string; notes?: string };
+type ConfigResp = { key: string; version: number; value_json: unknown };
 type Revision = { version: number; created_at: string; comment?: string | null };
 type SaveResp = { ok: boolean; key: string; version: number };
 type RevisionDetail = {
@@ -19,17 +20,37 @@ type RevisionDetail = {
   comment?: string | null;
 };
 
-function parseValue(v: any): any {
+function parseValue(v: unknown): PromptConfigValue {
   if (!v) return {};
   if (typeof v === 'string') {
-    try { return JSON.parse(v); } catch { return {}; }
+    try {
+      const parsed: unknown = JSON.parse(v);
+      return parseValue(parsed);
+    } catch {
+      return {};
+    }
   }
-  return v;
+  if (typeof v !== 'object' || v === null) return {};
+  const record = v as Record<string, unknown>;
+  return {
+    content: typeof record.content === 'string' ? record.content : '',
+    notes: typeof record.notes === 'string' ? record.notes : '',
+  };
+}
+
+function authHeaders(extra?: Record<string, string>): Record<string, string> {
+  if (typeof window === 'undefined') return extra ?? {};
+  const token = localStorage.getItem('auth_token');
+  return {
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...extra,
+  };
 }
 
 async function getConfig(key: string): Promise<ConfigResp> {
   const resp = await fetch(api(`/admin/config?key=${encodeURIComponent(key)}`), {
     method: 'GET',
+    headers: authHeaders(),
     credentials: 'include',
     cache: 'no-store',
   });
@@ -43,6 +64,7 @@ async function getConfig(key: string): Promise<ConfigResp> {
 async function getRevisions(key: string, limit = 50): Promise<Revision[]> {
   const resp = await fetch(api(`/admin/config/revisions?key=${encodeURIComponent(key)}&limit=${limit}`), {
     method: 'GET',
+    headers: authHeaders(),
     credentials: 'include',
     cache: 'no-store',
   });
@@ -53,6 +75,7 @@ async function getRevisions(key: string, limit = 50): Promise<Revision[]> {
 async function getRevisionDetail(key: string, version: number): Promise<RevisionDetail> {
   const resp = await fetch(api(`/admin/config/revision?key=${encodeURIComponent(key)}&version=${version}`), {
     method: 'GET',
+    headers: authHeaders(),
     credentials: 'include',
     cache: 'no-store',
   });
@@ -63,10 +86,10 @@ async function getRevisionDetail(key: string, version: number): Promise<Revision
   return resp.json();
 }
 
-async function saveConfig(key: string, value_json: any, comment?: string): Promise<SaveResp> {
+async function saveConfig(key: string, value_json: PromptConfigValue, comment?: string): Promise<SaveResp> {
   const resp = await fetch(api('/admin/config/save'), {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
     credentials: 'include',
     cache: 'no-store',
     body: JSON.stringify({ key, value_json, comment }),
@@ -81,7 +104,7 @@ async function saveConfig(key: string, value_json: any, comment?: string): Promi
 async function rollbackConfig(key: string, version: number, comment?: string): Promise<SaveResp> {
   const resp = await fetch(api('/admin/config/rollback'), {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
     credentials: 'include',
     cache: 'no-store',
     body: JSON.stringify({ key, version, comment }),

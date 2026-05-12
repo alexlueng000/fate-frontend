@@ -16,7 +16,7 @@ import { MessageList } from '@/app/components/chat/MessageList';
 import { InputArea } from '@/app/components/chat/InputArea';
 import { QuickActions } from '@/app/components/chat/QuickActions';
 import { Msg, normalizeMarkdown } from '@/app/lib/chat/types';
-import { parseSuggestedQuestions } from '@/app/lib/chat/parser';
+import { parseSuggestedQuestions, restoreStoredMessage } from '@/app/lib/chat/parser';
 import { saveConversation, loadConversation } from '@/app/lib/chat/storage';
 import { QuotaExhaustedError } from '@/app/lib/chat/sse';
 import { QuotaChip } from '@/app/components/QuotaChip';
@@ -158,11 +158,7 @@ export default function LiuyaoPage() {
           }
           return m.role === 'user' || m.role === 'assistant';
         });
-        const restoredMsgs: Msg[] = filtered.map((m) => ({
-          role: m.role as 'user' | 'assistant',
-          content: m.content,
-          meta: { messageId: m.id },
-        }));
+        const restoredMsgs: Msg[] = filtered.map(restoreStoredMessage);
 
         setConversationId(cid);
         setMsgs(restoredMsgs);

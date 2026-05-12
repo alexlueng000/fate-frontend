@@ -1,7 +1,15 @@
+import { normalizeMarkdown, type Msg } from '@/app/lib/chat/types';
+
 export interface SuggestedQuestions {
   questions: string[];
   cleanedContent: string; // 移除标记后的内容
 }
+
+export type StoredChatMessage = {
+  id?: number;
+  role: string;
+  content: string;
+};
 
 export function parseSuggestedQuestions(content: string): SuggestedQuestions {
   // 支持多种格式变体
@@ -26,4 +34,25 @@ export function parseSuggestedQuestions(content: string): SuggestedQuestions {
   }
 
   return { questions: [], cleanedContent: content };
+}
+
+export function restoreStoredMessage(message: StoredChatMessage): Msg {
+  const role = message.role as 'user' | 'assistant';
+  const meta = message.id ? { messageId: message.id } : undefined;
+
+  if (role !== 'assistant') {
+    return {
+      role,
+      content: message.content,
+      meta,
+    };
+  }
+
+  const { questions, cleanedContent } = parseSuggestedQuestions(message.content || '');
+  return {
+    role,
+    content: normalizeMarkdown(cleanedContent),
+    meta,
+    suggestedQuestions: questions.length > 0 ? questions : undefined,
+  };
 }

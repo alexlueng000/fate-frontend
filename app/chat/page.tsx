@@ -15,8 +15,8 @@ import { InputArea } from '@/app/components/chat/InputArea';
 import {
   Msg, Paipan, QUICK_BUTTONS, normalizeMarkdown,
 } from '@/app/lib/chat/types';
-import { parseSuggestedQuestions } from '@/app/lib/chat/parser';
-import { api, pickReply } from '@/app/lib/chat/api';
+import { parseSuggestedQuestions, restoreStoredMessage } from '@/app/lib/chat/parser';
+import { api, fetchQuickButtons, pickReply } from '@/app/lib/chat/api';
 import { trySSE, QuotaExhaustedError } from '@/app/lib/chat/sse';
 import {
   saveConversation, loadConversation, getActiveConversationId,
@@ -37,6 +37,7 @@ export default function ChatPage() {
   const [booting, setBooting] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [paipan, setPaipan] = useState<Paipan | null>(null);
+  const [quickButtons, setQuickButtons] = useState(QUICK_BUTTONS);
   const [quotaRefreshKey, setQuotaRefreshKey] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const mountedRef = useRef(true);
@@ -51,6 +52,14 @@ export default function ChatPage() {
   useEffect(() => {
     mountedRef.current = true;
     return () => { mountedRef.current = false; };
+  }, []);
+
+  useEffect(() => {
+    let alive = true;
+    fetchQuickButtons().then((buttons) => {
+      if (alive) setQuickButtons(buttons);
+    });
+    return () => { alive = false; };
   }, []);
 
   // 自动滚动
@@ -112,11 +121,7 @@ export default function ChatPage() {
             }
             return m.role === 'user' || m.role === 'assistant';
           });
-          const restoredMsgs: Msg[] = filtered.map((m) => ({
-            role: m.role as 'user' | 'assistant',
-            content: m.content,
-            meta: { messageId: m.id },
-          }));
+          const restoredMsgs: Msg[] = filtered.map(restoreStoredMessage);
 
           setConversationId(cid);
           setMsgs(restoredMsgs);
@@ -569,7 +574,7 @@ export default function ChatPage() {
 
         <QuickActions
           disabled={sending || booting || !conversationId}
-          buttons={QUICK_BUTTONS}
+          buttons={quickButtons}
           onClick={sendQuick}
         />
 
