@@ -82,6 +82,7 @@ export default function HistoryPage() {
   const [fetching, setFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<number | null>(null);
+  const [clearing, setClearing] = useState<'current' | 'all' | null>(null);
 
   // Tab counters (load both regardless of active tab so badges are accurate)
   const [counts, setCounts] = useState<{ bazi: number; liuyao: number }>({ bazi: 0, liuyao: 0 });
@@ -153,6 +154,45 @@ export default function HistoryPage() {
     }
   };
 
+  const handleClearCurrent = async () => {
+    if (total === 0 || clearing) return;
+    const label = activeTab === 'bazi' ? '八字解读' : '六爻记录';
+    if (!window.confirm(`确定清空所有${label}？此操作无法恢复。`)) return;
+
+    setClearing('current');
+    setError(null);
+    try {
+      await historyApi.clear(activeTab);
+      setItems([]);
+      setTotal(0);
+      setOffset(0);
+      setCounts((prev) => ({ ...prev, [activeTab]: 0 }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '清空失败');
+    } finally {
+      setClearing(null);
+    }
+  };
+
+  const handleClearAll = async () => {
+    if ((counts.bazi + counts.liuyao) === 0 || clearing) return;
+    if (!window.confirm('确定清空所有解读记录？八字和六爻记录都会删除，此操作无法恢复。')) return;
+
+    setClearing('all');
+    setError(null);
+    try {
+      await historyApi.clear('all');
+      setItems([]);
+      setTotal(0);
+      setOffset(0);
+      setCounts({ bazi: 0, liuyao: 0 });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '清空失败');
+    } finally {
+      setClearing(null);
+    }
+  };
+
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const currentPage = Math.floor(offset / PAGE_SIZE) + 1;
   const canPrev = offset > 0 && !fetching;
@@ -185,34 +225,57 @@ export default function HistoryPage() {
         </header>
 
         {/* Tab 切换 */}
-        <div className="inline-flex rounded-full bg-white border border-neutral-200 p-1 mb-6 shadow-sm">
-          {(['bazi', 'liuyao'] as const).map((t) => {
-            const active = activeTab === t;
-            const label = t === 'bazi' ? '八字' : '六爻';
-            const count = counts[t];
-            return (
-              <button
-                key={t}
-                onClick={() => handleTabChange(t)}
-                className={`px-5 py-1.5 text-sm rounded-full transition-all ${
-                  active
-                    ? 'bg-[#a83232] text-white shadow'
-                    : 'text-neutral-600 hover:text-neutral-900'
-                }`}
-              >
-                {label}
-                {count > 0 && (
-                  <span
-                    className={`ml-1.5 inline-flex items-center justify-center text-[11px] px-1.5 rounded-full min-w-[18px] ${
-                      active ? 'bg-white/20 text-white' : 'bg-neutral-100 text-neutral-500'
-                    }`}
-                  >
-                    {count}
-                  </span>
-                )}
-              </button>
-            );
-          })}
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="inline-flex self-start rounded-full bg-white border border-neutral-200 p-1 shadow-sm">
+            {(['bazi', 'liuyao'] as const).map((t) => {
+              const active = activeTab === t;
+              const label = t === 'bazi' ? '八字' : '六爻';
+              const count = counts[t];
+              return (
+                <button
+                  key={t}
+                  onClick={() => handleTabChange(t)}
+                  className={`px-5 py-1.5 text-sm rounded-full transition-all ${
+                    active
+                      ? 'bg-[#a83232] text-white shadow'
+                      : 'text-neutral-600 hover:text-neutral-900'
+                  }`}
+                >
+                  {label}
+                  {count > 0 && (
+                    <span
+                      className={`ml-1.5 inline-flex items-center justify-center text-[11px] px-1.5 rounded-full min-w-[18px] ${
+                        active ? 'bg-white/20 text-white' : 'bg-neutral-100 text-neutral-500'
+                      }`}
+                    >
+                      {count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={handleClearCurrent}
+              disabled={total === 0 || clearing !== null}
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-[3px] border border-neutral-200 bg-white px-3 text-sm text-neutral-600 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {clearing === 'current' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+              清空{activeTab === 'bazi' ? '八字' : '六爻'}
+            </button>
+            <button
+              type="button"
+              onClick={handleClearAll}
+              disabled={(counts.bazi + counts.liuyao) === 0 || clearing !== null}
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-[3px] border border-red-200 bg-red-50 px-3 text-sm text-red-700 transition-colors hover:border-red-300 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {clearing === 'all' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+              清空全部
+            </button>
+          </div>
         </div>
 
         {/* 错误 */}

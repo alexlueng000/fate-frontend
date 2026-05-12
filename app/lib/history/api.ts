@@ -1,7 +1,9 @@
 // app/lib/history/api.ts
 import { api } from '@/app/lib/api';
+import type { HexagramDetail } from '@/app/lib/liuyao/api';
 
 export type HistoryType = 'bazi' | 'liuyao';
+export type HistoryClearType = HistoryType | 'all';
 
 export type HexagramSummary = {
   hexagram_id: string;
@@ -41,9 +43,9 @@ export type ConversationDetailResp = {
   created_at: string;
   updated_at: string;
   messages: MessageItem[];
-  profile?: { bazi_chart: any } | null;
+  profile?: { bazi_chart: Record<string, unknown> } | null;
   profile_changed?: boolean;
-  hexagram?: any | null;
+  hexagram?: HexagramDetail | null;
 };
 
 function getAuthHeaders(): Record<string, string> {
@@ -93,5 +95,19 @@ export const historyApi = {
       const error = await response.json().catch(() => ({ detail: 'Request failed' }));
       throw new Error(error.detail || 'Failed to delete conversation');
     }
+  },
+
+  async clear(type: HistoryClearType): Promise<{ deleted: number }> {
+    const url = api(`/conversations?type=${type}`);
+    const response = await fetch(url, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: 'Request failed' }));
+      throw new Error(error.detail || 'Failed to clear conversations');
+    }
+    return response.json();
   },
 };

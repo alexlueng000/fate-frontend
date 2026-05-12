@@ -241,10 +241,10 @@ export default function Header() {
 
             {/* 汉堡菜单 — only visible below lg */}
             <button
-              className={`lg:hidden flex items-center justify-center w-9 h-9 rounded-md transition-colors ml-1 ${
+              className={`lg:hidden flex h-11 w-11 items-center justify-center rounded-[3px] border transition-colors ml-1 ${
                 mobileNavOpen
-                  ? 'bg-[var(--color-bg-hover)] text-[var(--color-primary)]'
-                  : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)]'
+                  ? 'border-[var(--color-primary)] bg-[var(--color-bg-elevated)] text-[var(--color-primary)]'
+                  : 'border-transparent text-[var(--color-text-secondary)] hover:border-[var(--color-border)] hover:bg-[var(--color-bg-hover)]'
               }`}
               onClick={() => {
                 setMenuOpen(false);
@@ -272,16 +272,32 @@ export default function Header() {
           className="fixed inset-x-0 bottom-0 top-16 z-[45] lg:hidden"
           onClick={() => setMobileNavOpen(false)}
         >
-          <div className="absolute inset-0 bg-[rgba(42,37,34,0.32)]" />
+          <div className="absolute inset-0 bg-[rgba(42,37,34,0.28)]" />
           <nav
             aria-label="移动端导航"
-            className="absolute left-0 right-0 top-0 max-h-[calc(100dvh-4rem)] overflow-y-auto border-b border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4 shadow-[0_12px_32px_rgba(60,40,20,0.14)] animate-slide-down"
+            className="absolute left-2 right-2 top-2 max-h-[calc(100dvh-5rem)] overflow-y-auto rounded-[4px] border border-[var(--color-border)] bg-[var(--color-bg-elevated)] shadow-[0_16px_44px_rgba(60,40,20,0.16)] animate-slide-down"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="mb-3 text-xs font-medium tracking-[0.04em] text-[var(--color-text-muted)]">
-              常用功能
+            <div className="flex items-center justify-between border-b border-[var(--color-border)] px-4 py-3">
+              <div>
+                <div className="text-[13px] font-medium tracking-[0.04em] text-[var(--color-text-muted)]">
+                  常用功能
+                </div>
+                <div className="mt-1 text-sm text-[var(--color-text-secondary)]">
+                  选择一个入口继续
+                </div>
+              </div>
+              <button
+                type="button"
+                aria-label="关闭导航菜单"
+                onClick={() => setMobileNavOpen(false)}
+                className="flex h-11 w-11 items-center justify-center rounded-[3px] border border-[var(--color-border)] text-[var(--color-text-secondary)] transition-colors hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)]"
+              >
+                <X className="h-4.5 w-4.5" strokeWidth={1.6} />
+              </button>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+
+            <div className="grid grid-cols-1 gap-px bg-[var(--color-border)] sm:grid-cols-2">
               {MOBILE_APP_LINKS.map((l) => {
                 const Icon = l.icon;
                 const active = isActivePath(l.href);
@@ -290,25 +306,28 @@ export default function Header() {
                     key={l.href}
                     href={l.href}
                     aria-current={active ? 'page' : undefined}
-                    className={`flex min-h-16 items-center gap-3 rounded-[4px] border px-3 py-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)] ${
+                    className={`flex min-h-14 items-center justify-between gap-3 bg-[var(--color-bg-elevated)] px-4 py-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)] ${
                       active
-                        ? 'border-[var(--color-primary)] bg-[var(--color-primary)] text-[var(--color-text-inverse)]'
-                        : 'border-[var(--color-border)] bg-[var(--color-bg)] text-[var(--color-text-primary)] hover:border-[var(--color-border-accent)] hover:bg-[var(--color-bg-hover)]'
+                        ? 'text-[var(--color-primary)]'
+                        : 'text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)]'
                     }`}
                     onClick={() => setMobileNavOpen(false)}
                   >
-                    {Icon && <Icon className="h-5 w-5 shrink-0" strokeWidth={1.5} />}
-                    <span>{l.label}</span>
+                    <span className="flex items-center gap-3">
+                      {Icon && <Icon className="h-5 w-5 shrink-0 text-[var(--color-text-secondary)]" strokeWidth={1.6} />}
+                      <span>{l.label}</span>
+                    </span>
+                    {active && <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-primary)]" />}
                   </Link>
                 );
               })}
             </div>
 
-            <div className="mt-5 border-t border-[var(--color-border)] pt-4">
-              <div className="mb-2 text-xs font-medium tracking-[0.04em] text-[var(--color-text-muted)]">
+            <div className="px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-5">
+              <div className="mb-2 text-[13px] font-medium tracking-[0.04em] text-[var(--color-text-muted)]">
                 了解更多
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-x-3 gap-y-1">
                 {NAV_LINKS.map((l) => {
                   const active = isActivePath(l.href);
                   return (
@@ -316,10 +335,10 @@ export default function Header() {
                       key={l.href}
                       href={l.href}
                       aria-current={active ? 'page' : undefined}
-                      className={`flex min-h-11 items-center rounded-[3px] px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)] ${
+                      className={`flex min-h-11 items-center rounded-[3px] px-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)] ${
                         active
                           ? 'bg-[var(--color-bg-hover)] text-[var(--color-primary)]'
-                          : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-primary)]'
+                          : 'text-[var(--color-text-secondary)] hover:text-[var(--color-primary)]'
                       }`}
                       onClick={() => setMobileNavOpen(false)}
                     >
