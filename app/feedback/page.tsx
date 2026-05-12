@@ -235,7 +235,7 @@ export default function FeedbackPage() {
 
             {/* 提示 */}
             <p className="text-xs text-[var(--color-text-hint)] text-center">
-              您也可以通过邮箱 <span className="text-[var(--color-gold)]">support@fateinsight.site</span> 联系我们
+              您也可以通过邮箱 <span className="text-[var(--color-gold)]">windy46825@163.com</span> 联系我们
             </p>
           </form>
         </div>

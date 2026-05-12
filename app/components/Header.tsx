@@ -113,12 +113,21 @@ export default function Header() {
           {/* ── Left: Logo + Desktop Nav ── */}
           <div className="flex items-center gap-6 lg:gap-10">
             <Link href="/" className="group shrink-0 flex items-center">
+              {/* Mobile logo */}
+              <Image
+                src="/yifan_mobile_logo.png"
+                alt="易凡文化"
+                width={140}
+                height={140}
+                className="w-28 h-auto group-hover:scale-105 transition-transform duration-200 lg:hidden"
+              />
+              {/* Desktop logo */}
               <Image
                 src="/yifan_logo.png"
                 alt="易凡文化"
                 width={140}
                 height={140}
-                className="w-28 lg:w-32 h-auto group-hover:scale-105 transition-transform duration-200"
+                className="hidden lg:block w-32 h-auto group-hover:scale-105 transition-transform duration-200"
               />
             </Link>
 

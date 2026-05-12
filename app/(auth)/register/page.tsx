@@ -294,7 +294,9 @@ export default function RegisterPage() {
 
           {/* Password */}
           <div>
-            <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1.5">密码</label>
+            <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1.5">
+              密码 <span className="text-[var(--color-text-hint)] font-normal">至少需要8位</span>
+            </label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-hint)]" />
               <input

@@ -103,7 +103,7 @@ export default function AboutPage() {
                   <Mail className="w-5 h-5 text-[var(--color-text-muted)]" />
                   <span className="text-[var(--color-text-secondary)]">客服邮箱</span>
                 </div>
-                <span className="text-[var(--color-primary)] font-medium">support@fateinsight.site</span>
+                <span className="text-[var(--color-primary)] font-medium">windy46825@163.com</span>
               </div>
               <div className="flex items-center justify-between p-4 bg-[var(--color-bg-hover)] rounded-xl">
                 <div className="flex items-center gap-3">

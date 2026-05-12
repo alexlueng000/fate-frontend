@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useRouteGuard } from '@/app/lib/useRouteGuard';
 import { api } from '@/app/lib/api';
@@ -42,6 +42,27 @@ function EditProfileContent() {
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const deleteDialogRef = useRef<HTMLDivElement>(null);
+  const cancelButtonRef = useRef<HTMLButtonElement>(null);
+
+  // 焦点管理和键盘支持
+  useEffect(() => {
+    if (showDeleteConfirm) {
+      // 聚焦到取消按钮
+      cancelButtonRef.current?.focus();
+
+      // 监听 Escape 键
+      const handleEscape = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          setShowDeleteConfirm(false);
+        }
+      };
+
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
+    }
+  }, [showDeleteConfirm]);
 
   useEffect(() => {
     if (loading) return;
@@ -187,20 +208,20 @@ function EditProfileContent() {
 
   if (loading || fetching) {
     return (
-      <div className="min-h-screen bg-[#F7F3EE] flex items-center justify-center">
-        <div className="text-neutral-600">加载中...</div>
+      <div className="min-h-screen bg-[var(--color-bg)] flex items-center justify-center">
+        <div className="text-[var(--color-text-secondary)]" role="status" aria-live="polite">加载中...</div>
       </div>
     );
   }
 
   if (error && !profile) {
     return (
-      <div className="min-h-screen bg-[#F7F3EE] flex items-center justify-center p-6">
+      <div className="min-h-screen bg-[var(--color-bg)] flex items-center justify-center p-6">
         <div className="text-center">
-          <div className="text-red-600 mb-4">{error}</div>
+          <div className="text-[var(--color-primary)] mb-4">{error}</div>
           <button
             onClick={() => router.push('/chat')}
-            className="px-6 py-2 rounded-xl bg-[#a83232] text-white hover:bg-[#8c2b2b] transition-colors"
+            className="px-6 py-3 rounded-md bg-[var(--color-primary)] text-[var(--color-text-inverse)] hover:bg-[var(--color-primary-hover)] transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] shadow-[var(--shadow-md)] hover:shadow-[var(--shadow-sm)] hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/24"
           >
             返回
           </button>
@@ -210,35 +231,37 @@ function EditProfileContent() {
   }
 
   return (
-    <main className="min-h-screen bg-[#F7F3EE] text-neutral-800 p-6 sm:p-10">
+    <main className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text-body)] p-6 sm:p-10">
       <div className="mx-auto w-full max-w-2xl">
         {/* Header */}
         <div className="mb-8">
           <button
             onClick={() => router.push(returnTo)}
-            className="text-neutral-600 hover:text-neutral-900 mb-4 flex items-center gap-2"
+            className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] mb-4 flex items-center gap-2 p-2 min-h-[44px] min-w-[44px] transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/24"
+            aria-label="返回"
           >
             <span>←</span> 返回
           </button>
-          <h1 className="text-3xl font-bold text-neutral-900">修改个人档案</h1>
-          <p className="text-neutral-600 mt-2">修改关键信息后，系统将自动重新计算命盘</p>
+          <h1 className="text-3xl font-bold text-[var(--color-text-primary)] font-serif" style={{ fontFamily: 'var(--font-display)' }}>修改个人档案</h1>
+          <p className="text-[var(--color-text-secondary)] mt-2">修改关键信息后，系统将自动重新计算命盘</p>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="bg-white rounded-3xl border border-neutral-200 p-6 sm:p-8 space-y-6">
+        <form onSubmit={handleSubmit} className="bg-[var(--color-bg-card)] rounded-lg border border-[var(--color-border)] p-6 sm:p-8 space-y-6 shadow-[var(--shadow-md)]">
           {/* 性别 */}
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">
-              性别 <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-2">
+              性别 <span className="text-[var(--color-primary)]">*</span>
             </label>
-            <div className="flex gap-3">
+            <div className="flex gap-3" role="group" aria-label="性别选择">
               <button
                 type="button"
                 onClick={() => setGender('男')}
-                className={`flex-1 py-3 px-4 rounded-xl border-2 transition-all ${
+                aria-pressed={gender === '男'}
+                className={`flex-1 py-4 px-4 rounded-md border-2 transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/24 ${
                   gender === '男'
-                    ? 'border-[#a83232] bg-[#a83232]/5 text-[#a83232] font-semibold'
-                    : 'border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300'
+                    ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5 text-[var(--color-primary)] font-semibold'
+                    : 'border-[var(--color-border)] bg-[var(--color-bg-elevated)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-strong)]'
                 }`}
               >
                 男
@@ -246,10 +269,11 @@ function EditProfileContent() {
               <button
                 type="button"
                 onClick={() => setGender('女')}
-                className={`flex-1 py-3 px-4 rounded-xl border-2 transition-all ${
+                aria-pressed={gender === '女'}
+                className={`flex-1 py-4 px-4 rounded-md border-2 transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/24 ${
                   gender === '女'
-                    ? 'border-[#a83232] bg-[#a83232]/5 text-[#a83232] font-semibold'
-                    : 'border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300'
+                    ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5 text-[var(--color-primary)] font-semibold'
+                    : 'border-[var(--color-border)] bg-[var(--color-bg-elevated)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-strong)]'
                 }`}
               >
                 女
@@ -259,17 +283,18 @@ function EditProfileContent() {
 
           {/* 历法类型 */}
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">
-              历法类型 <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-2">
+              历法类型 <span className="text-[var(--color-primary)]">*</span>
             </label>
-            <div className="flex gap-3">
+            <div className="flex gap-3" role="group" aria-label="历法类型选择">
               <button
                 type="button"
                 onClick={() => setCalendarType('公历')}
-                className={`flex-1 py-3 px-4 rounded-xl border-2 transition-all ${
+                aria-pressed={calendarType === '公历'}
+                className={`flex-1 py-4 px-4 rounded-md border-2 transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/24 ${
                   calendarType === '公历'
-                    ? 'border-[#a83232] bg-[#a83232]/5 text-[#a83232] font-semibold'
-                    : 'border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300'
+                    ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5 text-[var(--color-primary)] font-semibold'
+                    : 'border-[var(--color-border)] bg-[var(--color-bg-elevated)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-strong)]'
                 }`}
               >
                 公历
@@ -277,10 +302,11 @@ function EditProfileContent() {
               <button
                 type="button"
                 onClick={() => setCalendarType('农历')}
-                className={`flex-1 py-3 px-4 rounded-xl border-2 transition-all ${
+                aria-pressed={calendarType === '农历'}
+                className={`flex-1 py-4 px-4 rounded-md border-2 transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/24 ${
                   calendarType === '农历'
-                    ? 'border-[#a83232] bg-[#a83232]/5 text-[#a83232] font-semibold'
-                    : 'border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300'
+                    ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5 text-[var(--color-primary)] font-semibold'
+                    : 'border-[var(--color-border)] bg-[var(--color-bg-elevated)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-strong)]'
                 }`}
               >
                 农历
@@ -290,8 +316,8 @@ function EditProfileContent() {
 
           {/* 出生日期 */}
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">
-              出生日期 <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-2">
+              出生日期 <span className="text-[var(--color-primary)]">*</span>
             </label>
             <PrettyDateField
               value={birthDate}
@@ -305,8 +331,8 @@ function EditProfileContent() {
 
           {/* 出生时间 */}
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">
-              出生时间 <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-2">
+              出生时间 <span className="text-[var(--color-primary)]">*</span>
             </label>
             <IOSWheelTime
               value={birthTime}
@@ -318,24 +344,24 @@ function EditProfileContent() {
 
           {/* 出生地点 */}
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">
-              出生地点 <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-2">
+              出生地点 <span className="text-[var(--color-primary)]">*</span>
             </label>
             <input
               type="text"
               value={birthLocation}
               onChange={(e) => setBirthLocation(e.target.value)}
               placeholder="例如：北京市"
-              className="w-full px-4 py-3 rounded-xl border-2 border-neutral-200 focus:border-[#a83232] focus:outline-none transition-colors"
+              className="w-full px-4 py-3 rounded-md border-2 border-[var(--color-border)] bg-[var(--color-bg-elevated)] text-[var(--color-text-primary)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/24 transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] placeholder:text-[var(--color-text-hint)]"
             />
-            <p className="mt-1.5 text-xs text-neutral-500">
+            <p className="mt-1.5 text-xs text-[var(--color-text-muted)]">
               请输入出生城市，用于计算真太阳时
             </p>
           </div>
 
           {/* 错误提示 */}
           {error && (
-            <div className="rounded-xl bg-red-50 border border-red-200 p-4 text-sm text-red-700">
+            <div className="rounded-lg bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/30 p-4 text-sm text-[var(--color-primary)]" role="alert">
               {error}
             </div>
           )}
@@ -345,14 +371,14 @@ function EditProfileContent() {
             <button
               type="submit"
               disabled={submitting}
-              className="flex-1 py-4 px-6 rounded-xl bg-[#a83232] hover:bg-[#8c2b2b] text-white font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 py-4 px-6 rounded-md bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-text-inverse)] font-semibold transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] disabled:opacity-50 disabled:cursor-not-allowed shadow-[var(--shadow-md)] hover:shadow-[var(--shadow-sm)] hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/24 min-h-[44px]"
             >
               {submitting ? '保存中...' : '保存修改'}
             </button>
             <button
               type="button"
               onClick={() => setShowDeleteConfirm(true)}
-              className="px-6 py-4 rounded-xl border-2 border-red-500 text-red-500 hover:bg-red-50 transition-colors font-semibold"
+              className="px-6 py-4 rounded-md border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)]/5 transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/24 min-h-[44px]"
             >
               删除档案
             </button>
@@ -362,24 +388,36 @@ function EditProfileContent() {
 
       {/* 删除确认弹窗 */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-6 z-50">
-          <div className="bg-white rounded-3xl p-8 max-w-md w-full">
-            <h3 className="text-xl font-bold text-neutral-900 mb-4">确认删除档案？</h3>
-            <p className="text-neutral-600 mb-6">
+        <div
+          className="fixed inset-0 bg-[rgba(42,37,34,0.5)] flex items-center justify-center p-6 z-50"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowDeleteConfirm(false);
+          }}
+        >
+          <div
+            className="bg-[var(--color-bg-card)] rounded-lg p-8 max-w-md w-full shadow-[var(--shadow-lg)]"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-dialog-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 id="delete-dialog-title" className="text-xl font-bold text-[var(--color-text-primary)] mb-4 font-serif">确认删除档案？</h3>
+            <p className="text-[var(--color-text-secondary)] mb-6">
               删除后，您的个人档案和命盘信息将被永久删除，无法恢复。
             </p>
             <div className="flex gap-3">
               <button
+                ref={cancelButtonRef}
                 onClick={() => setShowDeleteConfirm(false)}
                 disabled={deleting}
-                className="flex-1 py-3 px-6 rounded-xl border-2 border-neutral-200 text-neutral-700 hover:bg-neutral-50 transition-colors font-semibold disabled:opacity-50"
+                className="flex-1 py-3 px-6 rounded-md border-2 border-[var(--color-border)] text-[var(--color-text-body)] hover:bg-[var(--color-bg-hover)] transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] font-semibold disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/24 min-h-[44px]"
               >
                 取消
               </button>
               <button
                 onClick={handleDelete}
                 disabled={deleting}
-                className="flex-1 py-3 px-6 rounded-xl bg-red-500 hover:bg-red-600 text-white font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 py-3 px-6 rounded-md bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-text-inverse)] font-semibold transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] disabled:opacity-50 disabled:cursor-not-allowed shadow-[var(--shadow-md)] hover:shadow-[var(--shadow-sm)] hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/24 min-h-[44px]"
               >
                 {deleting ? '删除中...' : '确认删除'}
               </button>
@@ -394,8 +432,8 @@ function EditProfileContent() {
 export default function EditProfilePage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[#F7F3EE] flex items-center justify-center">
-        <div className="text-neutral-600">加载中...</div>
+      <div className="min-h-screen bg-[var(--color-bg)] flex items-center justify-center">
+        <div className="text-[var(--color-text-secondary)]" role="status" aria-live="polite">加载中...</div>
       </div>
     }>
       <EditProfileContent />

@@ -39,10 +39,10 @@ export default function ContactPage() {
                 电子邮件
               </h3>
               <a
-                href="mailto:support@fateinsight.site"
+                href="mailto:windy46825@163.com"
                 className="text-[var(--color-primary)] hover:underline"
               >
-                support@fateinsight.site
+                windy46825@163.com
               </a>
             </div>
           </div>
