@@ -117,9 +117,9 @@ export default function Header() {
               <Image
                 src="/yifan_mobile_logo.png"
                 alt="易凡文化"
-                width={140}
-                height={140}
-                className="w-28 h-auto group-hover:scale-105 transition-transform duration-200 lg:hidden"
+                width={48}
+                height={48}
+                className="w-12 h-12 object-contain group-hover:scale-105 transition-transform duration-200 lg:hidden"
               />
               {/* Desktop logo */}
               <Image
