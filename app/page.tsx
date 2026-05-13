@@ -1,10 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Footer from "@/app/components/Footer";
-import { getAuthToken, checkProfileStatus } from "@/app/lib/auth";
 import FeatureShowcase from "@/app/components/landing/FeatureShowcase";
 import ScenarioCard from "@/app/components/landing/ScenarioCard";
 import { ArrowRight, ChevronRight } from "lucide-react";
@@ -37,42 +34,9 @@ const HERO_FEATURES = [
 ] as const;
 
 export default function LandingPage() {
-  const router = useRouter();
-  const [checking, setChecking] = useState(true);
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      const token = getAuthToken();
-      if (token) {
-        const status = await checkProfileStatus();
-        if (status) {
-          if (status.hasProfile) {
-            router.replace("/panel");
-          } else {
-            router.replace("/profile/create");
-          }
-          return;
-        }
-      }
-      setChecking(false);
-    };
-    checkAuth();
-  }, [router]);
-
   const scrollToFeatures = () => {
     document.getElementById("features-section")?.scrollIntoView({ behavior: "smooth" });
   };
-
-  if (checking) {
-    return (
-      <div
-        className="flex min-h-screen items-center justify-center"
-        style={{ background: "var(--color-bg)" }}
-      >
-        <div className="text-[var(--color-text-secondary)] text-sm">加载中…</div>
-      </div>
-    );
-  }
 
   return (
     <main className="min-h-screen" style={{ background: "var(--color-bg)" }}>

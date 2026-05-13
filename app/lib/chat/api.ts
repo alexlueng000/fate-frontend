@@ -1,4 +1,5 @@
 import { QUICK_BUTTONS } from '@/app/lib/chat/types';
+import { SYSTEM_INTRO } from '@/app/lib/chat/constants';
 
 const RAW_API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
 const API_BASE = RAW_API_BASE.replace(/\/+$/, '');
@@ -29,6 +30,26 @@ export async function fetchQuickButtons(): Promise<QuickButton[]> {
     return buttons.length > 0 ? buttons : QUICK_BUTTONS;
   } catch {
     return QUICK_BUTTONS;
+  }
+}
+
+export async function fetchBaziIntro(): Promise<string> {
+  try {
+    const resp = await fetch(api('/config/bazi_intro'), {
+      credentials: 'include',
+      cache: 'no-store',
+    });
+    if (!resp.ok) throw new Error('Failed to load bazi intro');
+
+    const data: unknown = await resp.json();
+    if (!data || typeof data !== 'object') return SYSTEM_INTRO;
+
+    const content = (data as Record<string, unknown>).content;
+    return typeof content === 'string' && content.trim().length > 0
+      ? content
+      : SYSTEM_INTRO;
+  } catch {
+    return SYSTEM_INTRO;
   }
 }
 

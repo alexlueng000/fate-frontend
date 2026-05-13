@@ -1,7 +1,7 @@
 'use client';
 import { Msg, Paipan } from '@/app/lib/chat/types';
 import { ComponentType } from 'react';
-import { Bot, User } from 'lucide-react';
+import { Bot, User, RotateCcw } from 'lucide-react';
 import { MessageRating } from './MessageRating';
 import { SimplifyButton } from './SimplifyButton';
 import { SimplifyPanel } from './SimplifyPanel';
@@ -16,6 +16,7 @@ export function MessageList({
   onSimplify,
   onSimplifyToggle,
   onQuestionClick,
+  onRegenerate,
   loading,
   containerClassName,
 }: {
@@ -27,10 +28,21 @@ export function MessageList({
   onSimplify?: (index: number) => void;
   onSimplifyToggle?: (index: number) => void;
   onQuestionClick?: (question: string) => void;
+  onRegenerate?: () => void;
   loading?: boolean;
   containerClassName?: string;
 }) {
   const baseClass = containerClassName ?? 'rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)]';
+
+  // Last assistant message that isn't the intro and isn't streaming — the only one we offer "regenerate" on.
+  let lastRegenerableIdx = -1;
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const m = messages[i];
+    if (m.role === 'assistant' && !m.streaming && m.meta?.kind !== 'intro') {
+      lastRegenerableIdx = i;
+      break;
+    }
+  }
   if (messages.length === 0) {
     return (
       <div
@@ -105,6 +117,19 @@ export function MessageList({
               {/* 操作按钮行 - 仅在AI消息且非流式状态且非开场白时显示 */}
               {isAssistant && !m.streaming && !isIntro && (
                 <div className="flex justify-end items-center gap-1 mt-1 flex-wrap">
+                  {onRegenerate && i === lastRegenerableIdx && (
+                    <button
+                      type="button"
+                      onClick={onRegenerate}
+                      disabled={loading}
+                      className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/24"
+                      title="重新解读这条回复"
+                      aria-label="重新解读这条回复"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>重新解读</span>
+                    </button>
+                  )}
                   <SimplifyButton
                     status={m.simplify?.status ?? 'idle'}
                     expanded={m.simplify?.expanded ?? false}

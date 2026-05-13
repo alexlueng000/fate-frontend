@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { MoreVertical, FileText, Edit3 } from 'lucide-react';
+import { MoreVertical, FileText, Edit3, Trash2, ChevronDown } from 'lucide-react';
 
 import Markdown from '@/app/components/Markdown';
 import { QuickActions } from '@/app/components/chat/QuickActions';
@@ -12,14 +12,13 @@ import { MiniPillars } from '@/app/components/chat/MiniPillars';
 
 import { Msg, QUICK_BUTTONS, normalizeMarkdown } from '@/app/lib/chat/types';
 import { parseSuggestedQuestions } from '@/app/lib/chat/parser';
-import { api, fetchQuickButtons, pickReply } from '@/app/lib/chat/api';
+import { api, fetchBaziIntro, fetchQuickButtons, pickReply } from '@/app/lib/chat/api';
 import { trySSE, QuotaExhaustedError } from '@/app/lib/chat/sse';
 import { QuotaBar } from '@/app/components/QuotaBar';
 import {
   saveConversation, loadConversation, getActiveConversationId,
   repairCorruptedConversations,
 } from '@/app/lib/chat/storage';
-import { SYSTEM_INTRO } from '@/app/lib/chat/constants';
 import { useUser, fetchMe } from '@/app/lib/auth';
 
 interface Profile {
@@ -38,6 +37,46 @@ interface FourPillarsData {
   hour?: string[];
 }
 
+function HeaderMenu({
+  id, onReport, onEditProfile, onClear,
+}: { id?: string; onReport: () => void; onEditProfile: () => void; onClear: () => void }) {
+  return (
+    <div
+      id={id}
+      role="menu"
+      aria-orientation="vertical"
+      className="absolute right-0 top-11 z-50 min-w-[160px] rounded-[var(--radius-lg)] overflow-hidden border border-[var(--color-border)] bg-[var(--color-bg-elevated)] shadow-[var(--shadow-lg)]"
+    >
+      <button
+        role="menuitem"
+        onClick={onReport}
+        className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] focus-visible:bg-[var(--color-bg-hover)] focus-visible:outline-none transition-colors text-left"
+      >
+        <FileText className="w-4 h-4 text-[var(--color-text-muted)] flex-shrink-0" aria-hidden />
+        查看命理报告
+      </button>
+      <div className="h-px bg-[var(--color-border)]" role="separator" />
+      <button
+        role="menuitem"
+        onClick={onEditProfile}
+        className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] focus-visible:bg-[var(--color-bg-hover)] focus-visible:outline-none transition-colors text-left"
+      >
+        <Edit3 className="w-4 h-4 text-[var(--color-text-muted)] flex-shrink-0" aria-hidden />
+        修改资料
+      </button>
+      <div className="h-px bg-[var(--color-border)]" role="separator" />
+      <button
+        role="menuitem"
+        onClick={onClear}
+        className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-[var(--color-primary)] hover:bg-[var(--color-bg-hover)] focus-visible:bg-[var(--color-bg-hover)] focus-visible:outline-none transition-colors text-left"
+      >
+        <Trash2 className="w-4 h-4 text-[var(--color-primary)] flex-shrink-0" aria-hidden />
+        清空对话
+      </button>
+    </div>
+  );
+}
+
 export default function PanelPage() {
   const router = useRouter();
 
@@ -45,7 +84,10 @@ export default function PanelPage() {
   const streamingLockRef = useRef(false);
   const lastFullRef = useRef('');
   const mountedRef = useRef(true);
-  const menuRef = useRef<HTMLDivElement>(null);
+  // Two refs: collapsed row + expanded row each render their own more-menu container.
+  // Both stay mounted (only CSS-hidden), so the outside-click handler checks both.
+  const menuRefCollapsed = useRef<HTMLDivElement>(null);
+  const menuRefExpanded = useRef<HTMLDivElement>(null);
 
   const { user: me, setUser } = useUser();
 
@@ -59,6 +101,16 @@ export default function PanelPage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [fourPillars, setFourPillars] = useState<FourPillarsData | null>(null);
   const [showMenu, setShowMenu] = useState(false);
+  // Mobile header collapse. Default collapsed on first visit to reclaim vertical space;
+  // sm+ viewports ignore this state (the summary row is hidden via CSS).
+  const [headerExpanded, setHeaderExpanded] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return window.localStorage.getItem('panel_header_expanded') === '1';
+  });
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem('panel_header_expanded', headerExpanded ? '1' : '0');
+  }, [headerExpanded]);
 
   const [qbLoading, setQbLoading] = useState(true);
   const [quickButtons, setQuickButtons] = useState<Array<{ label: string; prompt: string }>>(QUICK_BUTTONS);
@@ -79,10 +131,13 @@ export default function PanelPage() {
     return () => { mountedRef.current = false; };
   }, []);
 
-  // Close menu on outside click
+  // Close menu on outside click — check both menu containers since both stay mounted.
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setShowMenu(false);
+      const target = e.target as Node;
+      const insideCollapsed = menuRefCollapsed.current?.contains(target);
+      const insideExpanded = menuRefExpanded.current?.contains(target);
+      if (!insideCollapsed && !insideExpanded) setShowMenu(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
@@ -206,7 +261,8 @@ export default function PanelPage() {
         sessionStorage.setItem('conversation_id', cid);
         setConversationId(cid);
 
-        const introMsg: Msg = { role: 'assistant', content: SYSTEM_INTRO, meta: { kind: 'intro' } };
+        const introContent = await fetchBaziIntro();
+        const introMsg: Msg = { role: 'assistant', content: introContent, meta: { kind: 'intro' } };
         setMsgs([introMsg]);
         saveConversation(cid, [introMsg]);
       } catch (e: unknown) {
@@ -515,6 +571,8 @@ export default function PanelPage() {
   const genderLabel = profile?.gender === 'male' || profile?.gender === '男' ? '男' :
     profile?.gender === 'female' || profile?.gender === '女' ? '女' : (profile?.gender ?? '');
 
+  const dayPillar = (fourPillars?.day?.[0] || '') + (fourPillars?.day?.[1] || '');
+
   return (
     <div className="h-full flex flex-col bg-[var(--color-bg)]">
 
@@ -522,77 +580,132 @@ export default function PanelPage() {
       <header className="flex-shrink-0 border-b border-[var(--color-border)] bg-[var(--color-bg-elevated)]">
         <h1 className="sr-only">八字对话 · 当前命盘</h1>
 
-        <div className="px-4 pt-3 pb-2 flex items-start gap-3 sm:gap-4">
-          {/* Left: eyebrow + birth meta */}
-          <div className="min-w-0 flex-1">
-            <p className="font-sans text-[10px] font-medium tracking-[0.18em] uppercase text-[var(--color-text-muted)] mb-1.5">
-              当前命盘
-            </p>
+        {/* Mobile collapsed summary — single 44px row. Hidden on sm+ and when expanded on mobile. */}
+        <div className={`sm:hidden ${headerExpanded ? 'hidden' : 'flex'} items-center gap-2 px-4 h-11`}>
+          <button
+            type="button"
+            onClick={() => setHeaderExpanded(true)}
+            aria-expanded={false}
+            aria-controls="panel-header-details"
+            className="min-w-0 flex-1 flex items-center gap-2 -mx-1 px-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/24 rounded-[var(--radius-sm)]"
+          >
             {profile ? (
-              <p className="font-serif text-[13px] sm:text-[14px] leading-[1.5] text-[var(--color-text-body)] truncate">
-                <span className="text-[var(--color-text-primary)] font-medium">{genderLabel}</span>
-                <span className="mx-1.5 text-[var(--color-text-hint)]">·</span>
-                <span className="text-[var(--color-text-primary)] font-medium tabular-nums">{profile.birth_date}</span>
-                <span className="mx-1 text-[var(--color-text-hint)]">·</span>
-                <span className="text-[var(--color-text-primary)] font-medium tabular-nums">
-                  {profile.birth_time?.slice(0, 5)}
+              <>
+                <span className="font-serif text-[15px] font-medium text-[var(--color-primary)] tabular-nums flex-shrink-0">
+                  {dayPillar || '—'}
                 </span>
-                <span className="mx-1.5 text-[var(--color-text-hint)]">·</span>
-                <span className="text-[var(--color-text-secondary)]">{profile.birth_location}</span>
-              </p>
+                <span className="text-[var(--color-text-hint)] flex-shrink-0">·</span>
+                <span className="font-sans text-[13px] text-[var(--color-text-body)] truncate">
+                  {genderLabel}
+                  <span className="mx-1 text-[var(--color-text-hint)]">·</span>
+                  <span className="tabular-nums">{profile.birth_date}</span>
+                </span>
+              </>
             ) : (
-              <p className="font-sans text-xs text-[var(--color-text-muted)]">加载中…</p>
+              <span className="font-sans text-xs text-[var(--color-text-muted)]">加载中…</span>
             )}
-          </div>
+            <ChevronDown
+              className="w-4 h-4 text-[var(--color-text-muted)] flex-shrink-0 ml-auto"
+              aria-hidden
+            />
+          </button>
 
-          {/* Right: more menu */}
-          <div className="flex items-center flex-shrink-0 -mt-0.5">
-            <div className="relative" ref={menuRef}>
-              <button
-                onClick={() => setShowMenu(v => !v)}
-                onKeyDown={(e) => { if (e.key === 'Escape') setShowMenu(false); }}
-                className="w-11 h-11 flex items-center justify-center rounded-[var(--radius-md)] hover:bg-[var(--color-bg-hover)] transition-colors focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[var(--color-primary-glow)]"
-                aria-label="更多操作"
-                aria-haspopup="menu"
-                aria-expanded={showMenu}
-                aria-controls="panel-header-menu"
-              >
-                <MoreVertical className="w-4 h-4 text-[var(--color-text-secondary)]" />
-              </button>
-              {showMenu && (
-                <div
-                  id="panel-header-menu"
-                  role="menu"
-                  aria-orientation="vertical"
-                  onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); setShowMenu(false); } }}
-                  className="absolute right-0 top-11 z-50 min-w-[152px] rounded-[var(--radius-lg)] overflow-hidden border border-[var(--color-border)] bg-[var(--color-bg-elevated)] shadow-[var(--shadow-lg)]"
-                >
-                  <button
-                    role="menuitem"
-                    onClick={() => { setShowMenu(false); router.push('/report'); }}
-                    className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] focus-visible:bg-[var(--color-bg-hover)] focus-visible:outline-none transition-colors text-left"
-                  >
-                    <FileText className="w-4 h-4 text-[var(--color-text-muted)] flex-shrink-0" aria-hidden />
-                    查看命理报告
-                  </button>
-                  <div className="h-px bg-[var(--color-border)]" role="separator" />
-                  <button
-                    role="menuitem"
-                    onClick={() => { setShowMenu(false); router.push('/profile/edit?returnTo=/panel'); }}
-                    className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] focus-visible:bg-[var(--color-bg-hover)] focus-visible:outline-none transition-colors text-left"
-                  >
-                    <Edit3 className="w-4 h-4 text-[var(--color-text-muted)] flex-shrink-0" aria-hidden />
-                    修改资料
-                  </button>
-                </div>
-              )}
-            </div>
+          {/* More menu stays available in the collapsed state */}
+          <div className="relative flex-shrink-0" ref={menuRefCollapsed}>
+            <button
+              onClick={() => setShowMenu(v => !v)}
+              onKeyDown={(e) => { if (e.key === 'Escape') setShowMenu(false); }}
+              className="w-10 h-10 -mr-2 flex items-center justify-center rounded-[var(--radius-md)] hover:bg-[var(--color-bg-hover)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/24"
+              aria-label="更多操作"
+              aria-haspopup="menu"
+              aria-expanded={showMenu}
+              aria-controls="panel-header-menu-collapsed"
+            >
+              <MoreVertical className="w-4 h-4 text-[var(--color-text-secondary)]" />
+            </button>
+            {showMenu && <HeaderMenu
+              id="panel-header-menu-collapsed"
+              onReport={() => { setShowMenu(false); router.push('/report'); }}
+              onEditProfile={() => { setShowMenu(false); router.push('/profile/edit?returnTo=/panel'); }}
+              onClear={() => {
+                setShowMenu(false);
+                if (window.confirm('确认清空当前对话内容？此操作不可恢复。')) void clearChat();
+              }}
+            />}
           </div>
         </div>
 
-        {/* Pillars row sits below the meta line on every screen size */}
-        <div className="px-4 pb-3 pt-1">
-          <MiniPillars fourPillars={fourPillars} loading={!fourPillars && !!profile} />
+        {/* Expanded details — always visible on sm+, toggleable on mobile */}
+        <div
+          id="panel-header-details"
+          className={`${headerExpanded ? 'block' : 'hidden'} sm:block`}
+        >
+          <div className="px-4 pt-3 pb-2 flex items-start gap-3 sm:gap-4">
+            {/* Left: eyebrow + birth meta */}
+            <div className="min-w-0 flex-1">
+              <p className="font-sans text-[10px] font-medium tracking-[0.18em] uppercase text-[var(--color-text-muted)] mb-1.5">
+                当前命盘
+              </p>
+              {profile ? (
+                <p className="font-serif text-[13px] sm:text-[14px] leading-[1.5] text-[var(--color-text-body)] truncate">
+                  <span className="text-[var(--color-text-primary)] font-medium">{genderLabel}</span>
+                  <span className="mx-1.5 text-[var(--color-text-hint)]">·</span>
+                  <span className="text-[var(--color-text-primary)] font-medium tabular-nums">{profile.birth_date}</span>
+                  <span className="mx-1 text-[var(--color-text-hint)]">·</span>
+                  <span className="text-[var(--color-text-primary)] font-medium tabular-nums">
+                    {profile.birth_time?.slice(0, 5)}
+                  </span>
+                  <span className="mx-1.5 text-[var(--color-text-hint)]">·</span>
+                  <span className="text-[var(--color-text-secondary)]">{profile.birth_location}</span>
+                </p>
+              ) : (
+                <p className="font-sans text-xs text-[var(--color-text-muted)]">加载中…</p>
+              )}
+            </div>
+
+            {/* Right: mobile collapse trigger + more menu */}
+            <div className="flex items-center flex-shrink-0 -mt-0.5 gap-0.5">
+              {/* Collapse button — mobile only */}
+              <button
+                type="button"
+                onClick={() => setHeaderExpanded(false)}
+                className="sm:hidden w-10 h-10 flex items-center justify-center rounded-[var(--radius-md)] hover:bg-[var(--color-bg-hover)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/24"
+                aria-label="收起命盘"
+                aria-expanded
+                aria-controls="panel-header-details"
+              >
+                <ChevronDown className="w-4 h-4 text-[var(--color-text-muted)] rotate-180" />
+              </button>
+
+              <div className="relative" ref={menuRefExpanded}>
+                <button
+                  onClick={() => setShowMenu(v => !v)}
+                  onKeyDown={(e) => { if (e.key === 'Escape') setShowMenu(false); }}
+                  className="w-11 h-11 flex items-center justify-center rounded-[var(--radius-md)] hover:bg-[var(--color-bg-hover)] transition-colors focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[var(--color-primary-glow)]"
+                  aria-label="更多操作"
+                  aria-haspopup="menu"
+                  aria-expanded={showMenu}
+                  aria-controls="panel-header-menu-expanded"
+                >
+                  <MoreVertical className="w-4 h-4 text-[var(--color-text-secondary)]" />
+                </button>
+                {showMenu && <HeaderMenu
+                  id="panel-header-menu-expanded"
+                  onReport={() => { setShowMenu(false); router.push('/report'); }}
+                  onEditProfile={() => { setShowMenu(false); router.push('/profile/edit?returnTo=/panel'); }}
+                  onClear={() => {
+                    setShowMenu(false);
+                    if (window.confirm('确认清空当前对话内容？此操作不可恢复。')) void clearChat();
+                  }}
+                />}
+              </div>
+            </div>
+          </div>
+
+          {/* Pillars row sits below the meta line on every screen size */}
+          <div className="px-4 pb-3 pt-1">
+            <MiniPillars fourPillars={fourPillars} loading={!fourPillars && !!profile} />
+          </div>
         </div>
       </header>
 
@@ -608,6 +721,7 @@ export default function PanelPage() {
         onSimplify={handleSimplify}
         onSimplifyToggle={handleSimplifyToggle}
         onQuestionClick={handleQuestionClick}
+        onRegenerate={regenerate}
         loading={loading}
       />
 
@@ -650,6 +764,8 @@ export default function PanelPage() {
           onStop={() => {}}
           onClear={clearChat}
           confirmClear={true}
+          showRegenerate={false}
+          showClear={false}
           placeholder="问我一个你现在最关心的问题…"
         />
       </div>

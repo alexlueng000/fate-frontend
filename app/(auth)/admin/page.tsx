@@ -95,6 +95,13 @@ const SECTIONS: MenuSection[] = [
         tone: 'primary',
       },
       {
+        href: '/admin/config/bazi_intro',
+        icon: MessageSquare,
+        title: '八字开场白',
+        description: '八字页面首次进入时显示的欢迎语',
+        tone: 'primary',
+      },
+      {
         href: '/admin/config/report_system_prompt',
         icon: FileText,
         title: '报告页提示词',
