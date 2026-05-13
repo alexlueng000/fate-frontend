@@ -229,12 +229,19 @@ export default function PanelPage() {
       if (active) {
         const cached = loadConversation(active);
         if (cached?.length && alive) {
-          setConversationId(active);
-          setMsgs(cached.map(m =>
-            m.simplify?.status === 'loading'
+          const introContent = await fetchBaziIntro();
+          const restored = cached.map(m => {
+            const nextMsg = m.simplify?.status === 'loading'
               ? { ...m, simplify: { ...m.simplify, status: 'error' as const, error: '已中断，请重试' } }
-              : m
-          ));
+              : m;
+
+            return nextMsg.meta?.kind === 'intro'
+              ? { ...nextMsg, content: introContent }
+              : nextMsg;
+          });
+          setConversationId(active);
+          setMsgs(restored);
+          saveConversation(active, restored);
           return;
         }
       }
