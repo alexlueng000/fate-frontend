@@ -759,9 +759,6 @@ export default function PanelPage() {
           buttons={quickButtons}
           onClick={sendQuick}
         />
-        <p className="px-2 text-[12px] leading-5 text-[var(--color-text-muted)] sm:px-3">
-          内容仅供娱乐参考，请理性看待。
-        </p>
         <InputArea
           value={input}
           onChange={setInput}
@@ -778,6 +775,9 @@ export default function PanelPage() {
           showClear={false}
           placeholder="问我一个你现在最关心的问题…"
         />
+        <p className="text-center text-[12px] leading-5 text-[var(--color-text-muted)]">
+          内容仅供娱乐参考，请理性看待。
+        </p>
       </div>
     </div>
   );
