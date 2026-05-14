@@ -6,8 +6,6 @@ import Link from 'next/link';
 import { postJSON, api } from '@/app/lib/api';
 import { Mail, Lock, Eye, EyeOff, Loader2, ArrowLeft, KeyRound, Check } from 'lucide-react';
 
-const BAGUA = ['☰', '☱', '☲', '☳', '☴', '☵', '☶', '☷'];
-
 function ResetPasswordContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -30,7 +28,7 @@ function ResetPasswordContent() {
 
   const emailOk = useMemo(() => validateEmail(email), [email]);
   const codeOk = useMemo(() => /^\d{6}$/.test(code), [code]);
-  const pwOk = useMemo(() => password.length >= 6, [password]);
+  const pwOk = useMemo(() => password.length >= 8, [password]);
   const confirmOk = useMemo(
     () => confirmPassword === password && confirmPassword.length > 0,
     [password, confirmPassword]
@@ -50,7 +48,7 @@ function ResetPasswordContent() {
       return;
     }
     if (!pwOk) {
-      setErr('密码至少6位');
+      setErr('密码至少8位');
       return;
     }
     if (!confirmOk) {
@@ -78,23 +76,23 @@ function ResetPasswordContent() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="relative w-full max-w-md card p-6 text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 flex items-center justify-center">
-            <Check className="w-8 h-8 text-green-600" />
+      <div className="min-h-screen flex items-center justify-center bg-[var(--color-bg)] px-4 py-16">
+        <div className="relative w-full max-w-[26rem] card px-6 py-8 text-center">
+          <div className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-full border border-[color-mix(in_oklch,var(--color-wuxing-wood)_28%,var(--color-border))] bg-[color-mix(in_oklch,var(--color-wuxing-wood)_8%,var(--color-bg-elevated))]">
+            <Check className="h-6 w-6 text-[var(--color-wuxing-wood)]" />
           </div>
           <h1
-            className="text-xl font-bold text-[var(--color-text-primary)] mb-2"
+            className="mb-2 text-xl font-medium text-[var(--color-text-primary)]"
             style={{ fontFamily: 'var(--font-display)' }}
           >
             密码重置成功
           </h1>
-          <p className="text-sm text-[var(--color-text-muted)] mb-4">
+          <p className="mb-5 text-sm leading-6 text-[var(--color-text-muted)]">
             正在跳转到登录页面...
           </p>
           <Link
             href="/login"
-            className="text-[var(--color-gold)] hover:text-[var(--color-gold-light)] transition-colors"
+            className="btn btn-secondary w-full"
           >
             立即登录
           </Link>
@@ -104,62 +102,34 @@ function ResetPasswordContent() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background Elements */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[var(--color-primary)] rounded-full opacity-10 blur-[100px] animate-pulse-glow" />
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-[var(--color-gold)] rounded-full opacity-10 blur-[80px] animate-pulse-glow delay-500" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] opacity-[0.02] animate-rotate-slow">
-          {BAGUA.map((symbol, i) => (
-            <span
-              key={i}
-              className="absolute text-5xl text-[var(--color-gold)]"
-              style={{
-                left: '50%',
-                top: '50%',
-                transform: `rotate(${i * 45}deg) translateY(-250px) rotate(-${i * 45}deg)`,
-              }}
+    <div className="min-h-screen bg-[var(--color-bg)] px-4 py-16 sm:py-20">
+      <div className="mx-auto flex min-h-[calc(100vh-8rem)] w-full max-w-[28rem] items-center">
+        <div className="relative w-full card px-6 py-7 animate-scale-in sm:px-7 sm:py-8">
+          {/* Header */}
+          <div className="mb-6 text-center">
+            <p className="mb-2 text-[0.8125rem] font-medium tracking-[0.04em] text-[var(--color-text-muted)]">
+              账户安全
+            </p>
+            <h1
+              className="mb-2 text-xl font-medium text-[var(--color-text-primary)]"
+              style={{ fontFamily: 'var(--font-display)' }}
             >
-              {symbol}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      {/* Card */}
-      <div className="relative w-full max-w-md card p-6 animate-scale-in">
-        {/* Header */}
-        <div className="text-center mb-4">
-          <Link href="/" className="inline-flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-gold)] flex items-center justify-center shadow-lg">
-              <span
-                className="text-white text-lg font-bold"
-                style={{ fontFamily: 'var(--font-display)' }}
-              >
-                盏
-              </span>
-            </div>
-          </Link>
-          <h1
-            className="text-xl font-bold text-[var(--color-text-primary)] mb-1"
-            style={{ fontFamily: 'var(--font-display)' }}
-          >
-            重置密码
-          </h1>
-          <p className="text-xs text-[var(--color-text-muted)]">
-            输入验证码和新密码
-          </p>
-        </div>
+              重置密码
+            </h1>
+            <p className="text-sm leading-6 text-[var(--color-text-muted)]">
+              输入邮箱验证码，并设置至少 8 位的新密码
+            </p>
+          </div>
 
         {/* Error Alert */}
-        {err && (
-          <div className="mb-3 rounded-xl border border-[var(--color-primary)]/30 bg-[var(--color-primary)]/10 px-4 py-2.5 text-sm text-[var(--color-primary)]">
-            {err}
-          </div>
-        )}
+          {err && (
+            <div className="mb-4 border border-[var(--color-primary)]/30 bg-[var(--color-primary)]/10 px-4 py-3 text-sm leading-6 text-[var(--color-primary)]">
+              {err}
+            </div>
+          )}
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-3">
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-4">
           {/* Email (readonly if from query) */}
           <div>
             <label className="block text-xs text-[var(--color-text-secondary)] mb-1.5">
@@ -186,7 +156,7 @@ function ResetPasswordContent() {
             <div className="relative">
               <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
               <input
-                className="input !pl-12 tracking-[0.5em] text-center font-mono"
+                className="input !pl-12 text-center font-mono tracking-[0.5em]"
                 value={code}
                 onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                 placeholder="000000"
@@ -213,7 +183,7 @@ function ResetPasswordContent() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 type={showPw ? 'text' : 'password'}
-                placeholder="至少6位"
+                placeholder="至少8位"
                 autoComplete="new-password"
               />
               <button
@@ -226,7 +196,7 @@ function ResetPasswordContent() {
               </button>
             </div>
             {password.length > 0 && !pwOk && (
-              <p className="mt-1 text-xs text-[var(--color-primary)]">密码至少6位</p>
+              <p className="mt-1 text-xs text-[var(--color-primary)]">密码至少8位</p>
             )}
           </div>
 
@@ -255,7 +225,7 @@ function ResetPasswordContent() {
           <button
             type="submit"
             disabled={!canSubmit}
-            className="w-full btn btn-primary py-3 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full btn btn-primary py-3 text-base font-medium disabled:cursor-not-allowed disabled:opacity-50"
           >
             {submitting ? (
               <>
@@ -270,12 +240,13 @@ function ResetPasswordContent() {
           {/* Back to forgot password */}
           <Link
             href="/forgot-password"
-            className="flex items-center justify-center gap-2 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-gold)] transition-colors"
+            className="flex min-h-11 items-center justify-center gap-2 text-sm text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-text-primary)]"
           >
             <ArrowLeft className="w-4 h-4" />
             重新获取验证码
           </Link>
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   );
