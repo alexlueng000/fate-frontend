@@ -705,6 +705,9 @@ export default function LiuyaoPage() {
                     </div>
                   )}
                 </div>
+                <p className="-mt-3 text-center text-[12px] leading-5 text-[color:var(--color-text-muted)]">
+                  内容仅供娱乐参考，请理性看待。
+                </p>
               </form>
             </div>
           </div>

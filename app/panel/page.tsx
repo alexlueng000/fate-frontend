@@ -759,6 +759,9 @@ export default function PanelPage() {
           buttons={quickButtons}
           onClick={sendQuick}
         />
+        <p className="px-2 text-[12px] leading-5 text-[var(--color-text-muted)] sm:px-3">
+          内容仅供娱乐参考，请理性看待。
+        </p>
         <InputArea
           value={input}
           onChange={setInput}
