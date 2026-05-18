@@ -20,6 +20,7 @@ import { parseSuggestedQuestions, restoreStoredMessage } from '@/app/lib/chat/pa
 import { saveConversation, loadConversation } from '@/app/lib/chat/storage';
 import { QuotaExhaustedError } from '@/app/lib/chat/sse';
 import { QuotaChip } from '@/app/components/QuotaChip';
+import QuotaExhaustedDialog from '@/app/components/QuotaExhaustedDialog';
 
 const QUESTION_SCENARIOS = [
   { id: 'relationship', label: '感情关系', placeholder: '例如：我是否应该主动联系对方？' },
@@ -81,21 +82,22 @@ export default function LiuyaoPage() {
 
   const [quotaRefreshKey, setQuotaRefreshKey] = useState(0);
   const refreshLiuyaoQuota = async () => setQuotaRefreshKey((k) => k + 1);
+  const [quotaDialogOpen, setQuotaDialogOpen] = useState(false);
+  const [quotaDialogMessage, setQuotaDialogMessage] = useState('');
 
   const handleLiuyaoQuotaExhausted = (e: QuotaExhaustedError, assistantIdx: number) => {
-    const card: Msg = {
-      role: 'assistant',
-      content: `### 六爻次数已用完\n\n${e.detail}\n\n[前往充值 →](/pricing)`,
-      meta: { kind: 'quota_exhausted' },
-    };
+    // 移除正在 streaming 的助手消息
     setMsgs((prev) => {
       if (assistantIdx >= 0 && assistantIdx < prev.length) {
         const next = [...prev];
-        next[assistantIdx] = card;
+        next.splice(assistantIdx, 1);
         return next;
       }
-      return [...prev, card];
+      return prev;
     });
+    // 显示弹窗
+    setQuotaDialogMessage(e.detail);
+    setQuotaDialogOpen(true);
     void refreshLiuyaoQuota();
   };
 
@@ -1030,6 +1032,13 @@ export default function LiuyaoPage() {
           </div>
         )}
       </div>
+
+      <QuotaExhaustedDialog
+        open={quotaDialogOpen}
+        onClose={() => setQuotaDialogOpen(false)}
+        title="六爻次数已用完"
+        message={quotaDialogMessage}
+      />
     </div>
   );
 }

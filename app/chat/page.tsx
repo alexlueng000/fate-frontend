@@ -24,6 +24,7 @@ import {
 } from '@/app/lib/chat/storage';
 import { historyApi } from '@/app/lib/history/api';
 import { QuotaChip } from '@/app/components/QuotaChip';
+import QuotaExhaustedDialog from '@/app/components/QuotaExhaustedDialog';
 
 export default function ChatPage() {
   const router = useRouter();
@@ -41,6 +42,8 @@ export default function ChatPage() {
   const [quotaRefreshKey, setQuotaRefreshKey] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const mountedRef = useRef(true);
+  const [quotaDialogOpen, setQuotaDialogOpen] = useState(false);
+  const [quotaDialogMessage, setQuotaDialogMessage] = useState('');
 
   // 安全读取 conversation_id
   function readConversationId(meta: unknown): string {
@@ -323,26 +326,20 @@ export default function ChatPage() {
 
   const handleQuotaExhausted = (e: QuotaExhaustedError) => {
     setErr(null);
+    // 移除正在 streaming 的助手消息
     setMsgs((prev) => {
       const next = [...prev];
-      // 替换最后一条空助手消息为充值引导卡
       for (let i = next.length - 1; i >= 0; i--) {
         if (next[i].role === 'assistant' && next[i].streaming) {
-          next[i] = {
-            role: 'assistant',
-            content: `### 八字次数已用完\n\n${e.detail}\n\n[前往充值 →](/pricing)`,
-            meta: { kind: 'quota_exhausted' },
-          };
-          return next;
+          next.splice(i, 1);
+          break;
         }
       }
-      next.push({
-        role: 'assistant',
-        content: `### 八字次数已用完\n\n${e.detail}\n\n[前往充值 →](/pricing)`,
-        meta: { kind: 'quota_exhausted' },
-      });
       return next;
     });
+    // 显示弹窗
+    setQuotaDialogMessage(e.detail);
+    setQuotaDialogOpen(true);
     void refreshQuota();
   };
 
@@ -589,6 +586,13 @@ export default function ChatPage() {
           onRegenerate={regenerate}
         />
       </div>
+
+      <QuotaExhaustedDialog
+        open={quotaDialogOpen}
+        onClose={() => setQuotaDialogOpen(false)}
+        title="八字次数已用完"
+        message={quotaDialogMessage}
+      />
     </main>
   );
 }
