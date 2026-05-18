@@ -10,7 +10,10 @@ import {
   TrendingUp,
   AlertCircle,
   RefreshCw,
-  BarChart3
+  UserCheck,
+  Target,
+  Repeat,
+  Activity
 } from 'lucide-react';
 import {
   LineChart,
@@ -24,8 +27,7 @@ import {
   Pie,
   Cell,
   BarChart,
-  Bar,
-  Legend
+  Bar
 } from 'recharts';
 import { api } from '@/app/lib/api';
 
@@ -62,40 +64,73 @@ interface SourceData {
   [key: string]: string | number;
 }
 
-const COLORS = ['#a83232', '#e5c07b', '#22c55e', '#3b82f6', '#8b5cf6'];
+// Use design system colors for pie chart
+const PIE_COLORS = [
+  'var(--color-primary)',
+  'var(--color-gold)',
+  'var(--color-mist-deep)',
+  'var(--color-text-secondary)',
+  'var(--color-text-muted)'
+];
 
-function StatCard({
+// Primary metric card - larger, more prominent
+function PrimaryMetric({
   title,
   value,
   subValue,
-  icon: Icon,
-  color
+  icon: Icon
 }: {
   title: string;
   value: number | string;
   subValue?: string;
   icon: React.ElementType;
-  color: string;
 }) {
   return (
-    <div className="card p-6">
-      <div className="flex items-start justify-between">
-        <div>
+    <div className="card p-6 border border-[var(--color-border)]">
+      <div className="flex items-start gap-4">
+        <div className="w-10 h-10 rounded flex items-center justify-center bg-[var(--color-bg-alt)]">
+          <Icon className="w-5 h-5 text-[var(--color-text-secondary)]" />
+        </div>
+        <div className="flex-1 min-w-0">
           <p className="text-sm text-[var(--color-text-muted)] mb-1">{title}</p>
-          <p className="text-3xl font-bold text-[var(--color-text-primary)]">
+          <p
+            className="text-4xl font-medium text-[var(--color-text-primary)] mb-1"
+            style={{ fontFamily: 'var(--font-display)' }}
+          >
             {typeof value === 'number' ? value.toLocaleString() : value}
           </p>
           {subValue && (
-            <p className="text-sm text-[var(--color-text-hint)] mt-1">{subValue}</p>
+            <p className="text-sm text-[var(--color-text-secondary)]">{subValue}</p>
           )}
         </div>
-        <div
-          className="w-12 h-12 rounded-xl flex items-center justify-center"
-          style={{ backgroundColor: `${color}20`, color }}
-        >
-          <Icon className="w-6 h-6" />
-        </div>
       </div>
+    </div>
+  );
+}
+
+// Secondary metric - compact, list-style
+function SecondaryMetric({
+  label,
+  value,
+  icon: Icon
+}: {
+  label: string;
+  value: number | string;
+  icon?: React.ElementType;
+}) {
+  return (
+    <div className="flex items-center gap-3 py-3 border-b border-[var(--color-border)] last:border-b-0">
+      {Icon && (
+        <div className="w-8 h-8 rounded flex items-center justify-center bg-[var(--color-bg-alt)] flex-shrink-0">
+          <Icon className="w-4 h-4 text-[var(--color-text-muted)]" />
+        </div>
+      )}
+      <div className="flex-1 min-w-0">
+        <p className="text-sm text-[var(--color-text-secondary)]">{label}</p>
+      </div>
+      <p className="text-lg font-medium text-[var(--color-text-primary)] tabular-nums">
+        {typeof value === 'number' ? value.toLocaleString() : value}
+      </p>
     </div>
   );
 }
@@ -158,7 +193,7 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
-    // 检查管理员权限
+    // Check admin permission
     try {
       const raw = sessionStorage.getItem('me');
       if (!raw) {
@@ -181,7 +216,12 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <main className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 rounded-full border-2 border-[var(--color-gold)] border-t-transparent animate-spin" />
+        <div
+          className="w-8 h-8 rounded-full border-2 border-[var(--color-primary)] border-t-transparent animate-spin"
+          role="status"
+          aria-label="加载中"
+        />
+        <span className="sr-only">加载中...</span>
       </main>
     );
   }
@@ -201,7 +241,7 @@ export default function DashboardPage() {
             </Link>
             <div>
               <h1
-                className="text-2xl font-bold text-[var(--color-text-primary)]"
+                className="text-2xl font-medium text-[var(--color-text-primary)]"
                 style={{ fontFamily: 'var(--font-display)' }}
               >
                 数据概览
@@ -215,86 +255,161 @@ export default function DashboardPage() {
             onClick={() => fetchData(true)}
             disabled={refreshing}
             className="btn-secondary flex items-center gap-2"
+            aria-live="polite"
           >
             <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-            刷新
+            {refreshing ? '刷新中' : '刷新'}
           </button>
         </div>
 
         {error && (
-          <div className="card p-4 mb-6 border-l-4 border-red-500 bg-red-50">
-            <div className="flex items-center gap-2 text-red-700">
-              <AlertCircle className="w-5 h-5" />
-              <span>{error}</span>
+          <div
+            className="card p-4 mb-6 border border-[var(--color-primary)] bg-[var(--color-bg-elevated)]"
+            role="alert"
+            aria-live="assertive"
+          >
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-[var(--color-primary)] flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-medium text-[var(--color-text-primary)] mb-1">加载错误</p>
+                <p className="text-sm text-[var(--color-text-secondary)]">{error}</p>
+              </div>
             </div>
           </div>
         )}
 
         {overview && (
           <>
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-              <StatCard
+            {/* Primary Metrics - 2 column grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <PrimaryMetric
                 title="总用户数"
                 value={overview.users.total}
-                subValue={`今日 +${overview.users.today}`}
+                subValue={`今日新增 ${overview.users.today}`}
                 icon={Users}
-                color="#a83232"
               />
-              <StatCard
-                title="活跃用户"
-                value={overview.users.active_7d}
-                subValue="近7天登录"
-                icon={TrendingUp}
-                color="#22c55e"
-              />
-              <StatCard
+              <PrimaryMetric
                 title="总对话数"
                 value={overview.conversations.total}
-                subValue={`今日 +${overview.conversations.today}`}
+                subValue={`今日新增 ${overview.conversations.today}`}
                 icon={MessageSquare}
-                color="#3b82f6"
               />
-              <StatCard
-                title="待处理反馈"
-                value={overview.feedbacks.pending}
-                icon={AlertCircle}
-                color="#f59e0b"
-              />
+            </div>
+
+            {/* Secondary Metrics - Compact list in card */}
+            <div className="card p-6 mb-6 border border-[var(--color-border)]">
+              <h3
+                className="text-base font-medium text-[var(--color-text-primary)] mb-4"
+                style={{ fontFamily: 'var(--font-display)' }}
+              >
+                关键指标
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8">
+                <SecondaryMetric
+                  label="活跃用户（7日）"
+                  value={overview.users.active_7d}
+                  icon={TrendingUp}
+                />
+                <SecondaryMetric
+                  label="待处理反馈"
+                  value={overview.feedbacks.pending}
+                  icon={AlertCircle}
+                />
+                <SecondaryMetric
+                  label="新用户成功率"
+                  value="待接入"
+                  icon={UserCheck}
+                />
+                <SecondaryMetric
+                  label="首次解读后问率"
+                  value="待接入"
+                  icon={Target}
+                />
+                <SecondaryMetric
+                  label="7日复访率"
+                  value="待接入"
+                  icon={Repeat}
+                />
+                <SecondaryMetric
+                  label="付费转化率"
+                  value="待接入"
+                  icon={Activity}
+                />
+                <SecondaryMetric
+                  label="本周新增"
+                  value={overview.users.this_week}
+                />
+                <SecondaryMetric
+                  label="本月新增"
+                  value={overview.users.this_month}
+                />
+                <SecondaryMetric
+                  label="总消息数"
+                  value={overview.messages.total}
+                />
+              </div>
             </div>
 
             {/* Charts Row 1 */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
               {/* User Registration Trend */}
-              <div className="card p-6">
-                <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
+              <div className="card p-6 border border-[var(--color-border)]">
+                <h3
+                  className="text-base font-medium text-[var(--color-text-primary)] mb-4"
+                  style={{ fontFamily: 'var(--font-display)' }}
+                >
                   用户注册趋势（近30天）
                 </h3>
-                <div className="h-64">
+                <div className="h-64" role="img" aria-label="用户注册趋势折线图">
                   {usersTrend.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={usersTrend}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          stroke="var(--color-border)"
+                          strokeOpacity={0.5}
+                        />
                         <XAxis
                           dataKey="date"
-                          tick={{ fontSize: 12 }}
+                          tick={{
+                            fontSize: 12,
+                            fill: 'var(--color-text-muted)'
+                          }}
                           tickFormatter={(value) => value.slice(5)}
+                          stroke="var(--color-border)"
                         />
-                        <YAxis tick={{ fontSize: 12 }} />
+                        <YAxis
+                          tick={{
+                            fontSize: 12,
+                            fill: 'var(--color-text-muted)'
+                          }}
+                          stroke="var(--color-border)"
+                        />
                         <Tooltip
                           contentStyle={{
-                            backgroundColor: '#fff',
-                            border: '1px solid #e5e7eb',
-                            borderRadius: '8px',
+                            backgroundColor: 'var(--color-bg-elevated)',
+                            border: '1px solid var(--color-border)',
+                            borderRadius: 'var(--radius-md)',
+                            boxShadow: 'var(--shadow-md)',
+                            color: 'var(--color-text-primary)'
+                          }}
+                          labelStyle={{
+                            color: 'var(--color-text-secondary)',
+                            fontSize: '12px'
                           }}
                           labelFormatter={(value) => `日期: ${value}`}
                         />
                         <Line
                           type="monotone"
                           dataKey="count"
-                          stroke="#a83232"
+                          stroke="var(--color-primary)"
                           strokeWidth={2}
-                          dot={{ fill: '#a83232', strokeWidth: 2 }}
+                          dot={{
+                            fill: 'var(--color-primary)',
+                            strokeWidth: 0,
+                            r: 3
+                          }}
+                          activeDot={{ r: 5 }}
                           name="新增用户"
                         />
                       </LineChart>
@@ -308,11 +423,14 @@ export default function DashboardPage() {
               </div>
 
               {/* User Source Distribution */}
-              <div className="card p-6">
-                <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
+              <div className="card p-6 border border-[var(--color-border)]">
+                <h3
+                  className="text-base font-medium text-[var(--color-text-primary)] mb-4"
+                  style={{ fontFamily: 'var(--font-display)' }}
+                >
                   用户来源分布
                 </h3>
-                <div className="h-64">
+                <div className="h-64" role="img" aria-label="用户来源分布饼图">
                   {usersSource.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
@@ -327,21 +445,23 @@ export default function DashboardPage() {
                             return `${data.label} ${(percent * 100).toFixed(0)}%`;
                           }}
                           outerRadius={80}
-                          fill="#8884d8"
+                          fill="var(--color-primary)"
                           dataKey="count"
                         >
                           {usersSource.map((_, index) => (
                             <Cell
                               key={`cell-${index}`}
-                              fill={COLORS[index % COLORS.length]}
+                              fill={PIE_COLORS[index % PIE_COLORS.length]}
                             />
                           ))}
                         </Pie>
                         <Tooltip
                           contentStyle={{
-                            backgroundColor: '#fff',
-                            border: '1px solid #e5e7eb',
-                            borderRadius: '8px',
+                            backgroundColor: 'var(--color-bg-elevated)',
+                            border: '1px solid var(--color-border)',
+                            borderRadius: 'var(--radius-md)',
+                            boxShadow: 'var(--shadow-md)',
+                            color: 'var(--color-text-primary)'
                           }}
                           formatter={(value, _name, props) => {
                             const data = props.payload as SourceData;
@@ -360,33 +480,56 @@ export default function DashboardPage() {
             </div>
 
             {/* Charts Row 2 */}
-            <div className="card p-6">
-              <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
+            <div className="card p-6 border border-[var(--color-border)]">
+              <h3
+                className="text-base font-medium text-[var(--color-text-primary)] mb-4"
+                style={{ fontFamily: 'var(--font-display)' }}
+              >
                 对话量趋势（近7天）
               </h3>
-              <div className="h-64">
+              <div className="h-64" role="img" aria-label="对话量趋势柱状图">
                 {convTrend.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={convTrend}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke="var(--color-border)"
+                        strokeOpacity={0.5}
+                      />
                       <XAxis
                         dataKey="date"
-                        tick={{ fontSize: 12 }}
+                        tick={{
+                          fontSize: 12,
+                          fill: 'var(--color-text-muted)'
+                        }}
                         tickFormatter={(value) => value.slice(5)}
+                        stroke="var(--color-border)"
                       />
-                      <YAxis tick={{ fontSize: 12 }} />
+                      <YAxis
+                        tick={{
+                          fontSize: 12,
+                          fill: 'var(--color-text-muted)'
+                        }}
+                        stroke="var(--color-border)"
+                      />
                       <Tooltip
                         contentStyle={{
-                          backgroundColor: '#fff',
-                          border: '1px solid #e5e7eb',
-                          borderRadius: '8px',
+                          backgroundColor: 'var(--color-bg-elevated)',
+                          border: '1px solid var(--color-border)',
+                          borderRadius: 'var(--radius-md)',
+                          boxShadow: 'var(--shadow-md)',
+                          color: 'var(--color-text-primary)'
+                        }}
+                        labelStyle={{
+                          color: 'var(--color-text-secondary)',
+                          fontSize: '12px'
                         }}
                         labelFormatter={(value) => `日期: ${value}`}
                       />
                       <Bar
                         dataKey="count"
-                        fill="#e5c07b"
-                        radius={[4, 4, 0, 0]}
+                        fill="var(--color-gold)"
+                        radius={[2, 2, 0, 0]}
                         name="对话数"
                       />
                     </BarChart>
@@ -396,28 +539,6 @@ export default function DashboardPage() {
                     暂无数据
                   </div>
                 )}
-              </div>
-            </div>
-
-            {/* Additional Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-              <div className="card p-4">
-                <p className="text-sm text-[var(--color-text-muted)]">本周新增用户</p>
-                <p className="text-2xl font-bold text-[var(--color-text-primary)]">
-                  {overview.users.this_week}
-                </p>
-              </div>
-              <div className="card p-4">
-                <p className="text-sm text-[var(--color-text-muted)]">本月新增用户</p>
-                <p className="text-2xl font-bold text-[var(--color-text-primary)]">
-                  {overview.users.this_month}
-                </p>
-              </div>
-              <div className="card p-4">
-                <p className="text-sm text-[var(--color-text-muted)]">总消息数</p>
-                <p className="text-2xl font-bold text-[var(--color-text-primary)]">
-                  {overview.messages.total.toLocaleString()}
-                </p>
               </div>
             </div>
           </>
