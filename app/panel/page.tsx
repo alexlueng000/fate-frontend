@@ -15,6 +15,7 @@ import { parseSuggestedQuestions } from '@/app/lib/chat/parser';
 import { api, fetchBaziIntro, fetchQuickButtons, pickReply } from '@/app/lib/chat/api';
 import { trySSE, QuotaExhaustedError } from '@/app/lib/chat/sse';
 import { QuotaBar } from '@/app/components/QuotaBar';
+import QuotaExhaustedDialog from '@/app/components/QuotaExhaustedDialog';
 import {
   saveConversation, loadConversation, getActiveConversationId,
   repairCorruptedConversations,
@@ -115,6 +116,8 @@ export default function PanelPage() {
   const [qbLoading, setQbLoading] = useState(true);
   const [quickButtons, setQuickButtons] = useState<Array<{ label: string; prompt: string }>>(QUICK_BUTTONS);
   const [quotaRefreshKey, setQuotaRefreshKey] = useState(0);
+  const [quotaDialogOpen, setQuotaDialogOpen] = useState(false);
+  const [quotaDialogMessage, setQuotaDialogMessage] = useState('');
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -165,22 +168,20 @@ export default function PanelPage() {
 
   const handleQuotaExhausted = (e: QuotaExhaustedError) => {
     setErr(null);
+    // 移除正在 streaming 的助手消息
     setMsgs(prev => {
-      const card: Msg = {
-        role: 'assistant',
-        content: `### 八字次数已用完\n\n${e.detail}\n\n[前往充值 →](/pricing)`,
-        meta: { kind: 'quota_exhausted' },
-      };
       const next = [...prev];
       for (let i = next.length - 1; i >= 0; i--) {
         if (next[i].role === 'assistant' && next[i].streaming) {
-          next[i] = card;
-          return next;
+          next.splice(i, 1);
+          break;
         }
       }
-      next.push(card);
       return next;
     });
+    // 显示弹窗
+    setQuotaDialogMessage(e.detail);
+    setQuotaDialogOpen(true);
     void refreshQuota();
   };
 
@@ -779,6 +780,13 @@ export default function PanelPage() {
           内容仅供娱乐参考，请理性看待。
         </p>
       </div>
+
+      <QuotaExhaustedDialog
+        open={quotaDialogOpen}
+        onClose={() => setQuotaDialogOpen(false)}
+        title="八字次数已用完"
+        message={quotaDialogMessage}
+      />
     </div>
   );
 }
