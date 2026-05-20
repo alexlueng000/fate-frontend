@@ -67,10 +67,12 @@ export default function KBAdminPage() {
   const [toast, setToast] = useState<string>('');
 
   const fetchJSON = async <T,>(path: string, init?: RequestInit): Promise<T> => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
     const res = await fetch(api(path), {
       credentials: 'include',
       ...init,
       headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...(init?.headers ?? {}),
       },
     });
