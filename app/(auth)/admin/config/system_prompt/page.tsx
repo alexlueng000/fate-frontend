@@ -26,8 +26,10 @@ function parseValue(v: any): any {
 }
 
 async function getConfig(key: string): Promise<ConfigResp> {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
   const resp = await fetch(api(`/admin/config?key=${encodeURIComponent(key)}`), {
     method: 'GET',
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     credentials: 'include',
     cache: 'no-store',
   }).catch((err: unknown) => {
@@ -43,8 +45,10 @@ async function getConfig(key: string): Promise<ConfigResp> {
 }
 
 async function getRevisions(key: string, limit = 50): Promise<Revision[]> {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
   const resp = await fetch(api(`/admin/config/revisions?key=${encodeURIComponent(key)}&limit=${limit}`), {
     method: 'GET',
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     credentials: 'include',
     cache: 'no-store',
   }).catch((err: unknown) => {
@@ -56,8 +60,10 @@ async function getRevisions(key: string, limit = 50): Promise<Revision[]> {
 }
 
 async function getRevisionDetail(key: string, version: number): Promise<RevisionDetail> {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
   const resp = await fetch(api(`/admin/config/revision?key=${encodeURIComponent(key)}&version=${version}`), {
     method: 'GET',
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     credentials: 'include',
     cache: 'no-store',
   }).catch((err: unknown) => {
@@ -73,9 +79,13 @@ async function getRevisionDetail(key: string, version: number): Promise<Revision
 }
 
 async function saveConfig(key: string, value_json: any, comment?: string) {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
   const resp = await fetch(api('/admin/config/save'), {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     credentials: 'include',
     cache: 'no-store',
     body: JSON.stringify({ key, value_json, comment }),
@@ -92,9 +102,13 @@ async function saveConfig(key: string, value_json: any, comment?: string) {
 }
 
 async function rollbackConfig(key: string, version: number, comment?: string) {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
   const resp = await fetch(api('/admin/config/rollback'), {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     credentials: 'include',
     cache: 'no-store',
     body: JSON.stringify({ key, version, comment }),
