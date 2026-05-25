@@ -4,15 +4,19 @@ import { useMemo, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { loginWeb, saveAuth, useUser, checkProfileStatus } from '@/app/lib/auth';
-import { Mail, Lock, Eye, EyeOff, Loader2, Sparkles } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Loader2, Sparkles, Smartphone } from 'lucide-react';
+import PhoneLoginForm from '@/app/components/PhoneLoginForm';
 
 // 八卦符号
 const BAGUA = ['☰', '☱', '☲', '☳', '☴', '☵', '☶', '☷'];
+
+type LoginTab = 'email' | 'phone';
 
 export default function LoginClient() {
   const router = useRouter();
   const { user } = useUser();
 
+  const [activeTab, setActiveTab] = useState<LoginTab>('email');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
@@ -106,6 +110,34 @@ export default function LoginClient() {
           </p>
         </div>
 
+        {/* Tab Switcher */}
+        <div className="flex gap-2 mb-4 p-1 bg-[var(--color-bg-secondary)] rounded-lg">
+          <button
+            type="button"
+            onClick={() => setActiveTab('email')}
+            className={`flex-1 py-2 px-4 rounded text-sm font-medium transition-all ${
+              activeTab === 'email'
+                ? 'bg-white text-[var(--color-text-primary)] shadow-sm'
+                : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
+            }`}
+          >
+            <Mail className="w-4 h-4 inline-block mr-1.5 -mt-0.5" />
+            邮箱登录
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('phone')}
+            className={`flex-1 py-2 px-4 rounded text-sm font-medium transition-all ${
+              activeTab === 'phone'
+                ? 'bg-white text-[var(--color-text-primary)] shadow-sm'
+                : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
+            }`}
+          >
+            <Smartphone className="w-4 h-4 inline-block mr-1.5 -mt-0.5" />
+            手机登录
+          </button>
+        </div>
+
         {/* Error Alert */}
         {err && (
           <div className="mb-3 rounded-xl border border-[var(--color-primary)]/30 bg-[var(--color-primary)]/10 px-4 py-2.5 text-sm text-[var(--color-primary)]">
@@ -113,8 +145,9 @@ export default function LoginClient() {
           </div>
         )}
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-3">
+        {/* Email Login Form */}
+        {activeTab === 'email' && (
+          <form onSubmit={handleSubmit} className="space-y-3">
           {/* Email */}
           <div>
             <label className="block text-xs text-[var(--color-text-secondary)] mb-1.5">
@@ -201,6 +234,10 @@ export default function LoginClient() {
             </Link>
           </p>
         </form>
+        )}
+
+        {/* Phone Login Form */}
+        {activeTab === 'phone' && <PhoneLoginForm />}
       </div>
     </div>
   );

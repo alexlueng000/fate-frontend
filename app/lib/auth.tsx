@@ -111,6 +111,62 @@ export async function loginWeb(payload: { email: string; password: string }) {
   return data as LoginResp;
 }
 
+export async function sendPhoneCode(phone: string): Promise<void> {
+  const resp = await fetch(api('/auth/phone/send-code'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phone, purpose: 'login' }),
+  });
+
+  if (!resp.ok) {
+    const text = await resp.text().catch(() => '');
+    let errorMsg = '发送验证码失败';
+    if (text) {
+      try {
+        const json = JSON.parse(text);
+        errorMsg = json.detail || json.message || errorMsg;
+      } catch {
+        errorMsg = text;
+      }
+    }
+    throw new Error(errorMsg);
+  }
+}
+
+export async function loginPhone(payload: {
+  phone: string;
+  code: string;
+  nickname?: string;
+}): Promise<LoginResp> {
+  const resp = await fetch(api('/auth/phone/login'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(payload),
+  }).catch((err: unknown) => {
+    throw new Error(`网络错误：${(err as Error)?.message || '可能是 CORS/域名/协议问题'}`);
+  });
+
+  if (!resp.ok) {
+    const text = await resp.text().catch(() => '');
+    let errorMsg = '登录失败';
+    if (text) {
+      try {
+        const json = JSON.parse(text);
+        errorMsg = json.detail || json.message || errorMsg;
+      } catch {
+        errorMsg = text;
+      }
+    }
+    throw new Error(errorMsg);
+  }
+
+  const data = await resp.json().catch(() => null);
+  if (!data) throw new Error('服务器返回了无效的 JSON');
+
+  return data as LoginResp;
+}
+
 export function saveAuth(resp: LoginResp) {
   // SSR 安全检查
   if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
