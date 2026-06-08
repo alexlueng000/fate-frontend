@@ -30,6 +30,10 @@ import {
   type ConversationListItem,
   type HistoryType,
 } from '@/app/lib/history/api';
+import {
+  loadCareerTaskContext,
+  type CareerTaskContext,
+} from '@/app/lib/tasks/career';
 
 type Profile = {
   id: number;
@@ -178,10 +182,12 @@ export default function DashboardPage() {
   const [profileLoading, setProfileLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [careerTask, setCareerTask] = useState<CareerTaskContext | null>(null);
 
   useEffect(() => {
     if (routeLoading) return;
     let alive = true;
+    setCareerTask(loadCareerTaskContext());
 
     async function load() {
       setError(null);
@@ -384,22 +390,58 @@ export default function DashboardPage() {
                 先判断你是在看长期方向，还是在判断一个具体机会。长期趋势用八字，具体一事用六爻。
               </p>
             </div>
-            <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-stretch">
-              <div className="border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-4">
-                <p className="text-sm font-medium text-[var(--color-text-primary)]">看长期方向</p>
-                <p className="mt-1 text-xs leading-5 text-[var(--color-text-secondary)]">适合事业阶段、岗位类型、进取或稳定。</p>
+            <div className="grid gap-3">
+              {careerTask && (
+                <div className="border border-[var(--color-primary)]/25 bg-[var(--color-bg-elevated)] p-4">
+                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-xs font-medium tracking-[0.04em] text-[var(--color-primary)]">
+                      正在处理的事业任务
+                    </p>
+                    <span className="text-xs text-[var(--color-text-muted)]">
+                      {careerTask.mode === 'bazi' ? '八字长期方向' : '六爻具体事项'}
+                    </span>
+                  </div>
+                  <h3 className="text-sm font-medium leading-6 text-[var(--color-text-primary)]">
+                    {careerTask.title}
+                  </h3>
+                  <p className="mt-1 text-xs leading-5 text-[var(--color-text-secondary)]">
+                    {careerTask.nextAction}
+                  </p>
+                  <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                    <Link
+                      href={careerTask.href}
+                      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[3px] bg-[var(--color-primary)] px-4 text-sm font-medium text-[var(--color-text-inverse)] transition-colors hover:bg-[var(--color-primary-hover)] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)]"
+                    >
+                      继续这个任务
+                      <ArrowRight className="h-4 w-4" strokeWidth={1.6} />
+                    </Link>
+                    <Link
+                      href="/career"
+                      className="inline-flex min-h-11 items-center justify-center rounded-[3px] px-4 text-sm font-medium text-[var(--color-primary)] transition-colors hover:bg-[var(--color-bg-hover)] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)]"
+                    >
+                      重新分诊
+                    </Link>
+                  </div>
+                </div>
+              )}
+
+              <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-stretch">
+                <div className="border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-4">
+                  <p className="text-sm font-medium text-[var(--color-text-primary)]">看长期方向</p>
+                  <p className="mt-1 text-xs leading-5 text-[var(--color-text-secondary)]">适合事业阶段、岗位类型、进取或稳定。</p>
+                </div>
+                <div className="border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-4">
+                  <p className="text-sm font-medium text-[var(--color-text-primary)]">判断具体选择</p>
+                  <p className="mt-1 text-xs leading-5 text-[var(--color-text-secondary)]">适合 offer、合作、跳槽时机等具体事项。</p>
+                </div>
+                <Link
+                  href="/career"
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[3px] border border-[var(--color-border-strong)] bg-[var(--color-bg-elevated)] px-4 text-sm font-medium text-[var(--color-primary)] transition-colors hover:bg-[var(--color-bg-hover)] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)] sm:min-w-[120px]"
+                >
+                  开始分诊
+                  <ArrowRight className="h-4 w-4" strokeWidth={1.6} />
+                </Link>
               </div>
-              <div className="border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-4">
-                <p className="text-sm font-medium text-[var(--color-text-primary)]">判断具体选择</p>
-                <p className="mt-1 text-xs leading-5 text-[var(--color-text-secondary)]">适合 offer、合作、跳槽时机等具体事项。</p>
-              </div>
-              <Link
-                href="/career"
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[3px] border border-[var(--color-border-strong)] bg-[var(--color-bg-elevated)] px-4 text-sm font-medium text-[var(--color-primary)] transition-colors hover:bg-[var(--color-bg-hover)] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)] sm:min-w-[120px]"
-              >
-                开始分诊
-                <ArrowRight className="h-4 w-4" strokeWidth={1.6} />
-              </Link>
             </div>
           </div>
         </section>
