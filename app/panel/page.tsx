@@ -121,6 +121,12 @@ export default function PanelPage() {
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const prompt = params.get('prompt');
+    if (prompt) setInput(prompt);
+  }, []);
+
   // ===== Helpers =====
   const isRecord = (v: unknown): v is Record<string, unknown> =>
     typeof v === 'object' && v !== null;
@@ -430,7 +436,7 @@ export default function PanelPage() {
           streamingLockRef.current = false;
           await sendStream(content, false);
           return;
-        } catch (retryError) {
+        } catch {
           // If retry fails, fall through to sendOnce
         }
       }

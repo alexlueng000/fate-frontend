@@ -49,8 +49,8 @@ type DashboardData = {
 
 type FocusKey = 'career' | 'relationship' | 'wealth' | 'self' | 'year';
 
-const BAZI_ENTRIES: Array<{ key: FocusKey; label: string; hint: string; icon: typeof BriefcaseBusiness }> = [
-  { key: 'career', label: '事业阶段', hint: '看长期方向与当下节奏', icon: BriefcaseBusiness },
+const BAZI_ENTRIES: Array<{ key: FocusKey; label: string; hint: string; icon: typeof BriefcaseBusiness; href?: string }> = [
+  { key: 'career', label: '事业阶段', hint: '看长期方向与当下节奏', icon: BriefcaseBusiness, href: '/career' },
   { key: 'relationship', label: '感情模式', hint: '看关系里的重复倾向', icon: Heart },
   { key: 'wealth', label: '财运节奏', hint: '看资源流动与取舍', icon: WalletCards },
   { key: 'self', label: '个人优势', hint: '看天性、能力与适合位置', icon: Sparkles },
@@ -362,6 +362,42 @@ export default function DashboardPage() {
           )}
         </section>
 
+        <section className="mt-4 border border-[var(--color-border-strong)] bg-[var(--color-bg-elevated)] p-5 sm:p-6">
+          <div className="grid gap-5 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
+            <div>
+              <div className="mb-3 flex items-center gap-2 text-sm font-medium text-[var(--color-text-secondary)]">
+                <BriefcaseBusiness className="h-4 w-4 text-[var(--color-primary)]" strokeWidth={1.6} />
+                事业选择
+              </div>
+              <h2 className="font-serif text-xl font-medium leading-snug text-[var(--color-text-primary)]">
+                正在纠结工作或事业选择？
+              </h2>
+              <p className="mt-3 max-w-[52ch] text-[16px] leading-7 text-[var(--color-text-body)]">
+                先判断你是在看长期方向，还是在判断一个具体机会。长期趋势用八字，具体一事用六爻。
+              </p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+              <div className="grid gap-px border border-[var(--color-border)] bg-[var(--color-border)] sm:grid-cols-2">
+                <div className="bg-[var(--color-bg)] p-4">
+                  <p className="text-sm font-medium text-[var(--color-text-primary)]">看长期方向</p>
+                  <p className="mt-1 text-xs leading-5 text-[var(--color-text-secondary)]">适合事业阶段、岗位类型、进取或稳定。</p>
+                </div>
+                <div className="bg-[var(--color-bg)] p-4">
+                  <p className="text-sm font-medium text-[var(--color-text-primary)]">判断具体选择</p>
+                  <p className="mt-1 text-xs leading-5 text-[var(--color-text-secondary)]">适合 offer、合作、跳槽时机等具体事项。</p>
+                </div>
+              </div>
+              <Link
+                href="/career"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[3px] bg-[var(--color-primary)] px-4 text-sm font-medium text-[var(--color-text-inverse)] transition-colors hover:bg-[var(--color-primary-hover)] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)]"
+              >
+                开始分诊
+                <ArrowRight className="h-4 w-4" strokeWidth={1.6} />
+              </Link>
+            </div>
+          </div>
+        </section>
+
         <section className="mt-4 grid gap-4 lg:grid-cols-2">
           <div className="border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-5 sm:p-6">
             <div className="mb-4 flex items-center justify-between gap-3">
@@ -372,10 +408,10 @@ export default function DashboardPage() {
               <MessageSquare className="h-5 w-5 text-[var(--color-text-muted)]" strokeWidth={1.6} />
             </div>
             <div className="grid gap-2 sm:grid-cols-2">
-              {BAZI_ENTRIES.map(({ label, hint, icon: Icon }) => (
+              {BAZI_ENTRIES.map(({ label, hint, icon: Icon, href }) => (
                 <Link
                   key={label}
-                  href="/panel"
+                  href={href || '/panel'}
                   className="group min-h-[72px] border border-[var(--color-border)] bg-[var(--color-bg)] px-4 py-3 transition-colors hover:border-[var(--color-border-strong)] hover:bg-[var(--color-bg-hover)] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)]"
                 >
                   <span className="flex items-center gap-2 text-sm font-medium text-[var(--color-text-primary)]">

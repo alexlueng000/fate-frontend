@@ -85,6 +85,16 @@ export default function LiuyaoPage() {
   const [quotaDialogOpen, setQuotaDialogOpen] = useState(false);
   const [quotaDialogMessage, setQuotaDialogMessage] = useState('');
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const questionParam = params.get('question');
+    const scenarioParam = params.get('scenario');
+    if (questionParam) setQuestion(questionParam);
+    if (scenarioParam && QUESTION_SCENARIOS.some((item) => item.id === scenarioParam)) {
+      setSelectedScenario(scenarioParam);
+    }
+  }, []);
+
   const handleLiuyaoQuotaExhausted = (e: QuotaExhaustedError, assistantIdx: number) => {
     // 移除正在 streaming 的助手消息
     setMsgs((prev) => {
