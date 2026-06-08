@@ -51,6 +51,18 @@ type DashboardData = {
   liuyaoItems: ConversationListItem[];
 };
 
+type TodayLunarInfo = {
+  solar_date: string;
+  lunar_date: string;
+  ganzhi: {
+    year: string;
+    month: string;
+    day: string;
+  };
+  weekday: string;
+  display: string;
+};
+
 type FocusKey = 'career' | 'relationship' | 'wealth' | 'self' | 'year';
 
 const BAZI_ENTRIES: Array<{ key: FocusKey; label: string; hint: string; icon: typeof BriefcaseBusiness; href?: string }> = [
@@ -193,6 +205,7 @@ export default function DashboardPage() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [careerTask, setCareerTask] = useState<CareerTaskContext | null>(null);
+  const [todayLunar, setTodayLunar] = useState<TodayLunarInfo | null>(null);
 
   useEffect(() => {
     if (routeLoading) return;
@@ -217,6 +230,17 @@ export default function DashboardPage() {
         })
         .finally(() => {
           if (alive) setProfileLoading(false);
+        });
+
+      fetch(api('/bazi/today_lunar'), { credentials: 'include' })
+        .then(async (resp) => {
+          if (!resp.ok) throw new Error('today lunar load failed');
+          const info = await resp.json();
+          if (!alive) return;
+          setTodayLunar(info);
+        })
+        .catch(() => {
+          if (alive) setTodayLunar(null);
         });
 
       setHistoryLoading(true);
@@ -311,6 +335,12 @@ export default function DashboardPage() {
                 <h2 className="mt-1 font-serif text-[1.35rem] font-medium leading-snug text-[var(--color-text-primary)] sm:text-2xl">
                   {focus.label === '节律' ? '先整理，再行动' : `${focus.label}与节奏`}
                 </h2>
+                {todayLunar && (
+                  <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs leading-5 text-[var(--color-text-muted)]">
+                    <CalendarDays className="h-3.5 w-3.5 text-[var(--color-text-muted)]" strokeWidth={1.6} />
+                    <span>{todayLunar.display}</span>
+                  </div>
+                )}
                 <p className="mt-2 max-w-[50ch] text-[15px] leading-7 text-[var(--color-text-body)]">
                   {focus.sentence}
                 </p>
