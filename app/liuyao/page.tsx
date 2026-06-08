@@ -89,17 +89,22 @@ export default function LiuyaoPage() {
   const [quotaDialogOpen, setQuotaDialogOpen] = useState(false);
   const [quotaDialogMessage, setQuotaDialogMessage] = useState('');
   const [taskContext, setTaskContext] = useState<CareerTaskContext | null>(null);
+  const [autoStartAfterPaipan, setAutoStartAfterPaipan] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const questionParam = params.get('question');
     const scenarioParam = params.get('scenario');
     const taskParam = params.get('task');
+    const modeParam = params.get('mode');
     if (questionParam) setQuestion(questionParam);
     if (scenarioParam && QUESTION_SCENARIOS.some((item) => item.id === scenarioParam)) {
       setSelectedScenario(scenarioParam);
     }
-    if (taskParam === 'career') setTaskContext(loadCareerTaskContext());
+    if (taskParam === 'career') {
+      setTaskContext(loadCareerTaskContext());
+      if (modeParam === 'liuyao') setAutoStartAfterPaipan(true);
+    }
   }, []);
 
   const handleLiuyaoQuotaExhausted = (e: QuotaExhaustedError, assistantIdx: number) => {
@@ -200,7 +205,7 @@ export default function LiuyaoPage() {
   }, []);
 
   useEffect(() => {
-    if (restoringFromHistory) return;
+    if (restoringFromHistory || conversationId || booting) return;
     if (!result?.hexagram_id) {
       setConversationId(null);
       setMsgs([]);
@@ -219,7 +224,7 @@ export default function LiuyaoPage() {
     } catch {}
     setConversationId(null);
     setMsgs([]);
-  }, [result?.hexagram_id, restoringFromHistory]);
+  }, [result?.hexagram_id, restoringFromHistory, conversationId, booting]);
 
   useEffect(() => {
     if (conversationId) saveConversation(conversationId, msgs, { setActive: false });
@@ -266,6 +271,10 @@ export default function LiuyaoPage() {
       setConversationId(null);
       setMsgs([]);
       setInput('');
+      if (autoStartAfterPaipan) {
+        setLoading(false);
+        await handleStartChat(hexagram);
+      }
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : '排盘失败，请重试';
       console.error('排盘失败:', error);
@@ -286,8 +295,8 @@ export default function LiuyaoPage() {
     });
   };
 
-  const handleStartChat = async () => {
-    if (!result?.hexagram_id) return;
+  const handleStartChat = async (targetHexagram = result) => {
+    if (!targetHexagram?.hexagram_id) return;
     setBooting(true);
 
     let assistantIdx = -1;
@@ -299,7 +308,7 @@ export default function LiuyaoPage() {
 
     try {
       await liuyaoApi.startChat(
-        result.hexagram_id,
+        targetHexagram.hexagram_id,
         (delta) => {
           setMsgs((prev) => {
             const next = [...prev];
@@ -311,10 +320,10 @@ export default function LiuyaoPage() {
         },
         (meta) => {
           const cid = readConvId(meta);
-          if (cid && result?.hexagram_id) {
+          if (cid && targetHexagram.hexagram_id) {
             setConversationId(cid);
             try {
-              localStorage.setItem(LIUYAO_ACTIVE_CONV_KEY(result.hexagram_id), cid);
+              localStorage.setItem(LIUYAO_ACTIVE_CONV_KEY(targetHexagram.hexagram_id), cid);
             } catch {}
           }
         },

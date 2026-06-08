@@ -14,7 +14,9 @@ import {
 import { useRouteGuard } from '@/app/lib/useRouteGuard';
 import {
   buildCareerTaskHref,
+  buildCareerBaziPrompt,
   createCareerTaskContext,
+  savePendingCareerBaziPrompt,
   saveCareerTaskContext,
   type CareerTaskDraft,
   type CareerTaskMode,
@@ -70,6 +72,9 @@ export default function CareerTaskPage() {
   const startTask = () => {
     const context = createCareerTaskContext(draft);
     saveCareerTaskContext(context);
+    if (draft.mode === 'bazi') {
+      savePendingCareerBaziPrompt(buildCareerBaziPrompt(draft));
+    }
     router.push(buildCareerTaskHref(draft));
   };
 

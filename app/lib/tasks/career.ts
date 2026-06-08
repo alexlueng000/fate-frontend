@@ -20,6 +20,7 @@ export type CareerTaskContext = {
 };
 
 const CAREER_TASK_KEY = 'task:career:latest';
+const CAREER_PENDING_BAZI_PROMPT_KEY = 'task:career:pending_bazi_prompt';
 
 function clean(value: string) {
   return value.trim().replace(/\s+/g, ' ');
@@ -70,8 +71,7 @@ export function buildCareerLiuyaoQuestion(draft: CareerTaskDraft) {
 
 export function buildCareerTaskHref(draft: CareerTaskDraft) {
   if (draft.mode === 'bazi') {
-    const prompt = buildCareerBaziPrompt(draft);
-    return `/panel?task=career&mode=bazi&prompt=${encodeURIComponent(prompt)}`;
+    return '/panel?task=career&mode=bazi&auto=1';
   }
 
   const question = buildCareerLiuyaoQuestion(draft);
@@ -104,6 +104,22 @@ export function saveCareerTaskContext(context: CareerTaskContext) {
   try {
     localStorage.setItem(CAREER_TASK_KEY, JSON.stringify(context));
   } catch {}
+}
+
+export function savePendingCareerBaziPrompt(prompt: string) {
+  try {
+    sessionStorage.setItem(CAREER_PENDING_BAZI_PROMPT_KEY, prompt);
+  } catch {}
+}
+
+export function takePendingCareerBaziPrompt(): string | null {
+  try {
+    const prompt = sessionStorage.getItem(CAREER_PENDING_BAZI_PROMPT_KEY);
+    sessionStorage.removeItem(CAREER_PENDING_BAZI_PROMPT_KEY);
+    return prompt && prompt.trim().length > 0 ? prompt : null;
+  } catch {
+    return null;
+  }
 }
 
 export function loadCareerTaskContext(): CareerTaskContext | null {

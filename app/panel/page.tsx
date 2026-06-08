@@ -22,6 +22,7 @@ import {
 } from '@/app/lib/chat/storage';
 import {
   loadCareerTaskContext,
+  takePendingCareerBaziPrompt,
   type CareerTaskContext,
 } from '@/app/lib/tasks/career';
 import { useUser, fetchMe } from '@/app/lib/auth';
@@ -89,6 +90,8 @@ export default function PanelPage() {
   const streamingLockRef = useRef(false);
   const lastFullRef = useRef('');
   const mountedRef = useRef(true);
+  const autoTaskStartedRef = useRef(false);
+  const pendingAutoPromptRef = useRef<string | null>(null);
   // Two refs: collapsed row + expanded row each render their own more-menu container.
   // Both stay mounted (only CSS-hidden), so the outside-click handler checks both.
   const menuRefCollapsed = useRef<HTMLDivElement>(null);
@@ -128,10 +131,14 @@ export default function PanelPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const prompt = params.get('prompt');
     const task = params.get('task');
-    if (prompt) setInput(prompt);
-    if (task === 'career') setTaskContext(loadCareerTaskContext());
+    const auto = params.get('auto');
+    if (task === 'career') {
+      setTaskContext(loadCareerTaskContext());
+      if (auto === '1') {
+        pendingAutoPromptRef.current = takePendingCareerBaziPrompt();
+      }
+    }
   }, []);
 
   // ===== Helpers =====
@@ -356,13 +363,18 @@ export default function PanelPage() {
   };
 
   // ===== Send / Stream =====
-  const sendOnce = async (content: string, retryOnSessionLost = true) => {
+  const sendOnce = async (content: string, retryOnSessionLost = true, displayMessage?: string) => {
     const token = localStorage.getItem('auth_token');
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = `Bearer ${token}`;
     const res = await fetch(api('/chat'), {
       method: 'POST', headers,
-      body: JSON.stringify({ conversation_id: conversationId, message: content, task_context: taskContext }),
+      body: JSON.stringify({
+        conversation_id: conversationId,
+        message: content,
+        display_message: displayMessage,
+        task_context: taskContext,
+      }),
     });
     if (!res.ok) {
       const errorText = await res.text();
@@ -372,7 +384,12 @@ export default function PanelPage() {
         // Retry with new conversation_id
         const retryRes = await fetch(api('/chat'), {
           method: 'POST', headers,
-          body: JSON.stringify({ conversation_id: newCid, message: content, task_context: taskContext }),
+          body: JSON.stringify({
+            conversation_id: newCid,
+            message: content,
+            display_message: displayMessage,
+            task_context: taskContext,
+          }),
         });
         if (!retryRes.ok) throw new Error(await retryRes.text());
         return pickReply(await retryRes.json()).trim();
@@ -382,7 +399,7 @@ export default function PanelPage() {
     return pickReply(await res.json()).trim();
   };
 
-  const sendStream = async (content: string, retryOnSessionLost = true) => {
+  const sendStream = async (content: string, retryOnSessionLost = true, displayMessage?: string) => {
     if (!conversationId) throw new Error('缺少会话，请刷新页面重试');
     if (streamingLockRef.current) return;
     streamingLockRef.current = true;
@@ -409,7 +426,12 @@ export default function PanelPage() {
     try {
       await trySSE(
         api('/chat'),
-        { conversation_id: conversationId, message: content, task_context: taskContext },
+        {
+          conversation_id: conversationId,
+          message: content,
+          display_message: displayMessage,
+          task_context: taskContext,
+        },
         replace,
         (meta) => {
           const cid = hasConversationId(meta) ? meta.conversation_id : '';
@@ -441,14 +463,14 @@ export default function PanelPage() {
           await reinitSession();
           // Retry once with new session
           streamingLockRef.current = false;
-          await sendStream(content, false);
+          await sendStream(content, false, displayMessage);
           return;
         } catch {
           // If retry fails, fall through to sendOnce
         }
       }
 
-      const full = await sendOnce(content, false);
+      const full = await sendOnce(content, false, displayMessage);
       setMsgs(prev => {
         if (myIndex < 0 || myIndex >= prev.length) return prev;
         const next = [...prev];
@@ -478,6 +500,34 @@ export default function PanelPage() {
     }
     finally { setLoading(false); }
   };
+
+  const sendHiddenTaskPrompt = async (content: string, displayMessage: string) => {
+    if (!conversationId || streamingLockRef.current) return;
+    setErr(null);
+    setMsgs(m => [...m, { role: 'user', content: displayMessage }]);
+    setLoading(true);
+    try {
+      await sendStream(content, true, displayMessage);
+      void refreshQuota();
+    } catch (e: unknown) {
+      if (e instanceof QuotaExhaustedError) handleQuotaExhausted(e);
+      else setErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (autoTaskStartedRef.current || !conversationId || booting || loading) return;
+    const prompt = pendingAutoPromptRef.current;
+    if (!prompt || !taskContext || taskContext.mode !== 'bazi') return;
+
+    autoTaskStartedRef.current = true;
+    pendingAutoPromptRef.current = null;
+    const visibleMessage = taskContext.title || '事业选择分析';
+    void sendHiddenTaskPrompt(prompt, visibleMessage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [booting, conversationId, loading, taskContext]);
 
   const onKeyDown = (ev: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); if (canSend) void send(); }
