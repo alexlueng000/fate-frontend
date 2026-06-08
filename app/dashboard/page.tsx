@@ -142,6 +142,22 @@ function LoadingView() {
   );
 }
 
+function RecentLoading() {
+  return (
+    <div className="border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-5 sm:p-6">
+      <div className="mb-4 flex items-center gap-2 text-sm font-medium text-[var(--color-text-secondary)]">
+        <RefreshCw className="h-4 w-4 text-[var(--color-primary)]" strokeWidth={1.6} />
+        正在读取上次的问题
+      </div>
+      <div className="space-y-3">
+        <div className="h-5 w-40 bg-[var(--color-bg-hover)]" />
+        <div className="h-4 w-full max-w-xl bg-[var(--color-bg-hover)]" />
+        <div className="h-4 w-3/4 bg-[var(--color-bg-hover)]" />
+      </div>
+    </div>
+  );
+}
+
 function EmptyRecent() {
   return (
     <div className="border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-5">
@@ -157,9 +173,10 @@ function EmptyRecent() {
 }
 
 export default function DashboardPage() {
-  const routeLoading = useRouteGuard(true, true);
+  const routeLoading = useRouteGuard(true, false);
   const [data, setData] = useState<DashboardData>({ profile: null, baziItems: [], liuyaoItems: [] });
-  const [loading, setLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -167,30 +184,44 @@ export default function DashboardPage() {
     let alive = true;
 
     async function load() {
-      setLoading(true);
       setError(null);
-      try {
-        const token = getAuthToken();
-        const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
-        const [profileResp, bazi, liuyao] = await Promise.all([
-          fetch(api('/profile/me'), { headers, credentials: 'include' }),
-          historyApi.list('bazi', 0, 4),
-          historyApi.list('liuyao', 0, 4),
-        ]);
+      const token = getAuthToken();
+      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
 
-        if (!profileResp.ok) throw new Error('档案加载失败');
-        const profile = await profileResp.json();
-        if (!alive) return;
-        setData({
-          profile,
-          baziItems: bazi.items,
-          liuyaoItems: liuyao.items,
+      setProfileLoading(true);
+      fetch(api('/profile/me'), { headers, credentials: 'include' })
+        .then(async (profileResp) => {
+          if (!profileResp.ok) throw new Error('档案加载失败');
+          const profile = await profileResp.json();
+          if (!alive) return;
+          setData((current) => ({ ...current, profile }));
+        })
+        .catch((e) => {
+          if (alive) setError(e instanceof Error ? e.message : '档案加载失败');
+        })
+        .finally(() => {
+          if (alive) setProfileLoading(false);
         });
-      } catch (e) {
-        if (alive) setError(e instanceof Error ? e.message : '命理首页加载失败');
-      } finally {
-        if (alive) setLoading(false);
-      }
+
+      setHistoryLoading(true);
+      Promise.all([
+        historyApi.list('bazi', 0, 4),
+        historyApi.list('liuyao', 0, 4),
+      ])
+        .then(([bazi, liuyao]) => {
+          if (!alive) return;
+          setData((current) => ({
+            ...current,
+            baziItems: bazi.items,
+            liuyaoItems: liuyao.items,
+          }));
+        })
+        .catch((e) => {
+          if (alive) setError(e instanceof Error ? e.message : '记录加载失败');
+        })
+        .finally(() => {
+          if (alive) setHistoryLoading(false);
+        });
     }
 
     void load();
@@ -208,7 +239,7 @@ export default function DashboardPage() {
     [data.baziItems, data.liuyaoItems],
   );
 
-  if (routeLoading || loading) return <LoadingView />;
+  if (routeLoading) return <LoadingView />;
 
   return (
     <main className="min-h-full bg-[var(--color-bg)] px-4 pb-24 pt-5 sm:px-8 sm:pb-10 sm:pt-7">
@@ -229,8 +260,12 @@ export default function DashboardPage() {
                 <div>{data.profile.display_info || data.profile.birth_location}</div>
                 {dayMaster && <div>日主：{dayMaster}</div>}
               </>
+            ) : profileLoading ? (
+              <div>正在读取你的默认档案</div>
             ) : (
-              <div>已读取你的默认档案</div>
+              <Link href="/profile/create" className="text-[var(--color-primary)] hover:underline">
+                完善个人档案
+              </Link>
             )}
           </div>
         </header>
@@ -284,7 +319,9 @@ export default function DashboardPage() {
         </section>
 
         <section className="grid gap-4">
-          {latest ? (
+          {historyLoading ? (
+            <RecentLoading />
+          ) : latest ? (
             <div className="border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-5 sm:p-6">
               <div className="mb-4 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2 text-sm font-medium text-[var(--color-text-secondary)]">
@@ -389,7 +426,11 @@ export default function DashboardPage() {
             </Link>
           </div>
 
-          {recentItems.length ? (
+          {historyLoading ? (
+            <div className="border border-[var(--color-border)] bg-[var(--color-bg)] p-5 text-sm leading-6 text-[var(--color-text-secondary)]">
+              正在读取最近记录
+            </div>
+          ) : recentItems.length ? (
             <div className="divide-y divide-[var(--color-border)] border-y border-[var(--color-border)]">
               {recentItems.map(({ item, type }) => {
                 const Icon = type === 'bazi' ? FileText : Compass;
