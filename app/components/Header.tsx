@@ -90,6 +90,7 @@ export default function Header() {
   ];
 
   const MOBILE_APP_LINKS: MobileNavLink[] = [
+    { href: '/dashboard', label: '今日工作台', icon: LayoutDashboard },
     { href: '/report', label: '命理报告', icon: FileText },
     { href: '/panel', label: '八字对话', icon: LayoutDashboard },
     { href: '/history', label: '解读记录', icon: History },
@@ -158,9 +159,9 @@ export default function Header() {
             ) : (
               <>
                 {/* 个人中心 — icon only on md, text on lg+ */}
-                <Link href="/panel" className={outlineBtnClass} title="个人中心">
+                <Link href="/dashboard" className={outlineBtnClass} title="今日工作台">
                   <LayoutDashboard className="w-4 h-4 shrink-0" />
-                  <span className="hidden lg:inline">个人中心</span>
+                  <span className="hidden lg:inline">工作台</span>
                 </Link>
 
                 {/* 管理后台 — icon only on md, text on lg+ */}
@@ -196,6 +197,15 @@ export default function Header() {
                       aria-label="用户菜单"
                       className="absolute right-0 mt-2 w-48 overflow-hidden rounded-[var(--radius-lg)] card animate-scale-in shadow-lg"
                     >
+                      <Link
+                        href="/dashboard"
+                        role="menuitem"
+                        className="flex items-center gap-3 px-4 py-3 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        <LayoutDashboard className="w-4 h-4 shrink-0" />
+                        今日工作台
+                      </Link>
                       <Link
                         href="/profile/edit"
                         role="menuitem"

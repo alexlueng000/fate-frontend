@@ -1,4 +1,4 @@
-import { FileText, MessageSquare, BookOpen, Dices, History } from 'lucide-react';
+import { FileText, MessageSquare, BookOpen, Dices, History, LayoutDashboard } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 export type NavItem = {
@@ -10,6 +10,7 @@ export type NavItem = {
 
 // Primary 功能导航
 export const PRIMARY_NAV: NavItem[] = [
+  { href: '/dashboard', Icon: LayoutDashboard, shortLabel: '工作台', longLabel: '今日工作台' },
   { href: '/panel',  Icon: MessageSquare, shortLabel: '八字',   longLabel: '八字对话' },
   { href: '/xinji',  Icon: BookOpen,      shortLabel: '心镜灯', longLabel: '心镜灯'   },
   { href: '/liuyao', Icon: Dices,         shortLabel: '六爻',   longLabel: '六爻玄机' },
