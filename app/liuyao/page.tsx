@@ -295,7 +295,7 @@ export default function LiuyaoPage() {
     });
   };
 
-  const handleStartChat = async (targetHexagram = result) => {
+  const handleStartChat = async (targetHexagram: HexagramDetail | null = result) => {
     if (!targetHexagram?.hexagram_id) return;
     setBooting(true);
 
@@ -969,7 +969,7 @@ export default function LiuyaoPage() {
                     </p>
                     <button
                       type="button"
-                      onClick={handleStartChat}
+                      onClick={() => void handleStartChat()}
                       disabled={booting}
                       className="btn btn-primary"
                     >
