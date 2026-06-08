@@ -16,6 +16,7 @@ import {
   History,
   Loader2,
   MessageSquare,
+  Moon,
   RefreshCw,
   Sparkles,
   WalletCards,
@@ -134,7 +135,7 @@ function LoadingView() {
       <div className="mx-auto flex min-h-[55vh] max-w-6xl items-center justify-center">
         <div className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)]">
           <Loader2 className="h-4 w-4 animate-spin" />
-          正在整理今日工作台
+          正在整理命理首页
         </div>
       </div>
     </main>
@@ -186,7 +187,7 @@ export default function DashboardPage() {
           liuyaoItems: liuyao.items,
         });
       } catch (e) {
-        if (alive) setError(e instanceof Error ? e.message : '工作台加载失败');
+        if (alive) setError(e instanceof Error ? e.message : '命理首页加载失败');
       } finally {
         if (alive) setLoading(false);
       }
@@ -214,7 +215,7 @@ export default function DashboardPage() {
       <div className="mx-auto w-full max-w-6xl">
         <header className="mb-6 border-b border-[var(--color-border)] pb-5 sm:mb-8 sm:flex sm:items-end sm:justify-between sm:gap-8">
           <div className="max-w-2xl">
-            <p className="mb-2 text-[13px] font-medium tracking-[0.04em] text-[var(--color-text-muted)]">今日命理工作台</p>
+            <p className="mb-2 text-[13px] font-medium tracking-[0.04em] text-[var(--color-text-muted)]">今日命理概览</p>
             <h1 className="font-serif text-[1.45rem] font-medium leading-tight text-[var(--color-text-primary)] sm:text-[1.9rem]">
               回到你的问题，而不是重新开始。
             </h1>
@@ -240,7 +241,49 @@ export default function DashboardPage() {
           </div>
         )}
 
-        <section className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+        <section className="mb-4 border border-[var(--color-border-strong)] bg-[var(--color-bg-elevated)] p-5 sm:p-6">
+          <div className="grid gap-5 lg:grid-cols-[0.82fr_1.18fr] lg:items-start">
+            <div>
+              <div className="mb-3 flex items-center gap-2 text-sm font-medium text-[var(--color-text-secondary)]">
+                <Clock3 className="h-4 w-4 text-[var(--color-primary)]" strokeWidth={1.6} />
+                今日八字提示
+              </div>
+              <p className="text-xs font-medium tracking-[0.04em] text-[var(--color-text-muted)]">今日主题</p>
+              <h2 className="mt-2 font-serif text-2xl font-medium leading-snug text-[var(--color-text-primary)] sm:text-[1.65rem]">
+                {focus.label === '节律' ? '先整理，再行动' : `${focus.label}与节奏`}
+              </h2>
+              <p className="mt-3 max-w-[42ch] text-[16px] leading-7 text-[var(--color-text-body)]">
+                {focus.sentence}
+              </p>
+            </div>
+
+            <div className="grid gap-px border border-[var(--color-border)] bg-[var(--color-border)] sm:grid-cols-3">
+              <div className="bg-[var(--color-bg)] p-4">
+                <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-full border border-[var(--color-border)] text-[var(--color-primary)]">
+                  <Sparkles className="h-4 w-4" strokeWidth={1.6} />
+                </div>
+                <p className="text-xs font-medium tracking-[0.04em] text-[var(--color-text-muted)]">今日适合</p>
+                <p className="mt-2 text-sm leading-6 text-[var(--color-text-body)]">梳理计划、补充资料、低压力沟通</p>
+              </div>
+              <div className="bg-[var(--color-bg)] p-4">
+                <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-full border border-[var(--color-border)] text-[var(--color-primary)]">
+                  <Moon className="h-4 w-4" strokeWidth={1.6} />
+                </div>
+                <p className="text-xs font-medium tracking-[0.04em] text-[var(--color-text-muted)]">今日少做</p>
+                <p className="mt-2 text-sm leading-6 text-[var(--color-text-body)]">冲动承诺、情绪化判断、一次定死</p>
+              </div>
+              <div className="bg-[var(--color-primary)]/5 p-4">
+                <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-full border border-[var(--color-primary)]/25 text-[var(--color-primary)]">
+                  <CalendarDays className="h-4 w-4" strokeWidth={1.6} />
+                </div>
+                <p className="text-xs font-medium tracking-[0.04em] text-[var(--color-text-muted)]">今日提醒</p>
+                <p className="mt-2 text-sm leading-6 text-[var(--color-text-body)]">先把心里乱的部分理顺，再决定下一步。</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="grid gap-4">
           {latest ? (
             <div className="border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-5 sm:p-6">
               <div className="mb-4 flex items-center justify-between gap-3">
@@ -280,34 +323,6 @@ export default function DashboardPage() {
           ) : (
             <EmptyRecent />
           )}
-
-          <div className="border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-5 sm:p-6">
-            <div className="mb-4 flex items-center gap-2 text-sm font-medium text-[var(--color-text-secondary)]">
-              <Clock3 className="h-4 w-4 text-[var(--color-primary)]" strokeWidth={1.6} />
-              今日八字提醒
-            </div>
-            <div className="space-y-4">
-              <div>
-                <p className="text-xs font-medium tracking-[0.04em] text-[var(--color-text-muted)]">今日主题</p>
-                <p className="mt-1 font-serif text-lg font-medium text-[var(--color-text-primary)]">
-                  {focus.label === '节律' ? '先整理，再行动' : `${focus.label}与节奏`}
-                </p>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-                <div>
-                  <p className="text-xs font-medium tracking-[0.04em] text-[var(--color-text-muted)]">今日适合</p>
-                  <p className="mt-1 text-sm leading-6 text-[var(--color-text-body)]">梳理计划、补充资料、低压力沟通</p>
-                </div>
-                <div>
-                  <p className="text-xs font-medium tracking-[0.04em] text-[var(--color-text-muted)]">今日少做</p>
-                  <p className="mt-1 text-sm leading-6 text-[var(--color-text-body)]">冲动承诺、情绪化判断、一次定死</p>
-                </div>
-              </div>
-              <p className="border-t border-[var(--color-border)] pt-4 text-[16px] leading-7 text-[var(--color-text-body)]">
-                {focus.sentence}
-              </p>
-            </div>
-          </div>
         </section>
 
         <section className="mt-4 grid gap-4 lg:grid-cols-2">

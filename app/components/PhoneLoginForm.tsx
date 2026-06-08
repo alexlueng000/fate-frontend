@@ -2,13 +2,24 @@
 
 import { useState, useEffect } from 'react';
 import { validateChinaPhone, sanitizePhone } from '@/app/lib/phone';
-import { sendPhoneCode, loginPhone, saveAuth } from '@/app/lib/auth';
+import { loginPhone, saveAuth, checkProfileStatus } from '@/app/lib/auth';
 import { useRouter } from 'next/navigation';
+
+type TencentCaptchaResponse = {
+  ret: number;
+  ticket?: string;
+  randstr?: string;
+};
+
+type TencentCaptchaConstructor = new (
+  appId: string,
+  callback: (res: TencentCaptchaResponse) => void,
+) => { show: () => void };
 
 // Declare Tencent Captcha global type
 declare global {
   interface Window {
-    TencentCaptcha?: any;
+    TencentCaptcha?: TencentCaptchaConstructor;
   }
 }
 
@@ -77,7 +88,7 @@ export default function PhoneLoginForm() {
       // Get captcha app ID from environment or use a placeholder
       const captchaAppId = process.env.NEXT_PUBLIC_CAPTCHA_APP_ID || '2000000000';
 
-      const captcha = new window.TencentCaptcha(captchaAppId, async (res: any) => {
+      const captcha = new window.TencentCaptcha(captchaAppId, async (res) => {
         if (res.ret === 0) {
           // Captcha verified, send SMS code
           await sendSmsCode(res.ticket, res.randstr);
@@ -100,7 +111,7 @@ export default function PhoneLoginForm() {
     setError('');
 
     try {
-      const payload: any = { phone, purpose: 'login' };
+      const payload: Record<string, string> = { phone, purpose: 'login' };
       if (ticket && randstr) {
         payload.captcha_ticket = ticket;
         payload.captcha_randstr = randstr;
@@ -162,7 +173,8 @@ export default function PhoneLoginForm() {
     try {
       const resp = await loginPhone({ phone, code });
       saveAuth(resp);
-      router.push('/panel');
+      const status = await checkProfileStatus();
+      router.push(status?.hasProfile ? '/dashboard' : '/profile/create');
     } catch (err) {
       setError(err instanceof Error ? err.message : '登录失败');
     } finally {

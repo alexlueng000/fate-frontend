@@ -90,7 +90,7 @@ export default function Header() {
   ];
 
   const MOBILE_APP_LINKS: MobileNavLink[] = [
-    { href: '/dashboard', label: '今日工作台', icon: LayoutDashboard },
+    { href: '/dashboard', label: '命理首页', icon: LayoutDashboard },
     { href: '/report', label: '命理报告', icon: FileText },
     { href: '/panel', label: '八字对话', icon: LayoutDashboard },
     { href: '/history', label: '解读记录', icon: History },
@@ -159,9 +159,9 @@ export default function Header() {
             ) : (
               <>
                 {/* 个人中心 — icon only on md, text on lg+ */}
-                <Link href="/dashboard" className={outlineBtnClass} title="今日工作台">
+                <Link href="/dashboard" className={outlineBtnClass} title="命理首页">
                   <LayoutDashboard className="w-4 h-4 shrink-0" />
-                  <span className="hidden lg:inline">工作台</span>
+                  <span className="hidden lg:inline">命理首页</span>
                 </Link>
 
                 {/* 管理后台 — icon only on md, text on lg+ */}
@@ -204,7 +204,7 @@ export default function Header() {
                         onClick={() => setMenuOpen(false)}
                       >
                         <LayoutDashboard className="w-4 h-4 shrink-0" />
-                        今日工作台
+                        命理首页
                       </Link>
                       <Link
                         href="/profile/edit"

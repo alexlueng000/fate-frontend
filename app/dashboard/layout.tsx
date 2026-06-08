@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: '今日命理工作台',
+  title: '命理首页',
 };
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

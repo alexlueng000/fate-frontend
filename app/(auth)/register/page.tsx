@@ -72,7 +72,7 @@ export default function RegisterPage() {
     (async () => {
       const status = await checkProfileStatus();
       if (status?.hasProfile) {
-        router.replace('/panel');
+        router.replace('/dashboard');
       } else {
         router.replace('/profile/create');
       }
