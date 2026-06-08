@@ -144,7 +144,7 @@ function LoadingView() {
 
 function RecentLoading() {
   return (
-    <div className="border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-5 sm:p-6">
+    <div className="border border-[var(--color-border-strong)] bg-[var(--color-bg-elevated)] p-5 shadow-[0_2px_12px_rgba(60,40,20,0.08)] sm:p-7">
       <div className="mb-4 flex items-center gap-2 text-sm font-medium text-[var(--color-text-secondary)]">
         <RefreshCw className="h-4 w-4 text-[var(--color-primary)]" strokeWidth={1.6} />
         正在读取上次的问题
@@ -160,7 +160,7 @@ function RecentLoading() {
 
 function EmptyRecent() {
   return (
-    <div className="border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-5">
+    <div className="border border-[var(--color-border-strong)] bg-[var(--color-bg-elevated)] p-5 shadow-[0_2px_12px_rgba(60,40,20,0.08)] sm:p-7">
       <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-border)] text-[var(--color-text-secondary)]">
         <History className="h-5 w-5" strokeWidth={1.6} />
       </div>
@@ -276,85 +276,93 @@ export default function DashboardPage() {
           </div>
         )}
 
-        <section className="mb-4 border border-[var(--color-border-strong)] bg-[var(--color-bg-elevated)] p-5 sm:p-6">
-          <div className="grid gap-5 lg:grid-cols-[0.82fr_1.18fr] lg:items-start">
-            <div>
-              <div className="mb-3 flex items-center gap-2 text-sm font-medium text-[var(--color-text-secondary)]">
-                <Clock3 className="h-4 w-4 text-[var(--color-primary)]" strokeWidth={1.6} />
-                今日八字提示
+        <section className="mb-5 border-y border-[var(--color-border)] bg-[var(--color-bg-alt)] px-4 py-4 sm:px-5">
+          <div className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--color-border-strong)] bg-[var(--color-bg-elevated)] text-[var(--color-primary)]">
+                <Clock3 className="h-4 w-4" strokeWidth={1.6} />
               </div>
-              <p className="text-xs font-medium tracking-[0.04em] text-[var(--color-text-muted)]">今日主题</p>
-              <h2 className="mt-2 font-serif text-2xl font-medium leading-snug text-[var(--color-text-primary)] sm:text-[1.65rem]">
-                {focus.label === '节律' ? '先整理，再行动' : `${focus.label}与节奏`}
-              </h2>
-              <p className="mt-3 max-w-[42ch] text-[16px] leading-7 text-[var(--color-text-body)]">
-                {focus.sentence}
-              </p>
+              <div>
+                <p className="text-xs font-medium tracking-[0.04em] text-[var(--color-text-muted)]">今日八字提示</p>
+                <h2 className="mt-1 font-serif text-[1.35rem] font-medium leading-snug text-[var(--color-text-primary)] sm:text-2xl">
+                  {focus.label === '节律' ? '先整理，再行动' : `${focus.label}与节奏`}
+                </h2>
+                <p className="mt-2 max-w-[50ch] text-[15px] leading-7 text-[var(--color-text-body)]">
+                  {focus.sentence}
+                </p>
+              </div>
             </div>
 
-            <div className="grid gap-px border border-[var(--color-border)] bg-[var(--color-border)] sm:grid-cols-3">
-              <div className="bg-[var(--color-bg)] p-4">
-                <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-full border border-[var(--color-border)] text-[var(--color-primary)]">
-                  <Sparkles className="h-4 w-4" strokeWidth={1.6} />
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-3 py-3">
+                <div className="mb-2 flex items-center gap-2 text-xs font-medium tracking-[0.04em] text-[var(--color-text-muted)]">
+                  <Sparkles className="h-3.5 w-3.5 text-[var(--color-primary)]" strokeWidth={1.6} />
+                  适合
                 </div>
-                <p className="text-xs font-medium tracking-[0.04em] text-[var(--color-text-muted)]">今日适合</p>
-                <p className="mt-2 text-sm leading-6 text-[var(--color-text-body)]">梳理计划、补充资料、低压力沟通</p>
+                <p className="text-sm leading-6 text-[var(--color-text-body)]">梳理计划，补充资料，低压力沟通</p>
               </div>
-              <div className="bg-[var(--color-bg)] p-4">
-                <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-full border border-[var(--color-border)] text-[var(--color-primary)]">
-                  <Moon className="h-4 w-4" strokeWidth={1.6} />
+              <div className="border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-3 py-3">
+                <div className="mb-2 flex items-center gap-2 text-xs font-medium tracking-[0.04em] text-[var(--color-text-muted)]">
+                  <Moon className="h-3.5 w-3.5 text-[var(--color-primary)]" strokeWidth={1.6} />
+                  少做
                 </div>
-                <p className="text-xs font-medium tracking-[0.04em] text-[var(--color-text-muted)]">今日少做</p>
-                <p className="mt-2 text-sm leading-6 text-[var(--color-text-body)]">冲动承诺、情绪化判断、一次定死</p>
+                <p className="text-sm leading-6 text-[var(--color-text-body)]">冲动承诺，情绪化判断，一次定死</p>
               </div>
-              <div className="bg-[var(--color-primary)]/5 p-4">
-                <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-full border border-[var(--color-primary)]/25 text-[var(--color-primary)]">
-                  <CalendarDays className="h-4 w-4" strokeWidth={1.6} />
+              <div className="border border-[var(--color-primary)]/20 bg-[var(--color-primary)]/5 px-3 py-3">
+                <div className="mb-2 flex items-center gap-2 text-xs font-medium tracking-[0.04em] text-[var(--color-text-muted)]">
+                  <CalendarDays className="h-3.5 w-3.5 text-[var(--color-primary)]" strokeWidth={1.6} />
+                  提醒
                 </div>
-                <p className="text-xs font-medium tracking-[0.04em] text-[var(--color-text-muted)]">今日提醒</p>
-                <p className="mt-2 text-sm leading-6 text-[var(--color-text-body)]">先把心里乱的部分理顺，再决定下一步。</p>
+                <p className="text-sm leading-6 text-[var(--color-text-body)]">先把乱的部分理顺，再决定下一步。</p>
               </div>
             </div>
           </div>
         </section>
 
-        <section className="grid gap-4">
+        <section className="grid gap-5">
           {historyLoading ? (
             <RecentLoading />
           ) : latest ? (
-            <div className="border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-5 sm:p-6">
-              <div className="mb-4 flex items-center justify-between gap-3">
+            <div className="border border-[var(--color-border-strong)] bg-[var(--color-bg-elevated)] p-5 shadow-[0_2px_12px_rgba(60,40,20,0.08)] sm:p-7">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-2 text-sm font-medium text-[var(--color-text-secondary)]">
                   <RefreshCw className="h-4 w-4 text-[var(--color-primary)]" strokeWidth={1.6} />
-                  继续上次的问题
+                  当前最适合继续
                 </div>
                 <span className="text-xs text-[var(--color-text-muted)]">{formatRelative(latest.item.updated_at)}</span>
               </div>
-              <h2 className="font-serif text-xl font-medium leading-snug text-[var(--color-text-primary)]">
-                {displayTitle(latest.item, latest.type)}
-              </h2>
-              <p className="mt-3 max-w-2xl text-[16px] leading-7 text-[var(--color-text-body)]">
-                {previewText(latest.item, latest.type === 'bazi' ? '上次的八字解读' : '上次的六爻问事')}
-              </p>
-              {latest.item.last_assistant_preview && (
-                <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--color-text-secondary)]">
-                  当前结论：{latest.item.last_assistant_preview}
-                </p>
-              )}
-              <div className="mt-5 flex flex-col gap-2 sm:flex-row">
-                <Link
-                  href={conversationHref(latest.item, latest.type)}
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[3px] bg-[var(--color-primary)] px-4 text-sm font-medium text-[var(--color-text-inverse)] transition-colors hover:bg-[var(--color-primary-hover)] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)]"
-                >
-                  继续分析
-                  <ArrowRight className="h-4 w-4" strokeWidth={1.6} />
-                </Link>
-                <Link
-                  href="/history"
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[3px] border border-[var(--color-border-strong)] px-4 text-sm font-medium text-[var(--color-primary)] transition-colors hover:bg-[var(--color-bg-hover)] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)]"
-                >
-                  查看上次结论
-                </Link>
+              <div className="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-end">
+                <div>
+                  <p className="text-xs font-medium tracking-[0.04em] text-[var(--color-text-muted)]">
+                    {latest.type === 'bazi' ? '八字解读' : '六爻问事'}
+                  </p>
+                  <h2 className="mt-2 font-serif text-2xl font-medium leading-snug text-[var(--color-text-primary)] sm:text-[1.7rem]">
+                    {displayTitle(latest.item, latest.type)}
+                  </h2>
+                  <p className="mt-3 max-w-2xl text-[16px] leading-7 text-[var(--color-text-body)]">
+                    {previewText(latest.item, latest.type === 'bazi' ? '上次的八字解读' : '上次的六爻问事')}
+                  </p>
+                  {latest.item.last_assistant_preview && (
+                    <p className="mt-3 max-w-2xl border-t border-[var(--color-border)] pt-3 text-sm leading-6 text-[var(--color-text-secondary)]">
+                      当前结论：{latest.item.last_assistant_preview}
+                    </p>
+                  )}
+                </div>
+                <div className="flex flex-col gap-2 sm:min-w-[180px]">
+                  <Link
+                    href={conversationHref(latest.item, latest.type)}
+                    className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[3px] bg-[var(--color-primary)] px-5 text-sm font-medium text-[var(--color-text-inverse)] transition-colors hover:bg-[var(--color-primary-hover)] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)]"
+                  >
+                    继续分析
+                    <ArrowRight className="h-4 w-4" strokeWidth={1.6} />
+                  </Link>
+                  <Link
+                    href="/history"
+                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[3px] px-4 text-sm font-medium text-[var(--color-primary)] transition-colors hover:bg-[var(--color-bg-hover)] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)]"
+                  >
+                    查看上次结论
+                  </Link>
+                </div>
               </div>
             </div>
           ) : (
@@ -362,34 +370,32 @@ export default function DashboardPage() {
           )}
         </section>
 
-        <section className="mt-4 border border-[var(--color-border-strong)] bg-[var(--color-bg-elevated)] p-5 sm:p-6">
-          <div className="grid gap-5 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
+        <section className="mt-5 border border-[var(--color-border)] bg-[var(--color-bg-alt)] p-5 sm:p-6">
+          <div className="grid gap-5 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
             <div>
               <div className="mb-3 flex items-center gap-2 text-sm font-medium text-[var(--color-text-secondary)]">
                 <BriefcaseBusiness className="h-4 w-4 text-[var(--color-primary)]" strokeWidth={1.6} />
-                事业选择
+                开始一个新分析
               </div>
-              <h2 className="font-serif text-xl font-medium leading-snug text-[var(--color-text-primary)]">
-                正在纠结工作或事业选择？
+              <h2 className="font-serif text-[1.35rem] font-medium leading-snug text-[var(--color-text-primary)]">
+                工作或事业选择，先分清问题类型
               </h2>
               <p className="mt-3 max-w-[52ch] text-[16px] leading-7 text-[var(--color-text-body)]">
                 先判断你是在看长期方向，还是在判断一个具体机会。长期趋势用八字，具体一事用六爻。
               </p>
             </div>
-            <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
-              <div className="grid gap-px border border-[var(--color-border)] bg-[var(--color-border)] sm:grid-cols-2">
-                <div className="bg-[var(--color-bg)] p-4">
-                  <p className="text-sm font-medium text-[var(--color-text-primary)]">看长期方向</p>
-                  <p className="mt-1 text-xs leading-5 text-[var(--color-text-secondary)]">适合事业阶段、岗位类型、进取或稳定。</p>
-                </div>
-                <div className="bg-[var(--color-bg)] p-4">
-                  <p className="text-sm font-medium text-[var(--color-text-primary)]">判断具体选择</p>
-                  <p className="mt-1 text-xs leading-5 text-[var(--color-text-secondary)]">适合 offer、合作、跳槽时机等具体事项。</p>
-                </div>
+            <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-stretch">
+              <div className="border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-4">
+                <p className="text-sm font-medium text-[var(--color-text-primary)]">看长期方向</p>
+                <p className="mt-1 text-xs leading-5 text-[var(--color-text-secondary)]">适合事业阶段、岗位类型、进取或稳定。</p>
+              </div>
+              <div className="border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-4">
+                <p className="text-sm font-medium text-[var(--color-text-primary)]">判断具体选择</p>
+                <p className="mt-1 text-xs leading-5 text-[var(--color-text-secondary)]">适合 offer、合作、跳槽时机等具体事项。</p>
               </div>
               <Link
                 href="/career"
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[3px] bg-[var(--color-primary)] px-4 text-sm font-medium text-[var(--color-text-inverse)] transition-colors hover:bg-[var(--color-primary-hover)] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)]"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[3px] border border-[var(--color-border-strong)] bg-[var(--color-bg-elevated)] px-4 text-sm font-medium text-[var(--color-primary)] transition-colors hover:bg-[var(--color-bg-hover)] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)] sm:min-w-[120px]"
               >
                 开始分诊
                 <ArrowRight className="h-4 w-4" strokeWidth={1.6} />
