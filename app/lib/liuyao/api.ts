@@ -1,6 +1,7 @@
 // app/lib/liuyao/api.ts
 import { api } from '../api';
 import { trySSE } from '../chat/sse';
+import type { CareerTaskContext } from '../tasks/career';
 
 export interface PaipanRequest {
   question: string;
@@ -21,6 +22,17 @@ export interface HexagramLine {
   liushou?: string;
 }
 
+export interface HexagramGanzhi {
+  year?: string;
+  month?: string;
+  day?: string;
+  hour?: string;
+}
+
+export interface NumberCastResult {
+  numbers?: number[];
+}
+
 export interface Hexagram {
   id: number;
   hexagram_id: string;
@@ -32,12 +44,12 @@ export interface Hexagram {
   shi_yao: number | null;
   ying_yao: number | null;
   lines: { lines: HexagramLine[] } | null;
-  ganzhi: any | null;
+  ganzhi: HexagramGanzhi | null;
   created_at: string;
 }
 
 export interface HexagramDetail extends Hexagram {
-  numbers: any | null;
+  numbers: NumberCastResult | null;
   timestamp: string;
   location: string;
   solar_time: boolean;
@@ -160,10 +172,11 @@ export const liuyaoApi = {
     hexagramId: string,
     onChunk: (text: string) => void,
     onMeta?: (meta: unknown) => void,
+    taskContext?: CareerTaskContext | null,
   ): Promise<void> {
     return trySSE(
       api(`/liuyao/${hexagramId}/chat/start`),
-      {},
+      { task_context: taskContext ?? undefined },
       onChunk,
       onMeta,
     );
@@ -281,7 +294,7 @@ export const liuyaoApi = {
             if (parsed.text) {
               onChunk(parsed.text);
             }
-          } catch (e) {
+          } catch {
             console.warn('Failed to parse SSE data:', data);
           }
         }

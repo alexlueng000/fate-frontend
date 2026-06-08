@@ -20,6 +20,10 @@ import {
   saveConversation, loadConversation, getActiveConversationId,
   repairCorruptedConversations,
 } from '@/app/lib/chat/storage';
+import {
+  loadCareerTaskContext,
+  type CareerTaskContext,
+} from '@/app/lib/tasks/career';
 import { useUser, fetchMe } from '@/app/lib/auth';
 
 interface Profile {
@@ -118,13 +122,16 @@ export default function PanelPage() {
   const [quotaRefreshKey, setQuotaRefreshKey] = useState(0);
   const [quotaDialogOpen, setQuotaDialogOpen] = useState(false);
   const [quotaDialogMessage, setQuotaDialogMessage] = useState('');
+  const [taskContext, setTaskContext] = useState<CareerTaskContext | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const prompt = params.get('prompt');
+    const task = params.get('task');
     if (prompt) setInput(prompt);
+    if (task === 'career') setTaskContext(loadCareerTaskContext());
   }, []);
 
   // ===== Helpers =====
@@ -355,7 +362,7 @@ export default function PanelPage() {
     if (token) headers['Authorization'] = `Bearer ${token}`;
     const res = await fetch(api('/chat'), {
       method: 'POST', headers,
-      body: JSON.stringify({ conversation_id: conversationId, message: content }),
+      body: JSON.stringify({ conversation_id: conversationId, message: content, task_context: taskContext }),
     });
     if (!res.ok) {
       const errorText = await res.text();
@@ -365,7 +372,7 @@ export default function PanelPage() {
         // Retry with new conversation_id
         const retryRes = await fetch(api('/chat'), {
           method: 'POST', headers,
-          body: JSON.stringify({ conversation_id: newCid, message: content }),
+          body: JSON.stringify({ conversation_id: newCid, message: content, task_context: taskContext }),
         });
         if (!retryRes.ok) throw new Error(await retryRes.text());
         return pickReply(await retryRes.json()).trim();
@@ -402,7 +409,7 @@ export default function PanelPage() {
     try {
       await trySSE(
         api('/chat'),
-        { conversation_id: conversationId, message: content },
+        { conversation_id: conversationId, message: content, task_context: taskContext },
         replace,
         (meta) => {
           const cid = hasConversationId(meta) ? meta.conversation_id : '';

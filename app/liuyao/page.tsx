@@ -21,6 +21,10 @@ import { saveConversation, loadConversation } from '@/app/lib/chat/storage';
 import { QuotaExhaustedError } from '@/app/lib/chat/sse';
 import { QuotaChip } from '@/app/components/QuotaChip';
 import QuotaExhaustedDialog from '@/app/components/QuotaExhaustedDialog';
+import {
+  loadCareerTaskContext,
+  type CareerTaskContext,
+} from '@/app/lib/tasks/career';
 
 const QUESTION_SCENARIOS = [
   { id: 'relationship', label: '感情关系', placeholder: '例如：我是否应该主动联系对方？' },
@@ -84,15 +88,18 @@ export default function LiuyaoPage() {
   const refreshLiuyaoQuota = async () => setQuotaRefreshKey((k) => k + 1);
   const [quotaDialogOpen, setQuotaDialogOpen] = useState(false);
   const [quotaDialogMessage, setQuotaDialogMessage] = useState('');
+  const [taskContext, setTaskContext] = useState<CareerTaskContext | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const questionParam = params.get('question');
     const scenarioParam = params.get('scenario');
+    const taskParam = params.get('task');
     if (questionParam) setQuestion(questionParam);
     if (scenarioParam && QUESTION_SCENARIOS.some((item) => item.id === scenarioParam)) {
       setSelectedScenario(scenarioParam);
     }
+    if (taskParam === 'career') setTaskContext(loadCareerTaskContext());
   }, []);
 
   const handleLiuyaoQuotaExhausted = (e: QuotaExhaustedError, assistantIdx: number) => {
@@ -311,6 +318,7 @@ export default function LiuyaoPage() {
             } catch {}
           }
         },
+        taskContext,
       );
       finalizeAssistant(assistantIdx);
       void refreshLiuyaoQuota();
