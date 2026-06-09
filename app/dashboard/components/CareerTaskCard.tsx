@@ -9,6 +9,7 @@ import {
   scheduleCareerTaskReview,
   type CareerTaskContext,
 } from '@/app/lib/tasks/career';
+import { careerProgressApi } from '@/app/lib/career-progress/api';
 
 type CareerTaskCardProps = {
   task: CareerTaskContext | null;
@@ -27,20 +28,45 @@ function formatReviewDate(iso?: string) {
 
 export function CareerTaskCard({ task, onTaskUpdate }: CareerTaskCardProps) {
   const [isRecording, setIsRecording] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isScheduling, setIsScheduling] = useState(false);
   const [progress, setProgress] = useState('');
   const reviewDate = useMemo(() => formatReviewDate(task?.reviewDueAt), [task?.reviewDueAt]);
 
   if (!task) return null;
 
-  const saveProgress = () => {
+  const saveProgress = async () => {
+    if (!progress.trim() || isSaving) return;
     const next = recordCareerTaskProgress(task, progress);
     setProgress('');
     setIsRecording(false);
     onTaskUpdate(next);
+
+    setIsSaving(true);
+    try {
+      const saved = await careerProgressApi.saveProgress(next, next.lastProgress ?? progress);
+      onTaskUpdate(saved.task_context);
+    } catch {
+      onTaskUpdate(next);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const scheduleReview = () => {
-    onTaskUpdate(scheduleCareerTaskReview(task, 3));
+  const scheduleReview = async () => {
+    if (isScheduling) return;
+    const next = scheduleCareerTaskReview(task, 3);
+    onTaskUpdate(next);
+
+    setIsScheduling(true);
+    try {
+      const saved = await careerProgressApi.scheduleReview(next);
+      onTaskUpdate(saved.task_context);
+    } catch {
+      onTaskUpdate(next);
+    } finally {
+      setIsScheduling(false);
+    }
   };
 
   return (
@@ -95,10 +121,10 @@ export function CareerTaskCard({ task, onTaskUpdate }: CareerTaskCardProps) {
             <button
               type="button"
               onClick={saveProgress}
-              disabled={!progress.trim()}
+              disabled={!progress.trim() || isSaving}
               className="inline-flex min-h-10 items-center justify-center rounded-[3px] bg-[var(--color-primary)] px-4 text-sm font-medium text-[var(--color-text-inverse)] transition-colors hover:bg-[var(--color-primary-hover)] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              保存进展
+              {isSaving ? '保存中' : '保存进展'}
             </button>
             <button
               type="button"
@@ -133,10 +159,11 @@ export function CareerTaskCard({ task, onTaskUpdate }: CareerTaskCardProps) {
         <button
           type="button"
           onClick={scheduleReview}
+          disabled={isScheduling}
           className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[3px] px-4 text-sm font-medium text-[var(--color-primary)] transition-colors hover:bg-[var(--color-bg-hover)] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)]"
         >
           <CalendarClock className="h-4 w-4" strokeWidth={1.6} />
-          3天后复盘
+          {isScheduling ? '设置中' : '3天后复盘'}
         </button>
         <Link
           href="/career"

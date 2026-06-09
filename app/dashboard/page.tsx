@@ -27,8 +27,13 @@ import {
 } from '@/app/lib/history/api';
 import {
   loadCareerTaskContext,
+  saveCareerTaskContext,
   type CareerTaskContext,
 } from '@/app/lib/tasks/career';
+import {
+  careerProgressApi,
+  type CareerProgressRecord,
+} from '@/app/lib/career-progress/api';
 import {
   TodayReminderCard,
   type TodayReminder,
@@ -100,6 +105,21 @@ function latestCareerTaskFromHistory(data: DashboardData): CareerTaskContext | n
   return tasks.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0];
 }
 
+function latestCareerTaskFromProgress(record: CareerProgressRecord | null): CareerTaskContext | null {
+  return record?.task_context?.taskType === 'career' ? record.task_context : null;
+}
+
+function pickNewerCareerTask(
+  current: CareerTaskContext | null,
+  candidate: CareerTaskContext | null,
+): CareerTaskContext | null {
+  if (!candidate) return current;
+  if (!current) return candidate;
+  return new Date(candidate.updatedAt).getTime() >= new Date(current.updatedAt).getTime()
+    ? candidate
+    : current;
+}
+
 function LoadingView() {
   return (
     <main className="min-h-full bg-[var(--color-bg)] px-4 py-6 sm:px-8 sm:py-8">
@@ -125,7 +145,8 @@ export default function DashboardPage() {
   useEffect(() => {
     if (routeLoading) return;
     let alive = true;
-    setCareerTask(loadCareerTaskContext());
+    const localCareerTask = loadCareerTaskContext();
+    setCareerTask(localCareerTask);
 
     async function load() {
       setError(null);
@@ -158,6 +179,19 @@ export default function DashboardPage() {
           if (alive) setTodayReminder(null);
         });
 
+      careerProgressApi.getLatest()
+        .then((record) => {
+          if (!alive) return;
+          const latestProgressTask = latestCareerTaskFromProgress(record);
+          if (latestProgressTask) {
+            saveCareerTaskContext(latestProgressTask);
+          }
+          setCareerTask((current) => pickNewerCareerTask(current, latestProgressTask));
+        })
+        .catch(() => {
+          if (alive) setCareerTask((current) => current ?? localCareerTask);
+        });
+
       setHistoryLoading(true);
       Promise.all([
         historyApi.list('bazi', 0, 4),
@@ -186,11 +220,7 @@ export default function DashboardPage() {
   const latest = useMemo(() => latestConversation(data), [data]);
   const serverCareerTask = useMemo(() => latestCareerTaskFromHistory(data), [data]);
   const activeCareerTask = useMemo(() => {
-    if (!serverCareerTask) return careerTask;
-    if (!careerTask) return serverCareerTask;
-    return new Date(serverCareerTask.updatedAt).getTime() >= new Date(careerTask.updatedAt).getTime()
-      ? serverCareerTask
-      : careerTask;
+    return pickNewerCareerTask(careerTask, serverCareerTask);
   }, [careerTask, serverCareerTask]);
   const dayMaster = getDayMaster(data.profile);
   const recentItems = useMemo(
