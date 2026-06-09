@@ -17,6 +17,15 @@ export type CareerTaskContext = {
   followUpHint: string;
   href: string;
   updatedAt: string;
+  lastProgress?: string;
+  lastProgressAt?: string;
+  reviewDueAt?: string;
+  progressNotes?: CareerTaskProgress[];
+};
+
+export type CareerTaskProgress = {
+  content: string;
+  createdAt: string;
 };
 
 const CAREER_TASK_KEY = 'task:career:latest';
@@ -104,6 +113,38 @@ export function saveCareerTaskContext(context: CareerTaskContext) {
   try {
     localStorage.setItem(CAREER_TASK_KEY, JSON.stringify(context));
   } catch {}
+}
+
+export function recordCareerTaskProgress(context: CareerTaskContext, content: string): CareerTaskContext {
+  const cleaned = clean(content);
+  if (!cleaned) return context;
+
+  const now = new Date().toISOString();
+  const progress: CareerTaskProgress = {
+    content: cleaned,
+    createdAt: now,
+  };
+  const next: CareerTaskContext = {
+    ...context,
+    lastProgress: cleaned,
+    lastProgressAt: now,
+    progressNotes: [progress, ...(context.progressNotes ?? [])].slice(0, 5),
+    updatedAt: now,
+  };
+  saveCareerTaskContext(next);
+  return next;
+}
+
+export function scheduleCareerTaskReview(context: CareerTaskContext, days = 3): CareerTaskContext {
+  const due = new Date();
+  due.setDate(due.getDate() + days);
+  const next: CareerTaskContext = {
+    ...context,
+    reviewDueAt: due.toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  saveCareerTaskContext(next);
+  return next;
 }
 
 export function savePendingCareerBaziPrompt(prompt: string) {

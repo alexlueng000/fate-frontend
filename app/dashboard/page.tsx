@@ -35,6 +35,7 @@ import {
 } from './components/TodayReminderCard';
 import { ContinueLastCard } from './components/ContinueLastCard';
 import { RecentRecords } from './components/RecentRecords';
+import { CareerTaskCard } from './components/CareerTaskCard';
 
 type Profile = {
   id: number;
@@ -258,39 +259,7 @@ export default function DashboardPage() {
               </p>
             </div>
             <div className="grid gap-3">
-              {activeCareerTask && (
-                <div className="border border-[var(--color-primary)]/25 bg-[var(--color-bg-elevated)] p-4">
-                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-xs font-medium tracking-[0.04em] text-[var(--color-primary)]">
-                      正在处理的事业任务
-                    </p>
-                    <span className="text-xs text-[var(--color-text-muted)]">
-                      {activeCareerTask.mode === 'bazi' ? '八字长期方向' : '六爻具体事项'}
-                    </span>
-                  </div>
-                  <h3 className="text-sm font-medium leading-6 text-[var(--color-text-primary)]">
-                    {activeCareerTask.title}
-                  </h3>
-                  <p className="mt-1 text-xs leading-5 text-[var(--color-text-secondary)]">
-                    {activeCareerTask.nextAction}
-                  </p>
-                  <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-                    <Link
-                      href={activeCareerTask.href}
-                      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[3px] bg-[var(--color-primary)] px-4 text-sm font-medium text-[var(--color-text-inverse)] transition-colors hover:bg-[var(--color-primary-hover)] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)]"
-                    >
-                      继续这个任务
-                      <ArrowRight className="h-4 w-4" strokeWidth={1.6} />
-                    </Link>
-                    <Link
-                      href="/career"
-                      className="inline-flex min-h-11 items-center justify-center rounded-[3px] px-4 text-sm font-medium text-[var(--color-primary)] transition-colors hover:bg-[var(--color-bg-hover)] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)]"
-                    >
-                      重新分诊
-                    </Link>
-                  </div>
-                </div>
-              )}
+              <CareerTaskCard task={activeCareerTask} onTaskUpdate={setCareerTask} />
 
               <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-stretch">
                 <div className="border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-4">
