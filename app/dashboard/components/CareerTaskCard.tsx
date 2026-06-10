@@ -10,6 +10,7 @@ import {
   type CareerTaskContext,
 } from '@/app/lib/tasks/career';
 import { careerProgressApi } from '@/app/lib/career-progress/api';
+import { trackEvent } from '@/app/lib/analytics/track';
 
 type CareerTaskCardProps = {
   task: CareerTaskContext | null;
@@ -41,6 +42,12 @@ export function CareerTaskCard({ task, onTaskUpdate }: CareerTaskCardProps) {
     setProgress('');
     setIsRecording(false);
     onTaskUpdate(next);
+    trackEvent('career_progress_save', {
+      payload: {
+        mode: next.mode,
+        has_review_due_at: Boolean(next.reviewDueAt),
+      },
+    });
 
     setIsSaving(true);
     try {
@@ -57,6 +64,12 @@ export function CareerTaskCard({ task, onTaskUpdate }: CareerTaskCardProps) {
     if (isScheduling) return;
     const next = scheduleCareerTaskReview(task, 3);
     onTaskUpdate(next);
+    trackEvent('career_review_schedule', {
+      payload: {
+        mode: next.mode,
+        days: 3,
+      },
+    });
 
     setIsScheduling(true);
     try {

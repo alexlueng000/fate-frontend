@@ -34,6 +34,7 @@ import {
   careerProgressApi,
   type CareerProgressRecord,
 } from '@/app/lib/career-progress/api';
+import { trackEvent } from '@/app/lib/analytics/track';
 import {
   TodayReminderCard,
   type TodayReminder,
@@ -147,6 +148,11 @@ export default function DashboardPage() {
     let alive = true;
     const localCareerTask = loadCareerTaskContext();
     setCareerTask(localCareerTask);
+    trackEvent('dashboard_view', {
+      payload: {
+        has_local_career_task: Boolean(localCareerTask),
+      },
+    });
 
     async function load() {
       setError(null);

@@ -10,6 +10,7 @@ import {
   type ConversationListItem,
   type HistoryType,
 } from '@/app/lib/history/api';
+import { trackEvent } from '@/app/lib/analytics/track';
 
 const PAGE_SIZE = 20;
 
@@ -106,6 +107,11 @@ export default function HistoryPage() {
   // Initial load: also pre-fetch the other tab's count once
   useEffect(() => {
     if (loading) return;
+    trackEvent('history_view', {
+      payload: {
+        active_tab: activeTab,
+      },
+    });
     fetchList(activeTab, 0);
   }, [loading, activeTab, fetchList]);
 
@@ -127,6 +133,13 @@ export default function HistoryPage() {
 
   const handleOpen = (item: ConversationListItem) => {
     const path = activeTab === 'bazi' ? '/chat' : '/liuyao';
+    trackEvent('conversation_continue_click', {
+      payload: {
+        type: activeTab,
+        conversation_id: item.id,
+        source: 'history_list',
+      },
+    });
     router.push(`${path}?conv_id=${item.id}`);
   };
 

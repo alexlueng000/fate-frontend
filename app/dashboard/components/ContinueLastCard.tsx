@@ -10,6 +10,7 @@ import {
   formatRelative,
   previewText,
 } from './helpers';
+import { trackEvent } from '@/app/lib/analytics/track';
 
 type LatestConversation = {
   item: ConversationListItem;
@@ -84,6 +85,15 @@ export function ContinueLastCard({ latest, loading }: ContinueLastCardProps) {
         <div className="flex flex-col gap-2 sm:min-w-[180px]">
           <Link
             href={conversationHref(latest.item, latest.type)}
+            onClick={() => {
+              trackEvent('conversation_continue_click', {
+                payload: {
+                  type: latest.type,
+                  conversation_id: latest.item.id,
+                  source: 'dashboard_continue_card',
+                },
+              });
+            }}
             className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[3px] bg-[var(--color-primary)] px-5 text-sm font-medium text-[var(--color-text-inverse)] transition-colors hover:bg-[var(--color-primary-hover)] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)]"
           >
             继续分析
@@ -91,6 +101,13 @@ export function ContinueLastCard({ latest, loading }: ContinueLastCardProps) {
           </Link>
           <Link
             href="/history"
+            onClick={() => {
+              trackEvent('history_view', {
+                payload: {
+                  source: 'dashboard_continue_card',
+                },
+              });
+            }}
             className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[3px] px-4 text-sm font-medium text-[var(--color-primary)] transition-colors hover:bg-[var(--color-bg-hover)] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)]"
           >
             查看上次结论

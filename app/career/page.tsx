@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ArrowRight,
@@ -21,6 +21,7 @@ import {
   type CareerTaskDraft,
   type CareerTaskMode,
 } from '@/app/lib/tasks/career';
+import { trackEvent } from '@/app/lib/analytics/track';
 
 const MODE_OPTIONS: Array<{
   mode: CareerTaskMode;
@@ -69,12 +70,26 @@ export default function CareerTaskPage() {
 
   const canStart = topic.trim().length > 0 || currentSituation.trim().length > 0 || options.trim().length > 0;
 
+  useEffect(() => {
+    if (routeLoading) return;
+    trackEvent('career_triage_view');
+  }, [routeLoading]);
+
   const startTask = () => {
     const context = createCareerTaskContext(draft);
     saveCareerTaskContext(context);
     if (draft.mode === 'bazi') {
       savePendingCareerBaziPrompt(buildCareerBaziPrompt(draft));
     }
+    trackEvent('career_triage_submit', {
+      payload: {
+        mode: draft.mode,
+        has_topic: Boolean(draft.topic.trim()),
+        has_current_situation: Boolean(draft.currentSituation.trim()),
+        has_options: Boolean(draft.options.trim()),
+        has_timeframe: Boolean(draft.timeframe.trim()),
+      },
+    });
     router.push(buildCareerTaskHref(draft));
   };
 
