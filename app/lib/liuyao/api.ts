@@ -2,6 +2,9 @@
 import { api } from '../api';
 import { trySSE } from '../chat/sse';
 import type { CareerTaskContext } from '../tasks/career';
+import type { RelationshipTaskContext } from '../tasks/relationship';
+
+type LiuyaoTaskContext = CareerTaskContext | RelationshipTaskContext;
 
 export interface PaipanRequest {
   question: string;
@@ -172,7 +175,7 @@ export const liuyaoApi = {
     hexagramId: string,
     onChunk: (text: string) => void,
     onMeta?: (meta: unknown) => void,
-    taskContext?: CareerTaskContext | null,
+    taskContext?: LiuyaoTaskContext | null,
   ): Promise<void> {
     return trySSE(
       api(`/liuyao/${hexagramId}/chat/start`),

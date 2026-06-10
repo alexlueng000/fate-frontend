@@ -25,7 +25,14 @@ import {
   takePendingCareerBaziPrompt,
   type CareerTaskContext,
 } from '@/app/lib/tasks/career';
+import {
+  loadRelationshipTaskContext,
+  takePendingRelationshipBaziPrompt,
+  type RelationshipTaskContext,
+} from '@/app/lib/tasks/relationship';
 import { useUser, fetchMe } from '@/app/lib/auth';
+
+type PanelTaskContext = CareerTaskContext | RelationshipTaskContext;
 
 interface Profile {
   id: number;
@@ -125,7 +132,7 @@ export default function PanelPage() {
   const [quotaRefreshKey, setQuotaRefreshKey] = useState(0);
   const [quotaDialogOpen, setQuotaDialogOpen] = useState(false);
   const [quotaDialogMessage, setQuotaDialogMessage] = useState('');
-  const [taskContext, setTaskContext] = useState<CareerTaskContext | null>(null);
+  const [taskContext, setTaskContext] = useState<PanelTaskContext | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -137,6 +144,11 @@ export default function PanelPage() {
       setTaskContext(loadCareerTaskContext());
       if (auto === '1') {
         pendingAutoPromptRef.current = takePendingCareerBaziPrompt();
+      }
+    } else if (task === 'relationship') {
+      setTaskContext(loadRelationshipTaskContext());
+      if (auto === '1') {
+        pendingAutoPromptRef.current = takePendingRelationshipBaziPrompt();
       }
     }
   }, []);
@@ -524,7 +536,7 @@ export default function PanelPage() {
 
     autoTaskStartedRef.current = true;
     pendingAutoPromptRef.current = null;
-    const visibleMessage = taskContext.title || '事业选择分析';
+    const visibleMessage = taskContext.title || '任务分析';
     void sendHiddenTaskPrompt(prompt, visibleMessage);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [booting, conversationId, loading, taskContext]);

@@ -2,6 +2,9 @@
 import { api } from '@/app/lib/api';
 import type { HexagramDetail } from '@/app/lib/liuyao/api';
 import type { CareerTaskContext } from '@/app/lib/tasks/career';
+import type { RelationshipTaskContext } from '@/app/lib/tasks/relationship';
+
+export type TaskContext = CareerTaskContext | RelationshipTaskContext;
 
 export type HistoryType = 'bazi' | 'liuyao';
 export type HistoryClearType = HistoryType | 'all';
@@ -22,7 +25,7 @@ export type ConversationListItem = {
   last_assistant_preview: string | null;
   bazi_summary?: string | null;
   hexagram?: HexagramSummary | null;
-  task_context?: CareerTaskContext | null;
+  task_context?: TaskContext | null;
 };
 
 export type ConversationListResp = {
@@ -48,7 +51,7 @@ export type ConversationDetailResp = {
   profile?: { bazi_chart: Record<string, unknown> } | null;
   profile_changed?: boolean;
   hexagram?: HexagramDetail | null;
-  task_context?: CareerTaskContext | null;
+  task_context?: TaskContext | null;
 };
 
 function getAuthHeaders(): Record<string, string> {

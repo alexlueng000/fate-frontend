@@ -25,6 +25,12 @@ import {
   loadCareerTaskContext,
   type CareerTaskContext,
 } from '@/app/lib/tasks/career';
+import {
+  loadRelationshipTaskContext,
+  type RelationshipTaskContext,
+} from '@/app/lib/tasks/relationship';
+
+type LiuyaoTaskContext = CareerTaskContext | RelationshipTaskContext;
 
 const QUESTION_SCENARIOS = [
   { id: 'relationship', label: '感情关系', placeholder: '例如：我是否应该主动联系对方？' },
@@ -88,7 +94,7 @@ export default function LiuyaoPage() {
   const refreshLiuyaoQuota = async () => setQuotaRefreshKey((k) => k + 1);
   const [quotaDialogOpen, setQuotaDialogOpen] = useState(false);
   const [quotaDialogMessage, setQuotaDialogMessage] = useState('');
-  const [taskContext, setTaskContext] = useState<CareerTaskContext | null>(null);
+  const [taskContext, setTaskContext] = useState<LiuyaoTaskContext | null>(null);
   const [autoStartAfterPaipan, setAutoStartAfterPaipan] = useState(false);
 
   useEffect(() => {
@@ -103,6 +109,9 @@ export default function LiuyaoPage() {
     }
     if (taskParam === 'career') {
       setTaskContext(loadCareerTaskContext());
+      if (modeParam === 'liuyao') setAutoStartAfterPaipan(true);
+    } else if (taskParam === 'relationship') {
+      setTaskContext(loadRelationshipTaskContext());
       if (modeParam === 'liuyao') setAutoStartAfterPaipan(true);
     }
   }, []);

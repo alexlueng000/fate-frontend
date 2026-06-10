@@ -31,9 +31,18 @@ import {
   type CareerTaskContext,
 } from '@/app/lib/tasks/career';
 import {
+  loadRelationshipTaskContext,
+  saveRelationshipTaskContext,
+  type RelationshipTaskContext,
+} from '@/app/lib/tasks/relationship';
+import {
   careerProgressApi,
   type CareerProgressRecord,
 } from '@/app/lib/career-progress/api';
+import {
+  relationshipProgressApi,
+  type RelationshipProgressRecord,
+} from '@/app/lib/relationship-progress/api';
 import { trackEvent } from '@/app/lib/analytics/track';
 import {
   TodayReminderCard,
@@ -42,6 +51,7 @@ import {
 import { ContinueLastCard } from './components/ContinueLastCard';
 import { RecentRecords } from './components/RecentRecords';
 import { CareerTaskCard } from './components/CareerTaskCard';
+import { RelationshipTaskCard } from './components/RelationshipTaskCard';
 
 type Profile = {
   id: number;
@@ -63,7 +73,7 @@ type FocusKey = 'career' | 'relationship' | 'wealth' | 'self' | 'year';
 
 const BAZI_ENTRIES: Array<{ key: FocusKey; label: string; hint: string; icon: typeof BriefcaseBusiness; href?: string }> = [
   { key: 'career', label: '事业阶段', hint: '看长期方向与当下节奏', icon: BriefcaseBusiness, href: '/career' },
-  { key: 'relationship', label: '感情模式', hint: '看关系里的重复倾向', icon: Heart },
+  { key: 'relationship', label: '感情模式', hint: '看关系里的重复倾向', icon: Heart, href: '/relationship' },
   { key: 'wealth', label: '财运节奏', hint: '看资源流动与取舍', icon: WalletCards },
   { key: 'self', label: '个人优势', hint: '看天性、能力与适合位置', icon: Sparkles },
   { key: 'year', label: '流年提醒', hint: '看这一阶段的重点', icon: CalendarDays },
@@ -110,10 +120,35 @@ function latestCareerTaskFromProgress(record: CareerProgressRecord | null): Care
   return record?.task_context?.taskType === 'career' ? record.task_context : null;
 }
 
+function latestRelationshipTaskFromHistory(data: DashboardData): RelationshipTaskContext | null {
+  const tasks = [
+    ...data.baziItems.map((item) => item.task_context),
+    ...data.liuyaoItems.map((item) => item.task_context),
+  ].filter((task): task is RelationshipTaskContext => task?.taskType === 'relationship');
+
+  if (!tasks.length) return null;
+  return tasks.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0];
+}
+
+function latestRelationshipTaskFromProgress(record: RelationshipProgressRecord | null): RelationshipTaskContext | null {
+  return record?.task_context?.taskType === 'relationship' ? record.task_context : null;
+}
+
 function pickNewerCareerTask(
   current: CareerTaskContext | null,
   candidate: CareerTaskContext | null,
 ): CareerTaskContext | null {
+  if (!candidate) return current;
+  if (!current) return candidate;
+  return new Date(candidate.updatedAt).getTime() >= new Date(current.updatedAt).getTime()
+    ? candidate
+    : current;
+}
+
+function pickNewerRelationshipTask(
+  current: RelationshipTaskContext | null,
+  candidate: RelationshipTaskContext | null,
+): RelationshipTaskContext | null {
   if (!candidate) return current;
   if (!current) return candidate;
   return new Date(candidate.updatedAt).getTime() >= new Date(current.updatedAt).getTime()
@@ -141,16 +176,20 @@ export default function DashboardPage() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [careerTask, setCareerTask] = useState<CareerTaskContext | null>(null);
+  const [relationshipTask, setRelationshipTask] = useState<RelationshipTaskContext | null>(null);
   const [todayReminder, setTodayReminder] = useState<TodayReminder | null>(null);
 
   useEffect(() => {
     if (routeLoading) return;
     let alive = true;
     const localCareerTask = loadCareerTaskContext();
+    const localRelationshipTask = loadRelationshipTaskContext();
     setCareerTask(localCareerTask);
+    setRelationshipTask(localRelationshipTask);
     trackEvent('dashboard_view', {
       payload: {
         has_local_career_task: Boolean(localCareerTask),
+        has_local_relationship_task: Boolean(localRelationshipTask),
       },
     });
 
@@ -198,6 +237,19 @@ export default function DashboardPage() {
           if (alive) setCareerTask((current) => current ?? localCareerTask);
         });
 
+      relationshipProgressApi.getLatest()
+        .then((record) => {
+          if (!alive) return;
+          const latestProgressTask = latestRelationshipTaskFromProgress(record);
+          if (latestProgressTask) {
+            saveRelationshipTaskContext(latestProgressTask);
+          }
+          setRelationshipTask((current) => pickNewerRelationshipTask(current, latestProgressTask));
+        })
+        .catch(() => {
+          if (alive) setRelationshipTask((current) => current ?? localRelationshipTask);
+        });
+
       setHistoryLoading(true);
       Promise.all([
         historyApi.list('bazi', 0, 4),
@@ -225,9 +277,13 @@ export default function DashboardPage() {
 
   const latest = useMemo(() => latestConversation(data), [data]);
   const serverCareerTask = useMemo(() => latestCareerTaskFromHistory(data), [data]);
+  const serverRelationshipTask = useMemo(() => latestRelationshipTaskFromHistory(data), [data]);
   const activeCareerTask = useMemo(() => {
     return pickNewerCareerTask(careerTask, serverCareerTask);
   }, [careerTask, serverCareerTask]);
+  const activeRelationshipTask = useMemo(() => {
+    return pickNewerRelationshipTask(relationshipTask, serverRelationshipTask);
+  }, [relationshipTask, serverRelationshipTask]);
   const dayMaster = getDayMaster(data.profile);
   const recentItems = useMemo(
     () => [
@@ -308,6 +364,44 @@ export default function DashboardPage() {
                 </div>
                 <Link
                   href="/career"
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[3px] border border-[var(--color-border-strong)] bg-[var(--color-bg-elevated)] px-4 text-sm font-medium text-[var(--color-primary)] transition-colors hover:bg-[var(--color-bg-hover)] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)] sm:min-w-[120px]"
+                >
+                  开始分诊
+                  <ArrowRight className="h-4 w-4" strokeWidth={1.6} />
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-4 border border-[var(--color-border)] bg-[var(--color-bg-alt)] p-5 sm:p-6">
+          <div className="grid gap-5 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
+            <div>
+              <div className="mb-3 flex items-center gap-2 text-sm font-medium text-[var(--color-text-secondary)]">
+                <Heart className="h-4 w-4 text-[var(--color-primary)]" strokeWidth={1.6} />
+                开始一个感情分析
+              </div>
+              <h2 className="font-serif text-[1.35rem] font-medium leading-snug text-[var(--color-text-primary)]">
+                感情关系问题，先分清是模式还是具体节点
+              </h2>
+              <p className="mt-3 max-w-[52ch] text-[16px] leading-7 text-[var(--color-text-body)]">
+                长期关系模式用八字，复合、表白、冷战、是否推进这类具体一事用六爻。
+              </p>
+            </div>
+            <div className="grid gap-3">
+              <RelationshipTaskCard task={activeRelationshipTask} onTaskUpdate={setRelationshipTask} />
+
+              <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-stretch">
+                <div className="border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-4">
+                  <p className="text-sm font-medium text-[var(--color-text-primary)]">看长期模式</p>
+                  <p className="mt-1 text-xs leading-5 text-[var(--color-text-secondary)]">适合感情表达、择偶倾向、关系里的重复模式。</p>
+                </div>
+                <div className="border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-4">
+                  <p className="text-sm font-medium text-[var(--color-text-primary)]">判断具体关系</p>
+                  <p className="mt-1 text-xs leading-5 text-[var(--color-text-secondary)]">适合复合、推进、冷战、对方态度等具体节点。</p>
+                </div>
+                <Link
+                  href="/relationship"
                   className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[3px] border border-[var(--color-border-strong)] bg-[var(--color-bg-elevated)] px-4 text-sm font-medium text-[var(--color-primary)] transition-colors hover:bg-[var(--color-bg-hover)] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)] sm:min-w-[120px]"
                 >
                   开始分诊
