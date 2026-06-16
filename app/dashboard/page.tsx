@@ -5,16 +5,11 @@ import Link from 'next/link';
 import {
   ArrowRight,
   BookOpen,
-  BriefcaseBusiness,
-  CalendarDays,
   CircleHelp,
   Dices,
-  Heart,
   History,
   Loader2,
   MessageSquare,
-  Sparkles,
-  WalletCards,
 } from 'lucide-react';
 
 import { api } from '@/app/lib/api';
@@ -25,24 +20,6 @@ import {
   type ConversationListItem,
   type HistoryType,
 } from '@/app/lib/history/api';
-import {
-  loadCareerTaskContext,
-  saveCareerTaskContext,
-  type CareerTaskContext,
-} from '@/app/lib/tasks/career';
-import {
-  loadRelationshipTaskContext,
-  saveRelationshipTaskContext,
-  type RelationshipTaskContext,
-} from '@/app/lib/tasks/relationship';
-import {
-  careerProgressApi,
-  type CareerProgressRecord,
-} from '@/app/lib/career-progress/api';
-import {
-  relationshipProgressApi,
-  type RelationshipProgressRecord,
-} from '@/app/lib/relationship-progress/api';
 import { trackEvent } from '@/app/lib/analytics/track';
 import {
   TodayReminderCard,
@@ -50,8 +27,6 @@ import {
 } from './components/TodayReminderCard';
 import { ContinueLastCard } from './components/ContinueLastCard';
 import { RecentRecords } from './components/RecentRecords';
-import { CareerTaskCard } from './components/CareerTaskCard';
-import { RelationshipTaskCard } from './components/RelationshipTaskCard';
 
 type Profile = {
   id: number;
@@ -69,22 +44,21 @@ type DashboardData = {
   liuyaoItems: ConversationListItem[];
 };
 
-type FocusKey = 'career' | 'relationship' | 'wealth' | 'self' | 'year';
-
-const BAZI_ENTRIES: Array<{ key: FocusKey; label: string; hint: string; icon: typeof BriefcaseBusiness; href?: string }> = [
-  { key: 'career', label: '事业阶段', hint: '看长期方向与当下节奏', icon: BriefcaseBusiness, href: '/career' },
-  { key: 'relationship', label: '感情模式', hint: '看关系里的重复倾向', icon: Heart, href: '/relationship' },
-  { key: 'wealth', label: '财运节奏', hint: '看资源流动与取舍', icon: WalletCards },
-  { key: 'self', label: '个人优势', hint: '看天性、能力与适合位置', icon: Sparkles },
-  { key: 'year', label: '流年提醒', hint: '看这一阶段的重点', icon: CalendarDays },
-];
-
-const LIUYAO_ENTRIES = [
-  '这个 offer 要不要接',
-  '这段关系要不要推进',
-  '这次合作有没有风险',
-  '这个房子或工位是否合适',
-  '最近这件事能不能成',
+const NEW_ANALYSIS_ENTRIES = [
+  {
+    title: '八字长期趋势',
+    description: '适合看长期方向、性格优势、事业路径、关系模式和阶段运势。',
+    cta: '开始八字分析',
+    href: '/panel',
+    icon: MessageSquare,
+  },
+  {
+    title: '六爻具体问题',
+    description: '适合判断一个具体事项：要不要合作、能不能成、是否继续、对方态度如何。',
+    cta: '起一卦',
+    href: '/liuyao',
+    icon: Dices,
+  },
 ];
 
 function latestConversation(data: DashboardData): { item: ConversationListItem; type: HistoryType } | null {
@@ -106,56 +80,6 @@ function getDayMaster(profile: Profile | null): string | null {
   return typeof day?.stem === 'string' ? day.stem : null;
 }
 
-function latestCareerTaskFromHistory(data: DashboardData): CareerTaskContext | null {
-  const tasks = [
-    ...data.baziItems.map((item) => item.task_context),
-    ...data.liuyaoItems.map((item) => item.task_context),
-  ].filter((task): task is CareerTaskContext => task?.taskType === 'career');
-
-  if (!tasks.length) return null;
-  return tasks.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0];
-}
-
-function latestCareerTaskFromProgress(record: CareerProgressRecord | null): CareerTaskContext | null {
-  return record?.task_context?.taskType === 'career' ? record.task_context : null;
-}
-
-function latestRelationshipTaskFromHistory(data: DashboardData): RelationshipTaskContext | null {
-  const tasks = [
-    ...data.baziItems.map((item) => item.task_context),
-    ...data.liuyaoItems.map((item) => item.task_context),
-  ].filter((task): task is RelationshipTaskContext => task?.taskType === 'relationship');
-
-  if (!tasks.length) return null;
-  return tasks.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0];
-}
-
-function latestRelationshipTaskFromProgress(record: RelationshipProgressRecord | null): RelationshipTaskContext | null {
-  return record?.task_context?.taskType === 'relationship' ? record.task_context : null;
-}
-
-function pickNewerCareerTask(
-  current: CareerTaskContext | null,
-  candidate: CareerTaskContext | null,
-): CareerTaskContext | null {
-  if (!candidate) return current;
-  if (!current) return candidate;
-  return new Date(candidate.updatedAt).getTime() >= new Date(current.updatedAt).getTime()
-    ? candidate
-    : current;
-}
-
-function pickNewerRelationshipTask(
-  current: RelationshipTaskContext | null,
-  candidate: RelationshipTaskContext | null,
-): RelationshipTaskContext | null {
-  if (!candidate) return current;
-  if (!current) return candidate;
-  return new Date(candidate.updatedAt).getTime() >= new Date(current.updatedAt).getTime()
-    ? candidate
-    : current;
-}
-
 function LoadingView() {
   return (
     <main className="min-h-full bg-[var(--color-bg)] px-4 py-6 sm:px-8 sm:py-8">
@@ -175,23 +99,12 @@ export default function DashboardPage() {
   const [profileLoading, setProfileLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [careerTask, setCareerTask] = useState<CareerTaskContext | null>(null);
-  const [relationshipTask, setRelationshipTask] = useState<RelationshipTaskContext | null>(null);
   const [todayReminder, setTodayReminder] = useState<TodayReminder | null>(null);
 
   useEffect(() => {
     if (routeLoading) return;
     let alive = true;
-    const localCareerTask = loadCareerTaskContext();
-    const localRelationshipTask = loadRelationshipTaskContext();
-    setCareerTask(localCareerTask);
-    setRelationshipTask(localRelationshipTask);
-    trackEvent('dashboard_view', {
-      payload: {
-        has_local_career_task: Boolean(localCareerTask),
-        has_local_relationship_task: Boolean(localRelationshipTask),
-      },
-    });
+    trackEvent('dashboard_view');
 
     async function load() {
       setError(null);
@@ -224,32 +137,6 @@ export default function DashboardPage() {
           if (alive) setTodayReminder(null);
         });
 
-      careerProgressApi.getLatest()
-        .then((record) => {
-          if (!alive) return;
-          const latestProgressTask = latestCareerTaskFromProgress(record);
-          if (latestProgressTask) {
-            saveCareerTaskContext(latestProgressTask);
-          }
-          setCareerTask((current) => pickNewerCareerTask(current, latestProgressTask));
-        })
-        .catch(() => {
-          if (alive) setCareerTask((current) => current ?? localCareerTask);
-        });
-
-      relationshipProgressApi.getLatest()
-        .then((record) => {
-          if (!alive) return;
-          const latestProgressTask = latestRelationshipTaskFromProgress(record);
-          if (latestProgressTask) {
-            saveRelationshipTaskContext(latestProgressTask);
-          }
-          setRelationshipTask((current) => pickNewerRelationshipTask(current, latestProgressTask));
-        })
-        .catch(() => {
-          if (alive) setRelationshipTask((current) => current ?? localRelationshipTask);
-        });
-
       setHistoryLoading(true);
       Promise.all([
         historyApi.list('bazi', 0, 4),
@@ -276,14 +163,6 @@ export default function DashboardPage() {
   }, [routeLoading]);
 
   const latest = useMemo(() => latestConversation(data), [data]);
-  const serverCareerTask = useMemo(() => latestCareerTaskFromHistory(data), [data]);
-  const serverRelationshipTask = useMemo(() => latestRelationshipTaskFromHistory(data), [data]);
-  const activeCareerTask = useMemo(() => {
-    return pickNewerCareerTask(careerTask, serverCareerTask);
-  }, [careerTask, serverCareerTask]);
-  const activeRelationshipTask = useMemo(() => {
-    return pickNewerRelationshipTask(relationshipTask, serverRelationshipTask);
-  }, [relationshipTask, serverRelationshipTask]);
   const dayMaster = getDayMaster(data.profile);
   const recentItems = useMemo(
     () => [
@@ -305,7 +184,7 @@ export default function DashboardPage() {
               回到你的问题，而不是重新开始。
             </h1>
             <p className="mt-3 text-[16px] leading-7 text-[var(--color-text-secondary)]">
-              八字看长期趋势，六爻看具体事项。这里先帮你把入口排好。
+              八字看长期趋势，六爻看具体事项。这里先帮你接上当前最重要的一步。
             </p>
           </div>
           <div className="mt-4 text-sm leading-6 text-[var(--color-text-muted)] sm:mt-0 sm:text-right">
@@ -330,136 +209,38 @@ export default function DashboardPage() {
           </div>
         )}
 
-        <TodayReminderCard reminder={todayReminder} />
-
-        <section className="grid gap-5">
+        <section className="grid gap-4">
           <ContinueLastCard latest={latest} loading={historyLoading} />
-        </section>
 
-        <section className="mt-5 border border-[var(--color-border)] bg-[var(--color-bg-alt)] p-5 sm:p-6">
-          <div className="grid gap-5 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
-            <div>
-              <div className="mb-3 flex items-center gap-2 text-sm font-medium text-[var(--color-text-secondary)]">
-                <BriefcaseBusiness className="h-4 w-4 text-[var(--color-primary)]" strokeWidth={1.6} />
-                开始一个新分析
-              </div>
-              <h2 className="font-serif text-[1.35rem] font-medium leading-snug text-[var(--color-text-primary)]">
-                工作或事业选择，先分清问题类型
-              </h2>
-              <p className="mt-3 max-w-[52ch] text-[16px] leading-7 text-[var(--color-text-body)]">
-                先判断你是在看长期方向，还是在判断一个具体机会。长期趋势用八字，具体一事用六爻。
-              </p>
-            </div>
-            <div className="grid gap-3">
-              <CareerTaskCard task={activeCareerTask} onTaskUpdate={setCareerTask} />
-
-              <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-stretch">
-                <div className="border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-4">
-                  <p className="text-sm font-medium text-[var(--color-text-primary)]">看长期方向</p>
-                  <p className="mt-1 text-xs leading-5 text-[var(--color-text-secondary)]">适合事业阶段、岗位类型、进取或稳定。</p>
+          <div className="grid gap-4 lg:grid-cols-2">
+            {NEW_ANALYSIS_ENTRIES.map(({ title, description, cta, href, icon: Icon }) => (
+              <Link
+                key={title}
+                href={href}
+                className="group grid min-h-[164px] border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-5 transition-colors hover:border-[var(--color-border-strong)] hover:bg-[var(--color-bg-hover)] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)] sm:p-6"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium tracking-[0.04em] text-[var(--color-text-muted)]">新开分析</p>
+                    <h2 className="mt-2 font-serif text-xl font-medium leading-snug text-[var(--color-text-primary)]">
+                      {title}
+                    </h2>
+                  </div>
+                  <Icon className="h-5 w-5 shrink-0 text-[var(--color-text-muted)]" strokeWidth={1.6} />
                 </div>
-                <div className="border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-4">
-                  <p className="text-sm font-medium text-[var(--color-text-primary)]">判断具体选择</p>
-                  <p className="mt-1 text-xs leading-5 text-[var(--color-text-secondary)]">适合 offer、合作、跳槽时机等具体事项。</p>
-                </div>
-                <Link
-                  href="/career"
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[3px] border border-[var(--color-border-strong)] bg-[var(--color-bg-elevated)] px-4 text-sm font-medium text-[var(--color-primary)] transition-colors hover:bg-[var(--color-bg-hover)] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)] sm:min-w-[120px]"
-                >
-                  开始分诊
+                <p className="mt-3 text-[15px] leading-7 text-[var(--color-text-body)]">{description}</p>
+                <span className="mt-5 inline-flex min-h-11 w-fit items-center justify-center gap-2 rounded-[3px] border border-[var(--color-border-strong)] bg-[var(--color-bg-card)] px-4 text-sm font-medium text-[var(--color-primary)] transition-colors group-hover:bg-[var(--color-bg)]">
+                  {cta}
                   <ArrowRight className="h-4 w-4" strokeWidth={1.6} />
-                </Link>
-              </div>
-            </div>
+                </span>
+              </Link>
+            ))}
           </div>
         </section>
 
-        <section className="mt-4 border border-[var(--color-border)] bg-[var(--color-bg-alt)] p-5 sm:p-6">
-          <div className="grid gap-5 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
-            <div>
-              <div className="mb-3 flex items-center gap-2 text-sm font-medium text-[var(--color-text-secondary)]">
-                <Heart className="h-4 w-4 text-[var(--color-primary)]" strokeWidth={1.6} />
-                开始一个感情分析
-              </div>
-              <h2 className="font-serif text-[1.35rem] font-medium leading-snug text-[var(--color-text-primary)]">
-                感情关系问题，先分清是模式还是具体节点
-              </h2>
-              <p className="mt-3 max-w-[52ch] text-[16px] leading-7 text-[var(--color-text-body)]">
-                长期关系模式用八字，复合、表白、冷战、是否推进这类具体一事用六爻。
-              </p>
-            </div>
-            <div className="grid gap-3">
-              <RelationshipTaskCard task={activeRelationshipTask} onTaskUpdate={setRelationshipTask} />
-
-              <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-stretch">
-                <div className="border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-4">
-                  <p className="text-sm font-medium text-[var(--color-text-primary)]">看长期模式</p>
-                  <p className="mt-1 text-xs leading-5 text-[var(--color-text-secondary)]">适合感情表达、择偶倾向、关系里的重复模式。</p>
-                </div>
-                <div className="border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-4">
-                  <p className="text-sm font-medium text-[var(--color-text-primary)]">判断具体关系</p>
-                  <p className="mt-1 text-xs leading-5 text-[var(--color-text-secondary)]">适合复合、推进、冷战、对方态度等具体节点。</p>
-                </div>
-                <Link
-                  href="/relationship"
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[3px] border border-[var(--color-border-strong)] bg-[var(--color-bg-elevated)] px-4 text-sm font-medium text-[var(--color-primary)] transition-colors hover:bg-[var(--color-bg-hover)] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)] sm:min-w-[120px]"
-                >
-                  开始分诊
-                  <ArrowRight className="h-4 w-4" strokeWidth={1.6} />
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="mt-4 grid gap-4 lg:grid-cols-2">
-          <div className="border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-5 sm:p-6">
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div>
-                <h2 className="font-serif text-lg font-medium text-[var(--color-text-primary)]">长期趋势，用八字</h2>
-                <p className="mt-1 text-sm text-[var(--color-text-secondary)]">适合看阶段、模式和长期方向。</p>
-              </div>
-              <MessageSquare className="h-5 w-5 text-[var(--color-text-muted)]" strokeWidth={1.6} />
-            </div>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {BAZI_ENTRIES.map(({ label, hint, icon: Icon, href }) => (
-                <Link
-                  key={label}
-                  href={href || '/panel'}
-                  className="group min-h-[72px] border border-[var(--color-border)] bg-[var(--color-bg)] px-4 py-3 transition-colors hover:border-[var(--color-border-strong)] hover:bg-[var(--color-bg-hover)] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)]"
-                >
-                  <span className="flex items-center gap-2 text-sm font-medium text-[var(--color-text-primary)]">
-                    <Icon className="h-4 w-4 text-[var(--color-primary)]" strokeWidth={1.6} />
-                    {label}
-                  </span>
-                  <span className="mt-1 block text-xs leading-5 text-[var(--color-text-secondary)]">{hint}</span>
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          <div className="border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-5 sm:p-6">
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div>
-                <h2 className="font-serif text-lg font-medium text-[var(--color-text-primary)]">具体一事，用六爻</h2>
-                <p className="mt-1 text-sm text-[var(--color-text-secondary)]">适合判断能不能成、该不该动、风险在哪里。</p>
-              </div>
-              <Dices className="h-5 w-5 text-[var(--color-text-muted)]" strokeWidth={1.6} />
-            </div>
-            <div className="space-y-2">
-              {LIUYAO_ENTRIES.map((label) => (
-                <Link
-                  key={label}
-                  href="/liuyao"
-                  className="flex min-h-11 items-center justify-between gap-3 border border-[var(--color-border)] bg-[var(--color-bg)] px-4 py-2 text-sm font-medium text-[var(--color-text-primary)] transition-colors hover:border-[var(--color-border-strong)] hover:bg-[var(--color-bg-hover)] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)]"
-                >
-                  <span>{label}</span>
-                  <ArrowRight className="h-4 w-4 text-[var(--color-text-muted)]" strokeWidth={1.6} />
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
+        <div className="mt-5">
+          <TodayReminderCard reminder={todayReminder} />
+        </div>
 
         <RecentRecords items={recentItems} loading={historyLoading} />
 

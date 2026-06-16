@@ -24,9 +24,9 @@ type ContinueLastCardProps = {
 
 function LoadingState() {
   return (
-    <div className="border border-[var(--color-border-strong)] bg-[var(--color-bg-elevated)] p-5 shadow-[0_2px_12px_rgba(60,40,20,0.08)] sm:p-7">
+    <div className="border border-[var(--color-border-strong)] bg-[var(--color-bg-elevated)] p-5 shadow-[0_2px_12px_rgba(60,40,20,0.08)] sm:p-8">
       <div className="mb-4 flex items-center gap-2 text-sm font-medium text-[var(--color-text-secondary)]">
-        <RefreshCw className="h-4 w-4 text-[var(--color-primary)]" strokeWidth={1.6} />
+        <RefreshCw className="h-4 w-4 text-[var(--color-text-muted)]" strokeWidth={1.6} />
         正在读取上次的问题
       </div>
       <div className="space-y-3">
@@ -40,7 +40,7 @@ function LoadingState() {
 
 function EmptyState() {
   return (
-    <div className="border border-[var(--color-border-strong)] bg-[var(--color-bg-elevated)] p-5 shadow-[0_2px_12px_rgba(60,40,20,0.08)] sm:p-7">
+    <div className="border border-[var(--color-border-strong)] bg-[var(--color-bg-elevated)] p-5 shadow-[0_2px_12px_rgba(60,40,20,0.08)] sm:p-8">
       <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-border)] text-[var(--color-text-secondary)]">
         <History className="h-5 w-5" strokeWidth={1.6} />
       </div>
@@ -52,39 +52,68 @@ function EmptyState() {
   );
 }
 
+function typeLabel(type: HistoryType) {
+  return type === 'bazi' ? '八字 · 长期趋势' : '六爻 · 具体事项';
+}
+
+function currentStuckPoint(type: HistoryType) {
+  return type === 'bazi'
+    ? '适合继续把长期趋势落到当前阶段，而不是重新开一个泛泛的解读。'
+    : '适合继续围绕这件具体事判断下一步，不必重新起一个相同问题。';
+}
+
+function recommendedNextStep(type: HistoryType) {
+  return type === 'bazi'
+    ? '建议继续看：这个阶段真正要调整的节奏和取舍。'
+    : '建议继续判断：是否值得推进下一步，还是应降低投入。';
+}
+
 export function ContinueLastCard({ latest, loading }: ContinueLastCardProps) {
   if (loading) return <LoadingState />;
   if (!latest) return <EmptyState />;
 
+  const href = conversationHref(latest.item, latest.type);
+  const question = previewText(latest.item, latest.type === 'bazi' ? '上次的八字问题' : '上次的六爻问题');
+  const conclusion = latest.item.last_assistant_preview || '上次已经留下了判断线索，可以从这里接着看。';
+
   return (
-    <div className="border border-[var(--color-border-strong)] bg-[var(--color-bg-elevated)] p-5 shadow-[0_2px_12px_rgba(60,40,20,0.08)] sm:p-7">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+    <div className="border border-[var(--color-border-strong)] bg-[var(--color-bg-elevated)] p-5 shadow-[0_2px_12px_rgba(60,40,20,0.08)] sm:p-8">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-sm font-medium text-[var(--color-text-secondary)]">
-          <RefreshCw className="h-4 w-4 text-[var(--color-primary)]" strokeWidth={1.6} />
+          <RefreshCw className="h-4 w-4 text-[var(--color-text-muted)]" strokeWidth={1.6} />
           当前最适合继续
         </div>
         <span className="text-xs text-[var(--color-text-muted)]">{formatRelative(latest.item.updated_at)}</span>
       </div>
-      <div className="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-end">
+      <div className="grid gap-6 lg:grid-cols-[1fr_220px] lg:items-end">
         <div>
           <p className="text-xs font-medium tracking-[0.04em] text-[var(--color-text-muted)]">
-            {latest.type === 'bazi' ? '八字解读' : '六爻问事'}
+            {typeLabel(latest.type)}
           </p>
-          <h2 className="mt-2 font-serif text-2xl font-medium leading-snug text-[var(--color-text-primary)] sm:text-[1.7rem]">
+          <h2 className="mt-2 font-serif text-[1.55rem] font-medium leading-snug text-[var(--color-text-primary)] sm:text-[1.9rem]">
             {displayTitle(latest.item, latest.type)}
           </h2>
-          <p className="mt-3 max-w-2xl text-[16px] leading-7 text-[var(--color-text-body)]">
-            {previewText(latest.item, latest.type === 'bazi' ? '上次的八字解读' : '上次的六爻问事')}
+          <p className="mt-3 max-w-[64ch] text-[16px] leading-7 text-[var(--color-text-body)]">
+            问题摘要：{question}
           </p>
-          {latest.item.last_assistant_preview && (
-            <p className="mt-3 max-w-2xl border-t border-[var(--color-border)] pt-3 text-sm leading-6 text-[var(--color-text-secondary)]">
-              当前结论：{latest.item.last_assistant_preview}
+          <div className="mt-5 grid gap-3 border-t border-[var(--color-border)] pt-4">
+            <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
+              <span className="font-medium text-[var(--color-text-primary)]">上次判断：</span>
+              {conclusion}
             </p>
-          )}
+            <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
+              <span className="font-medium text-[var(--color-text-primary)]">当前卡点：</span>
+              {currentStuckPoint(latest.type)}
+            </p>
+            <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
+              <span className="font-medium text-[var(--color-text-primary)]">推荐下一步：</span>
+              {recommendedNextStep(latest.type)}
+            </p>
+          </div>
         </div>
-        <div className="flex flex-col gap-2 sm:min-w-[180px]">
+        <div className="flex flex-col gap-2">
           <Link
-            href={conversationHref(latest.item, latest.type)}
+            href={href}
             onClick={() => {
               trackEvent('conversation_continue_click', {
                 payload: {
@@ -100,7 +129,7 @@ export function ContinueLastCard({ latest, loading }: ContinueLastCardProps) {
             <ArrowRight className="h-4 w-4" strokeWidth={1.6} />
           </Link>
           <Link
-            href="/history"
+            href={href}
             onClick={() => {
               trackEvent('history_view', {
                 payload: {
