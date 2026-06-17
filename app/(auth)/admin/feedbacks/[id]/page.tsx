@@ -39,8 +39,9 @@ const TYPE_MAP: Record<string, { label: string; color: string }> = {
 
 export default function FeedbackDetailPage() {
   const router = useRouter();
-  const params = useParams();
-  const feedbackId = params.id as string;
+  const params = useParams<{ id?: string | string[] }>();
+  const rawFeedbackId = params?.id;
+  const feedbackId = Array.isArray(rawFeedbackId) ? rawFeedbackId[0] : rawFeedbackId;
 
   const [loading, setLoading] = useState(true);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
@@ -70,6 +71,11 @@ export default function FeedbackDetailPage() {
   }, [feedbackId, router]);
 
   const loadFeedback = async () => {
+    if (!feedbackId) {
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
       const token = localStorage.getItem('auth_token');
