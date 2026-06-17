@@ -9,7 +9,7 @@ import { Mail, Lock, Eye, EyeOff, Loader2, ArrowLeft, KeyRound, Check } from 'lu
 function ResetPasswordContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const emailFromQuery = searchParams.get('email') || '';
+  const emailFromQuery = searchParams?.get('email') || '';
 
   const [email, setEmail] = useState(emailFromQuery);
   const [code, setCode] = useState('');

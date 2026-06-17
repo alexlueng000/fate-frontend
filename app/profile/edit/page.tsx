@@ -26,7 +26,7 @@ interface UserProfile {
 function EditProfileContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const returnTo = searchParams.get('returnTo') || '/panel';
+  const returnTo = searchParams?.get('returnTo') || '/panel';
   const loading = useRouteGuard(true, true); // 需要登录和档案
 
   const [profile, setProfile] = useState<UserProfile | null>(null);

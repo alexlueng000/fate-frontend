@@ -65,11 +65,11 @@ function TryPageContent() {
     if (hasStartedRef.current) return;
     hasStartedRef.current = true;
 
-    const gender = searchParams.get('gender') || '男';
-    const calendar = searchParams.get('calendar') || 'gregorian';
-    const birthDate = searchParams.get('birth_date');
-    const birthTime = searchParams.get('birth_time');
-    const birthplace = searchParams.get('birthplace') || '';
+    const gender = searchParams?.get('gender') || '男';
+    const calendar = searchParams?.get('calendar') || 'gregorian';
+    const birthDate = searchParams?.get('birth_date');
+    const birthTime = searchParams?.get('birth_time');
+    const birthplace = searchParams?.get('birthplace') || '';
 
     if (!birthDate || !birthTime) {
       setError('缺少出生日期或时间参数');

@@ -30,7 +30,7 @@ type MobileNavLink = {
 
 export default function Header() {
   const router = useRouter();
-  const pathname = usePathname();
+  const pathname = usePathname() || '';
   const { user: me } = useUser();
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);

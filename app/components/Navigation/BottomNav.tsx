@@ -9,7 +9,7 @@ function matchActive(pathname: string, href: string) {
 }
 
 export default function BottomNav() {
-  const pathname = usePathname();
+  const pathname = usePathname() || '';
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--color-border)] bg-[var(--color-bg-elevated)] shadow-[var(--shadow-lg)] pb-[env(safe-area-inset-bottom)]">

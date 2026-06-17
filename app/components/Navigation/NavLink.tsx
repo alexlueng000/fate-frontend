@@ -14,7 +14,7 @@ interface NavLinkProps {
 }
 
 export default function NavLink({ href, icon, children, className = '', vertical = false, collapsed = false }: NavLinkProps) {
-  const pathname = usePathname();
+  const pathname = usePathname() || '';
   const isActive = pathname === href || pathname.startsWith(href + '/');
 
   if (vertical) {

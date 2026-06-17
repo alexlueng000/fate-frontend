@@ -13,7 +13,7 @@ function LayoutBody({ children }: { children: ReactNode }) {
   const { user, setUser } = useUser();
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const fetchAttempted = useRef(false);
-  const pathname = usePathname();
+  const pathname = usePathname() || '';
 
   // 检查用户认证（只执行一次）
   useEffect(() => {
