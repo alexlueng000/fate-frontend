@@ -1,18 +1,45 @@
-// lib/api.ts
 const RAW_API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
 const API_BASE = RAW_API_BASE.replace(/\/+$/, '');
+
 export const api = (path: string) => {
-  // Ensure path starts with /
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
-  // In production, prefix with /api for Next.js rewrite
   const pathWithPrefix = API_BASE ? normalizedPath : `/api${normalizedPath}`;
   return API_BASE ? `${API_BASE}${pathWithPrefix}` : pathWithPrefix;
 };
 
+export function authHeaders(): Record<string, string> {
+  if (typeof window === 'undefined') return {};
+  const token = localStorage.getItem('auth_token');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+async function parseError(r: Response): Promise<Error> {
+  const text = await r.text().catch(() => '');
+  if (!text) return new Error(`HTTP ${r.status}`);
+  try {
+    const json = JSON.parse(text);
+    return new Error(json.detail || json.message || text || `HTTP ${r.status}`);
+  } catch {
+    return new Error(text || `HTTP ${r.status}`);
+  }
+}
+
+export async function getJSON<T>(
+  url: string,
+  options?: { headers?: Record<string, string> },
+): Promise<T> {
+  const r = await fetch(url, {
+    headers: options?.headers,
+    credentials: 'include',
+  });
+  if (!r.ok) throw await parseError(r);
+  return r.json() as Promise<T>;
+}
+
 export async function postJSON<T>(
   url: string,
   body: unknown,
-  options?: { headers?: Record<string, string> }
+  options?: { headers?: Record<string, string> },
 ): Promise<T> {
   const r = await fetch(url, {
     method: 'POST',
@@ -23,23 +50,14 @@ export async function postJSON<T>(
     credentials: 'include',
     body: JSON.stringify(body),
   });
-  if (!r.ok) {
-    const text = await r.text().catch(() => '');
-    // 尝试解析 JSON 格式的错误响应
-    try {
-      const json = JSON.parse(text);
-      throw new Error(json.detail || json.message || text || `HTTP ${r.status}`);
-    } catch {
-      throw new Error(text || `HTTP ${r.status}`);
-    }
-  }
+  if (!r.ok) throw await parseError(r);
   return r.json() as Promise<T>;
 }
 
 export async function putJSON<T>(
   url: string,
   body: unknown,
-  options?: { headers?: Record<string, string> }
+  options?: { headers?: Record<string, string> },
 ): Promise<T> {
   const r = await fetch(url, {
     method: 'PUT',
@@ -50,16 +68,9 @@ export async function putJSON<T>(
     credentials: 'include',
     body: JSON.stringify(body),
   });
-  if (!r.ok) {
-    const msg = await r.text().catch(() => '');
-    throw new Error(msg || `HTTP ${r.status}`);
-  }
+  if (!r.ok) throw await parseError(r);
   return r.json() as Promise<T>;
 }
-
-// ============================================
-// Quota / simulate payment helpers
-// ============================================
 
 export type QuotaItem = {
   quota_type: string;
@@ -74,24 +85,14 @@ export type MyQuotas = {
   liuyao_chat: QuotaItem;
 };
 
-function authHeaders(): Record<string, string> {
-  if (typeof window === 'undefined') return {};
-  const token = localStorage.getItem('auth_token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
 export async function getMyQuotas(): Promise<MyQuotas> {
-  const r = await fetch(api('/quota/me/all'), {
-    headers: authHeaders(),
-    credentials: 'include',
-  });
-  if (!r.ok) throw new Error(`HTTP ${r.status}`);
-  return r.json();
+  return getJSON<MyQuotas>(api('/quota/me/all'), { headers: authHeaders() });
 }
 
 export type SimulatePaymentResult = {
   order_id: number;
   product_code: string;
+  membership_id?: number | null;
   granted: { bazi?: number; liuyao?: number };
   quotas: QuotaItem[];
 };
@@ -104,8 +105,117 @@ export async function simulatePayment(productCode: string): Promise<SimulatePaym
   );
 }
 
-/** Format a quota object for header chips. -1 → "无限制". */
 export function formatQuotaText(q: { total: number; remaining: number; is_unlimited: boolean }): string {
-  if (q.is_unlimited || q.total === -1) return '无限制';
+  if (q.is_unlimited || q.total === -1) return '无限';
   return `剩余 ${q.remaining} 次`;
+}
+
+export type ProductGrant = {
+  id: number;
+  quota_type: string;
+  amount: number;
+  valid_days?: number | null;
+};
+
+export type ProductDetail = {
+  id: number;
+  code: string;
+  kind: 'one_time' | 'subscription' | 'topup' | string;
+  period?: 'monthly' | 'yearly' | null;
+  name: string;
+  price_cents: number;
+  currency: string;
+  quota_amount: number;
+  bazi_quota: number;
+  liuyao_quota: number;
+  description?: string | null;
+  features?: Record<string, unknown> | null;
+  active: boolean;
+  grants: ProductGrant[];
+};
+
+export type Membership = {
+  id: number;
+  product_id: number;
+  status: string;
+  current_period_start: string;
+  current_period_end: string;
+  auto_renew: boolean;
+};
+
+export type MembershipMe = {
+  active: boolean;
+  membership: Membership | null;
+  video_access: boolean;
+};
+
+export type VideoLesson = {
+  id: number;
+  course_id: number;
+  slug: string;
+  title: string;
+  description?: string | null;
+  cover_url?: string | null;
+  duration_seconds?: number | null;
+  sort_order: number;
+  access_level: 'free' | 'member' | string;
+  provider: string;
+  is_active: boolean;
+};
+
+export type VideoCourse = {
+  id: number;
+  slug: string;
+  title: string;
+  subtitle?: string | null;
+  description?: string | null;
+  cover_url?: string | null;
+  sort_order: number;
+  is_active: boolean;
+  lessons: VideoLesson[];
+};
+
+export type VideoPlay = {
+  lesson_id: number;
+  play_url: string;
+  provider: string;
+};
+
+export function getMembershipPlans(): Promise<ProductDetail[]> {
+  return getJSON<ProductDetail[]>(api('/membership/plans'));
+}
+
+export function getTopupPackages(): Promise<ProductDetail[]> {
+  return getJSON<ProductDetail[]>(api('/membership/topup-packages'));
+}
+
+export function getMyMembership(): Promise<MembershipMe> {
+  return getJSON<MembershipMe>(api('/membership/me'), { headers: authHeaders() });
+}
+
+export function getVideoCourses(): Promise<VideoCourse[]> {
+  return getJSON<VideoCourse[]>(api('/videos/courses'));
+}
+
+export function getVideoLesson(lessonId: number): Promise<VideoLesson> {
+  return getJSON<VideoLesson>(api(`/videos/lessons/${lessonId}`));
+}
+
+export function getVideoPlay(lessonId: number): Promise<VideoPlay> {
+  return postJSON<VideoPlay>(
+    api(`/videos/lessons/${lessonId}/play`),
+    {},
+    { headers: authHeaders() },
+  );
+}
+
+export function updateVideoProgress(
+  lessonId: number,
+  payload: { position_seconds: number; completed: boolean },
+) {
+  return postJSON(
+    api(`/videos/lessons/${lessonId}/progress`),
+    payload,
+    { headers: authHeaders() },
+  );
 }
