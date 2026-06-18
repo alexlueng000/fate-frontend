@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
+  ArrowLeft,
   ArrowRight,
   BriefcaseBusiness,
   CheckCircle2,
@@ -107,6 +108,14 @@ export default function CareerTaskPage() {
     <main className="min-h-full bg-[var(--color-bg)] px-4 pb-24 pt-5 sm:px-8 sm:pb-10 sm:pt-7">
       <div className="mx-auto w-full max-w-5xl">
         <header className="mb-6 border-b border-[var(--color-border)] pb-5 sm:mb-8">
+          <button
+            type="button"
+            onClick={() => router.push('/dashboard')}
+            className="mb-5 inline-flex min-h-11 items-center gap-2 rounded-[3px] border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-3 text-sm font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)]"
+          >
+            <ArrowLeft className="h-4 w-4" strokeWidth={1.6} />
+            返回命理首页
+          </button>
           <p className="mb-2 text-[13px] font-medium tracking-[0.04em] text-[var(--color-text-muted)]">事业选择</p>
           <h1 className="font-serif text-[1.45rem] font-medium leading-tight text-[var(--color-text-primary)] sm:text-[1.9rem]">
             先把问题分清，再进入对应方法。
