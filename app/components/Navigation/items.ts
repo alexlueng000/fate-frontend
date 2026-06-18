@@ -1,4 +1,4 @@
-import { BookOpen, Dices, FileText, GraduationCap, History, LayoutDashboard, MessageSquare } from 'lucide-react';
+import { BookOpen, Crown, Dices, FileText, GraduationCap, History, LayoutDashboard, MessageSquare } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 export type NavItem = {
@@ -17,8 +17,12 @@ export const PRIMARY_NAV: NavItem[] = [
 ];
 
 export const SECONDARY_NAV: NavItem[] = [
+  { href: '/membership', Icon: Crown, shortLabel: '会员', longLabel: '会员中心' },
   { href: '/report', Icon: FileText, shortLabel: '报告', longLabel: '命理报告' },
   { href: '/history', Icon: History, shortLabel: '记录', longLabel: '解读记录' },
 ];
 
-export const BOTTOM_NAV: NavItem[] = [SECONDARY_NAV[0], ...PRIMARY_NAV];
+export const BOTTOM_NAV: NavItem[] = [
+  { href: '/report', Icon: FileText, shortLabel: '报告', longLabel: '命理报告' },
+  ...PRIMARY_NAV,
+];
