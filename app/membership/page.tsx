@@ -1,15 +1,28 @@
 'use client';
 
 import Link from 'next/link';
+import QRCode from 'qrcode';
 import { useEffect, useMemo, useState } from 'react';
-import { BookOpen, Check, Crown, PackagePlus, RefreshCw } from 'lucide-react';
+import {
+  BookOpen,
+  Check,
+  Copy,
+  Crown,
+  PackagePlus,
+  QrCode,
+  RefreshCw,
+  ShieldCheck,
+  X,
+} from 'lucide-react';
 import {
   ProductDetail,
+  WeChatNativeCheckoutResult,
+  createWeChatNativeCheckout,
   getMembershipPlans,
   getMyMembership,
   getMyQuotas,
+  getOrder,
   getTopupPackages,
-  simulatePayment,
   type MembershipMe,
   type MyQuotas,
 } from '@/app/lib/api';
@@ -34,6 +47,12 @@ function quotaText(quota?: { remaining: number; total: number; is_unlimited: boo
   return `${quota.remaining} / ${quota.total}`;
 }
 
+function productGrantText(product: ProductDetail) {
+  const bazi = product.bazi_quota || product.grants.find((g) => g.quota_type === 'chat')?.amount || 0;
+  const liuyao = product.liuyao_quota || product.grants.find((g) => g.quota_type === 'liuyao_chat')?.amount || 0;
+  return { bazi, liuyao };
+}
+
 export default function MembershipPage() {
   const [membership, setMembership] = useState<MembershipMe | null>(null);
   const [quotas, setQuotas] = useState<MyQuotas | null>(null);
@@ -41,10 +60,16 @@ export default function MembershipPage() {
   const [topups, setTopups] = useState<ProductDetail[]>([]);
   const [loading, setLoading] = useState(true);
   const [payingCode, setPayingCode] = useState<string | null>(null);
+  const [checkout, setCheckout] = useState<WeChatNativeCheckoutResult | null>(null);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const isAuthed = useMemo(() => typeof window !== 'undefined' && Boolean(getAuthToken()), []);
+  const checkoutProduct = useMemo(() => {
+    if (!checkout) return null;
+    return [...plans, ...topups].find((product) => product.id === checkout.order.product_id) ?? null;
+  }, [checkout, plans, topups]);
 
   async function refresh() {
     setLoading(true);
@@ -76,23 +101,73 @@ export default function MembershipPage() {
     void refresh();
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    async function renderQr() {
+      if (!checkout?.code_url) {
+        setQrDataUrl(null);
+        return;
+      }
+      const url = await QRCode.toDataURL(checkout.code_url, {
+        margin: 1,
+        width: 240,
+        color: {
+          dark: '#2A2522',
+          light: '#FBF8F4',
+        },
+      });
+      if (!cancelled) setQrDataUrl(url);
+    }
+    void renderQr();
+    return () => {
+      cancelled = true;
+    };
+  }, [checkout]);
+
+  useEffect(() => {
+    if (!checkout || checkout.order.status === 'PAID') return undefined;
+
+    const timer = window.setInterval(async () => {
+      try {
+        const order = await getOrder(checkout.order.id);
+        if (order.status === 'PAID') {
+          window.clearInterval(timer);
+          setCheckout((current) => (current ? { ...current, order } : current));
+          setMessage('支付成功，权益已发放。');
+          await refresh();
+        }
+      } catch (e) {
+        setError((e as Error).message || '订单状态查询失败');
+      }
+    }, 2500);
+
+    return () => window.clearInterval(timer);
+  }, [checkout]);
+
   async function buy(productCode: string) {
     if (!getAuthToken()) {
       window.location.href = `/login?redirect=${encodeURIComponent('/membership')}`;
       return;
     }
     setPayingCode(productCode);
+    setCheckout(null);
+    setQrDataUrl(null);
     setError(null);
     setMessage(null);
     try {
-      await simulatePayment(productCode);
-      setMessage('权益已发放，可以继续使用。');
-      await refresh();
+      const result = await createWeChatNativeCheckout(productCode);
+      setCheckout(result);
     } catch (e) {
-      setError((e as Error).message || '购买失败');
+      setError((e as Error).message || '创建支付订单失败');
     } finally {
       setPayingCode(null);
     }
+  }
+
+  async function copyCodeUrl() {
+    if (!checkout?.code_url) return;
+    await navigator.clipboard.writeText(checkout.code_url);
+    setMessage('支付链接已复制。');
   }
 
   return (
@@ -100,14 +175,14 @@ export default function MembershipPage() {
       <div className="mx-auto max-w-5xl">
         <header className="mb-8 flex flex-col gap-5 border-b border-[var(--color-border)] pb-6 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="mb-3 text-[13px] font-medium tracking-[0.16em] text-[var(--color-text-muted)]">
-              MEMBERSHIP
+            <p className="mb-3 text-[13px] font-medium uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
+              Membership
             </p>
             <h1 className="font-serif text-[1.75rem] font-medium leading-tight text-[var(--color-text-primary)]">
               会员与额度
             </h1>
-            <p className="mt-3 max-w-[60ch] text-[15px] leading-7 text-[var(--color-text-secondary)]">
-              会员月卡包含八字、六爻额度和视频学习权限；额度不足时，可按需要购买叠加包。
+            <p className="mt-3 max-w-[62ch] text-[16px] leading-7 text-[var(--color-text-secondary)]">
+              免费用户各有 10 次体验额度；月付会员可获得 100 次八字对话和 100 次六爻，额度不足时可购买叠加包。
             </p>
           </div>
           <button
@@ -122,12 +197,12 @@ export default function MembershipPage() {
         </header>
 
         {error && (
-          <p className="mb-5 border border-[rgba(181,68,52,0.24)] bg-[var(--color-bg-card)] px-4 py-3 text-[14px] text-[var(--color-primary)]">
+          <p className="mb-5 border border-[rgba(181,68,52,0.24)] bg-[var(--color-bg-card)] px-4 py-3 text-[14px] leading-6 text-[var(--color-primary)]">
             {error}
           </p>
         )}
         {message && (
-          <p className="mb-5 border border-[var(--color-border)] bg-[var(--color-bg-card)] px-4 py-3 text-[14px] text-[var(--color-text-primary)]">
+          <p className="mb-5 border border-[var(--color-border)] bg-[var(--color-bg-card)] px-4 py-3 text-[14px] leading-6 text-[var(--color-text-primary)]">
             {message}
           </p>
         )}
@@ -145,7 +220,7 @@ export default function MembershipPage() {
           <div className="border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
             <p className="mb-2 text-[13px] text-[var(--color-text-muted)]">八字额度</p>
             <p className="font-serif text-xl text-[var(--color-text-primary)]">{quotaText(quotas?.chat)}</p>
-            <p className="mt-2 text-[13px] text-[var(--color-text-secondary)]">用于八字 AI 解读</p>
+            <p className="mt-2 text-[13px] text-[var(--color-text-secondary)]">用于八字 AI 对话</p>
           </div>
           <div className="border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
             <p className="mb-2 text-[13px] text-[var(--color-text-muted)]">六爻额度</p>
@@ -157,7 +232,7 @@ export default function MembershipPage() {
         {!isAuthed && (
           <div className="mb-8 border border-[var(--color-border)] bg-[var(--color-bg-card)] p-5">
             <p className="text-[15px] leading-7 text-[var(--color-text-body)]">
-              登录后可以查看会员状态、购买月卡和叠加包。
+              登录后可查看额度、购买月卡和叠加包。
             </p>
             <Link
               href="/login?redirect=/membership"
@@ -169,6 +244,77 @@ export default function MembershipPage() {
           </div>
         )}
 
+        {checkout && (
+          <section className="mb-10 border border-[var(--color-border-strong)] bg-[var(--color-bg-card)] p-5 sm:p-6">
+            <div className="mb-5 flex items-start justify-between gap-4">
+              <div>
+                <div className="mb-2 flex items-center gap-2 text-[13px] font-medium text-[var(--color-primary)]">
+                  <QrCode size={16} />
+                  微信扫码支付
+                </div>
+                <h2 className="font-serif text-xl font-medium text-[var(--color-text-primary)]">
+                  {checkoutProduct?.name ?? '待支付订单'}
+                </h2>
+                <p className="mt-2 text-[14px] leading-6 text-[var(--color-text-secondary)]">
+                  金额 {formatPrice(checkout.order.amount_cents)}，订单号 {checkout.order.out_trade_no}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCheckout(null)}
+                className="inline-flex h-11 w-11 shrink-0 items-center justify-center border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)]"
+                style={{ borderRadius: 'var(--radius-md)' }}
+                aria-label="关闭支付面板"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="grid gap-5 md:grid-cols-[280px_1fr] md:items-center">
+              <div className="flex min-h-[280px] items-center justify-center border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-5">
+                {qrDataUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={qrDataUrl} alt="微信支付二维码" className="h-60 w-60" />
+                ) : (
+                  <div className="h-10 w-10 animate-spin border-2 border-[var(--color-primary)] border-t-transparent" />
+                )}
+              </div>
+              <div>
+                <ul className="space-y-3 text-[15px] leading-7 text-[var(--color-text-body)]">
+                  <li className="flex gap-2">
+                    <ShieldCheck size={17} className="mt-1 text-[var(--color-primary)]" />
+                    支付成功后由微信回调确认，系统自动发放额度。
+                  </li>
+                  <li className="flex gap-2">
+                    <RefreshCw size={17} className="mt-1 text-[var(--color-primary)]" />
+                    当前页面会自动查询订单状态，无需重复下单。
+                  </li>
+                </ul>
+                <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                  <button
+                    type="button"
+                    onClick={() => void copyCodeUrl()}
+                    className="inline-flex min-h-11 items-center justify-center gap-2 border border-[var(--color-border-strong)] px-4 text-[14px] font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)]"
+                    style={{ borderRadius: 'var(--radius-md)' }}
+                  >
+                    <Copy size={16} />
+                    复制支付链接
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void refresh()}
+                    className="inline-flex min-h-11 items-center justify-center gap-2 border border-[var(--color-border)] px-4 text-[14px] font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)]"
+                    style={{ borderRadius: 'var(--radius-md)' }}
+                  >
+                    <RefreshCw size={16} />
+                    手动刷新权益
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
         <section className="mb-10">
           <div className="mb-4 flex items-center gap-2">
             <Crown size={20} className="text-[var(--color-primary)]" />
@@ -176,31 +322,34 @@ export default function MembershipPage() {
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             {loading && <div className="h-44 animate-pulse bg-[var(--color-bg-card)]" />}
-            {plans.map((plan) => (
-              <article key={plan.code} className="border border-[var(--color-border)] bg-[var(--color-bg-card)] p-5">
-                <div className="mb-5 flex items-start justify-between gap-4">
-                  <div>
-                    <h3 className="font-serif text-lg font-medium text-[var(--color-text-primary)]">{plan.name}</h3>
-                    <p className="mt-2 text-[14px] leading-6 text-[var(--color-text-secondary)]">{plan.description}</p>
+            {plans.map((plan) => {
+              const grant = productGrantText(plan);
+              return (
+                <article key={plan.code} className="border border-[var(--color-border)] bg-[var(--color-bg-card)] p-5">
+                  <div className="mb-5 flex items-start justify-between gap-4">
+                    <div>
+                      <h3 className="font-serif text-lg font-medium text-[var(--color-text-primary)]">{plan.name}</h3>
+                      <p className="mt-2 text-[14px] leading-6 text-[var(--color-text-secondary)]">{plan.description}</p>
+                    </div>
+                    <p className="font-serif text-2xl text-[var(--color-text-primary)]">{formatPrice(plan.price_cents)}</p>
                   </div>
-                  <p className="font-serif text-2xl text-[var(--color-text-primary)]">{formatPrice(plan.price_cents)}</p>
-                </div>
-                <ul className="mb-5 space-y-2 text-[14px] text-[var(--color-text-body)]">
-                  <li className="flex gap-2"><Check size={16} className="mt-0.5 text-[var(--color-primary)]" />100 次八字解读</li>
-                  <li className="flex gap-2"><Check size={16} className="mt-0.5 text-[var(--color-primary)]" />100 次六爻问卦</li>
-                  <li className="flex gap-2"><Check size={16} className="mt-0.5 text-[var(--color-primary)]" />会员视频学习权限</li>
-                </ul>
-                <button
-                  type="button"
-                  onClick={() => void buy(plan.code)}
-                  disabled={payingCode === plan.code}
-                  className="inline-flex min-h-11 w-full items-center justify-center bg-[var(--color-primary)] px-5 text-[14px] font-medium text-[var(--color-text-inverse)] transition-colors hover:bg-[var(--color-primary-hover)] disabled:opacity-50"
-                  style={{ borderRadius: 'var(--radius-md)' }}
-                >
-                  {payingCode === plan.code ? '处理中' : membership?.active ? '续费会员' : '开通会员'}
-                </button>
-              </article>
-            ))}
+                  <ul className="mb-5 space-y-2 text-[14px] text-[var(--color-text-body)]">
+                    <li className="flex gap-2"><Check size={16} className="mt-0.5 text-[var(--color-primary)]" />{grant.bazi} 次八字对话</li>
+                    <li className="flex gap-2"><Check size={16} className="mt-0.5 text-[var(--color-primary)]" />{grant.liuyao} 次六爻解读</li>
+                    <li className="flex gap-2"><Check size={16} className="mt-0.5 text-[var(--color-primary)]" />有效期 30 天，续费顺延</li>
+                  </ul>
+                  <button
+                    type="button"
+                    onClick={() => void buy(plan.code)}
+                    disabled={payingCode === plan.code}
+                    className="inline-flex min-h-11 w-full items-center justify-center bg-[var(--color-primary)] px-5 text-[14px] font-medium text-[var(--color-text-inverse)] transition-colors hover:bg-[var(--color-primary-hover)] disabled:opacity-50"
+                    style={{ borderRadius: 'var(--radius-md)' }}
+                  >
+                    {payingCode === plan.code ? '创建订单中' : membership?.active ? '续费会员' : '开通会员'}
+                  </button>
+                </article>
+              );
+            })}
           </div>
         </section>
 
@@ -210,26 +359,33 @@ export default function MembershipPage() {
             <h2 className="font-serif text-xl font-medium text-[var(--color-text-primary)]">叠加包</h2>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            {topups.map((product) => (
-              <article key={product.code} className="border border-[var(--color-border)] bg-[var(--color-bg-card)] p-5">
-                <div className="mb-5 flex items-start justify-between gap-4">
-                  <div>
-                    <h3 className="font-serif text-lg font-medium text-[var(--color-text-primary)]">{product.name}</h3>
-                    <p className="mt-2 text-[14px] leading-6 text-[var(--color-text-secondary)]">{product.description}</p>
+            {topups.map((product) => {
+              const grant = productGrantText(product);
+              return (
+                <article key={product.code} className="border border-[var(--color-border)] bg-[var(--color-bg-card)] p-5">
+                  <div className="mb-5 flex items-start justify-between gap-4">
+                    <div>
+                      <h3 className="font-serif text-lg font-medium text-[var(--color-text-primary)]">{product.name}</h3>
+                      <p className="mt-2 text-[14px] leading-6 text-[var(--color-text-secondary)]">{product.description}</p>
+                    </div>
+                    <p className="font-serif text-xl text-[var(--color-text-primary)]">{formatPrice(product.price_cents)}</p>
                   </div>
-                  <p className="font-serif text-xl text-[var(--color-text-primary)]">{formatPrice(product.price_cents)}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => void buy(product.code)}
-                  disabled={payingCode === product.code}
-                  className="inline-flex min-h-11 w-full items-center justify-center border border-[var(--color-border-strong)] px-5 text-[14px] font-medium text-[var(--color-text-primary)] transition-colors hover:bg-[var(--color-bg-hover)] disabled:opacity-50"
-                  style={{ borderRadius: 'var(--radius-md)' }}
-                >
-                  {payingCode === product.code ? '处理中' : '购买叠加包'}
-                </button>
-              </article>
-            ))}
+                  <ul className="mb-5 space-y-2 text-[14px] text-[var(--color-text-body)]">
+                    <li className="flex gap-2"><Check size={16} className="mt-0.5 text-[var(--color-primary)]" />八字对话 +{grant.bazi} 次</li>
+                    <li className="flex gap-2"><Check size={16} className="mt-0.5 text-[var(--color-primary)]" />六爻解读 +{grant.liuyao} 次</li>
+                  </ul>
+                  <button
+                    type="button"
+                    onClick={() => void buy(product.code)}
+                    disabled={payingCode === product.code}
+                    className="inline-flex min-h-11 w-full items-center justify-center border border-[var(--color-border-strong)] px-5 text-[14px] font-medium text-[var(--color-text-primary)] transition-colors hover:bg-[var(--color-bg-hover)] disabled:opacity-50"
+                    style={{ borderRadius: 'var(--radius-md)' }}
+                  >
+                    {payingCode === product.code ? '创建订单中' : '购买叠加包'}
+                  </button>
+                </article>
+              );
+            })}
           </div>
         </section>
 

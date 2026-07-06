@@ -105,6 +105,47 @@ export async function simulatePayment(productCode: string): Promise<SimulatePaym
   );
 }
 
+export type Order = {
+  id: number;
+  user_id: number;
+  product_id: number;
+  amount_cents: number;
+  currency: string;
+  status: 'CREATED' | 'PAID' | 'CANCELED' | 'REFUNDED' | string;
+  out_trade_no: string;
+  created_at: string;
+};
+
+export type Payment = {
+  id: number;
+  order_id: number;
+  channel: string;
+  prepay_id?: string | null;
+  pay_url?: string | null;
+  transaction_id?: string | null;
+  status: 'PENDING' | 'SUCCESS' | 'FAIL' | string;
+  raw?: string | null;
+  created_at?: string | null;
+};
+
+export type WeChatNativeCheckoutResult = {
+  order: Order;
+  payment: Payment;
+  code_url: string;
+};
+
+export async function createWeChatNativeCheckout(productCode: string): Promise<WeChatNativeCheckoutResult> {
+  return postJSON<WeChatNativeCheckoutResult>(
+    api('/payments/wechat/native'),
+    { product_code: productCode },
+    { headers: authHeaders() },
+  );
+}
+
+export async function getOrder(orderId: number): Promise<Order> {
+  return getJSON<Order>(api(`/orders/${orderId}`), { headers: authHeaders() });
+}
+
 export function formatQuotaText(q: { total: number; remaining: number; is_unlimited: boolean }): string {
   if (q.is_unlimited || q.total === -1) return '无限';
   return `剩余 ${q.remaining} 次`;
