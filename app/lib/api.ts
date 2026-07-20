@@ -116,6 +116,81 @@ export type Order = {
   created_at: string;
 };
 
+export type Refund = {
+  id: number;
+  order_id: number;
+  user_id: number;
+  out_refund_no: string;
+  wechat_refund_id?: string | null;
+  refund_cents: number;
+  total_cents: number;
+  currency: string;
+  reason?: string | null;
+  status: 'CREATED' | 'PROCESSING' | 'SUCCESS' | 'CLOSED' | 'ABNORMAL' | 'FAILED' | string;
+  requested_by?: number | null;
+  requested_at: string;
+  success_at?: string | null;
+  failure_code?: string | null;
+  failure_message?: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type AdminOrderItem = Order & {
+  user_email?: string | null;
+  user_phone?: string | null;
+  user_nickname?: string | null;
+  product_code: string;
+  product_name: string;
+  product_kind: string;
+  payment_channel?: string | null;
+  transaction_id?: string | null;
+  entitlement_trace: 'READY' | 'MISSING' | 'NOT_REQUIRED' | string;
+  refund?: Refund | null;
+};
+
+export type AdminOrderList = {
+  items: AdminOrderItem[];
+  total: number;
+  page: number;
+  page_size: number;
+};
+
+export function getAdminOrders(params: {
+  page?: number;
+  pageSize?: number;
+  orderStatus?: string;
+  refundStatus?: string;
+  search?: string;
+}): Promise<AdminOrderList> {
+  const query = new URLSearchParams({
+    page: String(params.page ?? 1),
+    page_size: String(params.pageSize ?? 20),
+  });
+  if (params.orderStatus) query.set('order_status', params.orderStatus);
+  if (params.refundStatus) query.set('refund_status', params.refundStatus);
+  if (params.search) query.set('search', params.search);
+  return getJSON<AdminOrderList>(api(`/admin/orders?${query.toString()}`), {
+    headers: authHeaders(),
+  });
+}
+
+export function createAdminRefund(orderId: number, reason: string): Promise<Refund> {
+  return postJSON<Refund>(
+    api(`/admin/orders/${orderId}/refund`),
+    { reason },
+    { headers: authHeaders() },
+  );
+}
+
+export function syncAdminRefund(refundId: number): Promise<Refund> {
+  return postJSON<Refund>(
+    api(`/admin/refunds/${refundId}/sync`),
+    {},
+    { headers: authHeaders() },
+  );
+}
+
 export type Payment = {
   id: number;
   order_id: number;

@@ -16,6 +16,7 @@ import {
   ThumbsDown,
   FileText,
   Sparkles,
+  ReceiptText,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -60,6 +61,13 @@ const SECTIONS: MenuSection[] = [
         title: '用户反馈',
         description: '查看和回复用户反馈',
         tone: 'mist',
+      },
+      {
+        href: '/admin/orders',
+        icon: ReceiptText,
+        title: '订单与退款',
+        description: '查询支付订单并处理微信退款',
+        tone: 'gold',
       },
     ],
   },
