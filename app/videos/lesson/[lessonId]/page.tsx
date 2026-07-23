@@ -174,7 +174,7 @@ export default function VideoLessonPage() {
           )}
         </header>
 
-        <section className="border border-[var(--color-border)] bg-[var(--color-bg-card)] p-3 sm:p-4">
+        <section className="mx-auto max-w-4xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-3 sm:p-4">
           {loading && <div className="aspect-video animate-pulse bg-[var(--color-bg-alt)]" />}
 
           {!loading && play?.psign && play.appID && play.fileID && (
