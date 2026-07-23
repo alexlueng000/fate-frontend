@@ -2,16 +2,73 @@
 
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Lock, PlayCircle } from 'lucide-react';
 import { VideoLesson, VideoPlay, getVideoLesson, getVideoPlay, updateVideoProgress } from '@/app/lib/api';
 import { getAuthToken } from '@/app/lib/auth';
+
+declare global {
+  interface Window {
+    TCPlayer?: (
+      id: string,
+      options: {
+        appID: number;
+        fileID: string;
+        psign: string;
+        controls?: boolean;
+        autoplay?: boolean;
+        language?: string;
+      },
+    ) => {
+      dispose?: () => void;
+      on?: (event: string, handler: () => void) => void;
+      currentTime?: () => number;
+    };
+  }
+}
+
+const TCPLAYER_CSS_ID = 'tcplayer-css';
+const TCPLAYER_SCRIPT_ID = 'tcplayer-script';
+const TCPLAYER_CSS_URL = 'https://web.sdk.qcloud.com/player/tcplayer/release/v5.1.0/tcplayer.min.css';
+const TCPLAYER_SCRIPT_URL = 'https://web.sdk.qcloud.com/player/tcplayer/release/v5.1.0/tcplayer.v5.1.0.min.js';
+
+function loadTCPlayer() {
+  if (typeof window === 'undefined') return Promise.reject(new Error('TCPlayer only runs in browser'));
+  if (window.TCPlayer) return Promise.resolve();
+
+  if (!document.getElementById(TCPLAYER_CSS_ID)) {
+    const link = document.createElement('link');
+    link.id = TCPLAYER_CSS_ID;
+    link.rel = 'stylesheet';
+    link.href = TCPLAYER_CSS_URL;
+    document.head.appendChild(link);
+  }
+
+  const existingScript = document.getElementById(TCPLAYER_SCRIPT_ID) as HTMLScriptElement | null;
+  if (existingScript) {
+    return new Promise<void>((resolve, reject) => {
+      existingScript.addEventListener('load', () => resolve(), { once: true });
+      existingScript.addEventListener('error', () => reject(new Error('TCPlayer load failed')), { once: true });
+    });
+  }
+
+  return new Promise<void>((resolve, reject) => {
+    const script = document.createElement('script');
+    script.id = TCPLAYER_SCRIPT_ID;
+    script.src = TCPLAYER_SCRIPT_URL;
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('TCPlayer load failed'));
+    document.body.appendChild(script);
+  });
+}
 
 export default function VideoLessonPage() {
   const params = useParams<{ lessonId: string }>();
   const router = useRouter();
   const lessonId = Number(params.lessonId);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const tcPlayerRef = useRef<ReturnType<NonNullable<typeof window.TCPlayer>> | null>(null);
   const [lesson, setLesson] = useState<VideoLesson | null>(null);
   const [play, setPlay] = useState<VideoPlay | null>(null);
   const [loading, setLoading] = useState(true);
@@ -44,14 +101,46 @@ export default function VideoLessonPage() {
     if (Number.isFinite(lessonId)) void load();
   }, [lessonId]);
 
-  async function saveProgress(completed = false) {
-    const video = videoRef.current;
-    if (!video || !getAuthToken()) return;
+  const saveProgress = useCallback(async (completed = false) => {
+    if (!getAuthToken()) return;
+    const tcTime = tcPlayerRef.current?.currentTime?.();
+    const position = Number.isFinite(tcTime) ? tcTime : videoRef.current?.currentTime;
     await updateVideoProgress(lessonId, {
-      position_seconds: Math.floor(video.currentTime),
+      position_seconds: Math.floor(position || 0),
       completed,
     }).catch(() => {});
-  }
+  }, [lessonId]);
+
+  useEffect(() => {
+    if (!play?.psign || !play.appID || !play.fileID) return;
+
+    let disposed = false;
+    loadTCPlayer()
+      .then(() => {
+        if (disposed || !window.TCPlayer) return;
+        tcPlayerRef.current?.dispose?.();
+        const player = window.TCPlayer('vod-player', {
+          appID: play.appID!,
+          fileID: play.fileID!,
+          psign: play.psign!,
+          controls: true,
+          autoplay: false,
+          language: 'zh-CN',
+        });
+        tcPlayerRef.current = player;
+        player.on?.('pause', () => void saveProgress(false));
+        player.on?.('ended', () => void saveProgress(true));
+      })
+      .catch((e) => {
+        setError((e as Error).message || '播放器加载失败');
+      });
+
+    return () => {
+      disposed = true;
+      tcPlayerRef.current?.dispose?.();
+      tcPlayerRef.current = null;
+    };
+  }, [play, lessonId, saveProgress]);
 
   return (
     <main className="min-h-screen bg-[var(--color-bg)] px-4 py-8 sm:px-6 lg:px-10">
@@ -81,7 +170,17 @@ export default function VideoLessonPage() {
         <section className="border border-[var(--color-border)] bg-[var(--color-bg-card)] p-3 sm:p-4">
           {loading && <div className="aspect-video animate-pulse bg-[var(--color-bg-alt)]" />}
 
-          {!loading && play && (
+          {!loading && play?.psign && play.appID && play.fileID && (
+            <video
+              id="vod-player"
+              ref={videoRef}
+              className="aspect-video w-full bg-[var(--color-text-primary)]"
+              playsInline
+              preload="metadata"
+            />
+          )}
+
+          {!loading && play?.play_url && !play.psign && (
             <video
               ref={videoRef}
               className="aspect-video w-full bg-[var(--color-text-primary)]"

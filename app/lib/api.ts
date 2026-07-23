@@ -293,8 +293,12 @@ export type VideoCourse = {
 
 export type VideoPlay = {
   lesson_id: number;
-  play_url: string;
   provider: string;
+  play_url?: string | null;
+  appID?: number | null;
+  fileID?: string | null;
+  psign?: string | null;
+  expires_at?: number | null;
 };
 
 export function getMembershipPlans(): Promise<ProductDetail[]> {
