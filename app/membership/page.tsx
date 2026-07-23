@@ -193,13 +193,6 @@ export default function MembershipPage() {
     setMessage('支付链接已复制。');
   }
 
-  async function refreshPaymentResult() {
-    const synced = await refresh();
-    if (synced) {
-      setPaymentResult((current) => (current ? { ...current, synced: true } : current));
-    }
-  }
-
   return (
     <main className="min-h-screen bg-[var(--color-bg)] px-4 py-8 sm:px-6 lg:px-10">
       <div className="mx-auto max-w-5xl">
@@ -260,21 +253,19 @@ export default function MembershipPage() {
             </div>
             <div className="mt-5 flex flex-col gap-3 sm:mt-0 sm:flex-row">
               <Link
-                href="/chat"
+                href="/panel"
                 className="inline-flex min-h-11 items-center justify-center bg-[var(--color-primary)] px-5 text-[14px] font-medium text-[var(--color-text-inverse)]"
                 style={{ borderRadius: 'var(--radius-md)' }}
               >
                 开始八字对话
               </Link>
-              <button
-                type="button"
-                onClick={() => void refreshPaymentResult()}
+              <Link
+                href="/liuyao"
                 className="inline-flex min-h-11 items-center justify-center gap-2 border border-[var(--color-border-strong)] px-4 text-[14px] font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)]"
                 style={{ borderRadius: 'var(--radius-md)' }}
               >
-                <RefreshCw size={16} />
-                查看权益明细
-              </button>
+                开始六爻问事
+              </Link>
             </div>
           </section>
         )}
