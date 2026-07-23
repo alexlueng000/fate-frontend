@@ -2,10 +2,11 @@
 
 import Link from 'next/link';
 import QRCode from 'qrcode';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   BookOpen,
   Check,
+  CheckCircle2,
   Copy,
   Crown,
   PackagePlus,
@@ -53,7 +54,15 @@ function productGrantText(product: ProductDetail) {
   return { bazi, liuyao };
 }
 
+type PaymentResult = {
+  productName: string;
+  orderNo: string;
+  amountCents: number;
+  synced: boolean;
+};
+
 export default function MembershipPage() {
+  const resultRef = useRef<HTMLDivElement | null>(null);
   const [membership, setMembership] = useState<MembershipMe | null>(null);
   const [quotas, setQuotas] = useState<MyQuotas | null>(null);
   const [plans, setPlans] = useState<ProductDetail[]>([]);
@@ -62,6 +71,7 @@ export default function MembershipPage() {
   const [payingCode, setPayingCode] = useState<string | null>(null);
   const [checkout, setCheckout] = useState<WeChatNativeCheckoutResult | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [paymentResult, setPaymentResult] = useState<PaymentResult | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -90,8 +100,10 @@ export default function MembershipPage() {
         setMembership(membershipData);
         setQuotas(quotaData);
       }
+      return true;
     } catch (e) {
       setError((e as Error).message || '加载失败');
+      return false;
     } finally {
       setLoading(false);
     }
@@ -132,9 +144,19 @@ export default function MembershipPage() {
         const order = await getOrder(checkout.order.id);
         if (order.status === 'PAID') {
           window.clearInterval(timer);
-          setCheckout((current) => (current ? { ...current, order } : current));
-          setMessage('支付成功，权益已发放。');
-          await refresh();
+          const synced = await refresh();
+          setCheckout(null);
+          setQrDataUrl(null);
+          setMessage(null);
+          setPaymentResult({
+            productName: checkoutProduct?.name ?? '已购买权益',
+            orderNo: order.out_trade_no,
+            amountCents: order.amount_cents,
+            synced,
+          });
+          window.setTimeout(() => {
+            resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 80);
         }
       } catch (e) {
         setError((e as Error).message || '订单状态查询失败');
@@ -142,7 +164,7 @@ export default function MembershipPage() {
     }, 2500);
 
     return () => window.clearInterval(timer);
-  }, [checkout]);
+  }, [checkout, checkoutProduct]);
 
   async function buy(productCode: string) {
     if (!getAuthToken()) {
@@ -152,6 +174,7 @@ export default function MembershipPage() {
     setPayingCode(productCode);
     setCheckout(null);
     setQrDataUrl(null);
+    setPaymentResult(null);
     setError(null);
     setMessage(null);
     try {
@@ -168,6 +191,13 @@ export default function MembershipPage() {
     if (!checkout?.code_url) return;
     await navigator.clipboard.writeText(checkout.code_url);
     setMessage('支付链接已复制。');
+  }
+
+  async function refreshPaymentResult() {
+    const synced = await refresh();
+    if (synced) {
+      setPaymentResult((current) => (current ? { ...current, synced: true } : current));
+    }
   }
 
   return (
@@ -205,6 +235,48 @@ export default function MembershipPage() {
           <p className="mb-5 border border-[var(--color-border)] bg-[var(--color-bg-card)] px-4 py-3 text-[14px] leading-6 text-[var(--color-text-primary)]">
             {message}
           </p>
+        )}
+
+        {paymentResult && (
+          <section
+            ref={resultRef}
+            className="mb-5 border border-[var(--color-border-strong)] bg-[var(--color-bg-card)] p-5 sm:flex sm:items-start sm:justify-between sm:gap-6"
+          >
+            <div className="flex gap-3">
+              <CheckCircle2 size={21} className="mt-1 shrink-0 text-[var(--color-primary)]" />
+              <div>
+                <p className="font-serif text-xl font-medium text-[var(--color-text-primary)]">
+                  {paymentResult.synced ? '权益已生效' : '支付已确认'}
+                </p>
+                <p className="mt-2 text-[15px] leading-7 text-[var(--color-text-body)]">
+                  {paymentResult.synced
+                    ? `${paymentResult.productName} 已开通，八字与六爻额度已更新。`
+                    : '微信已确认支付，权益同步稍有延迟。请稍后刷新权益。'}
+                </p>
+                <p className="mt-1 text-[13px] leading-6 text-[var(--color-text-secondary)]">
+                  金额 {formatPrice(paymentResult.amountCents)}，订单号 {paymentResult.orderNo}
+                </p>
+              </div>
+            </div>
+            <div className="mt-5 flex flex-col gap-3 sm:mt-0 sm:flex-row">
+              <Link
+                href="/chat"
+                className="inline-flex min-h-11 items-center justify-center bg-[var(--color-primary)] px-5 text-[14px] font-medium text-[var(--color-text-inverse)]"
+                style={{ borderRadius: 'var(--radius-md)' }}
+              >
+                开始八字对话
+              </Link>
+              <button
+                type="button"
+                onClick={() => void refreshPaymentResult()}
+                className="inline-flex min-h-11 items-center justify-center gap-2 border border-[var(--color-border-strong)] px-4 text-[14px] font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)]"
+                style={{ borderRadius: 'var(--radius-md)' }}
+              >
+                <RefreshCw size={16} />
+                查看权益明细
+              </button>
+            </div>
+          </section>
         )}
 
         <section className="mb-8 grid gap-3 sm:grid-cols-3">
