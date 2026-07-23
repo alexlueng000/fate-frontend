@@ -19,8 +19,8 @@ declare global {
         controls?: boolean;
         autoplay?: boolean;
         language?: string;
-        width?: string;
-        height?: string;
+        width?: number;
+        height?: number;
       },
     ) => {
       dispose?: () => void;
@@ -127,6 +127,7 @@ export default function VideoLessonPage() {
       .then(() => {
         if (disposed || !window.TCPlayer) return;
         tcPlayerRef.current?.dispose?.();
+        const playerWidth = videoRef.current?.parentElement?.clientWidth || 768;
         const player = window.TCPlayer('vod-player', {
           appID: play.appID!,
           fileID: play.fileID!,
@@ -135,8 +136,8 @@ export default function VideoLessonPage() {
           controls: true,
           autoplay: false,
           language: 'zh-CN',
-          width: '100%',
-          height: '100%',
+          width: playerWidth,
+          height: Math.round(playerWidth * 9 / 16),
         });
         tcPlayerRef.current = player;
         player.on?.('pause', () => void saveProgress(false));
