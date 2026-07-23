@@ -15,6 +15,7 @@ declare global {
         appID: number;
         fileID: string;
         psign: string;
+        licenseUrl?: string;
         controls?: boolean;
         autoplay?: boolean;
         language?: string;
@@ -31,6 +32,7 @@ const TCPLAYER_CSS_ID = 'tcplayer-css';
 const TCPLAYER_SCRIPT_ID = 'tcplayer-script';
 const TCPLAYER_CSS_URL = 'https://web.sdk.qcloud.com/player/tcplayer/release/v5.1.0/tcplayer.min.css';
 const TCPLAYER_SCRIPT_URL = 'https://web.sdk.qcloud.com/player/tcplayer/release/v5.1.0/tcplayer.v5.1.0.min.js';
+const TENCENT_VOD_LICENSE_URL = process.env.NEXT_PUBLIC_TENCENT_VOD_LICENSE_URL;
 
 function loadTCPlayer() {
   if (typeof window === 'undefined') return Promise.reject(new Error('TCPlayer only runs in browser'));
@@ -113,6 +115,10 @@ export default function VideoLessonPage() {
 
   useEffect(() => {
     if (!play?.psign || !play.appID || !play.fileID) return;
+    if (!TENCENT_VOD_LICENSE_URL) {
+      setError('腾讯云播放器 License 未配置，请设置 NEXT_PUBLIC_TENCENT_VOD_LICENSE_URL');
+      return;
+    }
 
     let disposed = false;
     loadTCPlayer()
@@ -123,6 +129,7 @@ export default function VideoLessonPage() {
           appID: play.appID!,
           fileID: play.fileID!,
           psign: play.psign!,
+          licenseUrl: TENCENT_VOD_LICENSE_URL,
           controls: true,
           autoplay: false,
           language: 'zh-CN',
