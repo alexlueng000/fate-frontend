@@ -19,6 +19,8 @@ declare global {
         controls?: boolean;
         autoplay?: boolean;
         language?: string;
+        width?: string;
+        height?: string;
       },
     ) => {
       dispose?: () => void;
@@ -133,6 +135,8 @@ export default function VideoLessonPage() {
           controls: true,
           autoplay: false,
           language: 'zh-CN',
+          width: '100%',
+          height: '100%',
         });
         tcPlayerRef.current = player;
         player.on?.('pause', () => void saveProgress(false));
@@ -174,17 +178,19 @@ export default function VideoLessonPage() {
           )}
         </header>
 
-        <section className="mx-auto max-w-4xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-3 sm:p-4">
+        <section className="mx-auto w-full max-w-3xl overflow-hidden border border-[var(--color-border)] bg-[var(--color-bg-card)] p-3 sm:p-4">
           {loading && <div className="aspect-video animate-pulse bg-[var(--color-bg-alt)]" />}
 
           {!loading && play?.psign && play.appID && play.fileID && (
-            <video
-              id="vod-player"
-              ref={videoRef}
-              className="aspect-video w-full bg-[var(--color-text-primary)]"
-              playsInline
-              preload="metadata"
-            />
+            <div className="aspect-video w-full overflow-hidden bg-black">
+              <video
+                id="vod-player"
+                ref={videoRef}
+                className="h-full w-full max-w-full bg-black"
+                playsInline
+                preload="metadata"
+              />
+            </div>
           )}
 
           {!loading && play?.play_url && !play.psign && (
