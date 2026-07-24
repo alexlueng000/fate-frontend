@@ -157,6 +157,10 @@ export default function PricingPage() {
     window.location.href = checkout.code_url;
   }
 
+  async function copyCurrentPageLink() {
+    await navigator.clipboard.writeText(window.location.href);
+  }
+
   return (
     <div className="flex min-h-screen flex-col bg-[var(--color-bg)]">
       <div className="mx-auto w-full max-w-6xl flex-1 px-5 pb-20 pt-24 sm:px-8 lg:px-10">
@@ -307,7 +311,7 @@ export default function PricingPage() {
             onClick={closeCheckout}
           />
           <section
-            className="relative z-10 w-full max-w-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-6 shadow-[var(--shadow-lg)] sm:p-8"
+            className="relative z-10 max-h-[calc(100dvh-1.5rem)] w-full max-w-sm overflow-y-auto border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4 shadow-[var(--shadow-lg)] sm:max-w-xl sm:p-8"
             style={{ borderRadius: 'var(--radius-lg)' }}
           >
             <button
@@ -344,7 +348,7 @@ export default function PricingPage() {
                     <QrCode size={16} />
                     微信扫码支付
                   </p>
-                  <h2 id="checkout-title" className="font-serif text-2xl text-[var(--color-text-primary)]">
+                  <h2 id="checkout-title" className="font-serif text-xl text-[var(--color-text-primary)] sm:text-2xl">
                     {checkoutProduct?.name ?? '会员套餐'}
                   </h2>
                   <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
@@ -353,27 +357,40 @@ export default function PricingPage() {
                 </div>
 
                 {mobilePayment && (
-                  <div className="mt-6 rounded-[var(--radius-md)] bg-[var(--color-bg-alt)] p-4 text-center">
+                  <div className="mt-4 rounded-[var(--radius-md)] bg-[var(--color-bg-alt)] p-3 text-center sm:mt-6 sm:p-4">
                     <p className="text-[15px] font-medium text-[var(--color-text-primary)]">
-                      {wechatBrowser ? '在微信中完成支付' : '请使用微信完成支付'}
+                      {wechatBrowser ? '在微信中完成支付' : '当前浏览器不能直接调起微信支付'}
                     </p>
-                    <button
-                      type="button"
-                      onClick={openWeChatPayment}
-                      className="mt-4 min-h-12 w-full bg-[var(--color-primary)] px-5 text-[15px] font-medium text-[var(--color-text-inverse)]"
-                      style={{ borderRadius: 'var(--radius-md)' }}
-                    >
-                      打开微信支付
-                    </button>
+                    {wechatBrowser ? (
+                      <button
+                        type="button"
+                        onClick={openWeChatPayment}
+                        className="mt-3 min-h-11 w-full bg-[var(--color-primary)] px-5 text-[15px] font-medium text-[var(--color-text-inverse)]"
+                        style={{ borderRadius: 'var(--radius-md)' }}
+                      >
+                        打开微信支付
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => void copyCurrentPageLink()}
+                        className="mt-3 min-h-11 w-full border border-[var(--color-border-strong)] px-5 text-[14px] font-medium text-[var(--color-text-primary)]"
+                        style={{ borderRadius: 'var(--radius-md)' }}
+                      >
+                        复制页面链接，去微信打开
+                      </button>
+                    )}
                     <p className="mt-3 text-[13px] leading-6 text-[var(--color-text-secondary)]">
-                      如果没有自动打开，请长按下方二维码，选择“识别图中二维码”。
+                      {wechatBrowser
+                        ? '如果没有自动打开，请长按下方二维码，选择“识别图中二维码”。'
+                        : '也可以使用另一台设备的微信扫描下方二维码。'}
                     </p>
                   </div>
                 )}
 
-                <div className={`mt-6 grid gap-6 ${mobilePayment ? '' : 'sm:grid-cols-[240px_1fr] sm:items-center'}`}>
+                <div className={`mt-4 grid gap-4 sm:mt-6 sm:gap-6 ${mobilePayment ? '' : 'sm:grid-cols-[240px_1fr] sm:items-center'}`}>
                   <div className={`mx-auto flex items-center justify-center border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-3 ${
-                    mobilePayment ? 'h-52 w-52' : 'h-60 w-60'
+                    mobilePayment ? 'h-40 w-40' : 'h-60 w-60'
                   }`}>
                     {qrDataUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -383,7 +400,7 @@ export default function PricingPage() {
                     )}
                   </div>
                   <div className={mobilePayment ? 'text-center' : ''}>
-                    <p className="text-[15px] leading-7 text-[var(--color-text-body)]">
+                    <p className={`${mobilePayment ? 'text-[12px] leading-5' : 'text-[15px] leading-7'} text-[var(--color-text-body)]`}>
                       请使用微信扫描二维码完成支付。页面会自动确认订单并发放会员权益，请勿重复下单。
                     </p>
                     {!mobilePayment && (

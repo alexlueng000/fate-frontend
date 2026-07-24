@@ -81,6 +81,10 @@ export default function MembershipPage() {
     if (!checkout) return null;
     return [...plans, ...topups].find((product) => product.id === checkout.order.product_id) ?? null;
   }, [checkout, plans, topups]);
+  const currentPlan = useMemo(
+    () => plans.find((plan) => plan.id === membership?.membership?.product_id) ?? null,
+    [membership, plans],
+  );
 
   async function refresh() {
     setLoading(true);
@@ -205,6 +209,11 @@ export default function MembershipPage() {
     window.location.href = checkout.code_url;
   }
 
+  async function copyCurrentPageLink() {
+    await navigator.clipboard.writeText(window.location.href);
+    setMessage('页面链接已复制，请粘贴到微信中打开。');
+  }
+
   return (
     <main className="min-h-screen bg-[var(--color-bg)] px-4 py-8 sm:px-6 lg:px-10">
       <div className="mx-auto max-w-5xl">
@@ -217,7 +226,7 @@ export default function MembershipPage() {
               会员与额度
             </h1>
             <p className="mt-3 max-w-[62ch] text-[16px] leading-7 text-[var(--color-text-secondary)]">
-              免费用户各有 10 次体验额度；月付会员可获得 100 次八字对话和 100 次六爻，额度不足时可购买叠加包。
+              免费用户各有 10 次体验额度；基础版提供 30 次八字与 30 次六爻，高级版提供 100 次八字与 100 次六爻，额度不足时可购买叠加包。
             </p>
           </div>
           <button
@@ -246,7 +255,7 @@ export default function MembershipPage() {
           <div className="border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
             <p className="mb-2 text-[13px] text-[var(--color-text-muted)]">会员状态</p>
             <p className="font-serif text-xl text-[var(--color-text-primary)]">
-              {membership?.active ? '已开通' : '未开通'}
+              {membership?.active ? `已开通${currentPlan ? ` · ${currentPlan.name}` : ''}` : '未开通'}
             </p>
             <p className="mt-2 text-[13px] text-[var(--color-text-secondary)]">
               到期：{formatDate(membership?.membership?.current_period_end)}
@@ -282,7 +291,7 @@ export default function MembershipPage() {
         <section className="mb-10">
           <div className="mb-4 flex items-center gap-2">
             <Crown size={20} className="text-[var(--color-primary)]" />
-            <h2 className="font-serif text-xl font-medium text-[var(--color-text-primary)]">会员月卡</h2>
+            <h2 className="font-serif text-xl font-medium text-[var(--color-text-primary)]">会员套餐</h2>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             {loading && <div className="h-44 animate-pulse bg-[var(--color-bg-card)]" />}
@@ -309,7 +318,13 @@ export default function MembershipPage() {
                     className="inline-flex min-h-11 w-full items-center justify-center bg-[var(--color-primary)] px-5 text-[14px] font-medium text-[var(--color-text-inverse)] transition-colors hover:bg-[var(--color-primary-hover)] disabled:opacity-50"
                     style={{ borderRadius: 'var(--radius-md)' }}
                   >
-                    {payingCode === plan.code ? '创建订单中' : membership?.active ? '续费会员' : '开通会员'}
+                    {payingCode === plan.code
+                      ? '创建订单中'
+                      : currentPlan?.id === plan.id
+                        ? `续费${plan.name}`
+                        : membership?.active
+                          ? `切换为${plan.name}`
+                          : `开通${plan.name}`}
                   </button>
                 </article>
               );
@@ -375,7 +390,7 @@ export default function MembershipPage() {
             aria-label="关闭支付弹窗"
           />
           <section
-            className="relative z-10 max-h-[calc(100dvh-2rem)] w-full max-w-xl overflow-y-auto border border-[var(--color-border)] bg-[var(--color-bg-card)] p-6 shadow-[var(--shadow-lg)] sm:p-8"
+            className="relative z-10 max-h-[calc(100dvh-1.5rem)] w-full max-w-sm overflow-y-auto border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4 shadow-[var(--shadow-lg)] sm:max-w-xl sm:p-8"
             style={{ borderRadius: 'var(--radius-lg)' }}
           >
             <button
@@ -417,7 +432,7 @@ export default function MembershipPage() {
                     <QrCode size={16} />
                     微信扫码支付
                   </p>
-                  <h2 id="membership-checkout-title" className="font-serif text-2xl text-[var(--color-text-primary)]">
+                  <h2 id="membership-checkout-title" className="font-serif text-xl text-[var(--color-text-primary)] sm:text-2xl">
                     {checkoutProduct?.name ?? '待支付订单'}
                   </h2>
                   <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
@@ -426,27 +441,40 @@ export default function MembershipPage() {
                 </div>
 
                 {mobilePayment && (
-                  <div className="mt-6 rounded-[var(--radius-md)] bg-[var(--color-bg-alt)] p-4 text-center">
+                  <div className="mt-4 rounded-[var(--radius-md)] bg-[var(--color-bg-alt)] p-3 text-center sm:mt-6 sm:p-4">
                     <p className="text-[15px] font-medium text-[var(--color-text-primary)]">
-                      {wechatBrowser ? '在微信中完成支付' : '请使用微信完成支付'}
+                      {wechatBrowser ? '在微信中完成支付' : '当前浏览器不能直接调起微信支付'}
                     </p>
-                    <button
-                      type="button"
-                      onClick={openWeChatPayment}
-                      className="mt-4 min-h-12 w-full bg-[var(--color-primary)] px-5 text-[15px] font-medium text-[var(--color-text-inverse)]"
-                      style={{ borderRadius: 'var(--radius-md)' }}
-                    >
-                      打开微信支付
-                    </button>
+                    {wechatBrowser ? (
+                      <button
+                        type="button"
+                        onClick={openWeChatPayment}
+                        className="mt-3 min-h-11 w-full bg-[var(--color-primary)] px-5 text-[15px] font-medium text-[var(--color-text-inverse)]"
+                        style={{ borderRadius: 'var(--radius-md)' }}
+                      >
+                        打开微信支付
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => void copyCurrentPageLink()}
+                        className="mt-3 min-h-11 w-full border border-[var(--color-border-strong)] px-5 text-[14px] font-medium text-[var(--color-text-primary)]"
+                        style={{ borderRadius: 'var(--radius-md)' }}
+                      >
+                        复制页面链接，去微信打开
+                      </button>
+                    )}
                     <p className="mt-3 text-[13px] leading-6 text-[var(--color-text-secondary)]">
-                      如果没有自动打开，请长按下方二维码，选择“识别图中二维码”。
+                      {wechatBrowser
+                        ? '如果没有自动打开，请长按下方二维码，选择“识别图中二维码”。'
+                        : '也可以使用另一台设备的微信扫描下方二维码。'}
                     </p>
                   </div>
                 )}
 
-                <div className={`mt-6 grid gap-6 ${mobilePayment ? '' : 'sm:grid-cols-[240px_1fr] sm:items-center'}`}>
+                <div className={`mt-4 grid gap-4 sm:mt-6 sm:gap-6 ${mobilePayment ? '' : 'sm:grid-cols-[240px_1fr] sm:items-center'}`}>
                   <div className={`mx-auto flex items-center justify-center border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-3 ${
-                    mobilePayment ? 'h-52 w-52' : 'h-60 w-60'
+                    mobilePayment ? 'h-40 w-40' : 'h-60 w-60'
                   }`}>
                     {qrDataUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -456,7 +484,7 @@ export default function MembershipPage() {
                     )}
                   </div>
                   <div className={mobilePayment ? 'text-center' : ''}>
-                    <ul className="space-y-3 text-[14px] leading-6 text-[var(--color-text-body)]">
+                    <ul className={`${mobilePayment ? 'space-y-1 text-[12px] leading-5' : 'space-y-3 text-[14px] leading-6'} text-[var(--color-text-body)]`}>
                       <li className="flex gap-2">
                         <ShieldCheck size={17} className="mt-1 shrink-0 text-[var(--color-primary)]" />
                         支付完成后系统自动发放额度。
