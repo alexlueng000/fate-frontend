@@ -2,9 +2,16 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Check } from 'lucide-react';
+import QRCode from 'qrcode';
+import { Check, CheckCircle2, Copy, QrCode, X } from 'lucide-react';
 import Footer from '@/app/components/Footer';
-import { getMembershipPlans, type ProductDetail } from '@/app/lib/api';
+import {
+  createWeChatNativeCheckout,
+  getMembershipPlans,
+  getOrder,
+  type ProductDetail,
+  type WeChatNativeCheckoutResult,
+} from '@/app/lib/api';
 import { getAuthToken } from '@/app/lib/auth';
 
 function formatPrice(cents: number) {
@@ -22,6 +29,15 @@ export default function PricingPage() {
   const [products, setProducts] = useState<ProductDetail[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [payingCode, setPayingCode] = useState<string | null>(null);
+  const [checkout, setCheckout] = useState<WeChatNativeCheckoutResult | null>(null);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [paymentComplete, setPaymentComplete] = useState(false);
+
+  const checkoutProduct = useMemo(
+    () => products.find((product) => product.id === checkout?.order.product_id) ?? null,
+    [checkout, products],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -39,6 +55,42 @@ export default function PricingPage() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function renderQr() {
+      if (!checkout?.code_url) {
+        setQrDataUrl(null);
+        return;
+      }
+      const dataUrl = await QRCode.toDataURL(checkout.code_url, {
+        margin: 1,
+        width: 240,
+        color: { dark: '#2A2522', light: '#FBF8F4' },
+      });
+      if (!cancelled) setQrDataUrl(dataUrl);
+    }
+    void renderQr();
+    return () => {
+      cancelled = true;
+    };
+  }, [checkout]);
+
+  useEffect(() => {
+    if (!checkout || checkout.order.status === 'PAID') return undefined;
+    const timer = window.setInterval(async () => {
+      try {
+        const order = await getOrder(checkout.order.id);
+        if (order.status === 'PAID') {
+          window.clearInterval(timer);
+          setPaymentComplete(true);
+        }
+      } catch (reason: unknown) {
+        setError((reason as Error).message || '订单状态查询失败');
+      }
+    }, 2500);
+    return () => window.clearInterval(timer);
+  }, [checkout]);
 
   const plans = useMemo(
     () =>
@@ -64,12 +116,33 @@ export default function PricingPage() {
     [products],
   );
 
-  function goToMembership() {
+  async function buy(product: ProductDetail) {
     if (!getAuthToken()) {
       router.push(`/login?redirect=${encodeURIComponent('/pricing')}`);
       return;
     }
-    router.push('/membership');
+    setPayingCode(product.code);
+    setError(null);
+    setPaymentComplete(false);
+    try {
+      const result = await createWeChatNativeCheckout(product.code);
+      setCheckout(result);
+    } catch (reason: unknown) {
+      setError((reason as Error).message || '创建支付订单失败');
+    } finally {
+      setPayingCode(null);
+    }
+  }
+
+  function closeCheckout() {
+    setCheckout(null);
+    setQrDataUrl(null);
+    setPaymentComplete(false);
+  }
+
+  async function copyPaymentLink() {
+    if (!checkout?.code_url) return;
+    await navigator.clipboard.writeText(checkout.code_url);
   }
 
   return (
@@ -152,15 +225,16 @@ export default function PricingPage() {
 
               <button
                 type="button"
-                onClick={goToMembership}
+                onClick={() => void buy(product)}
+                disabled={payingCode === product.code}
                 className={`mb-8 w-full px-6 py-[14px] font-sans text-[15px] font-medium transition-colors duration-200 ${
                   popular
                     ? 'bg-[var(--color-primary)] text-[var(--color-text-inverse)] hover:bg-[var(--color-primary-hover)]'
                     : 'border border-[var(--color-border-strong)] text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)]'
-                }`}
+                } disabled:cursor-wait disabled:opacity-60`}
                 style={{ borderRadius: 'var(--radius-md)' }}
               >
-                立即购买
+                {payingCode === product.code ? '创建订单中…' : '立即购买'}
               </button>
 
               <ul className="space-y-3">
@@ -206,6 +280,95 @@ export default function PricingPage() {
           </dl>
         </section>
       </div>
+
+      {checkout && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center px-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="checkout-title"
+        >
+          <button
+            type="button"
+            className="absolute inset-0 bg-[rgba(42,37,34,0.48)]"
+            aria-label="关闭支付弹窗"
+            onClick={closeCheckout}
+          />
+          <section
+            className="relative z-10 w-full max-w-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-6 shadow-[var(--shadow-lg)] sm:p-8"
+            style={{ borderRadius: 'var(--radius-lg)' }}
+          >
+            <button
+              type="button"
+              onClick={closeCheckout}
+              className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
+              aria-label="关闭"
+            >
+              <X size={20} />
+            </button>
+
+            {paymentComplete ? (
+              <div className="py-8 text-center">
+                <CheckCircle2 className="mx-auto mb-5 text-[var(--color-primary)]" size={42} strokeWidth={1.5} />
+                <h2 id="checkout-title" className="font-serif text-2xl text-[var(--color-text-primary)]">
+                  支付成功，权益已开通
+                </h2>
+                <p className="mt-3 text-[15px] text-[var(--color-text-secondary)]">
+                  {checkoutProduct?.name ?? '会员套餐'}已生效，可直接开始使用。
+                </p>
+                <button
+                  type="button"
+                  onClick={() => router.push('/dashboard')}
+                  className="mt-7 bg-[var(--color-primary)] px-8 py-3 text-[15px] font-medium text-[var(--color-text-inverse)]"
+                  style={{ borderRadius: 'var(--radius-md)' }}
+                >
+                  返回命理首页
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="pr-12">
+                  <p className="mb-2 flex items-center gap-2 text-[13px] font-medium text-[var(--color-primary)]">
+                    <QrCode size={16} />
+                    微信扫码支付
+                  </p>
+                  <h2 id="checkout-title" className="font-serif text-2xl text-[var(--color-text-primary)]">
+                    {checkoutProduct?.name ?? '会员套餐'}
+                  </h2>
+                  <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
+                    支付金额 {formatPrice(checkout.order.amount_cents)}
+                  </p>
+                </div>
+
+                <div className="mt-6 grid gap-6 sm:grid-cols-[240px_1fr] sm:items-center">
+                  <div className="flex h-60 w-60 items-center justify-center border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-3">
+                    {qrDataUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={qrDataUrl} alt="微信支付二维码" className="h-full w-full" />
+                    ) : (
+                      <div className="h-9 w-9 animate-spin rounded-full border-2 border-[var(--color-primary)] border-t-transparent" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-[15px] leading-7 text-[var(--color-text-body)]">
+                      请使用微信扫描二维码完成支付。页面会自动确认订单并发放会员权益，请勿重复下单。
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => void copyPaymentLink()}
+                      className="mt-5 inline-flex min-h-11 items-center gap-2 border border-[var(--color-border-strong)] px-4 text-sm text-[var(--color-text-primary)]"
+                      style={{ borderRadius: 'var(--radius-md)' }}
+                    >
+                      <Copy size={16} />
+                      复制支付链接
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </section>
+        </div>
+      )}
       <Footer />
     </div>
   );
