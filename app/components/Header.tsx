@@ -88,7 +88,7 @@ export default function Header() {
     { href: '/knowledge', label: '命理学堂' },
     { href: '/about', label: '关于我们' },
     { href: '/faq', label: '常见问题' },
-    { href: '/membership', label: '套餐与会员' },
+    { href: '/pricing', label: '套餐与会员' },
   ];
 
   const MOBILE_APP_LINKS: MobileNavLink[] = [
