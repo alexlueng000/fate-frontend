@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import QRCode from 'qrcode';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   BookOpen,
   Check,
@@ -62,7 +62,6 @@ type PaymentResult = {
 };
 
 export default function MembershipPage() {
-  const resultRef = useRef<HTMLDivElement | null>(null);
   const [membership, setMembership] = useState<MembershipMe | null>(null);
   const [quotas, setQuotas] = useState<MyQuotas | null>(null);
   const [plans, setPlans] = useState<ProductDetail[]>([]);
@@ -145,8 +144,6 @@ export default function MembershipPage() {
         if (order.status === 'PAID') {
           window.clearInterval(timer);
           const synced = await refresh();
-          setCheckout(null);
-          setQrDataUrl(null);
           setMessage(null);
           setPaymentResult({
             productName: checkoutProduct?.name ?? '已购买权益',
@@ -154,9 +151,6 @@ export default function MembershipPage() {
             amountCents: order.amount_cents,
             synced,
           });
-          window.setTimeout(() => {
-            resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }, 80);
         }
       } catch (e) {
         setError((e as Error).message || '订单状态查询失败');
@@ -191,6 +185,12 @@ export default function MembershipPage() {
     if (!checkout?.code_url) return;
     await navigator.clipboard.writeText(checkout.code_url);
     setMessage('支付链接已复制。');
+  }
+
+  function closeCheckout() {
+    setCheckout(null);
+    setQrDataUrl(null);
+    setPaymentResult(null);
   }
 
   return (
@@ -230,46 +230,6 @@ export default function MembershipPage() {
           </p>
         )}
 
-        {paymentResult && (
-          <section
-            ref={resultRef}
-            className="mb-5 border border-[var(--color-border-strong)] bg-[var(--color-bg-card)] p-5 sm:flex sm:items-start sm:justify-between sm:gap-6"
-          >
-            <div className="flex gap-3">
-              <CheckCircle2 size={21} className="mt-1 shrink-0 text-[var(--color-primary)]" />
-              <div>
-                <p className="font-serif text-xl font-medium text-[var(--color-text-primary)]">
-                  {paymentResult.synced ? '权益已生效' : '支付已确认'}
-                </p>
-                <p className="mt-2 text-[15px] leading-7 text-[var(--color-text-body)]">
-                  {paymentResult.synced
-                    ? `${paymentResult.productName} 已开通，八字与六爻额度已更新。`
-                    : '微信已确认支付，权益同步稍有延迟。请稍后刷新权益。'}
-                </p>
-                <p className="mt-1 text-[13px] leading-6 text-[var(--color-text-secondary)]">
-                  金额 {formatPrice(paymentResult.amountCents)}，订单号 {paymentResult.orderNo}
-                </p>
-              </div>
-            </div>
-            <div className="mt-5 flex flex-col gap-3 sm:mt-0 sm:flex-row">
-              <Link
-                href="/panel"
-                className="inline-flex min-h-11 items-center justify-center bg-[var(--color-primary)] px-5 text-[14px] font-medium text-[var(--color-text-inverse)]"
-                style={{ borderRadius: 'var(--radius-md)' }}
-              >
-                开始八字对话
-              </Link>
-              <Link
-                href="/liuyao"
-                className="inline-flex min-h-11 items-center justify-center gap-2 border border-[var(--color-border-strong)] px-4 text-[14px] font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)]"
-                style={{ borderRadius: 'var(--radius-md)' }}
-              >
-                开始六爻问事
-              </Link>
-            </div>
-          </section>
-        )}
-
         <section className="mb-8 grid gap-3 sm:grid-cols-3">
           <div className="border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
             <p className="mb-2 text-[13px] text-[var(--color-text-muted)]">会员状态</p>
@@ -305,77 +265,6 @@ export default function MembershipPage() {
               登录
             </Link>
           </div>
-        )}
-
-        {checkout && (
-          <section className="mb-10 border border-[var(--color-border-strong)] bg-[var(--color-bg-card)] p-5 sm:p-6">
-            <div className="mb-5 flex items-start justify-between gap-4">
-              <div>
-                <div className="mb-2 flex items-center gap-2 text-[13px] font-medium text-[var(--color-primary)]">
-                  <QrCode size={16} />
-                  微信扫码支付
-                </div>
-                <h2 className="font-serif text-xl font-medium text-[var(--color-text-primary)]">
-                  {checkoutProduct?.name ?? '待支付订单'}
-                </h2>
-                <p className="mt-2 text-[14px] leading-6 text-[var(--color-text-secondary)]">
-                  金额 {formatPrice(checkout.order.amount_cents)}，订单号 {checkout.order.out_trade_no}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setCheckout(null)}
-                className="inline-flex h-11 w-11 shrink-0 items-center justify-center border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)]"
-                style={{ borderRadius: 'var(--radius-md)' }}
-                aria-label="关闭支付面板"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="grid gap-5 md:grid-cols-[280px_1fr] md:items-center">
-              <div className="flex min-h-[280px] items-center justify-center border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-5">
-                {qrDataUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={qrDataUrl} alt="微信支付二维码" className="h-60 w-60" />
-                ) : (
-                  <div className="h-10 w-10 animate-spin border-2 border-[var(--color-primary)] border-t-transparent" />
-                )}
-              </div>
-              <div>
-                <ul className="space-y-3 text-[15px] leading-7 text-[var(--color-text-body)]">
-                  <li className="flex gap-2">
-                    <ShieldCheck size={17} className="mt-1 text-[var(--color-primary)]" />
-                    支付成功后由微信回调确认，系统自动发放额度。
-                  </li>
-                  <li className="flex gap-2">
-                    <RefreshCw size={17} className="mt-1 text-[var(--color-primary)]" />
-                    当前页面会自动查询订单状态，无需重复下单。
-                  </li>
-                </ul>
-                <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                  <button
-                    type="button"
-                    onClick={() => void copyCodeUrl()}
-                    className="inline-flex min-h-11 items-center justify-center gap-2 border border-[var(--color-border-strong)] px-4 text-[14px] font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)]"
-                    style={{ borderRadius: 'var(--radius-md)' }}
-                  >
-                    <Copy size={16} />
-                    复制支付链接
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void refresh()}
-                    className="inline-flex min-h-11 items-center justify-center gap-2 border border-[var(--color-border)] px-4 text-[14px] font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)]"
-                    style={{ borderRadius: 'var(--radius-md)' }}
-                  >
-                    <RefreshCw size={16} />
-                    手动刷新权益
-                  </button>
-                </div>
-              </div>
-            </div>
-          </section>
         )}
 
         <section className="mb-10">
@@ -459,6 +348,107 @@ export default function MembershipPage() {
           </Link>
         </div>
       </div>
+
+      {checkout && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center px-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="membership-checkout-title"
+        >
+          <button
+            type="button"
+            className="absolute inset-0 bg-[rgba(42,37,34,0.48)]"
+            onClick={closeCheckout}
+            aria-label="关闭支付弹窗"
+          />
+          <section
+            className="relative z-10 max-h-[calc(100dvh-2rem)] w-full max-w-xl overflow-y-auto border border-[var(--color-border)] bg-[var(--color-bg-card)] p-6 shadow-[var(--shadow-lg)] sm:p-8"
+            style={{ borderRadius: 'var(--radius-lg)' }}
+          >
+            <button
+              type="button"
+              onClick={closeCheckout}
+              className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
+              aria-label="关闭"
+            >
+              <X size={20} />
+            </button>
+
+            {paymentResult ? (
+              <div className="py-8 text-center">
+                <CheckCircle2 className="mx-auto mb-5 text-[var(--color-primary)]" size={42} strokeWidth={1.5} />
+                <h2 id="membership-checkout-title" className="font-serif text-2xl text-[var(--color-text-primary)]">
+                  {paymentResult.synced ? '支付成功，权益已生效' : '支付成功，权益同步中'}
+                </h2>
+                <p className="mt-3 text-[15px] leading-7 text-[var(--color-text-secondary)]">
+                  {paymentResult.synced
+                    ? `${paymentResult.productName} 已到账，当前页面额度已更新。`
+                    : '微信已确认支付，请稍后刷新查看最新额度。'}
+                </p>
+                <p className="mt-2 text-xs text-[var(--color-text-muted)]">
+                  {formatPrice(paymentResult.amountCents)} · 订单号 {paymentResult.orderNo}
+                </p>
+                <button
+                  type="button"
+                  onClick={closeCheckout}
+                  className="mt-7 bg-[var(--color-primary)] px-8 py-3 text-[15px] font-medium text-[var(--color-text-inverse)]"
+                  style={{ borderRadius: 'var(--radius-md)' }}
+                >
+                  完成
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="pr-12">
+                  <p className="mb-2 flex items-center gap-2 text-[13px] font-medium text-[var(--color-primary)]">
+                    <QrCode size={16} />
+                    微信扫码支付
+                  </p>
+                  <h2 id="membership-checkout-title" className="font-serif text-2xl text-[var(--color-text-primary)]">
+                    {checkoutProduct?.name ?? '待支付订单'}
+                  </h2>
+                  <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
+                    支付金额 {formatPrice(checkout.order.amount_cents)}
+                  </p>
+                </div>
+
+                <div className="mt-6 grid gap-6 sm:grid-cols-[240px_1fr] sm:items-center">
+                  <div className="mx-auto flex h-60 w-60 items-center justify-center border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-3">
+                    {qrDataUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={qrDataUrl} alt="微信支付二维码" className="h-full w-full" />
+                    ) : (
+                      <div className="h-9 w-9 animate-spin rounded-full border-2 border-[var(--color-primary)] border-t-transparent" />
+                    )}
+                  </div>
+                  <div>
+                    <ul className="space-y-3 text-[14px] leading-6 text-[var(--color-text-body)]">
+                      <li className="flex gap-2">
+                        <ShieldCheck size={17} className="mt-1 shrink-0 text-[var(--color-primary)]" />
+                        支付完成后系统自动发放额度。
+                      </li>
+                      <li className="flex gap-2">
+                        <RefreshCw size={17} className="mt-1 shrink-0 text-[var(--color-primary)]" />
+                        此弹窗会自动确认订单，无需重复购买。
+                      </li>
+                    </ul>
+                    <button
+                      type="button"
+                      onClick={() => void copyCodeUrl()}
+                      className="mt-5 inline-flex min-h-11 items-center gap-2 border border-[var(--color-border-strong)] px-4 text-sm text-[var(--color-text-primary)]"
+                      style={{ borderRadius: 'var(--radius-md)' }}
+                    >
+                      <Copy size={16} />
+                      复制支付链接
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </section>
+        </div>
+      )}
     </main>
   );
 }
