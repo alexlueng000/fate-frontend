@@ -18,7 +18,9 @@ import {
   X,
   FileText,
   BookOpen,
+  Crown,
   Dices,
+  GraduationCap,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -86,7 +88,7 @@ export default function Header() {
     { href: '/knowledge', label: '命理学堂' },
     { href: '/about', label: '关于我们' },
     { href: '/faq', label: '常见问题' },
-    { href: '/pricing', label: '套餐定价' },
+    { href: '/membership', label: '套餐与会员' },
   ];
 
   const MOBILE_APP_LINKS: MobileNavLink[] = [
@@ -96,6 +98,8 @@ export default function Header() {
     { href: '/history', label: '解读记录', icon: History },
     { href: '/xinji', label: '心镜灯', icon: BookOpen },
     { href: '/liuyao', label: '六爻玄机', icon: Dices },
+    { href: '/membership', label: '会员中心', icon: Crown },
+    { href: '/videos', label: '视频课程', icon: GraduationCap },
   ];
 
   const isActivePath = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
@@ -205,6 +209,15 @@ export default function Header() {
                       >
                         <LayoutDashboard className="w-4 h-4 shrink-0" />
                         命理首页
+                      </Link>
+                      <Link
+                        href="/membership"
+                        role="menuitem"
+                        className="flex items-center gap-3 px-4 py-3 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        <Crown className="w-4 h-4 shrink-0" />
+                        会员中心
                       </Link>
                       <Link
                         href="/profile/edit"
