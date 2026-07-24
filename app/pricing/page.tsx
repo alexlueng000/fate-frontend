@@ -33,6 +33,8 @@ export default function PricingPage() {
   const [checkout, setCheckout] = useState<WeChatNativeCheckoutResult | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [paymentComplete, setPaymentComplete] = useState(false);
+  const [mobilePayment, setMobilePayment] = useState(false);
+  const [wechatBrowser, setWechatBrowser] = useState(false);
 
   const checkoutProduct = useMemo(
     () => products.find((product) => product.id === checkout?.order.product_id) ?? null,
@@ -54,6 +56,11 @@ export default function PricingPage() {
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  useEffect(() => {
+    setMobilePayment(window.matchMedia('(max-width: 639px)').matches);
+    setWechatBrowser(/MicroMessenger/i.test(window.navigator.userAgent));
   }, []);
 
   useEffect(() => {
@@ -143,6 +150,11 @@ export default function PricingPage() {
   async function copyPaymentLink() {
     if (!checkout?.code_url) return;
     await navigator.clipboard.writeText(checkout.code_url);
+  }
+
+  function openWeChatPayment() {
+    if (!checkout?.code_url) return;
+    window.location.href = checkout.code_url;
   }
 
   return (
@@ -340,8 +352,29 @@ export default function PricingPage() {
                   </p>
                 </div>
 
-                <div className="mt-6 grid gap-6 sm:grid-cols-[240px_1fr] sm:items-center">
-                  <div className="flex h-60 w-60 items-center justify-center border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-3">
+                {mobilePayment && (
+                  <div className="mt-6 rounded-[var(--radius-md)] bg-[var(--color-bg-alt)] p-4 text-center">
+                    <p className="text-[15px] font-medium text-[var(--color-text-primary)]">
+                      {wechatBrowser ? '在微信中完成支付' : '请使用微信完成支付'}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={openWeChatPayment}
+                      className="mt-4 min-h-12 w-full bg-[var(--color-primary)] px-5 text-[15px] font-medium text-[var(--color-text-inverse)]"
+                      style={{ borderRadius: 'var(--radius-md)' }}
+                    >
+                      打开微信支付
+                    </button>
+                    <p className="mt-3 text-[13px] leading-6 text-[var(--color-text-secondary)]">
+                      如果没有自动打开，请长按下方二维码，选择“识别图中二维码”。
+                    </p>
+                  </div>
+                )}
+
+                <div className={`mt-6 grid gap-6 ${mobilePayment ? '' : 'sm:grid-cols-[240px_1fr] sm:items-center'}`}>
+                  <div className={`mx-auto flex items-center justify-center border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-3 ${
+                    mobilePayment ? 'h-52 w-52' : 'h-60 w-60'
+                  }`}>
                     {qrDataUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={qrDataUrl} alt="微信支付二维码" className="h-full w-full" />
@@ -349,19 +382,21 @@ export default function PricingPage() {
                       <div className="h-9 w-9 animate-spin rounded-full border-2 border-[var(--color-primary)] border-t-transparent" />
                     )}
                   </div>
-                  <div>
+                  <div className={mobilePayment ? 'text-center' : ''}>
                     <p className="text-[15px] leading-7 text-[var(--color-text-body)]">
                       请使用微信扫描二维码完成支付。页面会自动确认订单并发放会员权益，请勿重复下单。
                     </p>
-                    <button
-                      type="button"
-                      onClick={() => void copyPaymentLink()}
-                      className="mt-5 inline-flex min-h-11 items-center gap-2 border border-[var(--color-border-strong)] px-4 text-sm text-[var(--color-text-primary)]"
-                      style={{ borderRadius: 'var(--radius-md)' }}
-                    >
-                      <Copy size={16} />
-                      复制支付链接
-                    </button>
+                    {!mobilePayment && (
+                      <button
+                        type="button"
+                        onClick={() => void copyPaymentLink()}
+                        className="mt-5 inline-flex min-h-11 items-center gap-2 border border-[var(--color-border-strong)] px-4 text-sm text-[var(--color-text-primary)]"
+                        style={{ borderRadius: 'var(--radius-md)' }}
+                      >
+                        <Copy size={16} />
+                        复制支付链接
+                      </button>
+                    )}
                   </div>
                 </div>
               </>
