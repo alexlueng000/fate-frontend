@@ -580,6 +580,7 @@ export default function PanelPage() {
 
   const clearChat = async () => {
     if (!conversationId) return;
+    setErr(null);
     setLoading(true);
     try {
       const res = await fetch(api('/chat/clear'), {
@@ -589,8 +590,17 @@ export default function PanelPage() {
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json().catch(() => null);
       if (!data?.ok) throw new Error(data?.error || '清空失败');
-      setMsgs([]);
-      saveConversation(conversationId, []);
+      // Clearing removes the conversation history/context, but the page should
+      // immediately return to its ready state instead of the empty loading
+      // placeholder. Reuse the admin-managed opening message.
+      const introContent = await fetchBaziIntro();
+      const introMsg: Msg = {
+        role: 'assistant',
+        content: introContent,
+        meta: { kind: 'intro' },
+      };
+      setMsgs([introMsg]);
+      saveConversation(conversationId, [introMsg]);
     } catch (e: unknown) { setErr(e instanceof Error ? e.message : String(e)); }
     finally { setLoading(false); }
   };
