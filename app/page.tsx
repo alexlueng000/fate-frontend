@@ -9,9 +9,9 @@ import { ArrowRight, ChevronRight } from "lucide-react";
 const HERO_FEATURES = [
   {
     id: "bazi",
-    name: "八字",
-    tagline: "看清你是谁",
-    desc: "通过出生时间精准计算命盘，AI 深度解读性格特质与人生轨迹。",
+    name: "八字文化",
+    tagline: "认识自我特质",
+    desc: "基于出生信息生成传统文化分析内容，提供理解个人特质的参考视角。",
     color: "var(--color-feature-bazi)",
     anchor: "#feature-bazi",
   },
@@ -19,15 +19,15 @@ const HERO_FEATURES = [
     id: "xinji",
     name: "心镜灯",
     tagline: "看懂你的情绪",
-    desc: "每日情绪追踪，五行性格分析，发现你的情绪触发模式。",
+    desc: "通过每日记录观察情绪变化，帮助整理个人感受与生活节奏。",
     color: "var(--color-feature-xinji)",
     anchor: "#feature-xinji",
   },
   {
     id: "liuyao",
-    name: "六爻",
-    tagline: "看清下一步",
-    desc: "一事一卦，AI 深度解读趋势与风险，辅助理性决策。",
+    name: "六爻文化",
+    tagline: "获得思考参考",
+    desc: "提供传统文化卦象解析内容，为具体问题增加一个思考视角。",
     color: "var(--color-feature-liuyao)",
     anchor: "#feature-liuyao",
   },
@@ -46,7 +46,7 @@ export default function LandingPage() {
           {/* 左：主文案 */}
           <div className="animate-fade-in space-y-7">
             <p className="text-[0.75rem] uppercase tracking-[0.14em] text-[var(--color-text-muted)]">
-              AI 驱动的自我认知
+              AI + 传统文化数字内容服务
             </p>
 
             <h1
@@ -56,13 +56,13 @@ export default function LandingPage() {
                 color: "var(--color-text-primary)",
               }}
             >
-              人生的答案不在别处，
+              从传统文化中，
               <br className="hidden md:block" />
-              就在你<span style={{ color: "var(--color-primary)" }}>自己</span>身上。
+              看见理解<span style={{ color: "var(--color-primary)" }}>自己</span>的新视角。
             </h1>
 
             <p className="max-w-xl text-[1rem] leading-relaxed text-[var(--color-text-body)] md:text-[1.0625rem]">
-              通过八字、情绪追踪、决策问卦，帮助你看清自己、理解情绪、把握时机。一面镜子，不是一个算命先生。
+              提供八字文化分析、情绪记录、六爻文化卦象解析与传统文化课程，让 AI 帮你整理信息、理解内容，并形成自己的判断。
             </p>
 
             {/* CTA */}
@@ -83,9 +83,8 @@ export default function LandingPage() {
 
             {/* 信任注脚 · 排版式而非图标堆 */}
             <p className="pt-2 text-[0.8125rem] text-[var(--color-text-muted)]">
-              已有 <span className="text-[var(--color-text-secondary)] tabular-nums">10,000+</span> 用户在使用 ·
-              <span className="ml-1">数据端到端加密 ·</span>
-              <span className="ml-1">随时可删除</span>
+              AI 生成内容 · 传统文化学习参考 ·
+              <span className="ml-1">个人资料可管理和删除</span>
             </p>
           </div>
 
@@ -174,10 +173,10 @@ export default function LandingPage() {
               className="text-[1.75rem] md:text-[2rem] lg:text-[2.25rem] leading-[1.25] font-medium text-[var(--color-text-primary)]"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              不是算命，是认识自己。
+              传统文化，是理解自己的另一种视角。
             </h2>
             <p className="text-[1rem] md:text-[1.0625rem] leading-relaxed text-[var(--color-text-secondary)]">
-              我们不预测命运，而是帮助你理解自己的特质与潜能。
+              我们提供文化内容和信息整理工具，最终判断与选择始终由你自己完成。
             </p>
           </header>
 
@@ -185,15 +184,15 @@ export default function LandingPage() {
             {[
               {
                 head: "理解自我特质",
-                body: "通过八字分析，了解你的性格特点、天赋优势和潜在挑战，更好地认识真实的自己。",
+                body: "通过八字文化分析，阅读关于个人特质、优势与注意事项的传统文化内容。",
               },
               {
                 head: "看见内心情绪",
-                body: "每日情绪追踪与五行分析，帮助你发现情绪触发模式，从理解情绪开始改变自己。",
+                body: "通过每日情绪记录整理感受与变化，逐步观察自己的生活节奏。",
               },
               {
                 head: "辅助理性决策",
-                body: "当逻辑分析无法给出答案时，传统智慧为你提供另一个思考维度，多一份从容。",
+                body: "面对具体问题时，传统文化卦象解析提供补充视角，帮助你整理已有信息。",
               },
             ].map((item, idx) => (
               <li
@@ -250,8 +249,8 @@ export default function LandingPage() {
             <ScenarioCard
               persona="张女士"
               role="28 岁 · 产品经理"
-              scenario="在考虑是否跳槽时，我用八字分析了自己的职业特质和当前大运。最终决定还是自己做的，但多了一份对自己的理解和信心。"
-              features={["八字", "心镜灯"]}
+              scenario="在考虑是否跳槽时，我阅读了八字文化中的职业特质分析。最终决定仍由自己完成，但多了一个整理想法的角度。"
+              features={["八字文化", "心镜灯"]}
               tags={["职业发展", "自我认知"]}
             />
             <ScenarioCard
@@ -264,8 +263,8 @@ export default function LandingPage() {
             <ScenarioCard
               persona="王女士"
               role="32 岁 · 设计师"
-              scenario="要不要接受外地的工作机会？逻辑分析了很久还是纠结。用六爻起了一卦，AI 的分析让我看到了一些没注意到的风险点，最终做了更理性的选择。"
-              features={["六爻", "八字"]}
+              scenario="要不要接受外地的工作机会？我参考了六爻文化卦象解析，并把其中的提示和现实条件逐项比较，最后自己作出选择。"
+              features={["六爻文化", "八字文化"]}
               tags={["职业选择", "理性决策"]}
             />
           </div>
@@ -283,23 +282,23 @@ export default function LandingPage() {
               className="text-[1.75rem] md:text-[2rem] lg:text-[2.25rem] leading-[1.25] font-medium text-[var(--color-text-primary)]"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              不一样的命理产品。
+              清晰、克制的传统文化 AI 产品。
             </h2>
           </header>
 
           <ol className="space-y-10">
             {[
               {
-                head: "不是算命，是认识自己",
-                body: "传统命理 + AI + 心理学。提供科学、理性、有温度的自我认知工具。我们不下定论，让你自己在被反射的过程里看清自己。",
+                head: "提供参考，不替你下结论",
+                body: "AI 负责生成和整理传统文化内容，不承诺结果，也不代替用户作出人生决定。",
               },
               {
                 head: "专业且严谨",
-                body: "结合传统命理与现代 AI，提供客观分析，不做模糊承诺。术语首次出现都有人话翻译——给小白看得懂，给爱好者看得深。",
+                body: "结合传统文化资料与现代 AI，提供结构化内容和术语解释，方便初学者阅读与理解。",
               },
               {
                 head: "隐私绝对保护",
-                body: "端到端加密，数据仅你可见，随时可删除。零广告追踪，没有暗黑模式。",
+                body: "采用必要的安全措施保护个人资料，并提供资料管理和删除入口。",
               },
             ].map((item, idx) => (
               <li
@@ -345,16 +344,16 @@ export default function LandingPage() {
               准备好认识真实的自己了吗？
             </h2>
             <p className="text-[1rem] md:text-[1.0625rem] leading-relaxed text-[var(--color-text-secondary)]">
-              注册即可体验，套餐解锁更多次数。
+              注册即可体验，会员套餐提供更多内容额度与课程观看权限。
             </p>
           </header>
 
           <ul className="space-y-3 text-left text-[0.9375rem] text-[var(--color-text-body)] md:mx-auto md:max-w-md">
             {[
-              "完整八字命盘 + AI 解读",
+              "八字文化分析 + AI 内容整理",
               "每日情绪追踪记录",
-              "六爻问事 · 一事一卦",
-              "套餐次数永久有效",
+              "六爻文化卦象解析",
+              "会员权益有效期 30 天",
             ].map((item) => (
               <li key={item} className="grid grid-cols-[auto_1fr] items-baseline gap-3">
                 <span
@@ -384,6 +383,9 @@ export default function LandingPage() {
             <Link href="/terms" className="ml-1 underline-offset-2 hover:underline">用户协议</Link>
             <span className="mx-1">与</span>
             <Link href="/privacy" className="underline-offset-2 hover:underline">隐私政策</Link>
+          </p>
+          <p className="border-t border-[var(--color-border)] pt-5 text-[0.75rem] leading-6 text-[var(--color-text-muted)]">
+            本平台内容由 AI 基于传统文化资料生成，仅供文化研究、娱乐与个人参考，不构成医疗、投资、法律或其他专业建议。
           </p>
         </div>
       </section>

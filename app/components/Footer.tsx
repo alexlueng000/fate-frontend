@@ -33,6 +33,12 @@ export default function Footer() {
 
         {/* Right: Links */}
         <nav className="flex items-center gap-6 text-sm text-[var(--color-text-muted)]">
+          <Link href="/contact" className="hover:text-[var(--color-gold)] transition-colors">
+            联系我们
+          </Link>
+          <Link href="/pricing" className="hover:text-[var(--color-gold)] transition-colors">
+            会员服务
+          </Link>
           <Link href="/privacy" className="hover:text-[var(--color-gold)] transition-colors">
             隐私政策
           </Link>
