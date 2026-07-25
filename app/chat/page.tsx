@@ -318,7 +318,12 @@ export default function ChatPage() {
       setMsgs((prev) => {
         if (assistantIndex < 0 || assistantIndex >= prev.length) return prev;
         const next = [...prev];
-        next[assistantIndex] = { role: 'assistant', content: normalizeMarkdown(full || '（后端未返回解读内容）') };
+        const { questions, cleanedContent } = parseSuggestedQuestions(full);
+        next[assistantIndex] = {
+          role: 'assistant',
+          content: normalizeMarkdown(cleanedContent || '（后端未返回解读内容）'),
+          suggestedQuestions: questions,
+        };
         return next;
       });
     }

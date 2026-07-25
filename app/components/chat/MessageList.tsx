@@ -6,6 +6,7 @@ import { MessageRating } from './MessageRating';
 import { SimplifyButton } from './SimplifyButton';
 import { SimplifyPanel } from './SimplifyPanel';
 import { SuggestedQuestions } from './SuggestedQuestions';
+import { parseSuggestedQuestions } from '@/app/lib/chat/parser';
 
 export function MessageList({
   scrollRef,
@@ -72,6 +73,16 @@ export function MessageList({
         const isAssistant = m.role === 'assistant';
         const isIntro = m.meta?.kind === 'intro';
         const content = m.content || '';
+        // Render-time parsing is intentional. It prevents protocol markers from
+        // leaking when an SSE completion update races with React state, and also
+        // repairs cached messages created before suggestedQuestions was stored.
+        const parsed = isAssistant && !isIntro
+          ? parseSuggestedQuestions(content)
+          : { questions: [], cleanedContent: content };
+        const displayContent = parsed.cleanedContent;
+        const suggestedQuestions = m.suggestedQuestions?.length
+          ? m.suggestedQuestions
+          : parsed.questions;
 
         return (
           <div key={i} className={`flex gap-2 sm:gap-3 ${isAssistant ? '' : 'flex-row-reverse'}`}>
@@ -101,12 +112,12 @@ export function MessageList({
                   isIntro ? (
                     <div className="border-l-2 border-[var(--color-gold)] pl-3">
                       <div className="msg-md">
-                        <Markdown content={content} />
+                        <Markdown content={displayContent} />
                       </div>
                     </div>
                   ) : (
                     <div className="msg-md">
-                      <Markdown content={content} />
+                      <Markdown content={displayContent} />
                     </div>
                   )
                 ) : (
@@ -159,9 +170,9 @@ export function MessageList({
               )}
 
               {/* 推荐问题 */}
-              {isAssistant && !isIntro && !m.streaming && m.suggestedQuestions && onQuestionClick && (
+              {isAssistant && !isIntro && !m.streaming && suggestedQuestions.length > 0 && onQuestionClick && (
                 <SuggestedQuestions
-                  questions={m.suggestedQuestions}
+                  questions={suggestedQuestions}
                   onQuestionClick={onQuestionClick}
                   loading={loading}
                 />
