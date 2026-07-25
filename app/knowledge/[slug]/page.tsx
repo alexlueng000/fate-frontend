@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: Props) {
   const article = getArticleBySlug(slug);
   if (!article) return {};
   return {
-    title: `${article.title} — 命理学堂`,
+    title: `${article.title} — 传统文化学堂`,
     description: article.summary,
   };
 }
@@ -42,7 +42,7 @@ export default async function ArticlePage({ params }: Props) {
             className="inline-flex items-center gap-2 text-[var(--color-text-muted)] hover:text-[var(--color-primary)] mb-8 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            命理学堂
+            传统文化学堂
           </Link>
 
           {/* 文章头部 */}

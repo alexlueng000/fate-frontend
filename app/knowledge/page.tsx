@@ -4,7 +4,7 @@ import Footer from '@/app/components/Footer';
 import { articles, categoryColors } from './data';
 
 export const metadata = {
-  title: '命理学堂 — 易凡文化',
+  title: '传统文化学堂 — 易凡文化',
   description: '系统学习八字命理基础知识，探索名人八字案例，理解五行与大运流年。',
 };
 
@@ -36,7 +36,7 @@ export default function KnowledgePage() {
               className="text-4xl font-bold text-[var(--color-text-primary)] mb-3"
               style={{ fontFamily: 'var(--font-display)' }}
             >
-              命理学堂
+              传统文化学堂
             </h1>
             <p className="text-[var(--color-text-muted)] max-w-xl mx-auto">
               从零开始，系统了解八字命理的核心概念与实际应用

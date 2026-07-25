@@ -85,7 +85,7 @@ export default function Header() {
     'hover:bg-[var(--color-primary)] hover:text-white hover:shadow-md transition-all duration-200';
 
   const NAV_LINKS: MobileNavLink[] = [
-    { href: '/knowledge', label: '命理学堂' },
+    { href: '/knowledge', label: '传统文化学堂' },
     { href: '/about', label: '关于我们' },
     { href: '/faq', label: '常见问题' },
     { href: '/pricing', label: '套餐与会员' },

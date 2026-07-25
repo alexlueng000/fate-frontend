@@ -112,11 +112,11 @@ export default function PricingPage() {
             (index === 0 ? '适合初次体验完整功能' : '适合持续探索与深度使用'),
           popular: index === 1,
           features: [
-            `${bazi} 次八字 AI 对话`,
-            `${liuyao} 次六爻 AI 解读`,
+            `${bazi} 次传统文化 AI 对话（八字文化）`,
+            `${liuyao} 次传统文化卦象解析（六爻文化）`,
             '会员有效期 30 天，续费顺延',
             '会员视频观看权限',
-            'AI 智能分析与专业命理知识库',
+            'AI 智能分析与传统文化知识库',
           ],
         };
       }),

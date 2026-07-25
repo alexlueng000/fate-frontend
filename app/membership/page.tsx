@@ -226,7 +226,7 @@ export default function MembershipPage() {
               会员与额度
             </h1>
             <p className="mt-3 max-w-[62ch] text-[16px] leading-7 text-[var(--color-text-secondary)]">
-              免费用户各有 10 次体验额度；基础版提供 30 次八字与 30 次六爻，高级版提供 100 次八字与 100 次六爻，额度不足时可购买叠加包。
+              免费用户可体验传统文化 AI 服务；基础版提供 30 次八字文化对话与 30 次六爻文化卦象解析，高级版各提供 100 次，额度不足时可购买叠加包。
             </p>
           </div>
           <button
@@ -264,12 +264,12 @@ export default function MembershipPage() {
           <div className="border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
             <p className="mb-2 text-[13px] text-[var(--color-text-muted)]">八字额度</p>
             <p className="font-serif text-xl text-[var(--color-text-primary)]">{quotaText(quotas?.chat)}</p>
-            <p className="mt-2 text-[13px] text-[var(--color-text-secondary)]">用于八字 AI 对话</p>
+            <p className="mt-2 text-[13px] text-[var(--color-text-secondary)]">用于传统文化 AI 对话（八字文化）</p>
           </div>
           <div className="border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
             <p className="mb-2 text-[13px] text-[var(--color-text-muted)]">六爻额度</p>
             <p className="font-serif text-xl text-[var(--color-text-primary)]">{quotaText(quotas?.liuyao_chat)}</p>
-            <p className="mt-2 text-[13px] text-[var(--color-text-secondary)]">用于六爻问卦解读</p>
+            <p className="mt-2 text-[13px] text-[var(--color-text-secondary)]">用于传统文化卦象解析（六爻文化）</p>
           </div>
         </section>
 
@@ -307,8 +307,8 @@ export default function MembershipPage() {
                     <p className="font-serif text-2xl text-[var(--color-text-primary)]">{formatPrice(plan.price_cents)}</p>
                   </div>
                   <ul className="mb-5 space-y-2 text-[14px] text-[var(--color-text-body)]">
-                    <li className="flex gap-2"><Check size={16} className="mt-0.5 text-[var(--color-primary)]" />{grant.bazi} 次八字对话</li>
-                    <li className="flex gap-2"><Check size={16} className="mt-0.5 text-[var(--color-primary)]" />{grant.liuyao} 次六爻解读</li>
+                    <li className="flex gap-2"><Check size={16} className="mt-0.5 text-[var(--color-primary)]" />{grant.bazi} 次传统文化 AI 对话（八字文化）</li>
+                    <li className="flex gap-2"><Check size={16} className="mt-0.5 text-[var(--color-primary)]" />{grant.liuyao} 次传统文化卦象解析（六爻文化）</li>
                     <li className="flex gap-2"><Check size={16} className="mt-0.5 text-[var(--color-primary)]" />有效期 30 天，续费顺延</li>
                   </ul>
                   <button
@@ -350,8 +350,8 @@ export default function MembershipPage() {
                     <p className="font-serif text-xl text-[var(--color-text-primary)]">{formatPrice(product.price_cents)}</p>
                   </div>
                   <ul className="mb-5 space-y-2 text-[14px] text-[var(--color-text-body)]">
-                    <li className="flex gap-2"><Check size={16} className="mt-0.5 text-[var(--color-primary)]" />八字对话 +{grant.bazi} 次</li>
-                    <li className="flex gap-2"><Check size={16} className="mt-0.5 text-[var(--color-primary)]" />六爻解读 +{grant.liuyao} 次</li>
+                    <li className="flex gap-2"><Check size={16} className="mt-0.5 text-[var(--color-primary)]" />八字文化 AI 对话 +{grant.bazi} 次</li>
+                    <li className="flex gap-2"><Check size={16} className="mt-0.5 text-[var(--color-primary)]" />六爻文化卦象解析 +{grant.liuyao} 次</li>
                   </ul>
                   <button
                     type="button"
