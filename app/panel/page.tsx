@@ -30,7 +30,7 @@ import {
   takePendingRelationshipBaziPrompt,
   type RelationshipTaskContext,
 } from '@/app/lib/tasks/relationship';
-import { useUser, fetchMe } from '@/app/lib/auth';
+import { useUser, fetchMe, getAuthToken } from '@/app/lib/auth';
 
 type PanelTaskContext = CareerTaskContext | RelationshipTaskContext;
 
@@ -132,6 +132,7 @@ export default function PanelPage() {
   const [quotaRefreshKey, setQuotaRefreshKey] = useState(0);
   const [quotaDialogOpen, setQuotaDialogOpen] = useState(false);
   const [quotaDialogMessage, setQuotaDialogMessage] = useState('');
+  const [regenerating, setRegenerating] = useState(false);
   const [taskContext, setTaskContext] = useState<PanelTaskContext | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -546,20 +547,35 @@ export default function PanelPage() {
   };
 
   const regenerate = async () => {
-    if (!conversationId) return;
+    if (!conversationId || regenerating) return;
     const lastIdx = [...msgs].map((m, i) => ({ m, i })).reverse().find(x => x.m.role === 'assistant')?.i;
     if (lastIdx == null) return;
+    setErr(null);
+    setRegenerating(true);
     setLoading(true);
     try {
+      const token = getAuthToken();
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers.Authorization = `Bearer ${token}`;
       const res = await fetch(api('/chat/regenerate'), {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+        headers,
         body: JSON.stringify({ conversation_id: conversationId }),
       });
       if (!res.ok) throw new Error(await res.text());
-      const newReply = normalizeMarkdown(pickReply(await res.json()).trim() || '（后端未返回解读内容）');
-      setMsgs(prev => { const next = [...prev]; next[lastIdx] = { role: 'assistant', content: newReply }; return next; });
+      const full = pickReply(await res.json()).trim();
+      const { questions, cleanedContent } = parseSuggestedQuestions(full);
+      const newReply = normalizeMarkdown(cleanedContent || '（后端未返回解读内容）');
+      setMsgs(prev => {
+        const next = [...prev];
+        next[lastIdx] = { role: 'assistant', content: newReply, suggestedQuestions: questions };
+        return next;
+      });
     } catch (e: unknown) { setErr(e instanceof Error ? e.message : String(e)); }
-    finally { setLoading(false); }
+    finally {
+      setRegenerating(false);
+      setLoading(false);
+    }
   };
 
   const clearChat = async () => {
@@ -712,7 +728,9 @@ export default function PanelPage() {
               onEditProfile={() => { setShowMenu(false); router.push('/profile/edit?returnTo=/panel'); }}
               onClear={() => {
                 setShowMenu(false);
-                if (window.confirm('确认清空当前对话内容？此操作不可恢复。')) void clearChat();
+                if (window.confirm(
+                  '确认清空当前对话内容？\n\n这会清除当前页面的聊天内容和 AI 对话上下文，但不会删除您的命盘档案或历史报告。',
+                )) void clearChat();
               }}
             />}
           </div>
@@ -778,7 +796,9 @@ export default function PanelPage() {
                   onEditProfile={() => { setShowMenu(false); router.push('/profile/edit?returnTo=/panel'); }}
                   onClear={() => {
                     setShowMenu(false);
-                    if (window.confirm('确认清空当前对话内容？此操作不可恢复。')) void clearChat();
+                    if (window.confirm(
+                      '确认清空当前对话内容？\n\n这会清除当前页面的聊天内容和 AI 对话上下文，但不会删除您的命盘档案或历史报告。',
+                    )) void clearChat();
                   }}
                 />}
               </div>
@@ -805,6 +825,7 @@ export default function PanelPage() {
         onSimplifyToggle={handleSimplifyToggle}
         onQuestionClick={handleQuestionClick}
         onRegenerate={regenerate}
+        regenerating={regenerating}
         loading={loading}
       />
 
@@ -848,7 +869,7 @@ export default function PanelPage() {
           onClear={clearChat}
           confirmClear={true}
           showRegenerate={false}
-          showClear={false}
+          showClear={true}
           placeholder="问我一个你现在最关心的问题…"
         />
         <p className="text-center text-[12px] leading-5 text-[var(--color-text-muted)]">

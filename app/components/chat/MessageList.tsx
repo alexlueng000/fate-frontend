@@ -1,7 +1,7 @@
 'use client';
 import { Msg, Paipan } from '@/app/lib/chat/types';
 import { ComponentType } from 'react';
-import { Bot, User, RotateCcw } from 'lucide-react';
+import { Bot, User, Loader2, RotateCcw } from 'lucide-react';
 import { MessageRating } from './MessageRating';
 import { SimplifyButton } from './SimplifyButton';
 import { SimplifyPanel } from './SimplifyPanel';
@@ -18,6 +18,7 @@ export function MessageList({
   onSimplifyToggle,
   onQuestionClick,
   onRegenerate,
+  regenerating,
   loading,
   containerClassName,
 }: {
@@ -30,6 +31,7 @@ export function MessageList({
   onSimplifyToggle?: (index: number) => void;
   onQuestionClick?: (question: string) => void;
   onRegenerate?: () => void;
+  regenerating?: boolean;
   loading?: boolean;
   containerClassName?: string;
 }) {
@@ -132,13 +134,15 @@ export function MessageList({
                     <button
                       type="button"
                       onClick={onRegenerate}
-                      disabled={loading}
+                      disabled={loading || regenerating}
                       className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/24"
-                      title="重新解读这条回复"
-                      aria-label="重新解读这条回复"
+                      title={regenerating ? '正在重新解读' : '重新解读这条回复'}
+                      aria-label={regenerating ? '正在重新解读' : '重新解读这条回复'}
                     >
-                      <RotateCcw className="w-3.5 h-3.5" />
-                      <span>重新解读</span>
+                      {regenerating
+                        ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        : <RotateCcw className="w-3.5 h-3.5" />}
+                      <span>{regenerating ? '重新解读中…' : '重新解读'}</span>
                     </button>
                   )}
                   <SimplifyButton

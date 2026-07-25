@@ -95,7 +95,9 @@ export function InputArea({
   const handleClear = () => {
     if (!onClear) return;
     if (confirmClear) {
-      if (!window.confirm('确认清空当前对话内容？此操作不可恢复。')) return;
+      if (!window.confirm(
+        '确认清空当前对话内容？\n\n这会清除当前页面的聊天内容和 AI 对话上下文，但不会删除您的命盘档案或历史报告。',
+      )) return;
     }
     onClear();
   };
@@ -232,6 +234,7 @@ export function InputArea({
                 title="清空对话"
               >
                 <Trash2 className="w-3 h-3" />
+                <span className="ml-1 whitespace-nowrap">清空对话</span>
               </button>
             )}
           </div>
