@@ -209,6 +209,10 @@ export default function DashboardPage() {
           </div>
         )}
 
+        <div className="mb-5">
+          <TodayReminderCard reminder={todayReminder} />
+        </div>
+
         <section className="grid gap-4">
           <ContinueLastCard latest={latest} loading={historyLoading} />
 
@@ -237,10 +241,6 @@ export default function DashboardPage() {
             ))}
           </div>
         </section>
-
-        <div className="mt-5">
-          <TodayReminderCard reminder={todayReminder} />
-        </div>
 
         <RecentRecords items={recentItems} loading={historyLoading} />
 

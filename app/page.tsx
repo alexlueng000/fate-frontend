@@ -4,6 +4,7 @@ import Link from "next/link";
 import Footer from "@/app/components/Footer";
 import FeatureShowcase from "@/app/components/landing/FeatureShowcase";
 import ScenarioCard from "@/app/components/landing/ScenarioCard";
+import { useUser } from "@/app/lib/auth";
 import { ArrowRight, ChevronRight } from "lucide-react";
 
 const HERO_FEATURES = [
@@ -34,6 +35,8 @@ const HERO_FEATURES = [
 ] as const;
 
 export default function LandingPage() {
+  const { user } = useUser();
+
   const scrollToFeatures = () => {
     document.getElementById("features-section")?.scrollIntoView({ behavior: "smooth" });
   };
@@ -146,13 +149,15 @@ export default function LandingPage() {
               </ol>
 
               <div className="border-t border-[var(--color-border)] px-5 py-4">
-                <Link href="/register" className="btn btn-primary w-full group">
-                  免费开始
+                <Link href={user ? "/dashboard" : "/register"} className="btn btn-primary w-full group">
+                  {user ? "进入命理首页" : "免费开始"}
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
                 </Link>
-                <p className="mt-3 text-center text-[0.6875rem] text-[var(--color-text-hint)]">
-                  注册即表示同意 <Link href="/terms" className="underline-offset-2 hover:underline">用户协议</Link> 与 <Link href="/privacy" className="underline-offset-2 hover:underline">隐私政策</Link>
-                </p>
+                {!user && (
+                  <p className="mt-3 text-center text-[0.6875rem] text-[var(--color-text-hint)]">
+                    注册即表示同意 <Link href="/terms" className="underline-offset-2 hover:underline">用户协议</Link> 与 <Link href="/privacy" className="underline-offset-2 hover:underline">隐私政策</Link>
+                  </p>
+                )}
               </div>
             </div>
           </aside>
@@ -368,8 +373,8 @@ export default function LandingPage() {
           </ul>
 
           <div className="flex flex-wrap items-center gap-3 md:justify-center">
-            <Link href="/register" className="btn btn-primary group">
-              免费开始
+            <Link href={user ? "/dashboard" : "/register"} className="btn btn-primary group">
+              {user ? "进入命理首页" : "免费开始"}
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
             </Link>
             <Link href="/pricing" className="btn btn-secondary group">
@@ -378,12 +383,14 @@ export default function LandingPage() {
             </Link>
           </div>
 
-          <p className="text-[0.75rem] text-[var(--color-text-hint)]">
-            注册即表示同意
-            <Link href="/terms" className="ml-1 underline-offset-2 hover:underline">用户协议</Link>
-            <span className="mx-1">与</span>
-            <Link href="/privacy" className="underline-offset-2 hover:underline">隐私政策</Link>
-          </p>
+          {!user && (
+            <p className="text-[0.75rem] text-[var(--color-text-hint)]">
+              注册即表示同意
+              <Link href="/terms" className="ml-1 underline-offset-2 hover:underline">用户协议</Link>
+              <span className="mx-1">与</span>
+              <Link href="/privacy" className="underline-offset-2 hover:underline">隐私政策</Link>
+            </p>
+          )}
           <p className="border-t border-[var(--color-border)] pt-5 text-[0.75rem] leading-6 text-[var(--color-text-muted)]">
             本平台内容由 AI 基于传统文化资料生成，仅供文化研究、娱乐与个人参考，不构成医疗、投资、法律或其他专业建议。
           </p>
