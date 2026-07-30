@@ -54,7 +54,7 @@ function LayoutBody({ children }: { children: ReactNode }) {
       <Header />
 
       {/* Header 下方区域：侧边栏 + 主内容 */}
-      <div className="flex flex-1 overflow-hidden mt-14">
+      <div className="flex flex-1 overflow-hidden mt-16">
         {/* 桌面端：左侧功能导航 */}
         {showFunctionNav && <SideNav />}
 

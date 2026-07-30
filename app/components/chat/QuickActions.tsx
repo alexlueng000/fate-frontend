@@ -7,10 +7,12 @@ export function QuickActions({
   disabled,
   buttons,
   onClick,
+  primary = false,
 }: {
   disabled: boolean;
   buttons: Array<{ label: string; prompt: string }>;
   onClick: (label: string, prompt: string) => void;
+  primary?: boolean;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -49,7 +51,11 @@ export function QuickActions({
               type="button"
               disabled={disabled}
               onClick={() => onClick(b.label, b.prompt)}
-              className="min-h-11 px-3 py-2 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-bg-elevated)] text-left text-sm leading-5 text-[var(--color-text-secondary)] hover:border-[var(--color-primary)]/35 hover:text-[var(--color-text-primary)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className={`min-h-11 px-3 py-2 rounded-[var(--radius-md)] border text-left text-sm font-medium leading-5 disabled:opacity-50 disabled:cursor-not-allowed transition-colors ${
+                primary
+                  ? 'border-[var(--color-primary)] bg-[var(--color-primary)] text-white hover:opacity-90'
+                  : 'border-[var(--color-border)] bg-[var(--color-bg-elevated)] text-[var(--color-text-secondary)] hover:border-[var(--color-primary)]/35 hover:text-[var(--color-text-primary)]'
+              }`}
               title={b.label}
             >
               {b.label}

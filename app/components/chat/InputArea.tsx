@@ -31,6 +31,8 @@ type InputAreaProps = {
   showRegenerate?: boolean;
   /** Render the clear button inside the input bar. Turn off when the parent surfaces it elsewhere (e.g. header menu). */
   showClear?: boolean;
+  /** Place the primary and clear actions next to each other. */
+  actionsInline?: boolean;
 };
 
 export function InputArea({
@@ -48,6 +50,7 @@ export function InputArea({
   quota,
   showRegenerate = true,
   showClear = true,
+  actionsInline = false,
 }: InputAreaProps) {
   const ref = useRef<HTMLTextAreaElement | null>(null);
 
@@ -193,7 +196,7 @@ export function InputArea({
         </div>
 
         {/* Buttons */}
-        <div className="flex flex-col gap-1.5">
+        <div className={`flex gap-1.5 ${actionsInline ? 'flex-row items-start' : 'flex-col'}`}>
           {!sending ? (
             <button
               onClick={onSend}
@@ -230,7 +233,7 @@ export function InputArea({
               <button
                 onClick={handleClear}
                 disabled={sending || disabled}
-                className="flex-1 h-8 px-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-elevated)] text-[var(--color-text-muted)] text-sm flex items-center justify-center hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-primary)] disabled:opacity-50 transition-all"
+                className={`${actionsInline ? 'h-[40px] px-3' : 'h-8 px-2'} flex-1 rounded-lg border border-[var(--color-primary)]/30 bg-[var(--color-primary)]/5 text-[var(--color-primary)] text-sm flex items-center justify-center hover:bg-[var(--color-primary)]/10 disabled:opacity-50 transition-all`}
                 title="清空对话"
               >
                 <Trash2 className="w-3 h-3" />

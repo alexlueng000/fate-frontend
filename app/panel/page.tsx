@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { MoreVertical, FileText, Edit3, Trash2, ChevronDown } from 'lucide-react';
+import { MoreVertical, FileText, Edit3, Trash2, ChevronDown, ArrowUp } from 'lucide-react';
 
 import Markdown from '@/app/components/Markdown';
 import { QuickActions } from '@/app/components/chat/QuickActions';
@@ -102,6 +102,7 @@ export default function PanelPage() {
   const pendingAutoPromptRef = useRef<string | null>(null);
   const panelViewTrackedRef = useRef(false);
   const firstMessageTrackedRef = useRef(false);
+  const [showBackToTop, setShowBackToTop] = useState(false);
   // Two refs: collapsed row + expanded row each render their own more-menu container.
   // Both stay mounted (only CSS-hidden), so the outside-click handler checks both.
   const menuRefCollapsed = useRef<HTMLDivElement>(null);
@@ -119,8 +120,7 @@ export default function PanelPage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [fourPillars, setFourPillars] = useState<FourPillarsData | null>(null);
   const [showMenu, setShowMenu] = useState(false);
-  // Mobile header collapse. Default collapsed on first visit to reclaim vertical space;
-  // sm+ viewports ignore this state (the summary row is hidden via CSS).
+  // 命盘区在桌面端和移动端都可收起，默认收起以给对话留出更多高度。
   const [headerExpanded, setHeaderExpanded] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     return window.localStorage.getItem('panel_header_expanded') === '1';
@@ -168,6 +168,17 @@ export default function PanelPage() {
   useEffect(() => {
     mountedRef.current = true;
     return () => { mountedRef.current = false; };
+  }, []);
+
+  useEffect(() => {
+    const scrollContainer = scrollRef.current;
+    if (!scrollContainer) return;
+    const updateBackToTopVisibility = () => {
+      setShowBackToTop(scrollContainer.scrollTop > 600);
+    };
+    updateBackToTopVisibility();
+    scrollContainer.addEventListener('scroll', updateBackToTopVisibility, { passive: true });
+    return () => scrollContainer.removeEventListener('scroll', updateBackToTopVisibility);
   }, []);
 
   useEffect(() => {
@@ -727,8 +738,8 @@ export default function PanelPage() {
       <header className="flex-shrink-0 border-b border-[var(--color-border)] bg-[var(--color-bg-elevated)]">
         <h1 className="sr-only">八字对话 · 当前命盘</h1>
 
-        {/* Mobile collapsed summary — single 44px row. Hidden on sm+ and when expanded on mobile. */}
-        <div className={`sm:hidden ${headerExpanded ? 'hidden' : 'flex'} items-center gap-2 px-4 h-11`}>
+        {/* Collapsed summary — single 44px row on all viewport sizes. */}
+        <div className={`${headerExpanded ? 'hidden' : 'flex'} items-center gap-2 px-4 h-11`}>
           <button
             type="button"
             onClick={() => setHeaderExpanded(true)}
@@ -784,10 +795,10 @@ export default function PanelPage() {
           </div>
         </div>
 
-        {/* Expanded details — always visible on sm+, toggleable on mobile */}
+        {/* Expanded details — toggleable on all viewport sizes. */}
         <div
           id="panel-header-details"
-          className={`${headerExpanded ? 'block' : 'hidden'} sm:block`}
+          className={headerExpanded ? 'block' : 'hidden'}
         >
           <div className="px-4 pt-3 pb-2 flex items-start gap-3 sm:gap-4">
             {/* Left: eyebrow + birth meta */}
@@ -812,13 +823,12 @@ export default function PanelPage() {
               )}
             </div>
 
-            {/* Right: mobile collapse trigger + more menu */}
+            {/* Right: collapse trigger + more menu */}
             <div className="flex items-center flex-shrink-0 -mt-0.5 gap-0.5">
-              {/* Collapse button — mobile only */}
               <button
                 type="button"
                 onClick={() => setHeaderExpanded(false)}
-                className="sm:hidden w-10 h-10 flex items-center justify-center rounded-[var(--radius-md)] hover:bg-[var(--color-bg-hover)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/24"
+                className="w-10 h-10 flex items-center justify-center rounded-[var(--radius-md)] hover:bg-[var(--color-bg-hover)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/24"
                 aria-label="收起命盘"
                 aria-expanded
                 aria-controls="panel-header-details"
@@ -864,18 +874,32 @@ export default function PanelPage() {
       <QuotaBar type="chat" refreshKey={quotaRefreshKey} />
 
       {/* Messages — flex-1, MessageList owns the scroll */}
-      <MessageList
-        scrollRef={scrollRef}
-        messages={msgs}
-        Markdown={Markdown}
-        onRated={handleRated}
-        onSimplify={handleSimplify}
-        onSimplifyToggle={handleSimplifyToggle}
-        onQuestionClick={handleQuestionClick}
-        onRegenerate={regenerate}
-        regenerating={regenerating}
-        loading={loading}
-      />
+      <div className="relative flex min-h-0 flex-1">
+        <MessageList
+          scrollRef={scrollRef}
+          messages={msgs}
+          Markdown={Markdown}
+          onRated={handleRated}
+          onSimplify={handleSimplify}
+          onSimplifyToggle={handleSimplifyToggle}
+          onQuestionClick={handleQuestionClick}
+          onRegenerate={regenerate}
+          regenerating={regenerating}
+          loading={loading}
+        />
+        {showBackToTop && (
+          <button
+            type="button"
+            onClick={() => scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
+            aria-label="回到对话顶部"
+            title="回到顶部"
+            className="absolute bottom-4 right-4 z-40 inline-flex min-h-12 min-w-12 items-center justify-center gap-2 rounded-full border border-[var(--color-primary)]/25 bg-[var(--color-bg-elevated)]/95 px-3 text-sm font-medium text-[var(--color-primary)] shadow-lg backdrop-blur transition hover:-translate-y-0.5 hover:bg-[var(--color-bg-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/40 sm:px-4"
+          >
+            <ArrowUp className="h-5 w-5" aria-hidden="true" />
+            <span className="hidden sm:inline">回到顶部</span>
+          </button>
+        )}
+      </div>
 
       {/* Inline status below messages (booting / error) */}
       {(booting || err) && (
@@ -903,6 +927,7 @@ export default function PanelPage() {
           disabled={!canUseQuick}
           buttons={quickButtons}
           onClick={sendQuick}
+          primary
         />
         <InputArea
           value={input}
@@ -918,6 +943,7 @@ export default function PanelPage() {
           confirmClear={true}
           showRegenerate={false}
           showClear={true}
+          actionsInline
           placeholder="问我一个你现在最关心的问题…"
         />
         <p className="text-center text-[12px] leading-5 text-[var(--color-text-muted)]">
