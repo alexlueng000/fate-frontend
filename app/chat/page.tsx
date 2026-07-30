@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { ArrowUp } from 'lucide-react';
 import { useRouteGuard } from '@/app/lib/useRouteGuard';
 import { getAuthToken } from '@/app/lib/auth';
 import { trackEvent } from '@/app/lib/analytics/track';
@@ -47,6 +48,7 @@ export default function ChatPage() {
   const [quotaDialogOpen, setQuotaDialogOpen] = useState(false);
   const [quotaDialogMessage, setQuotaDialogMessage] = useState('');
   const [viewingHistory, setViewingHistory] = useState(false);
+  const [showBackToTop, setShowBackToTop] = useState(false);
 
   // 安全读取 conversation_id
   function readConversationId(meta: unknown): string {
@@ -58,6 +60,15 @@ export default function ChatPage() {
   useEffect(() => {
     mountedRef.current = true;
     return () => { mountedRef.current = false; };
+  }, []);
+
+  useEffect(() => {
+    const updateBackToTopVisibility = () => {
+      setShowBackToTop(window.scrollY > 600);
+    };
+    updateBackToTopVisibility();
+    window.addEventListener('scroll', updateBackToTopVisibility, { passive: true });
+    return () => window.removeEventListener('scroll', updateBackToTopVisibility);
   }, []);
 
   useEffect(() => {
@@ -205,14 +216,16 @@ export default function ChatPage() {
         await trySSE(
           api('/chat/start'),
           {}, // 不传 paipan，后端从档案读取
-          (delta) => {
+          (text) => {
             if (!alive) return;
             setMsgs((prev) => {
               const next = [...prev];
               if (assistantIndex >= 0 && assistantIndex < next.length) {
                 next[assistantIndex] = {
                   ...next[assistantIndex],
-                  content: next[assistantIndex].content + delta,
+                  // trySSE 回调的是截至当前的完整正文，不是单个 token。
+                  // 继续相加会把每次完整快照重复拼进同一条回复。
+                  content: text,
                 };
               }
               return next;
@@ -287,11 +300,11 @@ export default function ChatPage() {
       return next;
     });
 
-    const append = (delta: string) => {
+    const replaceStreamingText = (text: string) => {
       setMsgs((prev) => {
         if (assistantIndex < 0 || assistantIndex >= prev.length) return prev;
         const next = [...prev];
-        next[assistantIndex] = { ...next[assistantIndex], content: next[assistantIndex].content + delta };
+        next[assistantIndex] = { ...next[assistantIndex], content: text };
         return next;
       });
     };
@@ -300,7 +313,7 @@ export default function ChatPage() {
       await trySSE(
         api('/chat'),
         { conversation_id: conversationId, message: content, display_message: displayMessage },
-        append,
+        replaceStreamingText,
         (meta) => {
           if (!mountedRef.current) return;
           const cid = readConversationId(meta);
@@ -649,6 +662,19 @@ export default function ChatPage() {
         title="八字次数已用完"
         message={quotaDialogMessage}
       />
+
+      {showBackToTop && (
+        <button
+          type="button"
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          aria-label="回到对话顶部"
+          title="回到顶部"
+          className="fixed bottom-6 right-4 z-40 inline-flex min-h-12 min-w-12 items-center justify-center gap-2 rounded-full border border-red-200 bg-white/95 px-3 text-sm font-medium text-red-800 shadow-lg backdrop-blur transition hover:-translate-y-0.5 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 sm:bottom-8 sm:right-8 sm:px-4"
+        >
+          <ArrowUp className="h-5 w-5" aria-hidden="true" />
+          <span className="hidden sm:inline">回到顶部</span>
+        </button>
+      )}
     </main>
   );
 }
