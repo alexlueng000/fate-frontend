@@ -20,6 +20,7 @@ export function MessageList({
   onRegenerate,
   regenerating,
   loading,
+  emptyText = '正在准备中…',
   containerClassName,
 }: {
   scrollRef?: React.MutableRefObject<HTMLDivElement | null> | React.RefObject<HTMLDivElement | null>;
@@ -33,6 +34,7 @@ export function MessageList({
   onRegenerate?: () => void;
   regenerating?: boolean;
   loading?: boolean;
+  emptyText?: string;
   containerClassName?: string;
 }) {
   const baseClass = containerClassName ?? 'rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)]';
@@ -58,7 +60,7 @@ export function MessageList({
               <Bot className="w-8 h-8 text-white" />
             </div>
             <p className="text-[var(--color-text-muted)]">
-              正在准备中…
+              {emptyText}
             </p>
           </div>
         </div>

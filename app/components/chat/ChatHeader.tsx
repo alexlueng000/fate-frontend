@@ -5,10 +5,12 @@ import type { ReactNode } from 'react';
 export function ChatHeader({
   conversationId,
   onBack,
+  backLabel = '返回首页',
   rightExtra,
 }: {
   conversationId: string | null;
   onBack: () => void;
+  backLabel?: string;
   /** 右侧额外槽位（例如剩余次数 chip）。 */
   rightExtra?: ReactNode;
 }) {
@@ -29,7 +31,7 @@ export function ChatHeader({
           onClick={onBack}
           className="shrink-0 rounded-full border border-red-200 bg-white/90 px-3 py-1 text-red-800 hover:bg-red-50 transition"
         >
-          返回首页
+          {backLabel}
         </button>
       </div>
     </div>

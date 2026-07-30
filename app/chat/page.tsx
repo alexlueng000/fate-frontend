@@ -46,6 +46,7 @@ export default function ChatPage() {
   const firstMessageTrackedRef = useRef(false);
   const [quotaDialogOpen, setQuotaDialogOpen] = useState(false);
   const [quotaDialogMessage, setQuotaDialogMessage] = useState('');
+  const [viewingHistory, setViewingHistory] = useState(false);
 
   // 安全读取 conversation_id
   function readConversationId(meta: unknown): string {
@@ -106,6 +107,7 @@ export default function ChatPage() {
       // 优先：从 URL ?conv_id=xxx 恢复历史会话
       const urlConvId = new URLSearchParams(window.location.search).get('conv_id');
       if (urlConvId) {
+        setViewingHistory(true);
         try {
           const detail = await historyApi.detail(Number(urlConvId));
           if (!alive) return;
@@ -135,11 +137,21 @@ export default function ChatPage() {
             return m.role === 'user' || m.role === 'assistant';
           });
           const restoredMsgs: Msg[] = filtered.map(restoreStoredMessage);
+          // 老版本可能生成了会话记录但尚未把消息写入数据库。
+          // 此时优先保留浏览器中的同会话缓存，避免再被空数组覆盖。
+          const cachedMsgs = loadConversation(cid);
+          const displayMsgs = restoredMsgs.length > 0
+            ? restoredMsgs
+            : (cachedMsgs?.length ? cachedMsgs.map(restoreStoredMessage) : []);
 
           setConversationId(cid);
-          setMsgs(restoredMsgs);
+          setMsgs(displayMsgs);
           sessionStorage.setItem('conversation_id', cid);
-          saveConversation(cid, restoredMsgs);
+          if (displayMsgs.length > 0) {
+            saveConversation(cid, displayMsgs);
+          } else {
+            setErr('这条记录没有可显示的解读内容，可能是生成过程中页面关闭或网络中断。');
+          }
           setBooting(false);
           return;
         } catch (e) {
@@ -583,7 +595,8 @@ export default function ChatPage() {
       <div className="mx-auto w-full max-w-5xl space-y-6">
         <ChatHeader
           conversationId={conversationId}
-          onBack={() => router.push('/')}
+          onBack={() => router.push(viewingHistory ? '/history' : '/')}
+          backLabel={viewingHistory ? '返回解读记录' : '返回首页'}
           rightExtra={<QuotaChip type="chat" refreshKey={quotaRefreshKey} />}
         />
 
@@ -597,6 +610,7 @@ export default function ChatPage() {
           onSimplifyToggle={handleSimplifyToggle}
           onQuestionClick={handleQuestionClick}
           loading={sending}
+          emptyText={booting ? '正在读取解读记录…' : '这条记录暂无解读内容'}
         />
 
         {(booting || sending) && (
