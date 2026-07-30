@@ -37,7 +37,7 @@ export default function ConfirmDialog({
     <dialog
       ref={dialogRef}
       onCancel={(event) => { event.preventDefault(); if (!busy) onClose(); }}
-      className="w-[calc(100%_-_2rem)] max-w-md border-0 bg-transparent p-0 backdrop:bg-[rgba(42,37,34,0.55)] backdrop:backdrop-blur-sm"
+      className="fixed inset-0 m-auto h-fit max-h-[calc(100dvh_-_2rem)] w-[calc(100%_-_2rem)] max-w-md overflow-y-auto border-0 bg-transparent p-0 backdrop:bg-[rgba(42,37,34,0.55)] backdrop:backdrop-blur-sm"
     >
       <div className="relative border border-[var(--color-border)] bg-[var(--color-bg-card)] p-6 shadow-[var(--shadow-lg)] sm:p-7">
         <button

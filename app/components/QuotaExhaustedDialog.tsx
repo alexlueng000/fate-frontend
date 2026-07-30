@@ -87,11 +87,17 @@ export default function QuotaExhaustedDialog({
 
       <style jsx>{`
         .quota-exhausted-dialog {
+          position: fixed;
+          inset: 0;
+          margin: auto;
           border: none;
           border-radius: var(--radius-lg);
           padding: 0;
           max-width: 420px;
           width: calc(100vw - 2rem);
+          height: fit-content;
+          max-height: calc(100dvh - 2rem);
+          overflow-y: auto;
           background: var(--color-bg-card);
           box-shadow: var(--shadow-lg);
           animation: scaleIn 300ms var(--ease-out) both;
