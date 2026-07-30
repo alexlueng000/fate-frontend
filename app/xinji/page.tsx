@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { BookOpen, MessageCircle, User, Sparkles, Target, Archive } from 'lucide-react';
 import { emotionApi, WeeklyChart, EmotionRecord } from '@/app/lib/emotion/api';
 import { useUser } from '@/app/lib/auth';
+import { useRouteGuard } from '@/app/lib/useRouteGuard';
 import DialogFlow from './components/DialogFlow';
 import CharacterProfileView from './components/CharacterProfileView';
 import JieqiHeader from './components/JieqiHeader';
@@ -13,8 +14,8 @@ import { useRouter } from 'next/navigation';
 export default function XinjiPage() {
   const { user } = useUser();
   const router = useRouter();
+  const authLoading = useRouteGuard(true, false);
   const [weeklyData, setWeeklyData] = useState<WeeklyChart | null>(null);
-  const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -33,8 +34,6 @@ export default function XinjiPage() {
       setWeeklyData(data);
     } catch (error) {
       console.error('Failed to load weekly chart:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -69,6 +68,16 @@ export default function XinjiPage() {
     day: 'numeric',
   });
   const weekday = today.toLocaleDateString('zh-CN', { weekday: 'long' });
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-[var(--color-bg)] flex items-center justify-center">
+        <div className="text-sm text-[var(--color-text-secondary)]" role="status" aria-live="polite">
+          加载中...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[var(--color-bg)]">

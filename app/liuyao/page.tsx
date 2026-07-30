@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/app/lib/auth';
+import { useRouteGuard } from '@/app/lib/useRouteGuard';
 import { liuyaoApi, PaipanRequest, HexagramDetail } from '@/app/lib/liuyao/api';
 import { historyApi } from '@/app/lib/history/api';
 import { getHexagramByName } from '@/app/lib/hexagram';
@@ -65,6 +66,7 @@ function DetailRow({ label, value, sub }: { label: string; value: string; sub?: 
 
 export default function LiuyaoPage() {
   const router = useRouter();
+  const authLoading = useRouteGuard(true, false);
   const { user } = useUser();
 
   const [restoringFromHistory, setRestoringFromHistory] = useState(false);
@@ -527,6 +529,16 @@ export default function LiuyaoPage() {
         ? 'border-[color:var(--color-primary)] bg-[color:var(--color-primary)] text-[color:var(--color-text-inverse)]'
         : 'border-[color:var(--color-border)] bg-[color:var(--color-bg-elevated)] text-[color:var(--color-text-secondary)] hover:border-[color:var(--color-border-strong)] hover:text-[color:var(--color-text-primary)]'
     } ${extra}`;
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-[var(--color-bg)] flex items-center justify-center">
+        <div className="text-sm text-[var(--color-text-secondary)]" role="status" aria-live="polite">
+          加载中...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[color:var(--color-bg)]">
