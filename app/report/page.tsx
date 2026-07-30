@@ -343,112 +343,6 @@ export default function ReportPage() {
           </div>
         </section>
 
-        {/* 四柱命盘 — flat grid, no nested cards, tokenized colors */}
-        {paipan && (
-          <section className="mb-12" aria-labelledby="four-pillars-heading">
-            <h2
-              id="four-pillars-heading"
-              className="font-serif text-base font-semibold text-[var(--color-text-primary)] mb-5 tracking-wide"
-            >
-              四柱命盘
-            </h2>
-            <div className="grid grid-cols-4 gap-1 sm:gap-3">
-              {pillars.map(({ label, pillar, sublabel, highlight }) => (
-                <div
-                  key={label}
-                  className="relative flex flex-col items-center text-center pt-3 pb-2"
-                >
-                  {highlight && (
-                    <div
-                      aria-hidden="true"
-                      className="absolute top-0 inset-x-2 h-px bg-[var(--color-primary)]"
-                    />
-                  )}
-                  <div
-                    className={`text-xs font-medium mb-4 ${
-                      highlight ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-muted)]'
-                    }`}
-                  >
-                    {label}
-                  </div>
-                  <div className="flex flex-col items-center gap-3">
-                    <PillarChar char={pillar?.[0] || ''} />
-                    <PillarChar char={pillar?.[1] || ''} />
-                  </div>
-                  <div className="text-[11px] text-[var(--color-text-hint)] mt-3">
-                    {sublabel}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* 详细排盘 */}
-        {paipan && (
-          <section className="mb-12" aria-label="详细排盘">
-            <DetailedPaipanTable paipan={paipan} />
-          </section>
-        )}
-
-        {/* 十年大运 — compact rows, was oversized card grid */}
-        {paipan && paipan.dayun && paipan.dayun.length > 0 && (
-          <section className="mb-14" aria-labelledby="dayun-heading">
-            <div className="flex items-baseline justify-between mb-5">
-              <h2
-                id="dayun-heading"
-                className="font-serif text-base font-semibold text-[var(--color-text-primary)] tracking-wide"
-              >
-                十年大运
-              </h2>
-              <span className="text-xs text-[var(--color-text-muted)]">
-                共 {paipan.dayun.length} 步
-              </span>
-            </div>
-            <ol className="border-t border-b border-[var(--color-border-subtle)] divide-y divide-[var(--color-border-subtle)]">
-              {paipan.dayun.map((d, i) => {
-                const pillar = d.pillar?.join('') || '';
-                const gan = pillar[0] || '';
-                const zhi = pillar[1] || '';
-                const ganEl: Wuxing | null = getWuxing(gan);
-                const zhiEl: Wuxing | null = getWuxing(zhi);
-                return (
-                  <li
-                    key={i}
-                    className="flex items-baseline gap-3 py-3 px-1"
-                  >
-                    <div className="w-[88px] shrink-0">
-                      <div className="text-sm font-medium text-[var(--color-text-primary)] tabular-nums">
-                        {d.start_year}
-                      </div>
-                      <div className="text-[11px] text-[var(--color-text-muted)] tabular-nums leading-tight mt-0.5">
-                        {d.age} 岁起
-                      </div>
-                    </div>
-                    <div className="flex-1 flex items-baseline gap-1 font-serif">
-                      <span
-                        className="text-2xl"
-                        style={{ color: wuxingColor(ganEl) }}
-                      >
-                        {gan || '—'}
-                      </span>
-                      <span
-                        className="text-2xl"
-                        style={{ color: wuxingColor(zhiEl) }}
-                      >
-                        {zhi || '—'}
-                      </span>
-                    </div>
-                    <div className="text-[11px] text-[var(--color-text-muted)] shrink-0 tabular-nums">
-                      {ganEl && zhiEl ? `${ganEl}·${zhiEl}` : ''}
-                    </div>
-                  </li>
-                );
-              })}
-            </ol>
-          </section>
-        )}
-
         {/* 命理解读 */}
         <section className="mb-12" aria-labelledby="reading-heading">
           <h2
@@ -494,18 +388,159 @@ export default function ReportPage() {
         </section>
 
         {/* CTA */}
-        <div className="text-center pb-10">
+        <div className="mb-12 border-t border-b border-[var(--color-border)] py-7 text-center">
           <button
             onClick={handleStartChat}
             disabled={streaming}
             className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {streaming ? '分析中…' : '开始对话'}
+            {streaming ? '分析中…' : '围绕这份报告继续追问'}
           </button>
-          <p className="text-xs text-[var(--color-text-muted)] mt-3 tracking-wide">
-            与 AI 大师深入探讨您的命理疑问
+          <p className="mx-auto mt-3 max-w-md text-xs leading-5 text-[var(--color-text-muted)]">
+            你可以补充现实处境，让 AI 把报告里的判断转成更具体的行动建议。
           </p>
         </div>
+
+        {/* 专业依据 */}
+        {paipan && (
+          <section className="pb-10" aria-labelledby="professional-info-heading">
+            <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
+              Basis
+            </p>
+            <h2
+              id="professional-info-heading"
+              className="mb-5 font-serif text-base font-semibold tracking-wide text-[var(--color-text-primary)]"
+            >
+              专业命盘依据
+            </h2>
+
+            <div className="space-y-3">
+              <details className="group border border-[var(--color-border)] bg-[var(--color-bg-card)]">
+                <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 px-4 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/24">
+                  <div>
+                    <span className="font-serif text-[15px] font-medium text-[var(--color-text-primary)]">
+                      查看四柱与详细排盘
+                    </span>
+                    <p className="mt-1 text-xs leading-5 text-[var(--color-text-muted)]">
+                      展开后查看 AI 解读所参考的基础命盘信息。
+                    </p>
+                  </div>
+                  <span className="shrink-0 font-mono text-xs text-[var(--color-primary)] group-open:hidden">
+                    展开
+                  </span>
+                  <span className="hidden shrink-0 font-mono text-xs text-[var(--color-text-muted)] group-open:inline">
+                    收起
+                  </span>
+                </summary>
+
+                <div className="border-t border-[var(--color-border)] px-4 py-6 sm:px-5">
+                  <section className="mb-8" aria-labelledby="four-pillars-heading">
+                    <h3
+                      id="four-pillars-heading"
+                      className="mb-5 font-serif text-sm font-semibold tracking-wide text-[var(--color-text-primary)]"
+                    >
+                      四柱命盘
+                    </h3>
+                    <div className="grid grid-cols-4 gap-1 sm:gap-3">
+                      {pillars.map(({ label, pillar, sublabel, highlight }) => (
+                        <div
+                          key={label}
+                          className="relative flex flex-col items-center text-center pt-3 pb-2"
+                        >
+                          {highlight && (
+                            <div
+                              aria-hidden="true"
+                              className="absolute top-0 inset-x-2 h-px bg-[var(--color-primary)]"
+                            />
+                          )}
+                          <div
+                            className={`text-xs font-medium mb-4 ${
+                              highlight ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-muted)]'
+                            }`}
+                          >
+                            {label}
+                          </div>
+                          <div className="flex flex-col items-center gap-3">
+                            <PillarChar char={pillar?.[0] || ''} />
+                            <PillarChar char={pillar?.[1] || ''} />
+                          </div>
+                          <div className="text-[11px] text-[var(--color-text-hint)] mt-3">
+                            {sublabel}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+
+                  <DetailedPaipanTable paipan={paipan} />
+                </div>
+              </details>
+
+              {paipan.dayun && paipan.dayun.length > 0 && (
+                <details className="group border border-[var(--color-border)] bg-[var(--color-bg-card)]">
+                  <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 px-4 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/24">
+                    <div>
+                      <span className="font-serif text-[15px] font-medium text-[var(--color-text-primary)]">
+                        查看长期节律参考
+                      </span>
+                      <p className="mt-1 text-xs leading-5 text-[var(--color-text-muted)]">
+                        共 {paipan.dayun.length} 步大运，适合需要进一步核对时查看。
+                      </p>
+                    </div>
+                    <span className="shrink-0 font-mono text-xs text-[var(--color-primary)] group-open:hidden">
+                      展开
+                    </span>
+                    <span className="hidden shrink-0 font-mono text-xs text-[var(--color-text-muted)] group-open:inline">
+                      收起
+                    </span>
+                  </summary>
+
+                  <ol className="border-t border-[var(--color-border)] divide-y divide-[var(--color-border-subtle)] px-4 py-3 sm:px-5">
+                    {paipan.dayun.map((d, i) => {
+                      const pillar = d.pillar?.join('') || '';
+                      const gan = pillar[0] || '';
+                      const zhi = pillar[1] || '';
+                      const ganEl: Wuxing | null = getWuxing(gan);
+                      const zhiEl: Wuxing | null = getWuxing(zhi);
+                      return (
+                        <li
+                          key={i}
+                          className="flex items-baseline gap-3 py-3 px-1"
+                        >
+                          <div className="w-[88px] shrink-0">
+                            <div className="text-sm font-medium text-[var(--color-text-primary)] tabular-nums">
+                              {d.start_year}
+                            </div>
+                            <div className="text-[11px] text-[var(--color-text-muted)] tabular-nums leading-tight mt-0.5">
+                              {d.age} 岁起
+                            </div>
+                          </div>
+                          <div className="flex-1 flex items-baseline gap-1 font-serif">
+                            <span
+                              className="text-2xl"
+                              style={{ color: wuxingColor(ganEl) }}
+                            >
+                              {gan || '—'}
+                            </span>
+                            <span
+                              className="text-2xl"
+                              style={{ color: wuxingColor(zhiEl) }}
+                            >
+                              {zhi || '—'}
+                            </span>
+                          </div>
+                          <div className="text-[11px] text-[var(--color-text-muted)] shrink-0 tabular-nums">
+                            {ganEl && zhiEl ? `${ganEl}·${zhiEl}` : ''}
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ol>
+                </details>
+              )}
+            </div>
+          </section>
+        )}
       </div>
     </div>
   );
