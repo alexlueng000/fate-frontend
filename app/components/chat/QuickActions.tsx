@@ -15,7 +15,7 @@ export function QuickActions({
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)]">
+    <div className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-bg-card)]">
       {/* 标题栏 - 移动端可点击折叠 */}
       <button
         type="button"
@@ -24,7 +24,7 @@ export function QuickActions({
       >
         <div className="flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-[var(--color-gold)] flex-shrink-0" />
-          <span className="text-sm font-medium text-[var(--color-text-secondary)]">快捷分析</span>
+          <span className="text-sm font-medium text-[var(--color-text-secondary)]">下一步可以这样问</span>
         </div>
         {/* 折叠图标 - 仅移动端显示 */}
         <div className="sm:hidden">
@@ -49,8 +49,8 @@ export function QuickActions({
               type="button"
               disabled={disabled}
               onClick={() => onClick(b.label, b.prompt)}
-              className="px-4 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-elevated)] text-sm text-[var(--color-text-secondary)] hover:border-[var(--color-gold-dark)] hover:text-[var(--color-gold)] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-              title={`快速生成：${b.label}`}
+              className="min-h-11 px-3 py-2 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-bg-elevated)] text-left text-sm leading-5 text-[var(--color-text-secondary)] hover:border-[var(--color-primary)]/35 hover:text-[var(--color-text-primary)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              title={b.label}
             >
               {b.label}
             </button>

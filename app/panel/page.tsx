@@ -20,6 +20,7 @@ import {
   saveConversation, loadConversation, getActiveConversationId,
   repairCorruptedConversations,
 } from '@/app/lib/chat/storage';
+import { trackEvent } from '@/app/lib/analytics/track';
 import {
   loadCareerTaskContext,
   takePendingCareerBaziPrompt,
@@ -99,6 +100,8 @@ export default function PanelPage() {
   const mountedRef = useRef(true);
   const autoTaskStartedRef = useRef(false);
   const pendingAutoPromptRef = useRef<string | null>(null);
+  const panelViewTrackedRef = useRef(false);
+  const firstMessageTrackedRef = useRef(false);
   // Two refs: collapsed row + expanded row each render their own more-menu container.
   // Both stay mounted (only CSS-hidden), so the outside-click handler checks both.
   const menuRefCollapsed = useRef<HTMLDivElement>(null);
@@ -167,6 +170,14 @@ export default function PanelPage() {
     return () => { mountedRef.current = false; };
   }, []);
 
+  useEffect(() => {
+    if (panelViewTrackedRef.current) return;
+    panelViewTrackedRef.current = true;
+    trackEvent('chat_view', {
+      payload: { surface: 'panel' },
+    });
+  }, []);
+
   // Close menu on outside click — check both menu containers since both stay mounted.
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -201,6 +212,9 @@ export default function PanelPage() {
 
   const handleQuotaExhausted = (e: QuotaExhaustedError) => {
     setErr(null);
+    trackEvent('quota_paywall_shown', {
+      payload: { surface: 'panel', type: 'chat' },
+    });
     // 移除正在 streaming 的助手消息
     setMsgs(prev => {
       const next = [...prev];
@@ -506,6 +520,12 @@ export default function PanelPage() {
     setMsgs(m => [...m, { role: 'user', content }]);
     setInput('');
     setLoading(true);
+    if (!firstMessageTrackedRef.current) {
+      firstMessageTrackedRef.current = true;
+      trackEvent('chat_first_message_sent', {
+        payload: { surface: 'panel', entry: 'manual' },
+      });
+    }
     try { await sendStream(content); void refreshQuota(); }
     catch (e: unknown) {
       if (e instanceof QuotaExhaustedError) handleQuotaExhausted(e);
@@ -608,8 +628,17 @@ export default function PanelPage() {
   const sendQuick = async (label: string, fullPrompt: string) => {
     if (!conversationId || streamingLockRef.current) return;
     setErr(null);
-    setMsgs(m => [...m, { role: 'user', content: `${label}分析` }]);
+    setMsgs(m => [...m, { role: 'user', content: label }]);
     setLoading(true);
+    if (!firstMessageTrackedRef.current) {
+      firstMessageTrackedRef.current = true;
+      trackEvent('chat_first_message_sent', {
+        payload: { surface: 'panel', entry: 'quick_action', label },
+      });
+    }
+    trackEvent('chat_suggested_question_click', {
+      payload: { surface: 'panel', entry: 'quick_action', label },
+    });
     try { await sendStream(fullPrompt); void refreshQuota(); }
     catch (e: unknown) {
       if (e instanceof QuotaExhaustedError) handleQuotaExhausted(e);
@@ -623,6 +652,15 @@ export default function PanelPage() {
     setErr(null);
     setMsgs(m => [...m, { role: 'user', content: question }]);
     setLoading(true);
+    if (!firstMessageTrackedRef.current) {
+      firstMessageTrackedRef.current = true;
+      trackEvent('chat_first_message_sent', {
+        payload: { surface: 'panel', entry: 'suggested_question' },
+      });
+    }
+    trackEvent('chat_suggested_question_click', {
+      payload: { surface: 'panel', entry: 'suggested_question' },
+    });
     try { await sendStream(question); void refreshQuota(); }
     catch (e: unknown) {
       if (e instanceof QuotaExhaustedError) handleQuotaExhausted(e);

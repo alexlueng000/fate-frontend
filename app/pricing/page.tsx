@@ -13,6 +13,7 @@ import {
   type WeChatNativeCheckoutResult,
 } from '@/app/lib/api';
 import { getAuthToken } from '@/app/lib/auth';
+import { trackEvent } from '@/app/lib/analytics/track';
 
 function formatPrice(cents: number) {
   return `¥${(cents / 100).toFixed(cents % 100 === 0 ? 0 : 2)}`;
@@ -40,6 +41,12 @@ export default function PricingPage() {
     () => products.find((product) => product.id === checkout?.order.product_id) ?? null,
     [checkout, products],
   );
+
+  useEffect(() => {
+    trackEvent('pricing_view', {
+      payload: { entry: 'pricing' },
+    });
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -91,6 +98,9 @@ export default function PricingPage() {
         if (order.status === 'PAID') {
           window.clearInterval(timer);
           setPaymentComplete(true);
+          trackEvent('payment_success', {
+            payload: { order_id: order.id, product_id: order.product_id, amount_cents: order.amount_cents },
+          });
         }
       } catch (reason: unknown) {
         setError((reason as Error).message || '订单状态查询失败');
@@ -124,6 +134,9 @@ export default function PricingPage() {
   );
 
   async function buy(product: ProductDetail) {
+    trackEvent('order_create_click', {
+      payload: { product_id: product.id, product_code: product.code, amount_cents: product.price_cents },
+    });
     if (!getAuthToken()) {
       router.push(`/login?redirect=${encodeURIComponent('/pricing')}`);
       return;

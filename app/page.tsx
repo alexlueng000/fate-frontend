@@ -1,10 +1,12 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import Footer from "@/app/components/Footer";
 import FeatureShowcase from "@/app/components/landing/FeatureShowcase";
 import ScenarioCard from "@/app/components/landing/ScenarioCard";
 import { useUser } from "@/app/lib/auth";
+import { trackEvent } from "@/app/lib/analytics/track";
 import { ArrowRight, ChevronRight } from "lucide-react";
 
 const HERO_FEATURES = [
@@ -37,9 +39,9 @@ const HERO_FEATURES = [
 export default function LandingPage() {
   const { user } = useUser();
 
-  const scrollToFeatures = () => {
-    document.getElementById("features-section")?.scrollIntoView({ behavior: "smooth" });
-  };
+  useEffect(() => {
+    trackEvent("home_view", { payload: { entry: "landing" } });
+  }, []);
 
   return (
     <main className="min-h-screen" style={{ background: "var(--color-bg)" }}>
@@ -70,18 +72,24 @@ export default function LandingPage() {
 
             {/* CTA */}
             <div className="flex flex-wrap items-center gap-3 pt-2">
-              <Link href="/demo" className="btn btn-primary group">
-                查看示例报告
+              <Link
+                href={user ? "/dashboard" : "/profile/create"}
+                className="btn btn-primary group"
+                onClick={() => trackEvent("home_primary_cta_click", {
+                  payload: { entry: "hero", target: user ? "dashboard" : "profile_create" },
+                })}
+              >
+                {user ? "进入命理首页" : "免费生成个人分析"}
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
               </Link>
-              <button
-                type="button"
-                onClick={scrollToFeatures}
+              <Link
+                href="/demo"
                 className="btn btn-ghost group"
+                onClick={() => trackEvent("home_secondary_cta_click", { payload: { entry: "hero", target: "demo" } })}
               >
-                了解三大功能
+                查看示例报告
                 <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-              </button>
+              </Link>
             </div>
 
             {/* 信任注脚 · 排版式而非图标堆 */}
@@ -91,7 +99,7 @@ export default function LandingPage() {
             </p>
           </div>
 
-          {/* 右：三大功能列 · 静态、克制 */}
+          {/* 右：首次路径 · 静态、克制 */}
           <aside className="animate-fade-in delay-200">
             <div className="card overflow-hidden">
               <header className="flex items-baseline justify-between border-b border-[var(--color-border)] px-5 py-4">
@@ -99,7 +107,7 @@ export default function LandingPage() {
                   className="text-[1rem] font-medium"
                   style={{ fontFamily: "var(--font-display)", color: "var(--color-text-primary)" }}
                 >
-                  三个工具，一站探索
+                  从一份个人分析开始
                 </h2>
                 <span className="text-[0.6875rem] uppercase tracking-[0.1em] text-[var(--color-text-hint)]">
                   Index
@@ -107,6 +115,37 @@ export default function LandingPage() {
               </header>
 
               <ol className="divide-y divide-[var(--color-border)]">
+                <li>
+                  <Link
+                    href={user ? "/dashboard" : "/profile/create"}
+                    onClick={() => trackEvent("home_primary_cta_click", {
+                      payload: { entry: "hero_path", target: user ? "dashboard" : "profile_create" },
+                    })}
+                    className="group grid grid-cols-[auto_1fr_auto] items-baseline gap-4 px-5 py-5 transition-colors hover:bg-[var(--color-bg-hover)] focus-visible:bg-[var(--color-bg-hover)] focus-visible:outline-none"
+                  >
+                    <span
+                      className="font-mono text-[0.6875rem] text-[var(--color-primary)] tabular-nums"
+                      aria-hidden="true"
+                    >
+                      01
+                    </span>
+                    <div className="min-w-0 space-y-1">
+                      <span
+                        className="text-[1.125rem] font-medium text-[var(--color-primary)]"
+                        style={{ fontFamily: "var(--font-display)" }}
+                      >
+                        {user ? "进入命理首页" : "免费生成个人分析"}
+                      </span>
+                      <p className="text-[0.8125rem] leading-relaxed text-[var(--color-text-muted)]">
+                        先填写出生信息，看见一份关于自己的核心特质与当前主题。
+                      </p>
+                    </div>
+                    <ArrowRight
+                      className="h-4 w-4 self-center text-[var(--color-primary)] transition-transform group-hover:translate-x-0.5"
+                      aria-hidden="true"
+                    />
+                  </Link>
+                </li>
                 {HERO_FEATURES.map((f, idx) => (
                   <li key={f.id}>
                     <Link
@@ -121,7 +160,7 @@ export default function LandingPage() {
                         className="font-mono text-[0.6875rem] text-[var(--color-text-hint)] tabular-nums"
                         aria-hidden="true"
                       >
-                        {String(idx + 1).padStart(2, "0")}
+                        {String(idx + 2).padStart(2, "0")}
                       </span>
                       <div className="min-w-0 space-y-1">
                         <div className="flex items-baseline gap-3">
@@ -149,8 +188,14 @@ export default function LandingPage() {
               </ol>
 
               <div className="border-t border-[var(--color-border)] px-5 py-4">
-                <Link href={user ? "/dashboard" : "/register"} className="btn btn-primary w-full group">
-                  {user ? "进入命理首页" : "免费开始"}
+                <Link
+                  href={user ? "/dashboard" : "/profile/create"}
+                  className="btn btn-primary w-full group"
+                  onClick={() => trackEvent("home_primary_cta_click", {
+                    payload: { entry: "hero_card_bottom", target: user ? "dashboard" : "profile_create" },
+                  })}
+                >
+                  {user ? "进入命理首页" : "生成个人分析"}
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
                 </Link>
                 {!user && (
@@ -231,7 +276,7 @@ export default function LandingPage() {
         <FeatureShowcase />
       </div>
 
-      {/* ========== 使用场景 · 用户语录 ========== */}
+      {/* ========== 使用场景 ========== */}
       <section
         className="px-6 py-20 md:py-28"
         style={{ background: "var(--color-bg-elevated)" }}
@@ -245,9 +290,9 @@ export default function LandingPage() {
               className="text-[1.75rem] md:text-[2rem] lg:text-[2.25rem] leading-[1.25] font-medium text-[var(--color-text-primary)]"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              他们都在用<span style={{ color: "var(--color-primary)" }}>认识自己</span>。
+              从一个真实问题开始<span style={{ color: "var(--color-primary)" }}>认识自己</span>。
             </h2>
-            <p className="text-[1rem] leading-relaxed text-[var(--color-text-secondary)]">真实场景，真实感受。</p>
+            <p className="text-[1rem] leading-relaxed text-[var(--color-text-secondary)]">典型使用场景，最终判断始终由你自己完成。</p>
           </header>
 
           <div className="grid gap-6 md:grid-cols-3 md:gap-7">
@@ -373,8 +418,14 @@ export default function LandingPage() {
           </ul>
 
           <div className="flex flex-wrap items-center gap-3 md:justify-center">
-            <Link href={user ? "/dashboard" : "/register"} className="btn btn-primary group">
-              {user ? "进入命理首页" : "免费开始"}
+            <Link
+              href={user ? "/dashboard" : "/profile/create"}
+              className="btn btn-primary group"
+              onClick={() => trackEvent("home_primary_cta_click", {
+                payload: { entry: "final_cta", target: user ? "dashboard" : "profile_create" },
+              })}
+            >
+              {user ? "进入命理首页" : "免费生成个人分析"}
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
             </Link>
             <Link href="/pricing" className="btn btn-secondary group">

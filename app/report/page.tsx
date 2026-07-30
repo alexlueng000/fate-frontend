@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useRouteGuard } from '@/app/lib/useRouteGuard';
 import { getAuthToken } from '@/app/lib/auth';
 import { api } from '@/app/lib/api';
+import { trackEvent } from '@/app/lib/analytics/track';
 import Markdown from '@/app/components/Markdown';
 import { getWuxing, wuxingColor, type Wuxing } from '@/app/components/WuXing';
 import { Paipan } from '@/app/lib/chat/types';
@@ -19,6 +20,38 @@ interface ProfileBrief {
   birth_time: string;
   birth_location: string;
   display_info: string;
+}
+
+function stripMarkdown(text: string): string {
+  return text
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/^#{3,4}\s+/gm, '')
+    .replace(/\*\*|__|[*_>`]/g, '')
+    .replace(/\[[^\]]+\]\([^)]+\)/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function buildReportSummary(report: string): {
+  portrait: string;
+  insights: string[];
+  focus: string;
+} {
+  const plain = stripMarkdown(report);
+  const sentences = plain
+    .split(/(?<=[。！？?])\s*/)
+    .map((line) => line.trim())
+    .filter((line) => line.length >= 12 && !line.includes('仅供'));
+
+  return {
+    portrait: sentences[0] || '这份报告会先帮你看见自己的核心特质，再展开专业命盘信息。',
+    insights: [
+      sentences[1] || '先从性格倾向和行为模式理解自己。',
+      sentences[2] || '再观察优势、挑战与适合投入的方向。',
+      sentences[3] || '最后把分析转为可以继续追问和复盘的问题。',
+    ],
+    focus: sentences[4] || '当前最值得关注的是：哪些判断与你的真实处境相符。',
+  };
 }
 
 function PillarChar({ char }: { char: string }) {
@@ -50,6 +83,25 @@ export default function ReportPage() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [conversationId, setConversationId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const reportViewTrackedRef = useRef(false);
+  const summaryTrackedRef = useRef(false);
+
+  useEffect(() => {
+    if (!loading && !reportViewTrackedRef.current) {
+      reportViewTrackedRef.current = true;
+      trackEvent('report_view', {
+        payload: { has_ai_report: Boolean(aiReport) },
+      });
+    }
+  }, [loading, aiReport]);
+
+  useEffect(() => {
+    if (!aiReport || summaryTrackedRef.current) return;
+    summaryTrackedRef.current = true;
+    trackEvent('report_summary_view', {
+      payload: { report_length: aiReport.length },
+    });
+  }, [aiReport]);
 
   useEffect(() => {
     if (streaming && scrollRef.current) {
@@ -197,6 +249,9 @@ export default function ReportPage() {
   }, [loading]);
 
   const handleStartChat = () => {
+    trackEvent('report_chat_cta_click', {
+      payload: { has_ai_report: Boolean(aiReport), streaming },
+    });
     clearActiveConversationId();
     router.push('/panel');
   };
@@ -230,6 +285,7 @@ export default function ReportPage() {
         { label: '时柱', pillar: paipan.four_pillars.hour, sublabel: '子女·晚年' },
       ]
     : [];
+  const summary = buildReportSummary(aiReport);
 
   return (
     <div className="min-h-screen bg-[var(--color-bg)]" ref={scrollRef}>
@@ -243,6 +299,49 @@ export default function ReportPage() {
             {profile?.display_info || '您的八字命盘详细解读'}
           </p>
         </header>
+
+        {/* 首次价值摘要 */}
+        <section className="mb-12" aria-labelledby="report-summary-heading">
+          <p className="text-[11px] font-medium tracking-[0.16em] uppercase text-[var(--color-text-muted)] mb-3">
+            先看懂自己
+          </p>
+          <h2
+            id="report-summary-heading"
+            className="font-serif text-2xl sm:text-3xl leading-[1.35] text-[var(--color-text-primary)] mb-5"
+          >
+            {aiReport ? summary.portrait : '正在整理你的核心特质。'}
+          </h2>
+
+          <div className="space-y-4 border-t border-b border-[var(--color-border-subtle)] py-5">
+            {(aiReport ? summary.insights : [
+              '先生成一句话人物画像。',
+              '再提炼三个更容易理解的关键洞察。',
+              '专业命盘信息会放在后面，方便展开查看。',
+            ]).map((item, index) => (
+              <div key={item} className="grid grid-cols-[auto_1fr] gap-3">
+                <span className="font-mono text-xs text-[var(--color-primary)] tabular-nums">
+                  {String(index + 1).padStart(2, '0')}
+                </span>
+                <p className="text-sm sm:text-base leading-7 text-[var(--color-text-body)]">
+                  {item}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
+              {aiReport ? summary.focus : '生成过程中可以先等待完整报告，再继续追问最关心的部分。'}
+            </p>
+            <button
+              onClick={handleStartChat}
+              disabled={streaming}
+              className="btn btn-primary shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {streaming ? '分析中…' : '继续追问'}
+            </button>
+          </div>
+        </section>
 
         {/* 四柱命盘 — flat grid, no nested cards, tokenized colors */}
         {paipan && (

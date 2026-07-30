@@ -5,9 +5,12 @@ import { useRouter } from 'next/navigation';
 import { useRouteGuard } from '@/app/lib/useRouteGuard';
 import { api } from '@/app/lib/api';
 import { getAuthToken } from '@/app/lib/auth';
+import { trackEvent } from '@/app/lib/analytics/track';
 import { PrettyDateField } from '@/app/components/Calender';
 import { IOSWheelTime } from '@/app/components/TimePicker';
 import { MapPin } from 'lucide-react';
+
+type FieldName = 'birthDate' | 'birthTime' | 'birthLocation';
 
 export default function CreateProfilePage() {
   const router = useRouter();
@@ -20,6 +23,22 @@ export default function CreateProfilePage() {
   const [birthLocation, setBirthLocation] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<FieldName, string>>>({});
+  const startedFieldsRef = useRef<Set<string>>(new Set());
+
+  const trackFieldStart = (field: string) => {
+    if (startedFieldsRef.current.has(field)) return;
+    startedFieldsRef.current.add(field);
+    trackEvent('profile_form_start', { payload: { field } });
+  };
+
+  useEffect(() => {
+    if (!loading) {
+      trackEvent('profile_create_view', {
+        payload: { has_profile: false },
+      });
+    }
+  }, [loading]);
 
   if (loading) {
     return (
@@ -32,12 +51,26 @@ export default function CreateProfilePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setFieldErrors({});
 
-    if (!birthDate) { setError('请选择出生日期'); return; }
-    if (!birthTime) { setError('请选择出生时间'); return; }
-    if (!birthLocation.trim()) { setError('请输入出生地点'); return; }
+    const nextFieldErrors: Partial<Record<FieldName, string>> = {};
+    if (!birthDate) nextFieldErrors.birthDate = '请选择出生日期';
+    if (!birthTime) nextFieldErrors.birthTime = '请选择出生时间';
+    if (!birthLocation.trim()) nextFieldErrors.birthLocation = '请输入出生地点';
+
+    if (Object.keys(nextFieldErrors).length > 0) {
+      setFieldErrors(nextFieldErrors);
+      setError('请先补全标记的出生信息');
+      trackEvent('profile_form_submit', {
+        payload: { result: 'validation_failed', error_code: Object.keys(nextFieldErrors).join(',') },
+      });
+      return;
+    }
 
     setSubmitting(true);
+    trackEvent('profile_form_submit', {
+      payload: { calendar_type: calendarType === '公历' ? 'solar' : 'lunar' },
+    });
 
     try {
       const token = getAuthToken();
@@ -67,7 +100,13 @@ export default function CreateProfilePage() {
           // Handle Pydantic validation errors
           if (json.detail) {
             if (Array.isArray(json.detail)) {
-              errorMsg = json.detail.map((err: any) => err.msg || JSON.stringify(err)).join('; ');
+              errorMsg = json.detail.map((err: unknown) => {
+                if (typeof err === 'object' && err !== null && 'msg' in err) {
+                  const msg = (err as { msg?: unknown }).msg;
+                  if (typeof msg === 'string') return msg;
+                }
+                return JSON.stringify(err);
+              }).join('; ');
             } else if (typeof json.detail === 'string') {
               errorMsg = json.detail;
             } else {
@@ -80,9 +119,16 @@ export default function CreateProfilePage() {
         throw new Error(errorMsg);
       }
 
+      trackEvent('profile_create_success', {
+        payload: { calendar_type: calendarType === '公历' ? 'solar' : 'lunar' },
+      });
       router.push('/report');
     } catch (err) {
-      setError(err instanceof Error ? err.message : '创建档案失败');
+      const message = err instanceof Error ? err.message : '创建档案失败';
+      setError(message);
+      trackEvent('profile_create_failed', {
+        payload: { error_code: message.slice(0, 120) },
+      });
     } finally {
       setSubmitting(false);
     }
@@ -94,10 +140,10 @@ export default function CreateProfilePage() {
         {/* Title block */}
         <div className="text-center mb-8">
           <h1 className="text-4xl sm:text-5xl font-bold text-[var(--color-text-primary)] mb-3 font-serif" style={{ fontFamily: 'var(--font-display)' }}>
-            完善个人档案
+            生成你的个人分析
           </h1>
           <p className="text-sm sm:text-base text-[var(--color-text-secondary)]">
-            填写出生信息，洞见命理玄机
+            填写出生信息，先获得一份关于自我特质的传统文化参考。
           </p>
         </div>
 
@@ -164,19 +210,28 @@ export default function CreateProfilePage() {
           </div>
 
           {/* Date + Time side by side */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div>
               <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-3">
                 出生日期 <span className="text-[var(--color-primary)]">*</span>
               </label>
               <PrettyDateField
                 value={birthDate}
-                onChange={setBirthDate}
+                onChange={(value) => {
+                  setBirthDate(value);
+                  if (value) setFieldErrors((prev) => ({ ...prev, birthDate: undefined }));
+                  trackFieldStart('birth_date');
+                }}
                 placeholder="选择日期"
                 theme="panel"
                 showPresets={false}
                 helper=""
               />
+              {fieldErrors.birthDate && (
+                <p className="mt-1.5 text-xs text-[var(--color-primary)]" role="alert">
+                  {fieldErrors.birthDate}
+                </p>
+              )}
             </div>
             <div>
               <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-3">
@@ -184,10 +239,19 @@ export default function CreateProfilePage() {
               </label>
               <IOSWheelTime
                 value={birthTime}
-                onChange={setBirthTime}
+                onChange={(value) => {
+                  setBirthTime(value);
+                  if (value) setFieldErrors((prev) => ({ ...prev, birthTime: undefined }));
+                  trackFieldStart('birth_time');
+                }}
                 placeholder="选择时间"
                 theme="panel"
               />
+              {fieldErrors.birthTime && (
+                <p className="mt-1.5 text-xs text-[var(--color-primary)]" role="alert">
+                  {fieldErrors.birthTime}
+                </p>
+              )}
             </div>
           </div>
 
@@ -201,14 +265,27 @@ export default function CreateProfilePage() {
               <input
                 type="text"
                 value={birthLocation}
-                onChange={(e) => setBirthLocation(e.target.value)}
+                onChange={(e) => {
+                  setBirthLocation(e.target.value);
+                  if (e.target.value.trim()) setFieldErrors((prev) => ({ ...prev, birthLocation: undefined }));
+                  trackFieldStart('birth_location');
+                }}
                 placeholder="搜索城市或坐标"
-                className="w-full pl-10 pr-4 py-3 rounded-md border-2 border-[var(--color-border)] bg-[var(--color-bg-elevated)] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-hint)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/24 transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] text-sm"
+                aria-invalid={Boolean(fieldErrors.birthLocation)}
+                aria-describedby={fieldErrors.birthLocation ? 'birth-location-error' : undefined}
+                className={`w-full pl-10 pr-4 py-3 rounded-md border-2 bg-[var(--color-bg-elevated)] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-hint)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/24 transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] text-sm ${
+                  fieldErrors.birthLocation ? 'border-[var(--color-primary)]' : 'border-[var(--color-border)]'
+                }`}
               />
             </div>
             <p className="mt-1.5 text-xs text-[var(--color-text-muted)]">
-              精准定位，用于计算真太阳时
+              出生地会用于历法和真太阳时换算，地点越明确，计算参考越稳定。
             </p>
+            {fieldErrors.birthLocation && (
+              <p id="birth-location-error" className="mt-1.5 text-xs text-[var(--color-primary)]" role="alert">
+                {fieldErrors.birthLocation}
+              </p>
+            )}
           </div>
 
           {/* Error */}
@@ -224,11 +301,11 @@ export default function CreateProfilePage() {
             disabled={submitting}
             className="w-full py-4 px-6 rounded-md bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-text-inverse)] font-semibold text-base transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] disabled:opacity-50 disabled:cursor-not-allowed shadow-[var(--shadow-md)] hover:shadow-[var(--shadow-sm)] hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/24 min-h-[44px]"
           >
-            {submitting ? '创建中...' : '完成建档'}
+            {submitting ? '生成中...' : '生成个人分析'}
           </button>
 
           <p className="text-center text-xs text-[var(--color-text-muted)]">
-            正在推演四柱八字
+            内容由 AI 基于传统文化资料生成，仅供文化研究、娱乐与个人参考。
           </p>
         </form>
 
@@ -237,13 +314,13 @@ export default function CreateProfilePage() {
           <div className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-lg p-5">
             <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-2">传统算法</h3>
             <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
-              依据传统典籍整理而成，确保每一柱干支均以古法精准推算
+              出生日期、时间和地点先用于确定命盘，再进入 AI 解读环节。
             </p>
           </div>
           <div className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-lg p-5">
-            <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-2">现代精算</h3>
+            <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-2">可解释参考</h3>
             <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
-              结合真太阳时与本地天文数据，呈现精准的八字命盘
+              专业术语会尽量翻译成白话，帮助你先看懂“这与我有什么关系”。
             </p>
           </div>
         </div>

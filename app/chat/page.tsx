@@ -4,9 +4,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useRouteGuard } from '@/app/lib/useRouteGuard';
 import { getAuthToken } from '@/app/lib/auth';
+import { trackEvent } from '@/app/lib/analytics/track';
 
 import Markdown from '@/app/components/Markdown';
-import { WuxingBadge, WuxingBar, getWuxing, colorClasses } from '@/app/components/WuXing';
 import { ChatHeader } from '@/app/components/chat/ChatHeader';
 import { QuickActions } from '@/app/components/chat/QuickActions';
 import { MessageList } from '@/app/components/chat/MessageList';
@@ -42,6 +42,8 @@ export default function ChatPage() {
   const [quotaRefreshKey, setQuotaRefreshKey] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const mountedRef = useRef(true);
+  const chatViewTrackedRef = useRef(false);
+  const firstMessageTrackedRef = useRef(false);
   const [quotaDialogOpen, setQuotaDialogOpen] = useState(false);
   const [quotaDialogMessage, setQuotaDialogMessage] = useState('');
 
@@ -56,6 +58,14 @@ export default function ChatPage() {
     mountedRef.current = true;
     return () => { mountedRef.current = false; };
   }, []);
+
+  useEffect(() => {
+    if (loading || chatViewTrackedRef.current) return;
+    chatViewTrackedRef.current = true;
+    trackEvent('chat_view', {
+      payload: { surface: 'chat' },
+    });
+  }, [loading]);
 
   useEffect(() => {
     let alive = true;
@@ -331,6 +341,9 @@ export default function ChatPage() {
 
   const handleQuotaExhausted = (e: QuotaExhaustedError) => {
     setErr(null);
+    trackEvent('quota_paywall_shown', {
+      payload: { surface: 'chat', type: 'chat' },
+    });
     // 移除正在 streaming 的助手消息
     setMsgs((prev) => {
       const next = [...prev];
@@ -360,6 +373,12 @@ export default function ChatPage() {
     setMsgs((m) => [...m, { role: 'user', content }]);
     setInput('');
     setSending(true);
+    if (!firstMessageTrackedRef.current) {
+      firstMessageTrackedRef.current = true;
+      trackEvent('chat_first_message_sent', {
+        payload: { surface: 'chat', entry: 'manual' },
+      });
+    }
 
     try {
       await sendStream(content);
@@ -413,8 +432,17 @@ export default function ChatPage() {
       return;
     }
     setErr(null);
-    setMsgs((m) => [...m, { role: 'user', content: `${label}分析` }]);
+    setMsgs((m) => [...m, { role: 'user', content: label }]);
     setSending(true);
+    if (!firstMessageTrackedRef.current) {
+      firstMessageTrackedRef.current = true;
+      trackEvent('chat_first_message_sent', {
+        payload: { surface: 'chat', entry: 'quick_action', label },
+      });
+    }
+    trackEvent('chat_suggested_question_click', {
+      payload: { surface: 'chat', entry: 'quick_action', label },
+    });
     try {
       await sendStream(fullPrompt, `${label}分析`);
       void refreshQuota();
@@ -434,6 +462,15 @@ export default function ChatPage() {
     setErr(null);
     setMsgs((m) => [...m, { role: 'user', content: question }]);
     setSending(true);
+    if (!firstMessageTrackedRef.current) {
+      firstMessageTrackedRef.current = true;
+      trackEvent('chat_first_message_sent', {
+        payload: { surface: 'chat', entry: 'suggested_question' },
+      });
+    }
+    trackEvent('chat_suggested_question_click', {
+      payload: { surface: 'chat', entry: 'suggested_question' },
+    });
     try {
       await sendStream(question);
       void refreshQuota();
