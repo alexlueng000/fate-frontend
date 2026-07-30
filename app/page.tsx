@@ -7,7 +7,7 @@ import FeatureShowcase from "@/app/components/landing/FeatureShowcase";
 import ScenarioCard from "@/app/components/landing/ScenarioCard";
 import { useUser } from "@/app/lib/auth";
 import { trackEvent } from "@/app/lib/analytics/track";
-import { ArrowRight, ChevronRight } from "lucide-react";
+import { ArrowRight, ChevronRight, Gift } from "lucide-react";
 
 const HERO_FEATURES = [
   {
@@ -70,13 +70,20 @@ export default function LandingPage() {
               提供八字文化分析、情绪记录、六爻文化卦象解析与传统文化课程，让 AI 帮你整理信息、理解内容，并形成自己的判断。
             </p>
 
+            {!user && (
+              <div className="inline-flex items-center gap-2 border border-[var(--color-primary)]/25 bg-[var(--color-primary)]/5 px-3 py-2 text-[0.875rem] font-medium text-[var(--color-primary)]">
+                <Gift className="h-4 w-4" aria-hidden="true" />
+                新用户注册即享：八字解读 10 次 + 六爻解卦 10 次
+              </div>
+            )}
+
             {/* CTA */}
             <div className="flex flex-wrap items-center gap-3 pt-2">
               <Link
-                href={user ? "/dashboard" : "/profile/create"}
+                href={user ? "/dashboard" : "/register"}
                 className="btn btn-primary group"
                 onClick={() => trackEvent("home_primary_cta_click", {
-                  payload: { entry: "hero", target: user ? "dashboard" : "profile_create" },
+                  payload: { entry: "hero", target: user ? "dashboard" : "register" },
                 })}
               >
                 {user ? "进入命理首页" : "免费生成个人分析"}
@@ -117,9 +124,9 @@ export default function LandingPage() {
               <ol className="divide-y divide-[var(--color-border)]">
                 <li>
                   <Link
-                    href={user ? "/dashboard" : "/profile/create"}
+                    href={user ? "/dashboard" : "/register"}
                     onClick={() => trackEvent("home_primary_cta_click", {
-                      payload: { entry: "hero_path", target: user ? "dashboard" : "profile_create" },
+                      payload: { entry: "hero_path", target: user ? "dashboard" : "register" },
                     })}
                     className="group grid grid-cols-[auto_1fr_auto] items-baseline gap-4 px-5 py-5 transition-colors hover:bg-[var(--color-bg-hover)] focus-visible:bg-[var(--color-bg-hover)] focus-visible:outline-none"
                   >
@@ -189,10 +196,10 @@ export default function LandingPage() {
 
               <div className="border-t border-[var(--color-border)] px-5 py-4">
                 <Link
-                  href={user ? "/dashboard" : "/profile/create"}
+                  href={user ? "/dashboard" : "/register"}
                   className="btn btn-primary w-full group"
                   onClick={() => trackEvent("home_primary_cta_click", {
-                    payload: { entry: "hero_card_bottom", target: user ? "dashboard" : "profile_create" },
+                    payload: { entry: "hero_card_bottom", target: user ? "dashboard" : "register" },
                   })}
                 >
                   {user ? "进入命理首页" : "生成个人分析"}
@@ -394,13 +401,14 @@ export default function LandingPage() {
               准备好认识真实的自己了吗？
             </h2>
             <p className="text-[1rem] md:text-[1.0625rem] leading-relaxed text-[var(--color-text-secondary)]">
-              注册即可体验，会员套餐提供更多内容额度与课程观看权限。
+              新用户注册即享 10 次八字解读和 10 次六爻解卦；会员套餐提供更多额度与课程观看权限。
             </p>
           </header>
 
           <ul className="space-y-3 text-left text-[0.9375rem] text-[var(--color-text-body)] md:mx-auto md:max-w-md">
             {[
               "八字文化分析 + AI 内容整理",
+              "新用户 10 次八字解读 + 10 次六爻解卦",
               "每日情绪追踪记录",
               "六爻文化卦象解析",
               "会员权益有效期 30 天",
@@ -419,10 +427,10 @@ export default function LandingPage() {
 
           <div className="flex flex-wrap items-center gap-3 md:justify-center">
             <Link
-              href={user ? "/dashboard" : "/profile/create"}
+              href={user ? "/dashboard" : "/register"}
               className="btn btn-primary group"
               onClick={() => trackEvent("home_primary_cta_click", {
-                payload: { entry: "final_cta", target: user ? "dashboard" : "profile_create" },
+                payload: { entry: "final_cta", target: user ? "dashboard" : "register" },
               })}
             >
               {user ? "进入命理首页" : "免费生成个人分析"}

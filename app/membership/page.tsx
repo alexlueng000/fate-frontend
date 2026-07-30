@@ -226,7 +226,7 @@ export default function MembershipPage() {
               会员与额度
             </h1>
             <p className="mt-3 max-w-[62ch] text-[16px] leading-7 text-[var(--color-text-secondary)]">
-              免费用户可体验传统文化 AI 服务；基础版提供 30 次八字文化对话与 30 次六爻文化卦象解析，高级版各提供 100 次，额度不足时可购买叠加包。
+              新用户注册即享 10 次八字文化 AI 对话和 10 次六爻文化卦象解析；基础版各提供 30 次，高级版各提供 100 次，额度不足时可购买叠加包。
             </p>
           </div>
           <button
@@ -276,7 +276,7 @@ export default function MembershipPage() {
         {!isAuthed && (
           <div className="mb-8 border border-[var(--color-border)] bg-[var(--color-bg-card)] p-5">
             <p className="text-[15px] leading-7 text-[var(--color-text-body)]">
-              登录后可查看额度、购买月卡和叠加包。
+              新用户注册可获得 10 次八字解读和 10 次六爻解卦。登录后可查看额度、购买月卡和叠加包。
             </p>
             <Link
               href="/login?redirect=/membership"

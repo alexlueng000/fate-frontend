@@ -16,6 +16,7 @@ import { api, fetchBaziIntro, fetchQuickButtons, pickReply } from '@/app/lib/cha
 import { trySSE, QuotaExhaustedError } from '@/app/lib/chat/sse';
 import { QuotaBar } from '@/app/components/QuotaBar';
 import QuotaExhaustedDialog from '@/app/components/QuotaExhaustedDialog';
+import ConfirmDialog from '@/app/components/ConfirmDialog';
 import {
   saveConversation, loadConversation, getActiveConversationId,
   repairCorruptedConversations,
@@ -49,6 +50,18 @@ interface FourPillarsData {
   month?: string[];
   day?: string[];
   hour?: string[];
+}
+
+async function readApiError(response: Response): Promise<string> {
+  const text = await response.text().catch(() => '');
+  if (!text) return `请求失败（${response.status}）`;
+  try {
+    const data = JSON.parse(text) as { detail?: unknown; message?: unknown };
+    const detail = data.detail ?? data.message;
+    return typeof detail === 'string' && detail.trim() ? detail : '请求失败，请稍后重试';
+  } catch {
+    return text;
+  }
 }
 
 function HeaderMenu({
@@ -136,6 +149,7 @@ export default function PanelPage() {
   const [quotaDialogOpen, setQuotaDialogOpen] = useState(false);
   const [quotaDialogMessage, setQuotaDialogMessage] = useState('');
   const [regenerating, setRegenerating] = useState(false);
+  const [clearDialogOpen, setClearDialogOpen] = useState(false);
   const [taskContext, setTaskContext] = useState<PanelTaskContext | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -392,7 +406,7 @@ export default function PanelPage() {
       headers,
       credentials: 'include',
     });
-    if (!initRes.ok) throw new Error(await initRes.text());
+    if (!initRes.ok) throw new Error(await readApiError(initRes));
     const { conversation_id: cid } = await initRes.json();
 
     sessionStorage.setItem('conversation_id', cid);
@@ -415,7 +429,8 @@ export default function PanelPage() {
       }),
     });
     if (!res.ok) {
-      const errorText = await res.text();
+      const errorText = await readApiError(res);
+      if (res.status === 429) throw new QuotaExhaustedError(errorText);
       // Check if session is lost
       if (retryOnSessionLost && errorText.includes('会话不存在')) {
         const newCid = await reinitSession();
@@ -429,7 +444,11 @@ export default function PanelPage() {
             task_context: taskContext,
           }),
         });
-        if (!retryRes.ok) throw new Error(await retryRes.text());
+        if (!retryRes.ok) {
+          const retryError = await readApiError(retryRes);
+          if (retryRes.status === 429) throw new QuotaExhaustedError(retryError);
+          throw new Error(retryError);
+        }
         return pickReply(await retryRes.json()).trim();
       }
       throw new Error(errorText);
@@ -494,6 +513,7 @@ export default function PanelPage() {
         return next;
       });
     } catch (e) {
+      if (e instanceof QuotaExhaustedError) throw e;
       // Check if session is lost and retry
       const errorMsg = e instanceof Error ? e.message : String(e);
       if (retryOnSessionLost && errorMsg.includes('会话不存在')) {
@@ -593,7 +613,7 @@ export default function PanelPage() {
         headers,
         body: JSON.stringify({ conversation_id: conversationId }),
       });
-      if (!res.ok) throw new Error(await res.text());
+      if (!res.ok) throw new Error(await readApiError(res));
       const full = pickReply(await res.json()).trim();
       const { questions, cleanedContent } = parseSuggestedQuestions(full);
       const newReply = normalizeMarkdown(cleanedContent || '（后端未返回解读内容）');
@@ -618,7 +638,7 @@ export default function PanelPage() {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ conversation_id: conversationId }),
       });
-      if (!res.ok) throw new Error(await res.text());
+      if (!res.ok) throw new Error(await readApiError(res));
       const data = await res.json().catch(() => null);
       if (!data?.ok) throw new Error(data?.error || '清空失败');
       // Clearing removes the conversation history/context, but the page should
@@ -787,9 +807,7 @@ export default function PanelPage() {
               onEditProfile={() => { setShowMenu(false); router.push('/profile/edit?returnTo=/panel'); }}
               onClear={() => {
                 setShowMenu(false);
-                if (window.confirm(
-                  '确认清空当前对话内容？\n\n这会清除当前页面的聊天内容和 AI 对话上下文，但不会删除您的命盘档案或历史报告。',
-                )) void clearChat();
+                setClearDialogOpen(true);
               }}
             />}
           </div>
@@ -854,9 +872,7 @@ export default function PanelPage() {
                   onEditProfile={() => { setShowMenu(false); router.push('/profile/edit?returnTo=/panel'); }}
                   onClear={() => {
                     setShowMenu(false);
-                    if (window.confirm(
-                      '确认清空当前对话内容？\n\n这会清除当前页面的聊天内容和 AI 对话上下文，但不会删除您的命盘档案或历史报告。',
-                    )) void clearChat();
+                    setClearDialogOpen(true);
                   }}
                 />}
               </div>
@@ -939,8 +955,8 @@ export default function PanelPage() {
           onSend={send}
           onRegenerate={regenerate}
           onStop={() => {}}
-          onClear={clearChat}
-          confirmClear={true}
+          onClear={() => setClearDialogOpen(true)}
+          confirmClear={false}
           showRegenerate={false}
           showClear={true}
           actionsInline
@@ -956,6 +972,18 @@ export default function PanelPage() {
         onClose={() => setQuotaDialogOpen(false)}
         title="八字次数已用完"
         message={quotaDialogMessage}
+      />
+      <ConfirmDialog
+        open={clearDialogOpen}
+        title="清空当前对话？"
+        message={'清空后，本页的聊天内容和 AI 对话上下文将被移除。\n命盘档案和历史解读记录不会受到影响。'}
+        confirmLabel="确认清空"
+        busy={loading}
+        onClose={() => setClearDialogOpen(false)}
+        onConfirm={() => {
+          setClearDialogOpen(false);
+          void clearChat();
+        }}
       />
     </div>
   );

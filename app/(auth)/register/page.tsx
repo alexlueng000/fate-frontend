@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { postJSON, api } from '@/app/lib/api';
 import { saveAuth, setUserCache, useUser, checkProfileStatus } from '@/app/lib/auth';
-import { Mail, User as UserIcon, Lock, Eye, EyeOff, Loader2, Ticket, Sparkles, CheckCircle, XCircle } from 'lucide-react';
+import { Mail, User as UserIcon, Lock, Eye, EyeOff, Loader2, Ticket, Sparkles, CheckCircle, XCircle, Gift } from 'lucide-react';
 
 const BAGUA = ['☰', '☱', '☲', '☳', '☴', '☵', '☶', '☷'];
 
@@ -209,6 +209,14 @@ export default function RegisterPage() {
           <p className="text-sm text-[var(--color-text-muted)]">
             使用邀请码注册
           </p>
+        </div>
+
+        <div className="mb-5 flex items-start gap-3 rounded-lg border border-[var(--color-primary)]/25 bg-[var(--color-primary)]/5 px-4 py-3">
+          <Gift className="mt-0.5 h-5 w-5 shrink-0 text-[var(--color-primary)]" aria-hidden="true" />
+          <div>
+            <p className="text-sm font-medium text-[var(--color-primary)]">注册即赠免费体验额度</p>
+            <p className="mt-1 text-xs leading-5 text-[var(--color-text-secondary)]">10 次八字 AI 解读 + 10 次六爻 AI 解卦</p>
+          </div>
         </div>
 
         {/* Error/Success Alert */}
