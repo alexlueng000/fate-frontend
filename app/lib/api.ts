@@ -72,6 +72,24 @@ export async function putJSON<T>(
   return r.json() as Promise<T>;
 }
 
+export async function patchJSON<T>(
+  url: string,
+  body: unknown,
+  options?: { headers?: Record<string, string> },
+): Promise<T> {
+  const r = await fetch(url, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...options?.headers,
+    },
+    credentials: 'include',
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) throw await parseError(r);
+  return r.json() as Promise<T>;
+}
+
 export type QuotaItem = {
   quota_type: string;
   total: number;
@@ -249,6 +267,18 @@ export type ProductDetail = {
   active: boolean;
   grants: ProductGrant[];
 };
+
+export function getAdminProducts(): Promise<ProductDetail[]> {
+  return getJSON<ProductDetail[]>(api('/admin/products'), { headers: authHeaders() });
+}
+
+export function updateAdminProductPrice(productId: number, priceCents: number): Promise<ProductDetail> {
+  return patchJSON<ProductDetail>(
+    api(`/admin/products/${productId}/price`),
+    { price_cents: priceCents },
+    { headers: authHeaders() },
+  );
+}
 
 export type Membership = {
   id: number;

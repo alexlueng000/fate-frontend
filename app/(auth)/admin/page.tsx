@@ -17,6 +17,7 @@ import {
   FileText,
   Sparkles,
   ReceiptText,
+  BadgeDollarSign,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -68,6 +69,13 @@ const SECTIONS: MenuSection[] = [
         title: '订单与退款',
         description: '查询支付订单并处理微信退款',
         tone: 'gold',
+      },
+      {
+        href: '/admin/products',
+        icon: BadgeDollarSign,
+        title: '商品价格',
+        description: '配置会员套餐与加购包价格',
+        tone: 'primary',
       },
     ],
   },
