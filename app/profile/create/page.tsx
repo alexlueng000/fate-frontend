@@ -8,9 +8,15 @@ import { getAuthToken } from '@/app/lib/auth';
 import { trackEvent } from '@/app/lib/analytics/track';
 import { PrettyDateField } from '@/app/components/Calender';
 import { IOSWheelTime } from '@/app/components/TimePicker';
-import { MapPin } from 'lucide-react';
+import { ArrowRight, CheckCircle2, MapPin, ShieldCheck } from 'lucide-react';
 
 type FieldName = 'birthDate' | 'birthTime' | 'birthLocation';
+
+const ANALYSIS_STEPS = [
+  '填写出生信息',
+  '生成核心摘要',
+  '继续追问与保存',
+];
 
 export default function CreateProfilePage() {
   const router = useRouter();
@@ -136,19 +142,75 @@ export default function CreateProfilePage() {
 
   return (
     <div className="min-h-screen bg-[var(--color-bg)]">
-      <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 pt-24 pb-12">
-        {/* Title block */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl sm:text-5xl font-bold text-[var(--color-text-primary)] mb-3 font-serif" style={{ fontFamily: 'var(--font-display)' }}>
+      <main className="mx-auto grid max-w-6xl gap-10 px-4 pb-14 pt-16 sm:px-6 lg:grid-cols-[0.88fr_1.12fr] lg:gap-14 lg:px-8 lg:pb-20 lg:pt-24">
+        <section className="lg:sticky lg:top-24 lg:self-start">
+          <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+            First Analysis
+          </p>
+          <h1
+            className="max-w-xl text-[2.25rem] font-medium leading-[1.18] text-[var(--color-text-primary)] sm:text-[3rem] lg:text-[3.25rem]"
+            style={{ fontFamily: 'var(--font-display)' }}
+          >
             生成你的个人分析
           </h1>
-          <p className="text-sm sm:text-base text-[var(--color-text-secondary)]">
-            填写出生信息，先获得一份关于自我特质的传统文化参考。
+          <p className="mt-5 max-w-md text-[1rem] leading-8 text-[var(--color-text-body)]">
+            填写出生信息，先获得一份关于自我特质的传统文化参考。专业命盘放在后面，第一页先帮你看懂“这与我有什么关系”。
           </p>
-        </div>
+
+          <ol className="mt-10 space-y-4 border-t border-[var(--color-border)] pt-6">
+            {ANALYSIS_STEPS.map((step, index) => (
+              <li key={step} className="grid grid-cols-[auto_1fr] items-center gap-3">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-bg-elevated)] font-mono text-[11px] text-[var(--color-primary)]">
+                  {String(index + 1).padStart(2, '0')}
+                </span>
+                <span className="text-sm leading-6 text-[var(--color-text-secondary)]">
+                  {step}
+                </span>
+              </li>
+            ))}
+          </ol>
+
+          <div className="mt-9 space-y-4 border-t border-[var(--color-border)] pt-6">
+            <div className="flex gap-3">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-primary)]" aria-hidden />
+              <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
+                出生日期、时间和地点先用于确定命盘，再进入 AI 解读环节。
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-primary)]" aria-hidden />
+              <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
+                内容仅供文化研究、娱乐与个人参考，不构成医疗、投资、法律或其他专业建议。
+              </p>
+            </div>
+          </div>
+        </section>
 
         {/* Main card */}
-        <form onSubmit={handleSubmit} className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-lg shadow-[var(--shadow-md)] p-6 sm:p-8 space-y-6">
+        <form
+          onSubmit={handleSubmit}
+          className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-[var(--radius-lg)] shadow-[var(--shadow-md)]"
+        >
+          <div className="border-b border-[var(--color-border)] px-5 py-5 sm:px-8 sm:py-6">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between">
+              <div>
+                <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
+                  Birth Profile
+                </p>
+                <h2
+                  className="mt-2 text-xl font-medium text-[var(--color-text-primary)]"
+                  style={{ fontFamily: 'var(--font-display)' }}
+                >
+                  出生信息
+                </h2>
+              </div>
+              <p className="text-xs leading-5 text-[var(--color-text-muted)]">
+                约 1 分钟完成
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-7 px-5 py-6 sm:px-8 sm:py-8">
 
           {/* Gender */}
           <div>
@@ -162,9 +224,9 @@ export default function CreateProfilePage() {
                   type="button"
                   onClick={() => setGender(val)}
                   aria-pressed={gender === val}
-                  className={`py-4 px-4 rounded-md border-2 text-sm font-medium transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/24 ${
+                  className={`py-4 px-4 rounded-[var(--radius-md)] border text-sm font-medium transition-colors duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] min-h-[48px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/24 ${
                     gender === val
-                      ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5 text-[var(--color-primary)]'
+                      ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/6 text-[var(--color-primary)]'
                       : 'border-[var(--color-border)] bg-[var(--color-bg-elevated)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-strong)]'
                   }`}
                 >
@@ -210,7 +272,7 @@ export default function CreateProfilePage() {
           </div>
 
           {/* Date + Time side by side */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div>
               <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-3">
                 出生日期 <span className="text-[var(--color-primary)]">*</span>
@@ -273,7 +335,7 @@ export default function CreateProfilePage() {
                 placeholder="搜索城市或坐标"
                 aria-invalid={Boolean(fieldErrors.birthLocation)}
                 aria-describedby={fieldErrors.birthLocation ? 'birth-location-error' : undefined}
-                className={`w-full pl-10 pr-4 py-3 rounded-md border-2 bg-[var(--color-bg-elevated)] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-hint)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/24 transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] text-sm ${
+                className={`w-full pl-10 pr-4 py-3 rounded-[var(--radius-md)] border bg-[var(--color-bg-elevated)] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-hint)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/24 transition-colors duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] text-sm ${
                   fieldErrors.birthLocation ? 'border-[var(--color-primary)]' : 'border-[var(--color-border)]'
                 }`}
               />
@@ -290,7 +352,7 @@ export default function CreateProfilePage() {
 
           {/* Error */}
           {error && (
-            <div className="rounded-lg bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/30 p-3 text-sm text-[var(--color-primary)]" role="alert">
+            <div className="rounded-[var(--radius-md)] bg-[var(--color-primary)]/8 border border-[var(--color-primary)]/30 p-3 text-sm text-[var(--color-primary)]" role="alert">
               {error}
             </div>
           )}
@@ -299,32 +361,20 @@ export default function CreateProfilePage() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full py-4 px-6 rounded-md bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-text-inverse)] font-semibold text-base transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] disabled:opacity-50 disabled:cursor-not-allowed shadow-[var(--shadow-md)] hover:shadow-[var(--shadow-sm)] hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/24 min-h-[44px]"
+            className="group flex w-full min-h-[52px] items-center justify-center gap-2 rounded-[var(--radius-md)] bg-[var(--color-primary)] px-6 py-4 text-base font-semibold text-[var(--color-text-inverse)] transition-colors duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] hover:bg-[var(--color-primary-hover)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/24"
           >
-            {submitting ? '生成中...' : '生成个人分析'}
+            <span>{submitting ? '生成中...' : '生成个人分析'}</span>
+            {!submitting && (
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden />
+            )}
           </button>
 
-          <p className="text-center text-xs text-[var(--color-text-muted)]">
-            内容由 AI 基于传统文化资料生成，仅供文化研究、娱乐与个人参考。
+          <p className="text-center text-xs leading-5 text-[var(--color-text-muted)]">
+            专业术语会尽量翻译成白话，先看懂，再展开命盘细节。
           </p>
+          </div>
         </form>
-
-        {/* Info cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-8">
-          <div className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-lg p-5">
-            <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-2">传统算法</h3>
-            <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
-              出生日期、时间和地点先用于确定命盘，再进入 AI 解读环节。
-            </p>
-          </div>
-          <div className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-lg p-5">
-            <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-2">可解释参考</h3>
-            <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
-              专业术语会尽量翻译成白话，帮助你先看懂“这与我有什么关系”。
-            </p>
-          </div>
-        </div>
-      </div>
+      </main>
     </div>
   );
 }
