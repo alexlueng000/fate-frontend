@@ -16,6 +16,7 @@ import { api } from '@/app/lib/api';
 import { getAuthToken } from '@/app/lib/auth';
 import { useRouteGuard } from '@/app/lib/useRouteGuard';
 import {
+  hasDisplayableConversationContent,
   historyApi,
   type ConversationListItem,
   type HistoryType,
@@ -139,15 +140,15 @@ export default function DashboardPage() {
 
       setHistoryLoading(true);
       Promise.all([
-        historyApi.list('bazi', 0, 4),
-        historyApi.list('liuyao', 0, 4),
+        historyApi.list('bazi', 0, 10),
+        historyApi.list('liuyao', 0, 10),
       ])
         .then(([bazi, liuyao]) => {
           if (!alive) return;
           setData((current) => ({
             ...current,
-            baziItems: bazi.items,
-            liuyaoItems: liuyao.items,
+            baziItems: bazi.items.filter(hasDisplayableConversationContent),
+            liuyaoItems: liuyao.items.filter(hasDisplayableConversationContent),
           }));
         })
         .catch((e) => {

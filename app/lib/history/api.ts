@@ -117,3 +117,16 @@ export const historyApi = {
     return response.json();
   },
 };
+
+export function hasDisplayableConversationContent(item: ConversationListItem): boolean {
+  const preview = item.last_assistant_preview?.trim();
+  if (!preview) return false;
+
+  const emptyMarkers = [
+    '（后端未返回解读内容）',
+    '后端未返回解读内容',
+    '暂无解读内容',
+  ];
+
+  return !emptyMarkers.some((marker) => preview.includes(marker));
+}

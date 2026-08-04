@@ -6,6 +6,7 @@ import { Trash2, MessageCircle, Sparkles, Loader2, ChevronLeft, ChevronRight, Ar
 
 import { useRouteGuard } from '@/app/lib/useRouteGuard';
 import {
+  hasDisplayableConversationContent,
   historyApi,
   type ConversationListItem,
   type HistoryType,
@@ -93,10 +94,11 @@ export default function HistoryPage() {
     setError(null);
     try {
       const data = await historyApi.list(type, off, PAGE_SIZE);
-      setItems(data.items);
-      setTotal(data.total);
+      const visibleItems = data.items.filter(hasDisplayableConversationContent);
+      setItems(visibleItems);
+      setTotal(data.total - (data.items.length - visibleItems.length));
       setOffset(off);
-      setCounts((prev) => ({ ...prev, [type]: data.total }));
+      setCounts((prev) => ({ ...prev, [type]: data.total - (data.items.length - visibleItems.length) }));
     } catch (e) {
       setError(e instanceof Error ? e.message : '加载失败');
     } finally {
@@ -120,7 +122,10 @@ export default function HistoryPage() {
     // 拉一次另一个 tab 的 count（首屏用），失败忽略
     const otherType: HistoryType = activeTab === 'bazi' ? 'liuyao' : 'bazi';
     historyApi.list(otherType, 0, 1)
-      .then((d) => setCounts((prev) => ({ ...prev, [otherType]: d.total })))
+      .then((d) => {
+        const visibleItems = d.items.filter(hasDisplayableConversationContent);
+        setCounts((prev) => ({ ...prev, [otherType]: d.total - (d.items.length - visibleItems.length) }));
+      })
       .catch(() => {});
   }, [loading, activeTab]);
 
