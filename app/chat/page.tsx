@@ -49,8 +49,9 @@ export default function ChatPage() {
   const [quotaDialogOpen, setQuotaDialogOpen] = useState(false);
   const [quotaDialogMessage, setQuotaDialogMessage] = useState('');
   const [viewingHistory, setViewingHistory] = useState(false);
-  const [showScrollJump, setShowScrollJump] = useState(false);
   const [scrollJumpDirection, setScrollJumpDirection] = useState<'top' | 'bottom'>('bottom');
+  const topAnchorRef = useRef<HTMLDivElement>(null);
+  const bottomAnchorRef = useRef<HTMLDivElement>(null);
 
   // 安全读取 conversation_id
   function readConversationId(meta: unknown): string {
@@ -65,25 +66,19 @@ export default function ChatPage() {
   }, []);
 
   useEffect(() => {
-    const updateScrollJump = () => {
-      const doc = document.documentElement;
-      const scrollTop = window.scrollY || doc.scrollTop;
-      const viewportHeight = window.innerHeight;
-      const scrollHeight = doc.scrollHeight;
-      const distanceToBottom = scrollHeight - scrollTop - viewportHeight;
+    const bottomAnchor = bottomAnchorRef.current;
+    if (!bottomAnchor || !viewingHistory || msgs.length === 0) return;
 
-      setShowScrollJump(scrollHeight > viewportHeight + 700);
-      setScrollJumpDirection(distanceToBottom > 420 ? 'bottom' : 'top');
-    };
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setScrollJumpDirection(entry.isIntersecting ? 'top' : 'bottom');
+      },
+      { threshold: 0.6 },
+    );
 
-    updateScrollJump();
-    window.addEventListener('scroll', updateScrollJump, { passive: true });
-    window.addEventListener('resize', updateScrollJump);
-    return () => {
-      window.removeEventListener('scroll', updateScrollJump);
-      window.removeEventListener('resize', updateScrollJump);
-    };
-  }, []);
+    observer.observe(bottomAnchor);
+    return () => observer.disconnect();
+  }, [msgs.length, viewingHistory]);
 
   useEffect(() => {
     if (loading || chatViewTrackedRef.current) return;
@@ -613,10 +608,10 @@ export default function ChatPage() {
 
   const handleScrollJump = () => {
     if (scrollJumpDirection === 'bottom') {
-      window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+      bottomAnchorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
       return;
     }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    topAnchorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   if (loading) {
@@ -629,6 +624,7 @@ export default function ChatPage() {
 
   return (
     <main className="min-h-screen bg-[#F7F3EE] text-neutral-800 p-6 sm:p-10">
+      <div ref={topAnchorRef} aria-hidden="true" />
       <div className="mx-auto w-full max-w-5xl space-y-6">
         <ChatHeader
           conversationId={conversationId}
@@ -703,6 +699,7 @@ export default function ChatPage() {
           onSend={send}
           onRegenerate={regenerate}
         />
+        <div ref={bottomAnchorRef} aria-hidden="true" />
       </div>
 
       <QuotaExhaustedDialog
@@ -712,7 +709,7 @@ export default function ChatPage() {
         message={quotaDialogMessage}
       />
 
-      {showScrollJump && (
+      {viewingHistory && msgs.length > 0 && (
         <button
           type="button"
           onClick={handleScrollJump}
