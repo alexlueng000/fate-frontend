@@ -2,38 +2,11 @@ import Link from "next/link";
 import {
   ArrowRight,
   AtSign,
-  BookOpenText,
-  Compass,
   Mail,
-  MessageCircle,
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
 import Footer from "@/app/components/Footer";
-
-const CAPABILITIES = [
-  {
-    title: "八字文化",
-    tagline: "看清你是谁",
-    body: "基于出生信息生成传统文化分析内容，把命理术语翻译成更容易理解的个人特质参考。",
-    icon: Compass,
-    color: "var(--color-feature-bazi)",
-  },
-  {
-    title: "心镜灯",
-    tagline: "看懂你的情绪",
-    body: "通过每日记录整理情绪变化，让长期的感受和生活节奏逐渐变得可观察。",
-    icon: MessageCircle,
-    color: "var(--color-feature-xinji)",
-  },
-  {
-    title: "六爻文化",
-    tagline: "看清下一步",
-    body: "面对具体问题时，提供一个来自传统文化卦象的补充视角，帮助你重新梳理信息。",
-    icon: BookOpenText,
-    color: "var(--color-feature-liuyao)",
-  },
-] as const;
 
 const BELIEFS = [
   "提供参考，不替你下结论",
@@ -54,63 +27,21 @@ export default function AboutPage() {
               className="max-w-3xl text-[2rem] leading-[1.22] font-medium text-[var(--color-text-primary)] md:text-[3rem] lg:text-[3.5rem]"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              我们做的不是算命，
-              <span className="block text-[var(--color-primary)]">而是一面理解自己的镜子。</span>
+              让传统文化，
+              <span className="block text-[var(--color-primary)]">成为理解自己的另一种方法。</span>
             </h1>
           </div>
 
           <div className="space-y-6 border-t border-[var(--color-border)] pt-6 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-10">
             <p className="text-[1rem] leading-[1.8] text-[var(--color-text-body)] md:text-[1.0625rem]">
-              易凡文化是一款基于中国传统文化与 AI 技术的智能解读平台。我们希望把八字、六爻等传统文化内容从神秘化和营销化里拿出来，变成一种更安静、更清晰的自我理解方式。
+              易凡文化是一款基于中国传统文化与 AI 技术的智能解读平台。我们关注八字、六爻、情绪记录等内容在当代生活里的表达方式，希望把它们从神秘化、营销化和过度断言里拿出来，变成一种更安静、更清晰的自我理解工具。
             </p>
             <p className="text-[0.9375rem] leading-[1.8] text-[var(--color-text-secondary)]">
-              AI 负责整理资料、生成内容和解释术语；最终的判断、选择和生活，始终由你自己完成。
+              在产品中，AI 主要承担资料整理、结构化生成和术语解释的工作。它会把传统文化中的复杂概念转译成更容易阅读的语言，帮助你从性格特质、生活节奏、关系模式和具体问题中，看见一些平时容易被忽略的线索。
             </p>
-          </div>
-        </div>
-      </section>
-
-      <section className="px-6 py-16 md:py-20" style={{ background: "var(--color-bg-elevated)" }}>
-        <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[0.42fr_1fr]">
-          <header className="space-y-3">
-            <p className="text-[0.6875rem] uppercase tracking-[0.12em] text-[var(--color-text-muted)]">
-              What We Build
+            <p className="text-[0.9375rem] leading-[1.8] text-[var(--color-text-secondary)]">
+              我们不希望用“注定”“必然”这类词替用户下判断。易凡文化提供的是参考视角，不是人生裁决；最终的选择、行动与生活方向，始终应该回到你自己的经验、理性和现实处境中。
             </p>
-            <h2
-              className="text-[1.75rem] leading-[1.3] font-medium text-[var(--color-text-primary)] md:text-[2.25rem]"
-              style={{ fontFamily: "var(--font-display)" }}
-            >
-              三个入口，指向同一件事。
-            </h2>
-          </header>
-
-          <div className="grid gap-4 md:grid-cols-3">
-            {CAPABILITIES.map((item) => {
-              const Icon = item.icon;
-
-              return (
-                <article
-                  key={item.title}
-                  className="border border-[var(--color-border)] bg-[var(--color-bg-card)] p-5"
-                >
-                  <div className="mb-5 flex h-10 w-10 items-center justify-center border border-[var(--color-border)] bg-[var(--color-bg)]">
-                    <Icon className="h-5 w-5" style={{ color: item.color }} aria-hidden="true" />
-                  </div>
-                  <h3
-                    className="text-[1.125rem] font-medium"
-                    style={{ fontFamily: "var(--font-display)", color: item.color }}
-                  >
-                    {item.title}
-                  </h3>
-                  <p className="mt-1 text-[0.875rem] text-[var(--color-text-secondary)]">
-                    {item.tagline}
-                  </p>
-                  <p className="mt-4 text-[0.875rem] leading-[1.75] text-[var(--color-text-body)]">
-                    {item.body}
-                  </p>
-                </article>
-              );
-            })}
           </div>
         </div>
       </section>
