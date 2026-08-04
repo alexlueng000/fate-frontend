@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowUp, History, Mail } from 'lucide-react';
+import { ArrowDown, ArrowUp, History, Mail } from 'lucide-react';
 import { useRouteGuard } from '@/app/lib/useRouteGuard';
 import { getAuthToken } from '@/app/lib/auth';
 import { trackEvent } from '@/app/lib/analytics/track';
@@ -49,7 +49,8 @@ export default function ChatPage() {
   const [quotaDialogOpen, setQuotaDialogOpen] = useState(false);
   const [quotaDialogMessage, setQuotaDialogMessage] = useState('');
   const [viewingHistory, setViewingHistory] = useState(false);
-  const [showBackToTop, setShowBackToTop] = useState(false);
+  const [showScrollJump, setShowScrollJump] = useState(false);
+  const [scrollJumpDirection, setScrollJumpDirection] = useState<'top' | 'bottom'>('bottom');
 
   // 安全读取 conversation_id
   function readConversationId(meta: unknown): string {
@@ -64,12 +65,24 @@ export default function ChatPage() {
   }, []);
 
   useEffect(() => {
-    const updateBackToTopVisibility = () => {
-      setShowBackToTop(window.scrollY > 600);
+    const updateScrollJump = () => {
+      const doc = document.documentElement;
+      const scrollTop = window.scrollY || doc.scrollTop;
+      const viewportHeight = window.innerHeight;
+      const scrollHeight = doc.scrollHeight;
+      const distanceToBottom = scrollHeight - scrollTop - viewportHeight;
+
+      setShowScrollJump(scrollHeight > viewportHeight + 700);
+      setScrollJumpDirection(distanceToBottom > 420 ? 'bottom' : 'top');
     };
-    updateBackToTopVisibility();
-    window.addEventListener('scroll', updateBackToTopVisibility, { passive: true });
-    return () => window.removeEventListener('scroll', updateBackToTopVisibility);
+
+    updateScrollJump();
+    window.addEventListener('scroll', updateScrollJump, { passive: true });
+    window.addEventListener('resize', updateScrollJump);
+    return () => {
+      window.removeEventListener('scroll', updateScrollJump);
+      window.removeEventListener('resize', updateScrollJump);
+    };
   }, []);
 
   useEffect(() => {
@@ -598,6 +611,14 @@ export default function ChatPage() {
     });
   };
 
+  const handleScrollJump = () => {
+    if (scrollJumpDirection === 'bottom') {
+      window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+      return;
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F7F3EE] flex items-center justify-center">
@@ -691,16 +712,22 @@ export default function ChatPage() {
         message={quotaDialogMessage}
       />
 
-      {showBackToTop && (
+      {showScrollJump && (
         <button
           type="button"
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          aria-label="回到对话顶部"
-          title="回到顶部"
-          className="fixed bottom-6 right-4 z-40 inline-flex min-h-12 min-w-12 items-center justify-center gap-2 rounded-full border border-red-200 bg-white/95 px-3 text-sm font-medium text-red-800 shadow-lg backdrop-blur transition hover:-translate-y-0.5 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 sm:bottom-8 sm:right-8 sm:px-4"
+          onClick={handleScrollJump}
+          aria-label={scrollJumpDirection === 'bottom' ? '跳到对话底部' : '回到对话顶部'}
+          title={scrollJumpDirection === 'bottom' ? '到底部' : '回顶部'}
+          className="fixed bottom-24 right-4 z-40 inline-flex min-h-12 min-w-12 items-center justify-center gap-2 border border-[var(--color-primary)]/25 bg-[var(--color-bg-elevated)]/95 px-3 text-sm font-medium text-[var(--color-primary)] shadow-lg backdrop-blur transition hover:-translate-y-0.5 hover:bg-[var(--color-bg-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/40 sm:bottom-8 sm:right-8 sm:px-4"
         >
-          <ArrowUp className="h-5 w-5" aria-hidden="true" />
-          <span className="hidden sm:inline">回到顶部</span>
+          {scrollJumpDirection === 'bottom' ? (
+            <ArrowDown className="h-5 w-5" aria-hidden="true" />
+          ) : (
+            <ArrowUp className="h-5 w-5" aria-hidden="true" />
+          )}
+          <span className="hidden sm:inline">
+            {scrollJumpDirection === 'bottom' ? '到底部' : '回顶部'}
+          </span>
         </button>
       )}
     </main>
