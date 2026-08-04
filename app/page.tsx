@@ -122,37 +122,6 @@ export default function LandingPage() {
               </header>
 
               <ol className="divide-y divide-[var(--color-border)]">
-                <li>
-                  <Link
-                    href={user ? "/dashboard" : "/register"}
-                    onClick={() => trackEvent("home_primary_cta_click", {
-                      payload: { entry: "hero_path", target: user ? "dashboard" : "register" },
-                    })}
-                    className="group grid grid-cols-[auto_1fr_auto] items-baseline gap-4 px-5 py-5 transition-colors hover:bg-[var(--color-bg-hover)] focus-visible:bg-[var(--color-bg-hover)] focus-visible:outline-none"
-                  >
-                    <span
-                      className="font-mono text-[0.6875rem] text-[var(--color-primary)] tabular-nums"
-                      aria-hidden="true"
-                    >
-                      01
-                    </span>
-                    <div className="min-w-0 space-y-1">
-                      <span
-                        className="text-[1.125rem] font-medium text-[var(--color-primary)]"
-                        style={{ fontFamily: "var(--font-display)" }}
-                      >
-                        {user ? "进入命理首页" : "免费生成个人分析"}
-                      </span>
-                      <p className="text-[0.8125rem] leading-relaxed text-[var(--color-text-muted)]">
-                        先填写出生信息，看见一份关于自己的核心特质与当前主题。
-                      </p>
-                    </div>
-                    <ArrowRight
-                      className="h-4 w-4 self-center text-[var(--color-primary)] transition-transform group-hover:translate-x-0.5"
-                      aria-hidden="true"
-                    />
-                  </Link>
-                </li>
                 {HERO_FEATURES.map((f, idx) => (
                   <li key={f.id}>
                     <Link
@@ -167,7 +136,7 @@ export default function LandingPage() {
                         className="font-mono text-[0.6875rem] text-[var(--color-text-hint)] tabular-nums"
                         aria-hidden="true"
                       >
-                        {String(idx + 2).padStart(2, "0")}
+                        {String(idx + 1).padStart(2, "0")}
                       </span>
                       <div className="min-w-0 space-y-1">
                         <div className="flex items-baseline gap-3">
@@ -193,24 +162,6 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ol>
-
-              <div className="border-t border-[var(--color-border)] px-5 py-4">
-                <Link
-                  href={user ? "/dashboard" : "/register"}
-                  className="btn btn-primary w-full group"
-                  onClick={() => trackEvent("home_primary_cta_click", {
-                    payload: { entry: "hero_card_bottom", target: user ? "dashboard" : "register" },
-                  })}
-                >
-                  {user ? "进入命理首页" : "生成个人分析"}
-                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-                </Link>
-                {!user && (
-                  <p className="mt-3 text-center text-[0.6875rem] text-[var(--color-text-hint)]">
-                    注册即表示同意 <Link href="/terms" className="underline-offset-2 hover:underline">用户协议</Link> 与 <Link href="/privacy" className="underline-offset-2 hover:underline">隐私政策</Link>
-                  </p>
-                )}
-              </div>
             </div>
           </aside>
         </div>
