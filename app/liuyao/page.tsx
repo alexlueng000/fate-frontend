@@ -34,13 +34,42 @@ import {
 type LiuyaoTaskContext = CareerTaskContext | RelationshipTaskContext;
 
 const QUESTION_SCENARIOS = [
-  { id: 'relationship', label: '感情关系', placeholder: '例如：我是否应该主动联系对方？' },
-  { id: 'career',       label: '工作事业', placeholder: '例如：我是否应该接受这个工作机会？' },
-  { id: 'business',     label: '合作客户', placeholder: '例如：这个客户近期是否有机会成交？' },
-  { id: 'wealth',       label: '财运决策', placeholder: '例如：这个投资项目是否值得参与？' },
-  { id: 'exam',         label: '考试申请', placeholder: '例如：我这次考试能否顺利通过？' },
-  { id: 'travel',       label: '出行搬迁', placeholder: '例如：我是否应该接受外地的工作机会？' },
-  { id: 'other',        label: '其他',     placeholder: '例如：我和对方的关系接下来会怎样？' },
+  {
+    id: 'relationship',
+    label: '感情关系',
+    placeholder: '例如：我是否应该主动联系对方？',
+    question: '我和对方的感情关系接下来会怎样发展？我现在是否适合主动联系对方？',
+  },
+  {
+    id: 'career',
+    label: '工作事业',
+    placeholder: '例如：我是否应该接受这个工作机会？',
+    question: '我目前这份工作或新的工作机会，接下来是否值得继续投入？',
+  },
+  {
+    id: 'business',
+    label: '合作客户',
+    placeholder: '例如：这个客户近期是否有机会成交？',
+    question: '这个合作或客户近期是否有推进和成交的机会？我需要注意什么？',
+  },
+  {
+    id: 'wealth',
+    label: '财运决策',
+    placeholder: '例如：这个投资项目是否值得参与？',
+    question: '这个投资或财务决策现在是否值得参与？风险和机会分别在哪里？',
+  },
+  {
+    id: 'exam',
+    label: '考试申请',
+    placeholder: '例如：我这次考试能否顺利通过？',
+    question: '我这次考试、申请或评审能否顺利通过？接下来应该注意什么？',
+  },
+  {
+    id: 'travel',
+    label: '出行搬迁',
+    placeholder: '例如：我是否应该接受外地的工作机会？',
+    question: '我近期是否适合出行、搬迁或接受外地机会？过程是否顺利？',
+  },
 ];
 
 // Detail row — uniform, no rainbow, no decorative glyphs
@@ -250,7 +279,13 @@ export default function LiuyaoPage() {
     ? QUESTION_SCENARIOS.find((s) => s.id === selectedScenario)?.placeholder
     : '例如：我是否应该接受这个工作机会？';
 
-  const handleScenarioClick = (scenarioId: string) => setSelectedScenario(scenarioId);
+  const handleScenarioClick = (scenarioId: string) => {
+    const scenario = QUESTION_SCENARIOS.find((item) => item.id === scenarioId);
+    if (!scenario) return;
+    setSelectedScenario(scenarioId);
+    setQuestion(scenario.question);
+    setFormError(null);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -637,6 +672,9 @@ export default function LiuyaoPage() {
                   <legend className="block text-[11px] tracking-[0.24em] uppercase text-[color:var(--color-text-secondary)] font-medium mb-3">
                     常见问题
                   </legend>
+                  <p className="-mt-1 mb-3 text-[12px] leading-5 text-[color:var(--color-text-muted)]">
+                    点选后会自动填入所问之事，你也可以继续修改得更贴近自己的情况。
+                  </p>
                   <div className="flex flex-wrap gap-2">
                     {QUESTION_SCENARIOS.map((scenario) => (
                       <button
