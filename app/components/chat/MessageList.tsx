@@ -1,6 +1,6 @@
 'use client';
 import { Msg, Paipan } from '@/app/lib/chat/types';
-import { ComponentType } from 'react';
+import { ComponentType, ReactNode } from 'react';
 import { Bot, User, Loader2, RotateCcw } from 'lucide-react';
 import { MessageRating } from './MessageRating';
 import { SimplifyButton } from './SimplifyButton';
@@ -21,6 +21,9 @@ export function MessageList({
   regenerating,
   loading,
   emptyText = '正在准备中…',
+  emptyTitle,
+  emptyDescription,
+  emptyAction,
   containerClassName,
 }: {
   scrollRef?: React.MutableRefObject<HTMLDivElement | null> | React.RefObject<HTMLDivElement | null>;
@@ -35,6 +38,9 @@ export function MessageList({
   regenerating?: boolean;
   loading?: boolean;
   emptyText?: string;
+  emptyTitle?: string;
+  emptyDescription?: string;
+  emptyAction?: ReactNode;
   containerClassName?: string;
 }) {
   const baseClass = containerClassName ?? 'rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)]';
@@ -55,13 +61,19 @@ export function MessageList({
         className={`flex-1 overflow-y-auto p-6 ${baseClass}`}
       >
         <div className="flex h-full min-h-[300px] items-center justify-center">
-          <div className="text-center">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-gold)] flex items-center justify-center mx-auto mb-4 opacity-50">
-              <Bot className="w-8 h-8 text-white" />
+          <div className="mx-auto max-w-md text-center">
+            <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center border border-[var(--color-border)] bg-[var(--color-bg)]">
+              <Bot className="h-7 w-7 text-[var(--color-text-muted)]" aria-hidden="true" />
             </div>
-            <p className="text-[var(--color-text-muted)]">
-              {emptyText}
+            {emptyTitle && (
+              <h2 className="text-[1.25rem] font-medium text-[var(--color-text-primary)]" style={{ fontFamily: 'var(--font-display)' }}>
+                {emptyTitle}
+              </h2>
+            )}
+            <p className={`${emptyTitle ? 'mt-3' : ''} text-[0.9375rem] leading-[1.8] text-[var(--color-text-muted)]`}>
+              {emptyDescription ?? emptyText}
             </p>
+            {emptyAction && <div className="mt-5">{emptyAction}</div>}
           </div>
         </div>
       </div>

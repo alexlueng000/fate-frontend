@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowUp } from 'lucide-react';
+import { ArrowUp, History, Mail } from 'lucide-react';
 import { useRouteGuard } from '@/app/lib/useRouteGuard';
 import { getAuthToken } from '@/app/lib/auth';
 import { trackEvent } from '@/app/lib/analytics/track';
@@ -285,9 +286,11 @@ export default function ChatPage() {
   }, [conversationId, msgs]);
 
   // ===== Helpers =====
+  const historyRecordMissing = viewingHistory && msgs.length === 0 && !!err;
+
   const canSend = useMemo(
-    () => !!conversationId && !!input.trim() && !sending && !booting,
-    [conversationId, input, sending, booting],
+    () => !!conversationId && !!input.trim() && !sending && !booting && !historyRecordMissing,
+    [conversationId, input, sending, booting, historyRecordMissing],
   );
 
   const sendStream = async (content: string, displayMessage?: string) => {
@@ -624,6 +627,30 @@ export default function ChatPage() {
           onQuestionClick={handleQuestionClick}
           loading={sending}
           emptyText={booting ? '正在读取解读记录…' : '这条记录暂无解读内容'}
+          emptyTitle={historyRecordMissing ? '这条记录暂时没有可显示的解读内容' : undefined}
+          emptyDescription={
+            historyRecordMissing
+              ? '可能是生成过程中页面被关闭、网络中断，或旧记录尚未保存完整。你可以返回解读记录查看其他内容；如果这条记录对你很重要，也可以联系客服协助排查。'
+              : undefined
+          }
+          emptyAction={
+            historyRecordMissing ? (
+              <div className="flex flex-wrap justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => router.push('/history')}
+                  className="btn btn-primary group"
+                >
+                  <History className="h-4 w-4" aria-hidden="true" />
+                  返回解读记录
+                </button>
+                <Link href="/contact" className="btn btn-secondary group">
+                  <Mail className="h-4 w-4" aria-hidden="true" />
+                  联系客服
+                </Link>
+              </div>
+            ) : undefined
+          }
         />
 
         {(booting || sending) && (
@@ -632,14 +659,15 @@ export default function ChatPage() {
             {booting ? '正在解读中…' : '发送中…'}
           </div>
         )}
-        {err && (
-          <div className="rounded-2xl bg-red-50 p-3 text-sm text-red-700 border border-red-200">
-            错误：{err}
+        {err && !historyRecordMissing && (
+          <div className="border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4 text-sm text-[var(--color-text-secondary)]">
+            <p className="font-medium text-[var(--color-primary)]">当前内容暂时无法加载</p>
+            <p className="mt-2 leading-[1.7]">{err}</p>
           </div>
         )}
 
         <QuickActions
-          disabled={sending || booting || !conversationId}
+          disabled={sending || booting || !conversationId || historyRecordMissing}
           buttons={quickButtons}
           onClick={sendQuick}
         />
@@ -650,7 +678,7 @@ export default function ChatPage() {
           onKeyDown={onKeyDown}
           canSend={canSend}
           sending={sending}
-          disabled={booting || !conversationId}
+          disabled={booting || !conversationId || historyRecordMissing}
           onSend={send}
           onRegenerate={regenerate}
         />
