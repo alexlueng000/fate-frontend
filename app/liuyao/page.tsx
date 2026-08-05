@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { ImageDown } from 'lucide-react';
 import { useUser } from '@/app/lib/auth';
 import { useRouteGuard } from '@/app/lib/useRouteGuard';
 import { liuyaoApi, PaipanRequest, HexagramDetail } from '@/app/lib/liuyao/api';
@@ -30,6 +31,7 @@ import {
   loadRelationshipTaskContext,
   type RelationshipTaskContext,
 } from '@/app/lib/tasks/relationship';
+import { ShareImageDialog } from '@/app/components/share/ShareImageDialog';
 
 type LiuyaoTaskContext = CareerTaskContext | RelationshipTaskContext;
 
@@ -106,6 +108,7 @@ export default function LiuyaoPage() {
   const [numbers, setNumbers] = useState<string[]>(['', '', '']);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<HexagramDetail | null>(null);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
   // inline error replaces alert()
   const [formError, setFormError] = useState<string | null>(null);
@@ -273,6 +276,11 @@ export default function LiuyaoPage() {
   const canSend = useMemo(
     () => !!conversationId && !!input.trim() && !sending && !booting,
     [conversationId, input, sending, booting],
+  );
+
+  const shareSource = useMemo(
+    () => result ? ({ kind: 'liuyao' as const, hexagram: result, messages: msgs }) : null,
+    [msgs, result],
   );
 
   const currentPlaceholder = selectedScenario
@@ -989,7 +997,15 @@ export default function LiuyaoPage() {
               </div>
 
               {/* Footer actions */}
-              <div className="px-6 md:px-9 py-6 border-t border-[color:var(--color-border)] flex justify-center">
+              <div className="px-6 md:px-9 py-6 border-t border-[color:var(--color-border)] flex flex-wrap justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShareDialogOpen(true)}
+                  className="btn btn-primary"
+                >
+                  <ImageDown className="h-4 w-4" aria-hidden="true" />
+                  保存分享图
+                </button>
                 <button
                   type="button"
                   onClick={() => {
@@ -1125,6 +1141,14 @@ export default function LiuyaoPage() {
         title="六爻次数已用完"
         message={quotaDialogMessage}
       />
+
+      {shareSource && (
+        <ShareImageDialog
+          open={shareDialogOpen}
+          source={shareSource}
+          onClose={() => setShareDialogOpen(false)}
+        />
+      )}
     </div>
   );
 }

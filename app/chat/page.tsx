@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowDown, ArrowUp, History, Mail } from 'lucide-react';
+import { ArrowDown, ArrowUp, History, ImageDown, Mail } from 'lucide-react';
 import { useRouteGuard } from '@/app/lib/useRouteGuard';
 import { getAuthToken } from '@/app/lib/auth';
 import { trackEvent } from '@/app/lib/analytics/track';
@@ -27,6 +27,7 @@ import {
 import { historyApi } from '@/app/lib/history/api';
 import { QuotaChip } from '@/app/components/QuotaChip';
 import QuotaExhaustedDialog from '@/app/components/QuotaExhaustedDialog';
+import { ShareImageDialog } from '@/app/components/share/ShareImageDialog';
 
 export default function ChatPage() {
   const router = useRouter();
@@ -50,6 +51,7 @@ export default function ChatPage() {
   const [quotaDialogMessage, setQuotaDialogMessage] = useState('');
   const [viewingHistory, setViewingHistory] = useState(false);
   const [scrollJumpDirection, setScrollJumpDirection] = useState<'top' | 'bottom'>('bottom');
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const topAnchorRef = useRef<HTMLDivElement>(null);
   const bottomAnchorRef = useRef<HTMLDivElement>(null);
 
@@ -299,6 +301,16 @@ export default function ChatPage() {
   const canSend = useMemo(
     () => !!conversationId && !!input.trim() && !sending && !booting && !historyRecordMissing,
     [conversationId, input, sending, booting, historyRecordMissing],
+  );
+
+  const canShareImage = useMemo(
+    () => !!paipan || msgs.some((msg) => msg.role === 'assistant' && msg.content.trim() && !msg.streaming),
+    [msgs, paipan],
+  );
+
+  const shareSource = useMemo(
+    () => ({ kind: 'bazi' as const, paipan, messages: msgs }),
+    [msgs, paipan],
   );
 
   const sendStream = async (content: string, displayMessage?: string) => {
@@ -630,7 +642,20 @@ export default function ChatPage() {
           conversationId={conversationId}
           onBack={() => router.push(viewingHistory ? '/history' : '/')}
           backLabel={viewingHistory ? '返回解读记录' : '返回首页'}
-          rightExtra={<QuotaChip type="chat" refreshKey={quotaRefreshKey} />}
+          rightExtra={(
+            <>
+              <button
+                type="button"
+                onClick={() => setShareDialogOpen(true)}
+                disabled={!canShareImage}
+                className="inline-flex min-h-8 shrink-0 items-center gap-1.5 rounded-full border border-red-200 bg-white/90 px-3 py-1 text-red-800 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <ImageDown className="h-3.5 w-3.5" aria-hidden="true" />
+                保存分享图
+              </button>
+              <QuotaChip type="chat" refreshKey={quotaRefreshKey} />
+            </>
+          )}
         />
 
         <MessageList
@@ -707,6 +732,12 @@ export default function ChatPage() {
         onClose={() => setQuotaDialogOpen(false)}
         title="八字次数已用完"
         message={quotaDialogMessage}
+      />
+
+      <ShareImageDialog
+        open={shareDialogOpen}
+        source={shareSource}
+        onClose={() => setShareDialogOpen(false)}
       />
 
       {viewingHistory && msgs.length > 0 && (
