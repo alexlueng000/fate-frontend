@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { Download, EyeOff, ImageDown, Loader2, X } from 'lucide-react';
-import { buildShareSvgDataUrl, downloadSharePng } from './share-utils';
+import {
+  buildShareSvgDataUrl,
+  downloadSharePng,
+  renderSharePngDataUrl,
+} from './share-utils';
 import {
   DEFAULT_SHARE_PRIVACY,
   type ShareImageSource,
@@ -28,19 +32,28 @@ const privacyOptions: Array<{
 
 export function ShareImageDialog({ open, source, onClose }: ShareImageDialogProps) {
   const [privacy, setPrivacy] = useState<SharePrivacy>(DEFAULT_SHARE_PRIVACY);
-  const [svgDataUrl, setSvgDataUrl] = useState('');
+  const [pngDataUrl, setPngDataUrl] = useState('');
   const [generating, setGenerating] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [preferLongPress, setPreferLongPress] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    const isWechat = /MicroMessenger/i.test(navigator.userAgent);
+    const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
+    setPreferLongPress(isWechat || isTouchDevice);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
     let alive = true;
     setGenerating(true);
+    setPngDataUrl('');
     setError('');
     buildShareSvgDataUrl(source, privacy)
+      .then(renderSharePngDataUrl)
       .then((url) => {
-        if (alive) setSvgDataUrl(url);
+        if (alive) setPngDataUrl(url);
       })
       .catch((err: unknown) => {
         if (alive) setError(err instanceof Error ? err.message : '分享图生成失败');
@@ -57,11 +70,11 @@ export function ShareImageDialog({ open, source, onClose }: ShareImageDialogProp
   const filename = `${source.kind === 'bazi' ? 'bazi' : 'liuyao'}-fateinsight-${Date.now()}.png`;
 
   const handleDownload = async () => {
-    if (!svgDataUrl) return;
+    if (!pngDataUrl) return;
     setDownloading(true);
     setError('');
     try {
-      await downloadSharePng(svgDataUrl, filename);
+      downloadSharePng(pngDataUrl, filename);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : '图片下载失败');
     } finally {
@@ -122,19 +135,25 @@ export function ShareImageDialog({ open, source, onClose }: ShareImageDialogProp
               </div>
             )}
 
-            <button
-              type="button"
-              onClick={handleDownload}
-              disabled={!svgDataUrl || generating || downloading}
-              className="btn btn-primary mt-5 w-full"
-            >
-              {downloading ? (
-                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-              ) : (
-                <Download className="h-4 w-4" aria-hidden="true" />
-              )}
-              下载 PNG
-            </button>
+            {preferLongPress ? (
+              <div className="mt-5 border border-[color:var(--color-primary)]/20 bg-[color:var(--color-primary)]/[0.05] px-3 py-3 text-center text-sm leading-6 text-[color:var(--color-text-body)]">
+                图片生成后，请在下方图片上长按，选择“保存图片”或“发送给朋友”。
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={handleDownload}
+                disabled={!pngDataUrl || generating || downloading}
+                className="btn btn-primary mt-5 w-full"
+              >
+                {downloading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                ) : (
+                  <Download className="h-4 w-4" aria-hidden="true" />
+                )}
+                下载 PNG
+              </button>
+            )}
           </aside>
 
           <div className="bg-[color:var(--color-bg)] p-4 md:p-6">
@@ -144,12 +163,13 @@ export function ShareImageDialog({ open, source, onClose }: ShareImageDialogProp
                   <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
                   正在生成预览
                 </div>
-              ) : svgDataUrl ? (
+              ) : pngDataUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={svgDataUrl}
+                  src={pngDataUrl}
                   alt="分享图预览"
-                  className="h-auto w-full border border-[color:var(--color-border)] bg-[color:var(--color-bg-elevated)] shadow-[var(--shadow-md)]"
+                  draggable={false}
+                  className="h-auto w-full select-none border border-[color:var(--color-border)] bg-[color:var(--color-bg-elevated)] shadow-[var(--shadow-md)] [-webkit-touch-callout:default]"
                 />
               ) : (
                 <div className="flex items-center gap-2 text-sm text-[color:var(--color-text-secondary)]">

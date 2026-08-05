@@ -248,7 +248,7 @@ export async function buildShareSvgDataUrl(source: ShareImageSource, privacy: Sh
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 }
 
-export async function downloadSharePng(svgDataUrl: string, filename: string) {
+export async function renderSharePngDataUrl(svgDataUrl: string) {
   const image = new Image();
   image.decoding = 'async';
   await new Promise<void>((resolve, reject) => {
@@ -266,12 +266,16 @@ export async function downloadSharePng(svgDataUrl: string, filename: string) {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
 
-  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png', 0.96));
-  if (!blob) throw new Error('图片导出失败');
-  const url = URL.createObjectURL(blob);
+  const pngDataUrl = canvas.toDataURL('image/png', 0.96);
+  if (!pngDataUrl.startsWith('data:image/png')) {
+    throw new Error('图片尺寸过大，请减少解读内容后重试');
+  }
+  return pngDataUrl;
+}
+
+export function downloadSharePng(pngDataUrl: string, filename: string) {
   const link = document.createElement('a');
-  link.href = url;
+  link.href = pngDataUrl;
   link.download = filename;
   link.click();
-  URL.revokeObjectURL(url);
 }
