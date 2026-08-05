@@ -119,6 +119,7 @@ export default function LiuyaoPage() {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [booting, setBooting] = useState(false);
+  const [chatError, setChatError] = useState<string | null>(null);
   const chatScrollRef = useRef<HTMLDivElement | null>(null);
 
   const [liuyaoQuickButtons, setLiuyaoQuickButtons] =
@@ -324,6 +325,7 @@ export default function LiuyaoPage() {
       setResult(hexagram);
       setConversationId(null);
       setMsgs([]);
+      setChatError(null);
       setInput('');
       if (autoStartAfterPaipan) {
         setLoading(false);
@@ -360,6 +362,8 @@ export default function LiuyaoPage() {
   const handleStartChat = async (targetHexagram: HexagramDetail | null = result) => {
     if (!targetHexagram?.hexagram_id) return;
     setBooting(true);
+    setChatError(null);
+    setFormError(null);
 
     const assistantIdx = 0;
     let streamedText = '';
@@ -392,7 +396,7 @@ export default function LiuyaoPage() {
       const finalText = finalizeAssistant(assistantIdx, streamedText);
       if (!finalText) {
         setConversationId(null);
-        setFormError('这次解卦没有成功生成内容，未扣除次数，请重新生成。');
+        setChatError('这次解卦没有成功生成内容，未扣除次数。');
         return;
       }
       void refreshLiuyaoQuota();
@@ -403,7 +407,7 @@ export default function LiuyaoPage() {
       } else {
         const msg = error instanceof Error ? error.message : '开启对话失败，请重试';
         console.error('开启对话失败:', error);
-        setFormError(msg);
+        setChatError(msg);
         setMsgs([]);
         setConversationId(null);
       }
@@ -417,6 +421,7 @@ export default function LiuyaoPage() {
   ) => {
     const assistantIdx = msgs.length;
     let streamedText = '';
+    setChatError(null);
     setMsgs((prev) => {
       const next: Msg[] = [...prev, { role: 'assistant', content: '', streaming: true }];
       return next;
@@ -437,7 +442,7 @@ export default function LiuyaoPage() {
       );
       const finalText = finalizeAssistant(assistantIdx, streamedText);
       if (!finalText) {
-        setFormError('这次回复没有成功生成内容，未扣除次数，请重新发送。');
+        setChatError('这次回复没有成功生成内容，未扣除次数。');
       }
     } catch (error: unknown) {
       if (error instanceof QuotaExhaustedError) {
@@ -448,13 +453,10 @@ export default function LiuyaoPage() {
       setMsgs((prev) => {
         if (assistantIdx < 0 || assistantIdx >= prev.length) return prev;
         const next = [...prev];
-        next[assistantIdx] = {
-          ...next[assistantIdx],
-          content: '抱歉，AI 服务暂时不可用，请稍后再试。',
-          streaming: false,
-        };
+        next.splice(assistantIdx, 1);
         return next;
       });
+      setChatError('抱歉，AI 服务暂时不可用，请稍后再试。');
     }
   };
 
@@ -513,9 +515,14 @@ export default function LiuyaoPage() {
   const regenerate = async () => {
     if (!conversationId || !result?.hexagram_id) return;
     setSending(true);
+    setChatError(null);
     try {
       const data = await liuyaoApi.regenerateChat(result.hexagram_id, conversationId);
       const newReply = normalizeMarkdown(data.reply || '');
+      if (!newReply.trim()) {
+        setChatError('这次重新解卦没有成功生成内容，未扣除次数。');
+        return;
+      }
       setMsgs((prev) => {
         const lastIdx = [...prev].map((m, i) => ({ m, i }))
           .reverse()
@@ -525,9 +532,10 @@ export default function LiuyaoPage() {
         next[lastIdx] = { role: 'assistant', content: newReply };
         return next;
       });
+      void refreshLiuyaoQuota();
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : '重新生成失败';
-      setFormError(msg);
+      setChatError(msg);
     } finally {
       setSending(false);
     }
@@ -1030,6 +1038,7 @@ export default function LiuyaoPage() {
                     setResult(null);
                     setConversationId(null);
                     setMsgs([]);
+                    setChatError(null);
                     setInput('');
                   }}
                   className="btn btn-secondary"
@@ -1077,6 +1086,26 @@ export default function LiuyaoPage() {
                         booting &&
                         (msgs.length === 0 ||
                           (last?.role === 'assistant' && last?.streaming && !last?.content));
+                      if (chatError) {
+                        return (
+                          <div className="rounded-[4px] border border-[color:var(--color-primary)]/30 bg-[color:var(--color-primary)]/[0.04] px-6 py-10 text-center">
+                            <p className="text-[15px] font-medium text-[color:var(--color-text-primary)]">
+                              这次解卦没有成功完成
+                            </p>
+                            <p className="mx-auto mt-2 max-w-md text-[13px] leading-6 text-[color:var(--color-text-secondary)]">
+                              {chatError} 如果页面长时间没有内容，通常是 AI 服务临时不可用或网络中断。未成功生成时不会扣除次数。
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => conversationId ? void regenerate() : void handleStartChat()}
+                              disabled={booting || sending}
+                              className="btn btn-primary mt-6"
+                            >
+                              {booting || sending ? '重新解卦中…' : '重新解卦'}
+                            </button>
+                          </div>
+                        );
+                      }
                       if (initialLoading) {
                         return (
                           <div className="rounded-[4px] border border-[color:var(--color-border)] bg-[color:var(--color-bg)] px-6 py-12 text-center">
@@ -1090,7 +1119,10 @@ export default function LiuyaoPage() {
                               AI 正在解读卦象…
                             </p>
                             <p className="text-[12px] text-[color:var(--color-text-muted)]">
-                              分析卦象结构、动爻变化与问题关联
+                              通常需要约 1 分钟，请先不要关闭页面。
+                            </p>
+                            <p className="mt-1 text-[12px] text-[color:var(--color-text-muted)]">
+                              正在分析卦象结构、动爻变化与问题关联。
                             </p>
                           </div>
                         );
@@ -1107,7 +1139,7 @@ export default function LiuyaoPage() {
                       );
                     })()}
                     <QuickActions
-                      disabled={sending || booting || !conversationId}
+                      disabled={sending || booting || !conversationId || !!chatError}
                       buttons={liuyaoQuickButtons}
                       onClick={sendQuick}
                     />
@@ -1117,7 +1149,7 @@ export default function LiuyaoPage() {
                       onKeyDown={onInputKeyDown}
                       canSend={canSend}
                       sending={sending}
-                      disabled={booting || !conversationId}
+                      disabled={booting || !conversationId || !!chatError}
                       onSend={send}
                       onRegenerate={regenerate}
                       placeholder="基于此卦继续追问，例如：现在主动联系合适吗？"
