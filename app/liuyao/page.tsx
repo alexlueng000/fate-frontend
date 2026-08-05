@@ -338,14 +338,15 @@ export default function LiuyaoPage() {
     }
   };
 
-  const finalizeAssistant = (idx: number) => {
-    let finalText = '';
+  const finalizeAssistant = (idx: number, contentOverride?: string) => {
+    const rawContent = contentOverride ?? msgs[idx]?.content ?? '';
+    const { questions, cleanedContent } = parseSuggestedQuestions(rawContent);
+    const normalized = normalizeMarkdown(cleanedContent);
+    const finalText = normalized.trim();
+
     setMsgs((prev) => {
       if (idx < 0 || idx >= prev.length) return prev;
       const next = [...prev];
-      const { questions, cleanedContent } = parseSuggestedQuestions(next[idx].content || '');
-      const normalized = normalizeMarkdown(cleanedContent);
-      finalText = normalized.trim();
       if (!finalText) {
         next.splice(idx, 1);
         return next;
@@ -360,17 +361,15 @@ export default function LiuyaoPage() {
     if (!targetHexagram?.hexagram_id) return;
     setBooting(true);
 
-    let assistantIdx = -1;
-    setMsgs(() => {
-      const next: Msg[] = [{ role: 'assistant', content: '', streaming: true }];
-      assistantIdx = 0;
-      return next;
-    });
+    const assistantIdx = 0;
+    let streamedText = '';
+    setMsgs([{ role: 'assistant', content: '', streaming: true }]);
 
     try {
       await liuyaoApi.startChat(
         targetHexagram.hexagram_id,
         (delta) => {
+          streamedText = delta;
           setMsgs((prev) => {
             const next = [...prev];
             if (assistantIdx >= 0 && assistantIdx < next.length) {
@@ -390,7 +389,7 @@ export default function LiuyaoPage() {
         },
         taskContext,
       );
-      const finalText = finalizeAssistant(assistantIdx);
+      const finalText = finalizeAssistant(assistantIdx, streamedText);
       if (!finalText) {
         setConversationId(null);
         setFormError('这次解卦没有成功生成内容，未扣除次数，请重新生成。');
@@ -416,16 +415,17 @@ export default function LiuyaoPage() {
   const sendStream = async (
     runner: (onDelta: (text: string) => void, onMeta: (meta: unknown) => void) => Promise<void>,
   ) => {
-    let assistantIdx = -1;
+    const assistantIdx = msgs.length;
+    let streamedText = '';
     setMsgs((prev) => {
       const next: Msg[] = [...prev, { role: 'assistant', content: '', streaming: true }];
-      assistantIdx = next.length - 1;
       return next;
     });
 
     try {
       await runner(
         (delta) => {
+          streamedText = delta;
           setMsgs((prev) => {
             if (assistantIdx < 0 || assistantIdx >= prev.length) return prev;
             const next = [...prev];
@@ -435,7 +435,7 @@ export default function LiuyaoPage() {
         },
         () => {},
       );
-      const finalText = finalizeAssistant(assistantIdx);
+      const finalText = finalizeAssistant(assistantIdx, streamedText);
       if (!finalText) {
         setFormError('这次回复没有成功生成内容，未扣除次数，请重新发送。');
       }
