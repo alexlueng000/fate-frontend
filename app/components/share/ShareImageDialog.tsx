@@ -23,7 +23,7 @@ const privacyOptions: Array<{
   { key: 'hideName', label: '隐藏姓名', appliesTo: ['bazi'] },
   { key: 'hideBirthTime', label: '隐藏时柱', appliesTo: ['bazi'] },
   { key: 'hideLocation', label: '隐藏地点', appliesTo: ['bazi', 'liuyao'] },
-  { key: 'hideQuestion', label: '隐藏问题原文', appliesTo: ['bazi', 'liuyao'] },
+  { key: 'hideQuestion', label: '隐藏问题原文', appliesTo: ['bazi'] },
 ];
 
 export function ShareImageDialog({ open, source, onClose }: ShareImageDialogProps) {

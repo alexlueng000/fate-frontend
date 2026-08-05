@@ -86,7 +86,7 @@ function sectionBlock({
   y,
   width,
   maxChars,
-  bodySize = 23,
+  bodySize = 21,
 }: {
   title: string;
   paragraphs: string[];
@@ -96,23 +96,23 @@ function sectionBlock({
   maxChars: number;
   bodySize?: number;
 }) {
-  const titleY = y + 38;
-  let currentY = y + 78;
+  const titleY = y + 20;
+  let currentY = y + 54;
   const textParts: string[] = [];
 
   for (const paragraph of paragraphs) {
     const wrapped = wrapText(paragraph, maxChars);
     for (const line of wrapped) {
-      textParts.push(textLine(x + 28, currentY, line, { size: bodySize, color: '#4B433D' }));
-      currentY += bodySize + 12;
+      textParts.push(textLine(x, currentY, line, { size: bodySize, color: '#4B433D' }));
+      currentY += bodySize + 8;
     }
-    currentY += 10;
+    currentY += 8;
   }
 
-  const height = Math.max(currentY - y + 8, 118);
+  const height = Math.max(currentY - y + 4, 82);
   const svg = `
-    <rect x="${x}" y="${y}" width="${width}" height="${height}" rx="4" fill="#F7F3EE" stroke="#E2D8CE"/>
-    ${textLine(x + 28, titleY, title, { size: 18, color: '#B54434', weight: 700 })}
+    ${textLine(x, titleY, title, { size: 18, color: '#B54434', weight: 700 })}
+    <line x1="${x}" y1="${titleY + 14}" x2="${x + width}" y2="${titleY + 14}" stroke="#E2D8CE"/>
     ${textParts.join('')}
   `;
 
@@ -191,7 +191,7 @@ export async function buildShareSvgDataUrl(source: ShareImageSource, privacy: Sh
   const answerParagraphs = markdownParagraphs(assistant || (isBazi
     ? '已生成八字排盘，可结合当下问题继续做文化分析。'
     : '卦象已生成，可结合问题继续查看文化分析与行动参考。'));
-  const questionParagraphs = privacy.hideQuestion ? ['问题已隐藏'] : markdownParagraphs(userQuestion);
+  const questionParagraphs = isBazi && privacy.hideQuestion ? ['问题已隐藏'] : markdownParagraphs(userQuestion);
 
   let y = isBazi ? 430 : 680;
   let bodySvg = isBazi ? buildBaziChart(source, privacy) : buildLiuyaoChart(source);
@@ -203,11 +203,11 @@ export async function buildShareSvgDataUrl(source: ShareImageSource, privacy: Sh
       x: H_PADDING,
       y,
       width: CONTENT_WIDTH,
-      maxChars: 34,
-      bodySize: 24,
+      maxChars: 42,
+      bodySize: 22,
     });
     bodySvg += question.svg;
-    y = question.y + 24;
+    y = question.y + 18;
   }
 
   const answer = sectionBlock({
@@ -216,11 +216,11 @@ export async function buildShareSvgDataUrl(source: ShareImageSource, privacy: Sh
     x: H_PADDING,
     y,
     width: CONTENT_WIDTH,
-    maxChars: 36,
-    bodySize: 23,
+    maxChars: 43,
+    bodySize: 20,
   });
   bodySvg += answer.svg;
-  y = answer.y + 42;
+  y = answer.y + 34;
 
   const footerY = y;
   const height = Math.max(footerY + 190, isBazi ? 980 : 1180);

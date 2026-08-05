@@ -26,5 +26,5 @@ export const DEFAULT_SHARE_PRIVACY: SharePrivacy = {
   hideName: true,
   hideBirthTime: true,
   hideLocation: true,
-  hideQuestion: true,
+  hideQuestion: false,
 };
