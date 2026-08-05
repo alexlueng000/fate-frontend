@@ -418,12 +418,17 @@ export default function LiuyaoPage() {
 
   const sendStream = async (
     runner: (onDelta: (text: string) => void, onMeta: (meta: unknown) => void) => Promise<void>,
+    userContent?: string,
   ) => {
-    const assistantIdx = msgs.length;
+    const assistantIdx = msgs.length + (userContent ? 1 : 0);
     let streamedText = '';
     setChatError(null);
     setMsgs((prev) => {
-      const next: Msg[] = [...prev, { role: 'assistant', content: '', streaming: true }];
+      const next: Msg[] = [...prev];
+      if (userContent) {
+        next.push({ role: 'user', content: userContent });
+      }
+      next.push({ role: 'assistant', content: '', streaming: true });
       return next;
     });
 
@@ -464,12 +469,13 @@ export default function LiuyaoPage() {
     if (!conversationId || !result?.hexagram_id) return;
     const content = input.trim();
     if (!content) return;
-    setMsgs((m) => [...m, { role: 'user', content }]);
     setInput('');
     setSending(true);
     try {
-      await sendStream((onDelta, onMeta) =>
-        liuyaoApi.sendChat(result.hexagram_id, conversationId, content, onDelta, onMeta),
+      await sendStream(
+        (onDelta, onMeta) =>
+          liuyaoApi.sendChat(result.hexagram_id, conversationId, content, onDelta, onMeta),
+        content,
       );
       void refreshLiuyaoQuota();
     } finally {
@@ -479,11 +485,12 @@ export default function LiuyaoPage() {
 
   const sendQuick = async (label: string, prompt: string) => {
     if (!conversationId || !result?.hexagram_id) return;
-    setMsgs((m) => [...m, { role: 'user', content: label }]);
     setSending(true);
     try {
-      await sendStream((onDelta, onMeta) =>
-        liuyaoApi.quickChat(result.hexagram_id, conversationId, label, prompt, onDelta, onMeta),
+      await sendStream(
+        (onDelta, onMeta) =>
+          liuyaoApi.quickChat(result.hexagram_id, conversationId, label, prompt, onDelta, onMeta),
+        label,
       );
       void refreshLiuyaoQuota();
     } finally {
@@ -493,11 +500,12 @@ export default function LiuyaoPage() {
 
   const handleQuestionClick = async (q: string) => {
     if (!conversationId || sending || !result?.hexagram_id) return;
-    setMsgs((m) => [...m, { role: 'user', content: q }]);
     setSending(true);
     try {
-      await sendStream((onDelta, onMeta) =>
-        liuyaoApi.sendChat(result.hexagram_id, conversationId, q, onDelta, onMeta),
+      await sendStream(
+        (onDelta, onMeta) =>
+          liuyaoApi.sendChat(result.hexagram_id, conversationId, q, onDelta, onMeta),
+        q,
       );
       void refreshLiuyaoQuota();
     } finally {

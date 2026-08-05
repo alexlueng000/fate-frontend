@@ -53,7 +53,7 @@ function latestMessage(messages: Msg[], role: Msg['role']) {
 }
 
 function visualLength(value: string) {
-  return [...value].reduce((sum, char) => sum + (/[\u0000-\u00ff]/.test(char) ? 0.55 : 1), 0);
+  return [...value].reduce((sum, char) => sum + (/[\u0000-\u00ff]/.test(char) ? 0.62 : 1.08), 0);
 }
 
 function wrapText(value: string, maxChars: number) {
@@ -203,7 +203,7 @@ export async function buildShareSvgDataUrl(source: ShareImageSource, privacy: Sh
       x: H_PADDING,
       y,
       width: CONTENT_WIDTH,
-      maxChars: 42,
+      maxChars: 34,
       bodySize: 22,
     });
     bodySvg += question.svg;
@@ -216,7 +216,7 @@ export async function buildShareSvgDataUrl(source: ShareImageSource, privacy: Sh
     x: H_PADDING,
     y,
     width: CONTENT_WIDTH,
-    maxChars: 43,
+    maxChars: 35,
     bodySize: 20,
   });
   bodySvg += answer.svg;
