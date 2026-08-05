@@ -339,14 +339,21 @@ export default function LiuyaoPage() {
   };
 
   const finalizeAssistant = (idx: number) => {
+    let finalText = '';
     setMsgs((prev) => {
       if (idx < 0 || idx >= prev.length) return prev;
       const next = [...prev];
       const { questions, cleanedContent } = parseSuggestedQuestions(next[idx].content || '');
       const normalized = normalizeMarkdown(cleanedContent);
+      finalText = normalized.trim();
+      if (!finalText) {
+        next.splice(idx, 1);
+        return next;
+      }
       next[idx] = { ...next[idx], content: normalized, streaming: false, suggestedQuestions: questions };
       return next;
     });
+    return finalText;
   };
 
   const handleStartChat = async (targetHexagram: HexagramDetail | null = result) => {
@@ -383,7 +390,12 @@ export default function LiuyaoPage() {
         },
         taskContext,
       );
-      finalizeAssistant(assistantIdx);
+      const finalText = finalizeAssistant(assistantIdx);
+      if (!finalText) {
+        setConversationId(null);
+        setFormError('这次解卦没有成功生成内容，未扣除次数，请重新生成。');
+        return;
+      }
       void refreshLiuyaoQuota();
     } catch (error: unknown) {
       if (error instanceof QuotaExhaustedError) {
@@ -423,7 +435,10 @@ export default function LiuyaoPage() {
         },
         () => {},
       );
-      finalizeAssistant(assistantIdx);
+      const finalText = finalizeAssistant(assistantIdx);
+      if (!finalText) {
+        setFormError('这次回复没有成功生成内容，未扣除次数，请重新发送。');
+      }
     } catch (error: unknown) {
       if (error instanceof QuotaExhaustedError) {
         handleLiuyaoQuotaExhausted(error, assistantIdx);
@@ -454,6 +469,7 @@ export default function LiuyaoPage() {
       await sendStream((onDelta, onMeta) =>
         liuyaoApi.sendChat(result.hexagram_id, conversationId, content, onDelta, onMeta),
       );
+      void refreshLiuyaoQuota();
     } finally {
       setSending(false);
     }
@@ -467,6 +483,7 @@ export default function LiuyaoPage() {
       await sendStream((onDelta, onMeta) =>
         liuyaoApi.quickChat(result.hexagram_id, conversationId, label, prompt, onDelta, onMeta),
       );
+      void refreshLiuyaoQuota();
     } finally {
       setSending(false);
     }
@@ -480,6 +497,7 @@ export default function LiuyaoPage() {
       await sendStream((onDelta, onMeta) =>
         liuyaoApi.sendChat(result.hexagram_id, conversationId, q, onDelta, onMeta),
       );
+      void refreshLiuyaoQuota();
     } finally {
       setSending(false);
     }
