@@ -50,7 +50,7 @@ export function DisclaimerModal({ open, onAccept }: DisclaimerModalProps) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center p-3 sm:items-center sm:p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
       {/* 背景遮罩 - 不可点击关闭 */}
       <div
         className="absolute inset-0 backdrop-blur-[2px]"
@@ -62,26 +62,26 @@ export function DisclaimerModal({ open, onAccept }: DisclaimerModalProps) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="disclaimer-title"
-        className="relative flex max-h-[calc(100dvh-1.5rem)] w-full max-w-3xl animate-scale-in flex-col overflow-hidden border border-[var(--color-border)] bg-[var(--color-bg-card)] shadow-[var(--shadow-lg)] sm:max-h-[min(760px,calc(100dvh-3rem))]"
+        className="relative flex h-[78dvh] max-h-[680px] min-h-0 w-full max-w-3xl animate-scale-in flex-col overflow-hidden border border-[var(--color-border)] bg-[var(--color-bg-card)] shadow-[var(--shadow-lg)] sm:h-auto sm:max-h-[min(760px,calc(100dvh-3rem))]"
       >
         {/* 标题 */}
-        <div className="flex-shrink-0 border-b border-[var(--color-border)] px-5 py-5 sm:px-8 sm:py-7">
-          <div className="flex items-start gap-4">
-            <div className="mt-1 flex h-9 w-9 flex-shrink-0 items-center justify-center border border-[var(--color-border)] bg-[var(--color-bg)]">
-              <AlertTriangle className="h-5 w-5 text-[var(--color-primary)]" aria-hidden="true" />
+        <div className="flex-shrink-0 border-b border-[var(--color-border)] px-4 py-3 sm:px-8 sm:py-7">
+          <div className="flex items-start gap-3 sm:gap-4">
+            <div className="mt-1 flex h-8 w-8 flex-shrink-0 items-center justify-center border border-[var(--color-border)] bg-[var(--color-bg)] sm:h-9 sm:w-9">
+              <AlertTriangle className="h-4 w-4 text-[var(--color-primary)] sm:h-5 sm:w-5" aria-hidden="true" />
             </div>
-            <div className="min-w-0 space-y-2">
-              <p className="text-[0.6875rem] uppercase tracking-[0.12em] text-[var(--color-text-muted)]">
+            <div className="min-w-0 space-y-1.5 sm:space-y-2">
+              <p className="hidden text-[0.6875rem] uppercase tracking-[0.12em] text-[var(--color-text-muted)] sm:block">
                 Before You Continue
               </p>
               <h2
                 id="disclaimer-title"
-                className="text-[1.5rem] font-medium leading-[1.3] text-[var(--color-text-primary)] sm:text-[1.875rem]"
+                className="text-[1.375rem] font-medium leading-[1.25] text-[var(--color-text-primary)] sm:text-[1.875rem]"
                 style={{ fontFamily: 'var(--font-display)' }}
               >
                 服务声明
               </h2>
-              <p className="max-w-2xl text-[0.9375rem] leading-[1.75] text-[var(--color-text-secondary)]">
+              <p className="max-w-2xl text-[0.875rem] leading-[1.55] text-[var(--color-text-secondary)] sm:text-[0.9375rem] sm:leading-[1.75]">
                 欢迎使用易凡文化。继续使用前，请先了解本服务的内容性质、适用边界和数据处理方式。
               </p>
             </div>
@@ -89,12 +89,12 @@ export function DisclaimerModal({ open, onAccept }: DisclaimerModalProps) {
         </div>
 
         {/* 可滚动声明内容 */}
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-8 sm:py-6">
-          <ol className="space-y-5">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-8 sm:py-6">
+          <ol className="space-y-4 sm:space-y-5">
             {DECLARATION_ITEMS.map((item, index) => (
               <li
                 key={item.title}
-                className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 border-t border-[var(--color-border)] pt-5 first:border-t-0 first:pt-0"
+                className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-2 border-t border-[var(--color-border)] pt-4 first:border-t-0 first:pt-0 sm:gap-x-4 sm:pt-5"
               >
                 <span className="pt-1 font-mono text-[0.75rem] text-[var(--color-primary)] tabular-nums">
                   {String(index + 1).padStart(2, '0')}
@@ -103,7 +103,7 @@ export function DisclaimerModal({ open, onAccept }: DisclaimerModalProps) {
                   <h3 className="text-[1rem] font-medium text-[var(--color-text-primary)]">
                     {item.title}
                   </h3>
-                  <p className="text-[0.9375rem] leading-[1.8] text-[var(--color-text-secondary)]">
+                  <p className="text-[0.9375rem] leading-[1.7] text-[var(--color-text-secondary)] sm:leading-[1.8]">
                     {item.body}
                   </p>
                 </div>
@@ -111,7 +111,7 @@ export function DisclaimerModal({ open, onAccept }: DisclaimerModalProps) {
             ))}
           </ol>
 
-          <div className="mt-6 border border-[var(--color-border)] bg-[var(--color-bg)] p-4">
+          <div className="mt-5 border border-[var(--color-border)] bg-[var(--color-bg)] p-3 sm:mt-6 sm:p-4">
             <div className="flex items-start gap-3">
               <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-[var(--color-mist-deep)]" aria-hidden="true" />
               <p className="text-[0.875rem] leading-[1.75] text-[var(--color-text-secondary)]">
@@ -130,14 +130,14 @@ export function DisclaimerModal({ open, onAccept }: DisclaimerModalProps) {
         </div>
 
         {/* 同意按钮 */}
-        <div className="flex-shrink-0 border-t border-[var(--color-border)] bg-[var(--color-bg-card)] px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-8 sm:py-5">
+        <div className="flex-shrink-0 border-t border-[var(--color-border)] bg-[var(--color-bg-card)] px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-8 sm:py-5">
           <button
             onClick={onAccept}
-            className="btn btn-primary w-full text-[1rem] font-medium"
+            className="btn btn-primary min-h-11 w-full text-[1rem] font-medium"
           >
             我已阅读并同意
           </button>
-          <p className="mt-3 text-center text-[0.75rem] leading-5 text-[var(--color-text-hint)]">
+          <p className="mt-2 text-center text-[0.75rem] leading-5 text-[var(--color-text-hint)] sm:mt-3">
             点击同意后，本声明将记录在当前浏览器中；清除浏览器数据后可能会再次提示。
           </p>
         </div>
