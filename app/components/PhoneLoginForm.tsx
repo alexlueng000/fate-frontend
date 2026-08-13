@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { validateChinaPhone, sanitizePhone } from '@/app/lib/phone';
 import { loginPhone, saveAuth, checkProfileStatus } from '@/app/lib/auth';
 import { useRouter } from 'next/navigation';
+import { Loader2, ShieldCheck, Smartphone, Sparkles } from 'lucide-react';
 
 type TencentCaptchaResponse = {
   ret: number;
@@ -186,45 +187,51 @@ export default function PhoneLoginForm() {
   const canLogin = phone.length === 11 && code.length === 6 && !loading;
 
   return (
-    <form onSubmit={handleLogin} className="space-y-4">
+    <form onSubmit={handleLogin} className="space-y-3">
       {/* Phone input */}
       <div>
-        <label htmlFor="phone" className="block text-sm font-medium mb-1.5">
+        <label htmlFor="phone" className="block text-xs text-[var(--color-text-secondary)] mb-1.5">
           手机号
         </label>
-        <input
-          id="phone"
-          type="tel"
-          inputMode="numeric"
-          value={phone}
-          onChange={handlePhoneChange}
-          placeholder="请输入11位手机号"
-          className="input w-full"
-          disabled={loading}
-        />
+        <div className="relative">
+          <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
+          <input
+            id="phone"
+            type="tel"
+            inputMode="numeric"
+            value={phone}
+            onChange={handlePhoneChange}
+            placeholder="请输入11位手机号"
+            className="input !pl-12"
+            disabled={loading}
+          />
+        </div>
       </div>
 
       {/* Verification code input with send button */}
       <div>
-        <label htmlFor="code" className="block text-sm font-medium mb-1.5">
+        <label htmlFor="code" className="block text-xs text-[var(--color-text-secondary)] mb-1.5">
           验证码
         </label>
         <div className="flex gap-2">
-          <input
-            id="code"
-            type="tel"
-            inputMode="numeric"
-            value={code}
-            onChange={handleCodeChange}
-            placeholder="请输入6位验证码"
-            className="input flex-1"
-            disabled={loading}
-          />
+          <div className="relative min-w-0 flex-1">
+            <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
+            <input
+              id="code"
+              type="tel"
+              inputMode="numeric"
+              value={code}
+              onChange={handleCodeChange}
+              placeholder="请输入6位验证码"
+              className="input !pl-12"
+              disabled={loading}
+            />
+          </div>
           <button
             type="button"
             onClick={handleSendCode}
             disabled={!canSendCode}
-            className="btn px-4 whitespace-nowrap"
+            className="btn btn-secondary min-w-[118px] px-3 text-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {countdown > 0 ? `${countdown}秒后重试` : '获取验证码'}
           </button>
@@ -233,7 +240,7 @@ export default function PhoneLoginForm() {
 
       {/* Error message */}
       {error && (
-        <div className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded">
+        <div className="rounded-xl border border-[var(--color-primary)]/30 bg-[var(--color-primary)]/10 px-4 py-2.5 text-sm text-[var(--color-primary)]">
           {error}
         </div>
       )}
@@ -242,13 +249,23 @@ export default function PhoneLoginForm() {
       <button
         type="submit"
         disabled={!canLogin}
-        className="btn-primary w-full"
+        className="w-full btn btn-primary py-3 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {loading ? '登录中...' : '登录'}
+        {loading ? (
+          <>
+            <Loader2 className="w-5 h-5 animate-spin" />
+            登录中...
+          </>
+        ) : (
+          <>
+            <Sparkles className="w-5 h-5" />
+            登录
+          </>
+        )}
       </button>
 
       {/* Help text */}
-      <p className="text-xs text-[var(--color-text-secondary)] text-center">
+      <p className="text-sm text-center text-[var(--color-text-muted)]">
         未注册的手机号将自动创建账号
       </p>
     </form>

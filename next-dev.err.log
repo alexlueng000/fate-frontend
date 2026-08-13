@@ -1,1 +1,23 @@
  ⚠ Port 3000 is in use by process 44448, using available port 3001 instead.
+[Error: UNKNOWN: unknown error, unlink 'E:\claude_projects\chat\fate-frontend\.next\static\development\_buildManifest.js'] {
+  errno: -4094,
+  code: 'UNKNOWN',
+  syscall: 'unlink',
+  path: 'E:\\claude_projects\\chat\\fate-frontend\\.next\\static\\development\\_buildManifest.js'
+}
+node:events:502
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: EPERM: operation not permitted, open 'E:\claude_projects\chat\fate-frontend\.next\trace'
+Emitted 'error' event on WriteStream instance at:
+    at emitErrorNT (node:internal/streams/destroy:170:8)
+    at emitErrorCloseNT (node:internal/streams/destroy:129:3)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  errno: -4048,
+  code: 'EPERM',
+  syscall: 'open',
+  path: 'E:\\claude_projects\\chat\\fate-frontend\\.next\\trace'
+}
+
+Node.js v22.13.0
