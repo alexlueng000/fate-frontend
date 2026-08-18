@@ -727,12 +727,6 @@ export default function ChatPage() {
           }
         />
 
-        {(booting || sending) && (
-          <div className="flex items-center gap-2 rounded-2xl bg-white/90 border border-red-200 p-3 text-sm text-neutral-800">
-            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-red-300 border-t-red-600" />
-            {booting ? '正在解读中…' : '发送中…'}
-          </div>
-        )}
         {err && !historyRecordMissing && (
           <div className="border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4 text-sm text-[var(--color-text-secondary)]">
             <p className="font-medium text-[var(--color-primary)]">当前内容暂时无法加载</p>

@@ -7,6 +7,7 @@ import { SimplifyButton } from './SimplifyButton';
 import { SimplifyPanel } from './SimplifyPanel';
 import { SuggestedQuestions } from './SuggestedQuestions';
 import { parseSuggestedQuestions } from '@/app/lib/chat/parser';
+import { WaitingResponse } from './WaitingResponse';
 
 export function MessageList({
   scrollRef,
@@ -122,10 +123,12 @@ export function MessageList({
                   isAssistant
                     ? 'bg-[var(--color-bg-card)] border border-[var(--color-border)] text-[var(--color-text-primary)]'
                     : 'bg-[var(--color-primary)] text-white max-w-[85%] sm:max-w-[75%] ml-auto'
-                } ${m.streaming ? 'animate-pulse' : ''}`}
+                }`}
               >
                 {isAssistant ? (
-                  isIntro ? (
+                  m.streaming && !displayContent.trim() ? (
+                    <WaitingResponse />
+                  ) : isIntro ? (
                     <div className="border-l-2 border-[var(--color-gold)] pl-3">
                       <div className="msg-md">
                         <Markdown content={displayContent} />
