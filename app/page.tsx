@@ -13,8 +13,8 @@ const HERO_FEATURES = [
   {
     id: "bazi",
     name: "八字文化",
-    tagline: "认识自我特质",
-    desc: "基于出生信息生成传统文化分析内容，提供理解个人特质的参考视角。",
+    tagline: "看清你是谁",
+    desc: "输入出生信息，生成基础命盘和白话分析，作为理解性格倾向的参考。",
     color: "var(--color-feature-bazi)",
     anchor: "#feature-bazi",
   },
@@ -22,15 +22,15 @@ const HERO_FEATURES = [
     id: "xinji",
     name: "心镜灯",
     tagline: "看懂你的情绪",
-    desc: "通过每日记录观察情绪变化，帮助整理个人感受与生活节奏。",
+    desc: "记录每日情绪，把感受和生活节奏放在一起观察。",
     color: "var(--color-feature-xinji)",
     anchor: "#feature-xinji",
   },
   {
     id: "liuyao",
     name: "六爻文化",
-    tagline: "获得思考参考",
-    desc: "提供传统文化卦象解析内容，为具体问题增加一个思考视角。",
+    tagline: "看清下一步",
+    desc: "围绕一个具体问题，整理不同因素，提供补充视角。",
     color: "var(--color-feature-liuyao)",
     anchor: "#feature-liuyao",
   },
@@ -51,7 +51,7 @@ export default function LandingPage() {
           {/* 左：主文案 */}
           <div className="animate-fade-in space-y-7">
             <p className="text-[0.75rem] uppercase tracking-[0.14em] text-[var(--color-text-muted)]">
-              AI + 传统文化数字内容服务
+              AI · 东方文化 · 自我观察
             </p>
 
             <h1
@@ -61,19 +61,19 @@ export default function LandingPage() {
                 color: "var(--color-text-primary)",
               }}
             >
-              从传统文化中，
+              用东方视角，
               <br className="hidden md:block" />
-              看见理解<span style={{ color: "var(--color-primary)" }}>自己</span>的新视角。
+              看清<span style={{ color: "var(--color-primary)" }}>你自己</span>。
             </h1>
 
             <p className="max-w-xl text-[1rem] leading-relaxed text-[var(--color-text-body)] md:text-[1.0625rem]">
-              提供八字文化分析、情绪记录、六爻文化卦象解析与传统文化课程，让 AI 帮你整理信息、理解内容，并形成自己的判断。
+              八字文化分析、情绪记录与六爻参考，帮你把性格、感受和选择整理得更清楚。
             </p>
 
             {!user && (
               <div className="inline-flex items-center gap-2 border border-[var(--color-primary)]/25 bg-[var(--color-primary)]/5 px-3 py-2 text-[0.875rem] font-medium text-[var(--color-primary)]">
                 <Gift className="h-4 w-4" aria-hidden="true" />
-                新用户注册即享：八字解读 10 次 + 六爻解卦 10 次
+                新用户注册即享：八字解读 10 次 + 六爻参考 10 次
               </div>
             )}
 
@@ -86,7 +86,7 @@ export default function LandingPage() {
                   payload: { entry: "hero", target: user ? "dashboard" : "guest_analysis_start" },
                 })}
               >
-                {user ? "进入命理首页" : "免费生成个人分析"}
+                {user ? "进入命理首页" : "免费生成首次分析"}
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
               </Link>
               <Link
@@ -101,7 +101,7 @@ export default function LandingPage() {
 
             {/* 信任注脚 · 排版式而非图标堆 */}
             <p className="pt-2 text-[0.8125rem] text-[var(--color-text-muted)]">
-              AI 生成内容 · 传统文化学习参考 ·
+              AI 生成内容 · 供文化参考 ·
               <span className="ml-1">个人资料可管理和删除</span>
             </p>
           </div>
@@ -114,10 +114,10 @@ export default function LandingPage() {
                   className="text-[1rem] font-medium"
                   style={{ fontFamily: "var(--font-display)", color: "var(--color-text-primary)" }}
                 >
-                  从一份个人分析开始
+                  三个工具，一个目标
                 </h2>
                 <span className="text-[0.6875rem] uppercase tracking-[0.1em] text-[var(--color-text-hint)]">
-                  Index
+                  Tools
                 </span>
               </header>
 
@@ -175,32 +175,32 @@ export default function LandingPage() {
         <div className="mx-auto max-w-3xl space-y-12">
           <header className="space-y-3">
             <p className="text-[0.6875rem] uppercase tracking-[0.12em] text-[var(--color-text-muted)]">
-              产品定位
+              为什么是东方文化
             </p>
             <h2
               className="text-[1.75rem] md:text-[2rem] lg:text-[2.25rem] leading-[1.25] font-medium text-[var(--color-text-primary)]"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              传统文化，是理解自己的另一种视角。
+              用另一套语言，重新理解自己。
             </h2>
             <p className="text-[1rem] md:text-[1.0625rem] leading-relaxed text-[var(--color-text-secondary)]">
-              我们提供文化内容和信息整理工具，最终判断与选择始终由你自己完成。
+              不替你做决定，只帮你把性格、情绪和选择整理得更清楚。
             </p>
           </header>
 
           <ol className="space-y-8">
             {[
               {
-                head: "理解自我特质",
-                body: "通过八字文化分析，阅读关于个人特质、优势与注意事项的传统文化内容。",
+                head: "看清你是谁",
+                body: "八字文化分析会把出生信息转成一份结构化命盘，用白话解释你的性格倾向、优势和需要留意的地方。",
               },
               {
-                head: "看见内心情绪",
-                body: "通过每日情绪记录整理感受与变化，逐步观察自己的生活节奏。",
+                head: "看懂你的情绪",
+                body: "心镜灯让你持续记录感受。时间拉长后，你会更容易看见情绪变化和生活节奏之间的关系。",
               },
               {
-                head: "辅助理性决策",
-                body: "面对具体问题时，传统文化卦象解析提供补充视角，帮助你整理已有信息。",
+                head: "看清下一步",
+                body: "面对具体问题时，六爻文化参考会帮你拆开不同因素，补充一个整理思路的角度。",
               },
             ].map((item, idx) => (
               <li
@@ -248,30 +248,30 @@ export default function LandingPage() {
               className="text-[1.75rem] md:text-[2rem] lg:text-[2.25rem] leading-[1.25] font-medium text-[var(--color-text-primary)]"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              从一个真实问题开始<span style={{ color: "var(--color-primary)" }}>认识自己</span>。
+              他们都从一个真实问题开始，重新<span style={{ color: "var(--color-primary)" }}>看见自己</span>。
             </h2>
-            <p className="text-[1rem] leading-relaxed text-[var(--color-text-secondary)]">典型使用场景，最终判断始终由你自己完成。</p>
+            <p className="text-[1rem] leading-relaxed text-[var(--color-text-secondary)]">三个日常场景，三种整理问题的方式。</p>
           </header>
 
           <div className="grid gap-6 md:grid-cols-3 md:gap-7">
             <ScenarioCard
               persona="张女士"
               role="28 岁 · 产品经理"
-              scenario="在考虑是否跳槽时，我阅读了八字文化中的职业特质分析。最终决定仍由自己完成，但多了一个整理想法的角度。"
+              scenario="考虑跳槽那段时间，我一直拿不准方向。看完八字文化里的职业特质分析后，我多了一个整理自己优势和顾虑的角度。"
               features={["八字文化", "心镜灯"]}
               tags={["职业发展", "自我认知"]}
             />
             <ScenarioCard
               persona="李先生"
               role="35 岁 · 创业者"
-              scenario="创业压力大，经常焦虑。用心镜灯记录情绪后，我发现了自己的焦虑模式，也学会了更好地调节。现在每天睡前都会记录一下。"
+              scenario="创业压力大的时候，焦虑经常混在每天的琐事里。用心镜灯记了一段时间后，我才看见自己在哪些节点更容易被压力推着走。"
               features={["心镜灯"]}
               tags={["情绪管理", "压力释放"]}
             />
             <ScenarioCard
               persona="王女士"
               role="32 岁 · 设计师"
-              scenario="要不要接受外地的工作机会？我参考了六爻文化卦象解析，并把其中的提示和现实条件逐项比较，最后自己作出选择。"
+              scenario="要不要接受外地的工作机会，我纠结了很久。六爻文化参考没有替我决定，但帮我把顾虑拆成几条可以比较的线。"
               features={["六爻文化", "八字文化"]}
               tags={["职业选择", "理性决策"]}
             />
@@ -284,29 +284,29 @@ export default function LandingPage() {
         <div className="mx-auto max-w-3xl space-y-12">
           <header className="space-y-3">
             <p className="text-[0.6875rem] uppercase tracking-[0.12em] text-[var(--color-text-muted)]">
-              为什么选择
+              你可以放心
             </p>
             <h2
               className="text-[1.75rem] md:text-[2rem] lg:text-[2.25rem] leading-[1.25] font-medium text-[var(--color-text-primary)]"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              清晰、克制的传统文化 AI 产品。
+              给你参考，不替你做决定。
             </h2>
           </header>
 
           <ol className="space-y-10">
             {[
               {
-                head: "提供参考，不替你下结论",
-                body: "AI 负责生成和整理传统文化内容，不承诺结果，也不代替用户作出人生决定。",
+                head: "只给参考，不替你拍板",
+                body: "AI 会整理传统文化内容和你的输入信息，但不会承诺结果，也不会代替你作出人生决定。",
               },
               {
-                head: "专业且严谨",
-                body: "结合传统文化资料与现代 AI，提供结构化内容和术语解释，方便初学者阅读与理解。",
+                head: "术语有人帮你翻译",
+                body: "遇到日主、十神、六亲这类概念时，页面会尽量用白话解释，方便初学者阅读。",
               },
               {
-                head: "隐私绝对保护",
-                body: "采用必要的安全措施保护个人资料，并提供资料管理和删除入口。",
+                head: "资料可管理，有保护措施",
+                body: "出生信息、档案和历史记录有对应的管理入口。涉及个人资料的处理，会按隐私政策采取必要保护措施。",
               },
             ].map((item, idx) => (
               <li
@@ -349,20 +349,20 @@ export default function LandingPage() {
               className="text-[1.875rem] md:text-[2.25rem] lg:text-[2.5rem] leading-[1.2] font-medium text-[var(--color-text-primary)]"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              准备好认识真实的自己了吗？
+              先生成一份首次分析，再决定要不要继续聊。
             </h2>
             <p className="text-[1rem] md:text-[1.0625rem] leading-relaxed text-[var(--color-text-secondary)]">
-              新用户注册即享 10 次八字解读和 10 次六爻解卦；会员套餐提供更多额度与课程观看权限。
+              首次分析不需要注册。注册后可以保存结果，并获得 10 次八字解读和 10 次六爻参考额度。
             </p>
           </header>
 
           <ul className="space-y-3 text-left text-[0.9375rem] text-[var(--color-text-body)] md:mx-auto md:max-w-md">
             {[
-              "八字文化分析 + AI 内容整理",
-              "新用户 10 次八字解读 + 10 次六爻解卦",
-              "每日情绪追踪记录",
-              "六爻文化卦象解析",
-              "会员权益有效期 30 天",
+              "基础命盘和白话摘要",
+              "注册后 10 次八字解读 + 10 次六爻参考",
+              "心镜灯：持续记录情绪和生活节奏",
+              "六爻文化：面对具体问题时的补充视角",
+              "会员套餐可获得更多额度与课程权限",
             ].map((item) => (
               <li key={item} className="grid grid-cols-[auto_1fr] items-baseline gap-3">
                 <span
@@ -384,11 +384,11 @@ export default function LandingPage() {
                 payload: { entry: "final_cta", target: user ? "dashboard" : "guest_analysis_start" },
               })}
             >
-              {user ? "进入命理首页" : "免费生成个人分析"}
+              {user ? "进入命理首页" : "免费生成首次分析"}
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
             </Link>
             <Link href="/pricing" className="btn btn-secondary group">
-              查看套餐定价
+              查看会员套餐
               <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
             </Link>
           </div>
@@ -402,7 +402,7 @@ export default function LandingPage() {
             </p>
           )}
           <p className="border-t border-[var(--color-border)] pt-5 text-[0.75rem] leading-6 text-[var(--color-text-muted)]">
-            本平台内容由 AI 基于传统文化资料生成，仅供文化研究、娱乐与个人参考，不构成医疗、投资、法律或其他专业建议。
+            本平台内容由 AI 基于传统文化资料生成，仅供文化参考，不构成医疗、投资、法律或其他专业建议。
           </p>
         </div>
       </section>

@@ -9,31 +9,31 @@ import HexagramPreview from "./HexagramPreview";
 const FEATURES = [
   {
     id: "feature-bazi",
-    title: "你真的了解自己吗？",
-    subtitle: "八字文化 · 认识自我特质",
+    title: "从一份命盘，看见性格的底色。",
+    subtitle: "八字文化 · 看清你是谁",
     painPoints: [
       "为什么我总是在同样的地方摔跤？",
       "我的优势到底在哪里？",
-      "为什么有些事我就是做不好？",
+      "为什么有些事我总是绕不过去？",
     ],
     solution: {
       intro: "基于出生信息生成八字文化分析内容，包括：",
       points: [
-        "传统文化中的性格特质描述",
-        "不同人生阶段的文化解读",
+        "传统文化中的性格倾向描述",
+        "不同阶段的节律观察",
         "个人优势与注意事项参考",
       ],
     },
-    value: "提供传统文化视角，帮助你整理信息；最终判断由你自己完成。",
+    value: "它不会替你定义人生，但能帮你换一个角度看清自己。",
     visual: <BaziPreview />,
-    ctaText: "免费生成个人分析",
+    ctaText: "生成首次分析",
     ctaLink: "/analysis/start",
     themeColor: "var(--color-feature-bazi)",
     reversed: false,
   },
   {
     id: "feature-xinji",
-    title: "情绪来了，你能看见它吗？",
+    title: "情绪出现时，先把它照亮。",
     subtitle: "心镜灯 · 看懂你的情绪",
     painPoints: [
       "为什么我总是莫名烦躁？",
@@ -45,11 +45,11 @@ const FEATURES = [
       points: [
         "追踪情绪变化趋势",
         "发现情绪触发模式",
-        "基于五行理论的性格分析",
+        "结合传统文化视角的性格观察",
         "整理可尝试的日常行动",
       ],
     },
-    value: "看见情绪，才能理解情绪。理解自己，才能改变自己。",
+    value: "记录不是为了评判自己，而是让你慢慢看见情绪背后的节奏。",
     visual: <EmotionChart />,
     ctaText: "开始情绪追踪",
     ctaLink: "/xinji",
@@ -58,25 +58,25 @@ const FEATURES = [
   },
   {
     id: "feature-liuyao",
-    title: "当逻辑无法给出答案时",
-    subtitle: "六爻文化 · 获得思考参考",
+    title: "站在选择路口时，多一个参考角度。",
+    subtitle: "六爻文化 · 看清下一步",
     painPoints: [
       "这个工作机会该不该接受？",
       "这段关系还要不要继续？",
       "这个决定的风险在哪里？",
     ],
     solution: {
-      intro: "围绕一个具体问题生成卦象文化解析：",
+      intro: "围绕一个具体问题生成六爻文化参考：",
       points: [
-        "解释卦象结构与传统含义",
+        "解释结构与传统含义",
         "整理问题中的不同因素",
         "提供可供比较的思考角度",
         "提醒结合现实信息自行判断",
       ],
     },
-    value: "不是替你决定，而是多一个视角。让你在选择时多一份从容。",
+    value: "它不替你选 A 或 B，只帮你把已有信息拆开来看。",
     visual: <HexagramPreview />,
-    ctaText: "体验卦象解析",
+    ctaText: "试着整理一个问题",
     ctaLink: "/liuyao",
     themeColor: "var(--color-feature-liuyao)",
     reversed: false,
@@ -154,16 +154,16 @@ export default function FeatureShowcase() {
         <AnimatedSection>
           <header className="space-y-3 text-center">
             <p className="text-[0.6875rem] uppercase tracking-[0.12em] text-[var(--color-text-muted)]">
-              三个工具，一种方法
+              三个工具
             </p>
             <h2
               className="text-[1.75rem] md:text-[2rem] lg:text-[2.25rem] font-medium leading-[1.25] text-[var(--color-text-primary)]"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              三个工具，陪你认识自己
+              三个工具，帮你整理自己
             </h2>
             <p className="mx-auto max-w-xl text-[1rem] md:text-[1.0625rem] text-[var(--color-text-secondary)] leading-relaxed">
-              从性格特质到情绪模式，从自我认知到决策支持。
+              看清性格、看懂情绪、整理选择。
             </p>
           </header>
         </AnimatedSection>
