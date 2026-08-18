@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo, useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useMemo, useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { postJSON, api } from '@/app/lib/api';
 import { saveAuth, setUserCache, useUser, checkProfileStatus } from '@/app/lib/auth';
@@ -45,9 +45,12 @@ function passwordStrength(pw: string): { score: number; label: string } {
   return { score, label: labels[Math.min(score, labels.length - 1)] };
 }
 
-export default function RegisterPage() {
+function RegisterPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useUser();
+  const redirect = searchParams.get('redirect');
+  const redirectTarget = redirect && redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : null;
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -71,13 +74,17 @@ export default function RegisterPage() {
     if (!registerSuccess || !user) return;
     (async () => {
       const status = await checkProfileStatus();
+      if (redirectTarget) {
+        router.replace(redirectTarget);
+        return;
+      }
       if (status?.hasProfile) {
         router.replace('/dashboard');
       } else {
         router.replace('/profile/create');
       }
     })();
-  }, [registerSuccess, user, router]);
+  }, [registerSuccess, redirectTarget, user, router]);
 
   const emailOk = useMemo(() => validateEmail(email), [email]);
   const pwStrength = useMemo(() => passwordStrength(password), [password]);
@@ -375,12 +382,20 @@ export default function RegisterPage() {
           {/* Footer */}
           <p className="text-sm text-center text-[var(--color-text-muted)] pt-2">
             已有账号？
-            <Link href="/login" className="ml-1 text-[var(--color-gold)] hover:text-[var(--color-gold-light)] transition-colors font-medium">
+            <Link href={redirectTarget ? `/login?redirect=${encodeURIComponent(redirectTarget)}` : '/login'} className="ml-1 text-[var(--color-gold)] hover:text-[var(--color-gold-light)] transition-colors font-medium">
               去登录
             </Link>
           </p>
         </form>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[var(--color-bg)]" />}>
+      <RegisterPageContent />
+    </Suspense>
   );
 }

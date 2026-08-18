@@ -80,10 +80,10 @@ export default function LandingPage() {
             {/* CTA */}
             <div className="flex flex-wrap items-center gap-3 pt-2">
               <Link
-                href={user ? "/dashboard" : "/register"}
+                href={user ? "/dashboard" : "/analysis/start"}
                 className="btn btn-primary group"
                 onClick={() => trackEvent("home_primary_cta_click", {
-                  payload: { entry: "hero", target: user ? "dashboard" : "register" },
+                  payload: { entry: "hero", target: user ? "dashboard" : "guest_analysis_start" },
                 })}
               >
                 {user ? "进入命理首页" : "免费生成个人分析"}
@@ -378,10 +378,10 @@ export default function LandingPage() {
 
           <div className="flex flex-wrap items-center gap-3 md:justify-center">
             <Link
-              href={user ? "/dashboard" : "/register"}
+              href={user ? "/dashboard" : "/analysis/start"}
               className="btn btn-primary group"
               onClick={() => trackEvent("home_primary_cta_click", {
-                payload: { entry: "final_cta", target: user ? "dashboard" : "register" },
+                payload: { entry: "final_cta", target: user ? "dashboard" : "guest_analysis_start" },
               })}
             >
               {user ? "进入命理首页" : "免费生成个人分析"}

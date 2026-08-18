@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { loginWeb, saveAuth, useUser, checkProfileStatus } from '@/app/lib/auth';
 import { Mail, Lock, Eye, EyeOff, Loader2, Sparkles, Smartphone } from 'lucide-react';
@@ -14,7 +14,10 @@ type LoginTab = 'email' | 'phone';
 
 export default function LoginClient() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useUser();
+  const redirect = searchParams.get('redirect');
+  const redirectTarget = redirect && redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : null;
 
   const [activeTab, setActiveTab] = useState<LoginTab>('email');
   const [email, setEmail] = useState('');
@@ -30,13 +33,17 @@ export default function LoginClient() {
     if (!loginSuccess || !user) return;
     (async () => {
       const status = await checkProfileStatus();
+      if (redirectTarget) {
+        router.replace(redirectTarget);
+        return;
+      }
       if (status?.hasProfile) {
         router.replace('/dashboard');
       } else {
         router.replace('/profile/create');
       }
     })();
-  }, [loginSuccess, user, router]);
+  }, [loginSuccess, redirectTarget, user, router]);
 
   // Validations
   function validateEmail(v: string): boolean {
@@ -227,7 +234,7 @@ export default function LoginClient() {
           <p className="text-sm text-center text-[var(--color-text-muted)]">
             还没有账号？
             <Link
-              href="/register"
+              href={redirectTarget ? `/register?redirect=${encodeURIComponent(redirectTarget)}` : '/register'}
               className="ml-1 text-[var(--color-gold)] hover:text-[var(--color-gold-light)] transition-colors"
             >
               去注册

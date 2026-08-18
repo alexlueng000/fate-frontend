@@ -7,6 +7,7 @@ import { ArrowDown, ArrowUp, History, ImageDown, Mail } from 'lucide-react';
 import { useRouteGuard } from '@/app/lib/useRouteGuard';
 import { getAuthToken } from '@/app/lib/auth';
 import { trackEvent } from '@/app/lib/analytics/track';
+import { getGuestAnalysis } from '@/app/lib/api';
 
 import Markdown from '@/app/components/Markdown';
 import { ChatHeader } from '@/app/components/chat/ChatHeader';
@@ -60,6 +61,16 @@ export default function ChatPage() {
     if (typeof meta !== 'object' || meta === null) return '';
     const v = (meta as Record<string, unknown>)['conversation_id'];
     return typeof v === 'string' ? v : '';
+  }
+
+  function extractGuestMingpan(payload: unknown): Paipan | null {
+    if (!payload || typeof payload !== 'object') return null;
+    const result = payload as { mingpan?: unknown };
+    const mingpan = result.mingpan;
+    if (!mingpan || typeof mingpan !== 'object') return null;
+    const candidate = mingpan as Paipan;
+    if (!candidate.four_pillars || !Array.isArray(candidate.dayun)) return null;
+    return candidate;
   }
 
   useEffect(() => {
@@ -127,7 +138,9 @@ export default function ChatPage() {
       }
 
       // 优先：从 URL ?conv_id=xxx 恢复历史会话
-      const urlConvId = new URLSearchParams(window.location.search).get('conv_id');
+      const searchParams = new URLSearchParams(window.location.search);
+      const urlConvId = searchParams.get('conv_id');
+      const guestAnalysisPublicId = searchParams.get('guest_analysis_public_id');
       if (urlConvId) {
         setViewingHistory(true);
         try {
@@ -184,8 +197,25 @@ export default function ChatPage() {
         }
       }
 
-      // 尝试恢复旧会话
-      const active = getActiveConversationId() || sessionStorage.getItem('conversation_id');
+      if (guestAnalysisPublicId) {
+        try {
+          const guestAnalysis = await getGuestAnalysis(guestAnalysisPublicId);
+          if (!alive) return;
+          const mingpan = extractGuestMingpan(guestAnalysis.bazi_result);
+          if (mingpan) {
+            setPaipan(mingpan);
+            savePaipanLocal(mingpan);
+          }
+        } catch (e) {
+          if (!alive) return;
+          setErr(e instanceof Error ? e.message : '读取游客分析命盘失败');
+          setBooting(false);
+          return;
+        }
+      }
+
+      // 尝试恢复旧会话。游客分析入口必须创建同一命盘的新会话，不能复用旧活跃会话。
+      const active = guestAnalysisPublicId ? null : getActiveConversationId() || sessionStorage.getItem('conversation_id');
       if (active) {
         const cached = loadConversation(active);
         if (cached?.length) {
@@ -226,7 +256,9 @@ export default function ChatPage() {
 
         await trySSE(
           api('/chat/start'),
-          {}, // 不传 paipan，后端从档案读取
+          guestAnalysisPublicId
+            ? { guest_analysis_public_id: guestAnalysisPublicId }
+            : {}, // 默认不传 paipan，后端从档案读取
           (text) => {
             if (!alive) return;
             setMsgs((prev) => {

@@ -34,7 +34,8 @@ export interface PaipanForChat {
 }
 
 export interface ChatStartReq {
-  paipan: PaipanForChat;
+  paipan?: PaipanForChat;
+  guest_analysis_public_id?: string | null;
   kb_index_dir?: string | null;
   kb_topk?: number;
   note?: string | null;

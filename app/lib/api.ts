@@ -107,6 +107,56 @@ export async function getMyQuotas(): Promise<MyQuotas> {
   return getJSON<MyQuotas>(api('/quota/me/all'), { headers: authHeaders() });
 }
 
+export type GuestAnalysisStartPayload = {
+  guest_session_id: string;
+  display_name?: string | null;
+  gender: 'male' | 'female';
+  calendar_type: 'solar' | 'lunar';
+  birth_date: string;
+  birth_time: string;
+  birth_location: string;
+  birth_longitude?: number | null;
+  birth_latitude?: number | null;
+  timezone?: string;
+};
+
+export type GuestAnalysis = {
+  public_id: string;
+  guest_session_id: string;
+  user_id?: number | null;
+  status: 'pending' | 'running' | 'succeeded' | 'failed' | 'expired' | string;
+  error_message?: string | null;
+  display_name?: string | null;
+  gender: 'male' | 'female' | string;
+  calendar_type: 'solar' | 'lunar' | string;
+  birth_date: string;
+  birth_time: string;
+  birth_location: string;
+  birth_longitude?: number | null;
+  birth_latitude?: number | null;
+  timezone: string;
+  bazi_result?: Record<string, unknown> | null;
+  analysis_result?: Record<string, unknown> | null;
+  analysis_markdown?: string | null;
+  prompt_version?: string | null;
+  bound_at?: string | null;
+  expires_at?: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export function startGuestAnalysis(payload: GuestAnalysisStartPayload): Promise<GuestAnalysis> {
+  return postJSON<GuestAnalysis>(api('/guest/analysis/start'), payload);
+}
+
+export function getGuestAnalysis(publicId: string): Promise<GuestAnalysis> {
+  return getJSON<GuestAnalysis>(api(`/guest/analysis/${publicId}`));
+}
+
+export function bindGuestAnalysis(publicId: string): Promise<{ ok: boolean; public_id: string; user_id: number }> {
+  return postJSON(api(`/guest/analysis/${publicId}/bind`), {}, { headers: authHeaders() });
+}
+
 export type SimulatePaymentResult = {
   order_id: number;
   product_code: string;

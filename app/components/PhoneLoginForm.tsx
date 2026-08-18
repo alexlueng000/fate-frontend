@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { validateChinaPhone, sanitizePhone } from '@/app/lib/phone';
 import { loginPhone, saveAuth, checkProfileStatus } from '@/app/lib/auth';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Loader2, ShieldCheck, Smartphone, Sparkles } from 'lucide-react';
 
 type TencentCaptchaResponse = {
@@ -26,6 +26,9 @@ declare global {
 
 export default function PhoneLoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get('redirect');
+  const redirectTarget = redirect && redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : null;
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
   const [countdown, setCountdown] = useState(0);
@@ -175,7 +178,7 @@ export default function PhoneLoginForm() {
       const resp = await loginPhone({ phone, code });
       saveAuth(resp);
       const status = await checkProfileStatus();
-      router.push(status?.hasProfile ? '/dashboard' : '/profile/create');
+      router.push(redirectTarget || (status?.hasProfile ? '/dashboard' : '/profile/create'));
     } catch (err) {
       setError(err instanceof Error ? err.message : '登录失败');
     } finally {
