@@ -17,7 +17,9 @@ export default function LoginClient() {
   const searchParams = useSearchParams();
   const { user } = useUser();
   const redirect = searchParams.get('redirect');
-  const redirectTarget = redirect && redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : null;
+  const redirectTarget = redirect && redirect.startsWith('/') && !redirect.startsWith('//')
+    ? redirect === '/' ? '/dashboard' : redirect
+    : null;
 
   const [activeTab, setActiveTab] = useState<LoginTab>('email');
   const [email, setEmail] = useState('');

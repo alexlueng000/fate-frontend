@@ -28,7 +28,9 @@ export default function PhoneLoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect');
-  const redirectTarget = redirect && redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : null;
+  const redirectTarget = redirect && redirect.startsWith('/') && !redirect.startsWith('//')
+    ? redirect === '/' ? '/dashboard' : redirect
+    : null;
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
   const [countdown, setCountdown] = useState(0);

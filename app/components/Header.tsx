@@ -54,10 +54,14 @@ export default function Header() {
   }, []);
 
   function goLogin() {
-    router.push(`/login?redirect=${encodeURIComponent(window.location.pathname || '/')}`);
+    const currentPath = window.location.pathname || '/';
+    const redirectTarget = currentPath === '/' ? '/dashboard' : currentPath;
+    router.push(`/login?redirect=${encodeURIComponent(redirectTarget)}`);
   }
   function goRegister() {
-    router.push('/register');
+    const currentPath = window.location.pathname || '/';
+    const redirectTarget = currentPath === '/' ? '/dashboard' : currentPath;
+    router.push(`/register?redirect=${encodeURIComponent(redirectTarget)}`);
   }
   async function doLogout() {
     await logout();
@@ -105,7 +109,7 @@ export default function Header() {
 
           {/* ── Left: Logo + Desktop Nav ── */}
           <div className="flex items-center gap-6 lg:gap-10">
-            <Link href="/" className="group shrink-0 flex items-center">
+            <Link href={me ? "/dashboard" : "/"} className="group shrink-0 flex items-center">
               {/* Mobile logo */}
               <Image
                 src="/yifan_mobile_logo.png"

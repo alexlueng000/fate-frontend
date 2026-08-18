@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Footer from "@/app/components/Footer";
 import FeatureShowcase from "@/app/components/landing/FeatureShowcase";
 import ScenarioCard from "@/app/components/landing/ScenarioCard";
-import { useUser } from "@/app/lib/auth";
+import { fetchMe, getAuthToken, useUser } from "@/app/lib/auth";
 import { trackEvent } from "@/app/lib/analytics/track";
-import { ArrowRight, ChevronRight, Gift } from "lucide-react";
+import { ArrowRight, ChevronRight, Gift, Loader2 } from "lucide-react";
 
 const HERO_FEATURES = [
   {
@@ -37,11 +38,56 @@ const HERO_FEATURES = [
 ] as const;
 
 export default function LandingPage() {
-  const { user } = useUser();
+  const router = useRouter();
+  const { user, setUser } = useUser();
+  const [checkingAuth, setCheckingAuth] = useState(() => Boolean(getAuthToken()));
 
   useEffect(() => {
-    trackEvent("home_view", { payload: { entry: "landing" } });
-  }, []);
+    let alive = true;
+
+    async function routeByAuthState() {
+      if (user) {
+        router.replace("/dashboard");
+        return;
+      }
+
+      if (!getAuthToken()) {
+        if (!alive) return;
+        setCheckingAuth(false);
+        trackEvent("home_view", { payload: { entry: "landing" } });
+        return;
+      }
+
+      const currentUser = await fetchMe();
+      if (!alive) return;
+
+      if (currentUser) {
+        setUser(currentUser);
+        router.replace("/dashboard");
+        return;
+      }
+
+      setCheckingAuth(false);
+      trackEvent("home_view", { payload: { entry: "landing" } });
+    }
+
+    void routeByAuthState();
+
+    return () => {
+      alive = false;
+    };
+  }, [router, setUser, user]);
+
+  if (checkingAuth) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[var(--color-bg)] px-4">
+        <div className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)]" role="status" aria-live="polite">
+          <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+          正在进入命理首页
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen" style={{ background: "var(--color-bg)" }}>
