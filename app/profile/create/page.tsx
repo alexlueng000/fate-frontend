@@ -14,8 +14,8 @@ type FieldName = 'birthDate' | 'birthTime' | 'birthLocation';
 
 const ANALYSIS_STEPS = [
   '填写出生信息',
-  '生成核心摘要',
-  '继续追问与保存',
+  '生成你的命盘',
+  '查看命理报告',
 ];
 
 export default function CreateProfilePage() {
@@ -151,10 +151,10 @@ export default function CreateProfilePage() {
             className="max-w-xl text-[2.25rem] font-medium leading-[1.18] text-[var(--color-text-primary)] sm:text-[3rem] lg:text-[3.25rem]"
             style={{ fontFamily: 'var(--font-display)' }}
           >
-            生成你的个人分析
+            先生成你的第一张命盘
           </h1>
           <p className="mt-5 max-w-md text-[1rem] leading-8 text-[var(--color-text-body)]">
-            填写出生信息，先获得一份关于自我特质的传统文化参考。专业命盘放在后面，第一页先帮你看懂“这与我有什么关系”。
+            只需要一次填写。之后命理报告、八字对话和每日提醒，都会基于这份命盘展开。
           </p>
 
           <ol className="mt-10 space-y-4 border-t border-[var(--color-border)] pt-6">
@@ -363,14 +363,14 @@ export default function CreateProfilePage() {
             disabled={submitting}
             className="group flex w-full min-h-[52px] items-center justify-center gap-2 rounded-[var(--radius-md)] bg-[var(--color-primary)] px-6 py-4 text-base font-semibold text-[var(--color-text-inverse)] transition-colors duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] hover:bg-[var(--color-primary-hover)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/24"
           >
-            <span>{submitting ? '生成中...' : '生成个人分析'}</span>
+            <span>{submitting ? '生成中...' : '生成命盘并查看报告'}</span>
             {!submitting && (
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden />
             )}
           </button>
 
           <p className="text-center text-xs leading-5 text-[var(--color-text-muted)]">
-            专业术语会尽量翻译成白话，先看懂，再展开命盘细节。
+            专业术语会尽量翻译成白话，报告生成后可以继续进入对话追问。
           </p>
           </div>
         </form>

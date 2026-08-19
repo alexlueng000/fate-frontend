@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { validateChinaPhone, sanitizePhone } from '@/app/lib/phone';
 import { loginPhone, saveAuth, checkProfileStatus } from '@/app/lib/auth';
+import { resolvePostAuthRedirect } from '@/app/lib/onboarding';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Loader2, ShieldCheck, Smartphone, Sparkles } from 'lucide-react';
 
@@ -180,7 +181,7 @@ export default function PhoneLoginForm() {
       const resp = await loginPhone({ phone, code });
       saveAuth(resp);
       const status = await checkProfileStatus();
-      router.push(redirectTarget || (status?.hasProfile ? '/dashboard' : '/profile/create'));
+      router.push(resolvePostAuthRedirect(status, redirectTarget));
     } catch (err) {
       setError(err instanceof Error ? err.message : '登录失败');
     } finally {

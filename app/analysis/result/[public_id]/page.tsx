@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowRight, CheckCircle2, Loader2, RefreshCw, Save } from 'lucide-react';
@@ -55,6 +55,7 @@ export default function GuestAnalysisResultPage() {
   const [binding, setBinding] = useState(false);
   const [bound, setBound] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const autoBindStartedRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -92,7 +93,9 @@ export default function GuestAnalysisResultPage() {
   const result = (analysis?.analysis_result ?? {}) as AnalysisResult;
   const fourPillars = analysis ? getFourPillars(analysis) : null;
   const suggestionItems = useMemo(() => suggestions(result.suggestions), [result.suggestions]);
-  const loginHref = `/login?redirect=${encodeURIComponent(`/analysis/result/${publicId}`)}`;
+  const continuePath = `/analysis/result/${publicId}?intent=bind_continue`;
+  const loginHref = `/login?redirect=${encodeURIComponent(continuePath)}`;
+  const registerHref = `/register?redirect=${encodeURIComponent(continuePath)}`;
   const hasStructuredResult = analysis?.analysis_result && Object.keys(analysis.analysis_result).length > 0;
 
   const bindAndContinue = useCallback(async () => {
@@ -116,7 +119,7 @@ export default function GuestAnalysisResultPage() {
       });
       const mingpan = getMingpan(analysis);
       if (mingpan) savePaipanLocal(mingpan);
-      router.push(`/chat?guest_analysis_public_id=${encodeURIComponent(analysis.public_id)}`);
+      router.push('/dashboard');
     } catch (err) {
       const message = err instanceof Error ? err.message : '保存失败，请稍后重试';
       setActionError(message);
@@ -127,6 +130,14 @@ export default function GuestAnalysisResultPage() {
       setBinding(false);
     }
   }, [analysis, loginHref, router, user]);
+
+  useEffect(() => {
+    if (!analysis || !user || bound || binding || autoBindStartedRef.current) return;
+    const searchParams = new URLSearchParams(window.location.search);
+    if (searchParams.get('intent') !== 'bind_continue') return;
+    autoBindStartedRef.current = true;
+    void bindAndContinue();
+  }, [analysis, bindAndContinue, binding, bound, user]);
 
   if (loading) {
     return (
@@ -190,8 +201,8 @@ export default function GuestAnalysisResultPage() {
                 保存并继续追问
               </button>
               {!user && (
-                <Link href={loginHref} className="btn btn-secondary">
-                  登录后保存这份分析
+                <Link href={registerHref} className="btn btn-secondary">
+                  注册后保存这份分析
                 </Link>
               )}
             </div>
@@ -275,7 +286,7 @@ export default function GuestAnalysisResultPage() {
         <section className="mt-6 border border-[var(--color-border)] bg-[var(--color-bg-alt)] p-5">
           <h2 className="text-base font-medium text-[var(--color-text-primary)]">下一步</h2>
           <p className="mt-3 text-sm leading-7 text-[var(--color-text-body)]">
-            这份首轮解读已经完整生成。登录后可以保存结果，并围绕同一张命盘继续追问，不需要重新填写出生信息。
+            这份首轮解读已经完整生成。登录或注册后可以保存结果，并围绕同一张命盘继续追问，不需要重新填写出生信息。
           </p>
           <div className="mt-5 flex flex-col gap-3 sm:flex-row">
             <button

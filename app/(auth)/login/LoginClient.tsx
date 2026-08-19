@@ -4,6 +4,7 @@ import { useMemo, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { loginWeb, saveAuth, useUser, checkProfileStatus } from '@/app/lib/auth';
+import { resolvePostAuthRedirect } from '@/app/lib/onboarding';
 import { Mail, Lock, Eye, EyeOff, Loader2, Sparkles, Smartphone } from 'lucide-react';
 import PhoneLoginForm from '@/app/components/PhoneLoginForm';
 
@@ -35,15 +36,7 @@ export default function LoginClient() {
     if (!loginSuccess || !user) return;
     (async () => {
       const status = await checkProfileStatus();
-      if (redirectTarget) {
-        router.replace(redirectTarget);
-        return;
-      }
-      if (status?.hasProfile) {
-        router.replace('/dashboard');
-      } else {
-        router.replace('/profile/create');
-      }
+      router.replace(resolvePostAuthRedirect(status, redirectTarget));
     })();
   }, [loginSuccess, redirectTarget, user, router]);
 

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { postJSON, api } from '@/app/lib/api';
 import { saveAuth, setUserCache, useUser, checkProfileStatus } from '@/app/lib/auth';
+import { resolvePostAuthRedirect } from '@/app/lib/onboarding';
 import { Mail, User as UserIcon, Lock, Eye, EyeOff, Loader2, Ticket, Sparkles, CheckCircle, XCircle, Gift } from 'lucide-react';
 
 const BAGUA = ['☰', '☱', '☲', '☳', '☴', '☵', '☶', '☷'];
@@ -76,15 +77,7 @@ function RegisterPageContent() {
     if (!registerSuccess || !user) return;
     (async () => {
       const status = await checkProfileStatus();
-      if (redirectTarget) {
-        router.replace(redirectTarget);
-        return;
-      }
-      if (status?.hasProfile) {
-        router.replace('/dashboard');
-      } else {
-        router.replace('/profile/create');
-      }
+      router.replace(resolvePostAuthRedirect(status, redirectTarget));
     })();
   }, [registerSuccess, redirectTarget, user, router]);
 

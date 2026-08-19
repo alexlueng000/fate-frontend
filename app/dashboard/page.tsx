@@ -198,7 +198,7 @@ export default function DashboardPage() {
               <div>正在读取你的默认档案</div>
             ) : (
               <Link href="/profile/create" className="text-[var(--color-primary)] hover:underline">
-                完善个人档案
+                生成第一张命盘
               </Link>
             )}
           </div>
@@ -218,10 +218,13 @@ export default function DashboardPage() {
           <ContinueLastCard latest={latest} loading={historyLoading} />
 
           <div className="grid gap-4 lg:grid-cols-2">
-            {NEW_ANALYSIS_ENTRIES.map(({ title, description, cta, href, icon: Icon }) => (
+            {NEW_ANALYSIS_ENTRIES.map(({ title, description, cta, href, icon: Icon }) => {
+              const targetHref = href === '/panel' && !data.profile ? '/profile/create' : href;
+              const targetCta = href === '/panel' && !data.profile ? '生成命盘并查看报告' : cta;
+              return (
               <Link
                 key={title}
-                href={href}
+                href={targetHref}
                 className="group grid min-h-[164px] border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-5 transition-colors hover:border-[var(--color-border-strong)] hover:bg-[var(--color-bg-hover)] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)] sm:p-6"
               >
                 <div className="flex items-start justify-between gap-4">
@@ -235,11 +238,12 @@ export default function DashboardPage() {
                 </div>
                 <p className="mt-3 text-[15px] leading-7 text-[var(--color-text-body)]">{description}</p>
                 <span className="mt-5 inline-flex min-h-11 w-fit items-center justify-center gap-2 rounded-[3px] border border-[var(--color-border-strong)] bg-[var(--color-bg-card)] px-4 text-sm font-medium text-[var(--color-primary)] transition-colors group-hover:bg-[var(--color-bg)]">
-                  {cta}
+                  {targetCta}
                   <ArrowRight className="h-4 w-4" strokeWidth={1.6} />
                 </span>
               </Link>
-            ))}
+              );
+            })}
           </div>
         </section>
 
