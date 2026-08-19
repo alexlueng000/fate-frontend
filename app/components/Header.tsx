@@ -93,7 +93,13 @@ export default function Header() {
     { href: '/history', label: '解读记录', icon: History },
     { href: '/xinji', label: '心镜灯', icon: BookOpen },
     { href: '/liuyao', label: '六爻玄机', icon: Dices },
+  ];
+
+  const MOBILE_ACCOUNT_LINKS: MobileNavLink[] = [
     { href: '/membership', label: '会员中心', icon: Crown },
+    { href: '/profile/edit', label: '编辑个人档案', icon: FileEdit },
+    { href: '/account', label: '我的账户', icon: User },
+    { href: '/feedback', label: '意见反馈', icon: MessageSquare },
   ];
 
   const isActivePath = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
@@ -153,21 +159,21 @@ export default function Header() {
             ) : (
               <>
                 {/* 个人中心 — icon only on md, text on lg+ */}
-                <Link href="/dashboard" className={outlineBtnClass} title="命理首页">
+                <Link href="/dashboard" className={`${outlineBtnClass} hidden lg:flex`} title="命理首页">
                   <LayoutDashboard className="w-4 h-4 shrink-0" />
                   <span className="hidden lg:inline">命理首页</span>
                 </Link>
 
                 {/* 管理后台 — icon only on md, text on lg+ */}
                 {me.is_admin && (
-                  <Link href="/admin" className={outlineBtnClass} title="管理后台">
+                  <Link href="/admin" className={`${outlineBtnClass} hidden lg:flex`} title="管理后台">
                     <Settings className="w-4 h-4 shrink-0" />
                     <span className="hidden lg:inline">管理后台</span>
                   </Link>
                 )}
 
                 {/* User Dropdown */}
-                <div className="relative" ref={menuRef}>
+                <div className="relative hidden lg:block" ref={menuRef}>
                   <button
                     onClick={() => setMenuOpen((v) => !v)}
                     aria-haspopup="menu"
@@ -299,14 +305,30 @@ export default function Header() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-[var(--color-border)] px-4 py-3">
-              <div>
-                <div className="text-[13px] font-medium tracking-[0.04em] text-[var(--color-text-muted)]">
-                  常用功能
+              {me ? (
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--color-primary)] text-sm font-semibold text-[var(--color-text-inverse)]">
+                    {(me.nickname || me.username || 'U').slice(0, 1).toUpperCase()}
+                  </span>
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-medium text-[var(--color-text-primary)]">
+                      {me.nickname || me.username}
+                    </div>
+                    <div className="mt-1 text-[13px] text-[var(--color-text-muted)]">
+                      账户与常用功能
+                    </div>
+                  </div>
                 </div>
-                <div className="mt-1 text-sm text-[var(--color-text-secondary)]">
-                  选择一个入口继续
+              ) : (
+                <div>
+                  <div className="text-[13px] font-medium tracking-[0.04em] text-[var(--color-text-muted)]">
+                    常用功能
+                  </div>
+                  <div className="mt-1 text-sm text-[var(--color-text-secondary)]">
+                    选择一个入口继续
+                  </div>
                 </div>
-              </div>
+              )}
               <button
                 type="button"
                 aria-label="关闭导航菜单"
@@ -343,7 +365,58 @@ export default function Header() {
               })}
             </div>
 
-            <div className="px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-5">
+            {me && (
+              <div className="border-t border-[var(--color-border)] px-4 py-5">
+                <div className="mb-2 text-[13px] font-medium tracking-[0.04em] text-[var(--color-text-muted)]">
+                  账户
+                </div>
+                <div className="grid grid-cols-1 gap-px overflow-hidden rounded-[3px] border border-[var(--color-border)] bg-[var(--color-border)]">
+                  {me.is_admin && (
+                    <Link
+                      href="/admin"
+                      className="flex min-h-12 items-center gap-3 bg-[var(--color-bg-elevated)] px-3 text-sm font-medium text-[var(--color-text-primary)] transition-colors hover:bg-[var(--color-bg-hover)] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)]"
+                      onClick={() => setMobileNavOpen(false)}
+                    >
+                      <Settings className="h-4.5 w-4.5 shrink-0 text-[var(--color-text-secondary)]" strokeWidth={1.6} />
+                      管理后台
+                    </Link>
+                  )}
+
+                  {MOBILE_ACCOUNT_LINKS.map((l) => {
+                    const Icon = l.icon;
+                    const active = isActivePath(l.href);
+                    return (
+                      <Link
+                        key={l.href}
+                        href={l.href}
+                        aria-current={active ? 'page' : undefined}
+                        className={`flex min-h-12 items-center justify-between gap-3 bg-[var(--color-bg-elevated)] px-3 text-sm font-medium transition-colors hover:bg-[var(--color-bg-hover)] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)] ${
+                          active ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-primary)]'
+                        }`}
+                        onClick={() => setMobileNavOpen(false)}
+                      >
+                        <span className="flex items-center gap-3">
+                          {Icon && <Icon className="h-4.5 w-4.5 shrink-0 text-[var(--color-text-secondary)]" strokeWidth={1.6} />}
+                          <span>{l.label}</span>
+                        </span>
+                        {active && <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-primary)]" />}
+                      </Link>
+                    );
+                  })}
+
+                  <button
+                    type="button"
+                    className="flex min-h-12 w-full items-center gap-3 bg-[var(--color-bg-elevated)] px-3 text-left text-sm font-medium text-[var(--color-primary)] transition-colors hover:bg-[var(--color-bg-hover)] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)]"
+                    onClick={doLogout}
+                  >
+                    <LogOut className="h-4.5 w-4.5 shrink-0" strokeWidth={1.6} />
+                    退出登录
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className={`px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] ${me ? 'pt-0' : 'pt-5'}`}>
               <div className="mb-2 text-[13px] font-medium tracking-[0.04em] text-[var(--color-text-muted)]">
                 了解更多
               </div>
