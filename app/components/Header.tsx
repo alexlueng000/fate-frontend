@@ -20,7 +20,6 @@ import {
   BookOpen,
   Crown,
   Dices,
-  GraduationCap,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -95,7 +94,6 @@ export default function Header() {
     { href: '/xinji', label: '心镜灯', icon: BookOpen },
     { href: '/liuyao', label: '六爻玄机', icon: Dices },
     { href: '/membership', label: '会员中心', icon: Crown },
-    { href: '/videos', label: '视频课程', icon: GraduationCap },
   ];
 
   const isActivePath = (href: string) => pathname === href || pathname.startsWith(`${href}/`);

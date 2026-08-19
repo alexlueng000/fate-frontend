@@ -4,7 +4,6 @@ import Link from 'next/link';
 import QRCode from 'qrcode';
 import { useEffect, useMemo, useState } from 'react';
 import {
-  BookOpen,
   Check,
   CheckCircle2,
   Copy,
@@ -368,12 +367,6 @@ export default function MembershipPage() {
           </div>
         </section>
 
-        <div className="mt-10 border-t border-[var(--color-border)] pt-6">
-          <Link href="/videos" className="inline-flex min-h-11 items-center gap-2 text-[14px] font-medium text-[var(--color-primary)]">
-            <BookOpen size={17} />
-            去看视频课程
-          </Link>
-        </div>
       </div>
 
       {checkout && (

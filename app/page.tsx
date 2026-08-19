@@ -408,7 +408,7 @@ export default function LandingPage() {
               "注册后 10 次八字解读 + 10 次六爻参考",
               "心镜灯：持续记录情绪和生活节奏",
               "六爻文化：面对具体问题时的补充视角",
-              "会员套餐可获得更多额度与课程权限",
+              "会员套餐可获得更多额度与完整功能",
             ].map((item) => (
               <li key={item} className="grid grid-cols-[auto_1fr] items-baseline gap-3">
                 <span

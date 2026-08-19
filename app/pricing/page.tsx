@@ -125,7 +125,6 @@ export default function PricingPage() {
             `${bazi} 次传统文化 AI 对话（八字文化）`,
             `${liuyao} 次传统文化卦象解析（六爻文化）`,
             '会员有效期 30 天，续费顺延',
-            '会员视频观看权限',
             'AI 智能分析与传统文化知识库',
           ],
         };
@@ -191,8 +190,6 @@ export default function PricingPage() {
             <span className="font-serif">八字</span>
             <span className="h-4 w-px bg-[var(--color-border)]" aria-hidden />
             <span className="font-serif">六爻</span>
-            <span className="h-4 w-px bg-[var(--color-border)]" aria-hidden />
-            <span className="font-serif">课程</span>
           </div>
         </header>
 
