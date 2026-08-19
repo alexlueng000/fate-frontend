@@ -917,15 +917,9 @@ export default function PanelPage() {
         )}
       </div>
 
-      {/* Inline status below messages (booting / error) */}
-      {(booting || err) && (
+      {/* Inline error below messages. Loading is shown inside the pending assistant reply. */}
+      {err && (
         <div className="flex-shrink-0 px-4 pb-1">
-          {booting && (
-            <div className="flex items-center gap-2 py-1.5 text-xs text-[var(--color-text-muted)]">
-              <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-[var(--color-primary)]/30 border-t-[var(--color-primary)]" />
-              正在解读中…
-            </div>
-          )}
           {err && (
             <div
               role="alert"
