@@ -9,6 +9,7 @@ import { trackEvent } from '@/app/lib/analytics/track';
 import Markdown from '@/app/components/Markdown';
 import { getWuxing, wuxingColor, type Wuxing } from '@/app/components/WuXing';
 import { Paipan } from '@/app/lib/chat/types';
+import { parseSuggestedQuestions } from '@/app/lib/chat/parser';
 import { trySSE } from '@/app/lib/chat/sse';
 import { savePaipanLocal, saveConversation, clearActiveConversationId } from '@/app/lib/chat/storage';
 import { DetailedPaipanTable } from '@/app/components/chat/DetailedPaipanTable';
@@ -22,10 +23,16 @@ interface ProfileBrief {
   display_info: string;
 }
 
+const SECTION_LABEL_PATTERN =
+  '(?:个人画像|个人属性|人物画像|整体画像|性格特点|性格剖析|性格解读|做事方式|事业与财运|事业建议|财运建议|感情与人际|人际与感情|适合方向|适合行业|行动建议|三年关键节点|流年提示|流年|十年大运|大运流年|命理依据)';
+const SECTION_LABEL_RE = new RegExp(`^${SECTION_LABEL_PATTERN}[：:，,\\s]*`);
+
 function stripMarkdown(text: string): string {
   return text
     .replace(/```[\s\S]*?```/g, '')
     .replace(/^#{3,4}\s+/gm, '')
+    .replace(new RegExp(`^\\s*${SECTION_LABEL_PATTERN}[：:，,\\s]*`, 'gm'), '')
+    .replace(/^\s*[-—–－]{3,}\s*$/gm, '')
     .replace(/\*\*|__|[*_>`]/g, '')
     .replace(/\[[^\]]+\]\([^)]+\)/g, '')
     .replace(/\s+/g, ' ')
@@ -34,23 +41,35 @@ function stripMarkdown(text: string): string {
 
 function buildReportSummary(report: string): {
   portrait: string;
-  insights: string[];
+  insights: Array<{ label: string; text: string }>;
   focus: string;
+  questions: string[];
 } {
-  const plain = stripMarkdown(report);
+  const parsed = parseSuggestedQuestions(report);
+  const plain = stripMarkdown(parsed.cleanedContent);
+  const looksLikeTitle = (value: string) => {
+    const compact = value.replace(/\s+/g, '').replace(/[。！？?：:，,、]/g, '');
+    return compact.length <= 18 && SECTION_LABEL_RE.test(compact);
+  };
   const sentences = plain
     .split(/(?<=[。！？?])\s*/)
     .map((line) => line.trim())
-    .filter((line) => line.length >= 12 && !line.includes('仅供'));
+    .filter((line) => line.length >= 12 && !line.includes('仅供') && !looksLikeTitle(line));
+  const fallbackQuestions = [
+    '这份报告里，哪一点最值得我现在优先调整？',
+    '从性格与做事方式看，我接下来适合怎么发力？',
+    '未来三年我最需要留意的节奏变化是什么？',
+  ];
 
   return {
     portrait: sentences[0] || '这份报告会先帮你看见自己的核心特质，再展开专业命盘信息。',
     insights: [
-      sentences[1] || '先从性格倾向和行为模式理解自己。',
-      sentences[2] || '再观察优势、挑战与适合投入的方向。',
-      sentences[3] || '最后把分析转为可以继续追问和复盘的问题。',
+      { label: '性格', text: sentences[1] || '先从性格倾向和行为模式理解自己。' },
+      { label: '做事', text: sentences[2] || '再观察优势、挑战与适合投入的方向。' },
+      { label: '关系', text: sentences[3] || '最后把分析转为可以继续追问和复盘的问题。' },
     ],
     focus: sentences[4] || '当前最值得关注的是：哪些判断与你的真实处境相符。',
+    questions: parsed.questions.length ? parsed.questions.slice(0, 3) : fallbackQuestions,
   };
 }
 
@@ -248,12 +267,13 @@ export default function ReportPage() {
     fetchData();
   }, [loading]);
 
-  const handleStartChat = () => {
+  const handleStartChat = (question?: string, source: 'primary' | 'question' = 'primary') => {
     trackEvent('report_chat_cta_click', {
-      payload: { has_ai_report: Boolean(aiReport), streaming },
+      payload: { has_ai_report: Boolean(aiReport), streaming, source },
     });
     clearActiveConversationId();
-    router.push('/panel');
+    const query = question ? `?q=${encodeURIComponent(question)}` : '';
+    router.push(`/panel${query}`);
   };
 
   if (loading) {
@@ -285,6 +305,8 @@ export default function ReportPage() {
         { label: '时柱', pillar: paipan.four_pillars.hour, sublabel: '子女·晚年' },
       ]
     : [];
+  const parsedReport = parseSuggestedQuestions(aiReport);
+  const reportContent = parsedReport.cleanedContent;
   const summary = buildReportSummary(aiReport);
 
   return (
@@ -314,32 +336,25 @@ export default function ReportPage() {
 
           <div className="space-y-4 border-t border-b border-[var(--color-border-subtle)] py-5">
             {(aiReport ? summary.insights : [
-              '先生成一句话人物画像。',
-              '再提炼三个更容易理解的关键洞察。',
-              '专业命盘信息会放在后面，方便展开查看。',
-            ]).map((item, index) => (
-              <div key={item} className="grid grid-cols-[auto_1fr] gap-3">
-                <span className="font-mono text-xs text-[var(--color-primary)] tabular-nums">
-                  {String(index + 1).padStart(2, '0')}
+              { label: '性格', text: '先生成一句话人物画像。' },
+              { label: '做事', text: '再提炼三个更容易理解的关键洞察。' },
+              { label: '关系', text: '专业命盘信息会放在后面，方便展开查看。' },
+            ]).map((item) => (
+              <div key={item.label} className="grid grid-cols-[auto_1fr] gap-3">
+                <span className="mt-0.5 inline-flex min-w-10 justify-center rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2 py-0.5 text-xs font-medium text-[var(--color-primary)]">
+                  {item.label}
                 </span>
                 <p className="text-sm sm:text-base leading-7 text-[var(--color-text-body)]">
-                  {item}
+                  {item.text}
                 </p>
               </div>
             ))}
           </div>
 
-          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-5">
             <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
               {aiReport ? summary.focus : '生成过程中可以先等待完整报告，再继续追问最关心的部分。'}
             </p>
-            <button
-              onClick={handleStartChat}
-              disabled={streaming}
-              className="btn btn-primary shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {streaming ? '分析中…' : '继续追问'}
-            </button>
           </div>
         </section>
 
@@ -362,9 +377,9 @@ export default function ReportPage() {
               </p>
             </div>
           )}
-          {aiReport && (
+          {reportContent && (
             <div className="msg-md">
-              <Markdown content={aiReport} />
+              <Markdown content={reportContent} />
             </div>
           )}
           {streaming && aiReport && (
@@ -388,17 +403,40 @@ export default function ReportPage() {
         </section>
 
         {/* CTA */}
-        <div className="mb-12 border-t border-b border-[var(--color-border)] py-7 text-center">
+        <div className="mb-12 border-t border-b border-[var(--color-border)] py-7">
+          <h2 className="font-serif text-base font-semibold text-[var(--color-text-primary)] tracking-wide">
+            建议你先问 3 个问题
+          </h2>
+          <div className="mt-5 space-y-3">
+            {summary.questions.map((question, index) => (
+              <button
+                key={question}
+                type="button"
+                onClick={() => handleStartChat(question, 'question')}
+                disabled={streaming}
+                className="group flex w-full min-h-12 items-start gap-3 border border-[var(--color-border)] bg-[var(--color-bg-card)] px-4 py-3 text-left transition-colors hover:border-[var(--color-border-strong)] hover:bg-[var(--color-bg-hover)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/24"
+              >
+                <span className="font-mono text-xs leading-6 text-[var(--color-primary)] tabular-nums">
+                  {String(index + 1).padStart(2, '0')}
+                </span>
+                <span className="text-sm leading-6 text-[var(--color-text-body)]">
+                  {question}
+                </span>
+              </button>
+            ))}
+          </div>
+          <div className="mt-6 text-center">
           <button
-            onClick={handleStartChat}
+            onClick={() => handleStartChat()}
             disabled={streaming}
             className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {streaming ? '分析中…' : '围绕这份报告继续追问'}
+            {streaming ? '分析中…' : '自己写问题'}
           </button>
           <p className="mx-auto mt-3 max-w-md text-xs leading-5 text-[var(--color-text-muted)]">
             你可以补充现实处境，让 AI 把报告里的判断转成更具体的行动建议。
           </p>
+          </div>
         </div>
 
         {/* 专业依据 */}

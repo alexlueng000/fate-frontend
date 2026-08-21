@@ -156,6 +156,13 @@ export default function PanelPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    const initialQuestion = params.get('q');
+    if (initialQuestion) {
+      setInput(initialQuestion);
+      trackEvent('panel_prefill_question', {
+        payload: { source: 'report', length: initialQuestion.length },
+      });
+    }
     const task = params.get('task');
     const auto = params.get('auto');
     if (task === 'career') {
