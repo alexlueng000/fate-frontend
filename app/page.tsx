@@ -2,51 +2,45 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Footer from "@/app/components/Footer";
 import FeatureShowcase from "@/app/components/landing/FeatureShowcase";
-import FaqPreview, { LANDING_FAQS } from "@/app/components/landing/FaqPreview";
-import KnowledgePreview from "@/app/components/landing/KnowledgePreview";
 import AuthGate from "@/app/components/landing/AuthGate";
 import { PrimaryCta, SecondaryCta } from "@/app/components/landing/LandingCtas";
 import { Gift } from "lucide-react";
 
-const HERO_FEATURES = [
+const HERO_ENTRIES = [
   {
     id: "bazi",
-    name: "八字文化",
-    tagline: "看清你是谁",
-    desc: "输入出生信息，生成基础命盘和白话分析，作为理解性格倾向的参考。",
-    color: "var(--color-feature-bazi)",
-    anchor: "#feature-bazi",
-  },
-  {
-    id: "xinji",
-    name: "心镜灯",
-    tagline: "看懂你的情绪",
-    desc: "记录每日情绪，把感受和生活节奏放在一起观察。",
-    color: "var(--color-feature-xinji)",
-    anchor: "#feature-xinji",
+    eyebrow: "认识自己",
+    title: "八字分析",
+    desc: "适合你想了解长期的自己：性格底色、关系模式、做事节奏、容易卡住的地方，以及更适合你的发力方式。",
+    helper: "你只需要提供出生日期、时间和地点。系统会完成八字排盘，并用更日常的语言解释其中的结构。",
+    points: ["性格倾向", "关系模式", "事业方向", "人生阶段", "长期节奏"],
+    href: "/analysis/start",
+    cta: "开始看我的八字",
   },
   {
     id: "liuyao",
-    name: "六爻文化",
-    tagline: "看清下一步",
-    desc: "围绕一个具体问题，整理不同因素，提供补充视角。",
-    color: "var(--color-feature-liuyao)",
-    anchor: "#feature-liuyao",
+    eyebrow: "看一件具体的事",
+    title: "六爻起卦",
+    desc: "适合你正面对一个明确问题：一段关系要不要继续、某个机会值不值得投入、一次合作是否顺畅，或者一个选择该如何看待。",
+    helper: "你写下问题，完成起卦后，系统会围绕这件事本身，分析当前状态、关键影响、可能变化和需要留意的地方。",
+    points: ["感情关系", "工作机会", "合作推进", "选择判断", "近期进展"],
+    href: "/liuyao",
+    cta: "开始问一件事",
   },
 ] as const;
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://fateinsight.site";
 
 export const metadata: Metadata = {
-  title: "AI八字排盘与性格分析平台 | 易凡文化",
+  title: "AI八字分析与六爻起卦平台 | 易凡文化",
   description:
-    "易凡文化提供在线八字排盘与白话解读：输入出生日期、时间和地点，免费生成首次分析，从五行、日主、十神等角度理解性格倾向与节奏，配套情绪记录与六爻文化参考。",
+    "易凡文化用传统方法结合 AI 分析，提供在线八字分析、八字排盘、六爻起卦与六爻解卦，帮你把性格、关系、选择和当下的问题整理得更清楚。",
   alternates: {
     canonical: '/',
   },
 };
 
-/** Structured data: Organization + WebSite + FAQPage (mirrors visible FAQ content). */
+/** Structured data: Organization + WebSite. */
 function StructuredData() {
   const jsonLd = {
     "@context": "https://schema.org",
@@ -66,18 +60,6 @@ function StructuredData() {
         name: "易凡文化",
         inLanguage: "zh-CN",
         publisher: { "@id": `${SITE_URL}/#organization` },
-      },
-      {
-        "@type": "FAQPage",
-        "@id": `${SITE_URL}/#faq`,
-        mainEntity: LANDING_FAQS.map((faq) => ({
-          "@type": "Question",
-          name: faq.question,
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: faq.answer,
-          },
-        })),
       },
     ],
   };
@@ -114,11 +96,11 @@ export default function LandingPage() {
             >
               用东方视角，
               <br className="hidden md:block" />
-              看清<span style={{ color: "var(--color-primary)" }}>你自己</span>。
+              看清<span style={{ color: "var(--color-primary)" }}>自己</span>，也看清事情。
             </h1>
 
             <p className="max-w-xl text-[1rem] leading-relaxed text-[var(--color-text-body)] md:text-[1.0625rem]">
-              八字文化分析、情绪记录与六爻参考，帮你把性格、感受和选择整理得更清楚。
+              八字观察自己，六爻观察事情。用传统方法结合 AI 分析，帮你把性格、关系、选择和当下的问题整理得更清楚。
             </p>
 
             <div className="inline-flex items-center gap-2 border border-[var(--color-primary)]/25 bg-[var(--color-primary)]/5 px-3 py-2 text-[0.875rem] font-medium text-[var(--color-primary)]">
@@ -128,9 +110,9 @@ export default function LandingPage() {
 
             {/* CTA */}
             <div className="flex flex-wrap items-center gap-3 pt-2">
-              <PrimaryCta entry="hero">免费生成首次分析</PrimaryCta>
-              <SecondaryCta entry="hero" event="home_secondary_cta_click" href="/demo">
-                查看示例报告
+              <PrimaryCta entry="hero">开始看我的八字</PrimaryCta>
+              <SecondaryCta entry="hero" event="home_liuyao_cta_click" href="/liuyao">
+                开始问一件事
               </SecondaryCta>
             </div>
 
@@ -144,25 +126,29 @@ export default function LandingPage() {
           {/* 右：首次路径 · 静态、克制 */}
           <aside className="animate-fade-in delay-200">
             <div className="card overflow-hidden">
-              <header className="flex items-baseline justify-between border-b border-[var(--color-border)] px-5 py-4">
+              <header className="space-y-2 border-b border-[var(--color-border)] px-5 py-5">
+                <p className="text-[0.6875rem] uppercase tracking-[0.12em] text-[var(--color-text-muted)]">
+                  先选方向
+                </p>
                 <h2
-                  className="text-[1rem] font-medium"
-                  style={{ fontFamily: "var(--font-display)", color: "var(--color-text-primary)" }}
+                  className="text-[1.25rem] font-medium leading-snug text-[var(--color-text-primary)]"
+                  style={{ fontFamily: "var(--font-display)" }}
                 >
-                  三个工具，一个目标
+                  你现在想看哪一种问题？
                 </h2>
-                <span className="text-[0.6875rem] uppercase tracking-[0.1em] text-[var(--color-text-hint)]">
-                  Tools
-                </span>
+                <p className="text-[0.875rem] leading-relaxed text-[var(--color-text-secondary)]">
+                  一个适合了解自己，一个适合观察具体事情。不用先懂八字或六爻，按你当下最想问的方向开始。
+                </p>
               </header>
 
               <ol className="divide-y divide-[var(--color-border)]">
-                {HERO_FEATURES.map((f, idx) => (
-                  <li key={f.id}>
-                    <a
-                      href={f.anchor}
-                      className="group grid grid-cols-[auto_1fr_auto] items-baseline gap-4 px-5 py-4 transition-colors hover:bg-[var(--color-bg-hover)] focus-visible:bg-[var(--color-bg-hover)] focus-visible:outline-none"
+                {HERO_ENTRIES.map((entry, idx) => (
+                  <li key={entry.id}>
+                    <Link
+                      href={entry.href}
+                      className="group block px-5 py-5 transition-colors hover:bg-[var(--color-bg-hover)] focus-visible:bg-[var(--color-bg-hover)] focus-visible:outline-none"
                     >
+                      <div className="mb-3 grid grid-cols-[auto_1fr] items-baseline gap-4">
                       <span
                         className="font-mono text-[0.6875rem] text-[var(--color-text-hint)] tabular-nums"
                         aria-hidden="true"
@@ -170,31 +156,51 @@ export default function LandingPage() {
                         {String(idx + 1).padStart(2, "0")}
                       </span>
                       <div className="min-w-0 space-y-1">
-                        <div className="flex items-baseline gap-3">
-                          <span
-                            className="text-[1.0625rem] font-medium"
-                            style={{ fontFamily: "var(--font-display)", color: f.color }}
-                          >
-                            {f.name}
-                          </span>
-                          <span className="text-[0.8125rem] text-[var(--color-text-secondary)]">
-                            {f.tagline}
-                          </span>
-                        </div>
-                        <p className="text-[0.8125rem] leading-relaxed text-[var(--color-text-muted)]">
-                          {f.desc}
+                        <p className="text-[0.75rem] text-[var(--color-text-muted)]">
+                          {entry.eyebrow}
                         </p>
+                        <h3
+                          className="text-[1.125rem] font-medium text-[var(--color-text-primary)]"
+                          style={{ fontFamily: "var(--font-display)" }}
+                        >
+                          {entry.title}
+                        </h3>
                       </div>
-                      <span
-                        className="self-center text-[var(--color-text-hint)] transition-transform group-hover:translate-x-0.5 group-hover:text-[var(--color-text-secondary)]"
-                        aria-hidden="true"
-                      >
-                        →
-                      </span>
-                    </a>
+                      </div>
+                      <div className="space-y-3 pl-0 md:pl-[2.2rem]">
+                        <p className="text-[0.875rem] leading-[1.75] text-[var(--color-text-body)]">
+                          {entry.desc}
+                        </p>
+                        <p className="text-[0.8125rem] leading-[1.7] text-[var(--color-text-secondary)]">
+                          {entry.helper}
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {entry.points.map((point) => (
+                            <span
+                              key={point}
+                              className="border border-[var(--color-border)] px-2 py-1 text-[0.75rem] text-[var(--color-text-secondary)]"
+                            >
+                              {point}
+                            </span>
+                          ))}
+                        </div>
+                        <span className="inline-flex items-center gap-1 pt-1 text-[0.875rem] font-medium text-[var(--color-primary)]">
+                          {entry.cta}
+                          <span
+                            className="transition-transform group-hover:translate-x-0.5"
+                            aria-hidden="true"
+                          >
+                            →
+                          </span>
+                        </span>
+                      </div>
+                    </Link>
                   </li>
                 ))}
               </ol>
+              <footer className="border-t border-[var(--color-border)] px-5 py-4 text-[0.8125rem] leading-relaxed text-[var(--color-text-muted)]">
+                想了解“我是谁、我为什么总这样”，选八字。心里已经有一件明确的事，选六爻。
+              </footer>
             </div>
           </aside>
         </div>
@@ -266,51 +272,6 @@ export default function LandingPage() {
       <div id="features-section">
         <FeatureShowcase />
       </div>
-
-      {/* ========== 八字是什么 · 面向搜索意图的内容区块 ========== */}
-      <section className="px-6 py-20 md:py-28" style={{ background: "var(--color-bg-elevated)" }}>
-        <div className="mx-auto max-w-3xl space-y-10">
-          <header className="space-y-3">
-            <p className="text-[0.6875rem] uppercase tracking-[0.12em] text-[var(--color-text-muted)]">
-              八字入门
-            </p>
-            <h2
-              className="text-[1.75rem] md:text-[2rem] lg:text-[2.25rem] leading-[1.25] font-medium text-[var(--color-text-primary)]"
-              style={{ fontFamily: "var(--font-display)" }}
-            >
-              八字是什么？
-            </h2>
-          </header>
-
-          <div className="space-y-6 text-[0.9375rem] md:text-[1rem] leading-[1.8] text-[var(--color-text-body)]">
-            <p>
-              八字，又称<strong>四柱</strong>，是把一个人出生的年、月、日、时，分别换算成对应的天干地支，组成四组、共八个字的一套符号体系。它起源于唐代，经宋代徐子平完善，是流传至今的传统命理核心工具。
-            </p>
-            <p>
-              在这份命盘里，<strong>日柱的天干</strong>（日主）代表你自己，其余七个字与你产生不同的关系，传统上用<strong>五行</strong>（金木水火土）、<strong>十神</strong>、<strong>六亲</strong>等概念来描述这些关系。通过分析五行的强弱与平衡，可以观察一个人的性格特质、能量节奏和关系模式。
-            </p>
-            <p>
-              在易凡文化，你只需要输入出生日期、时间和地点，系统会自动完成公历农历转换、真太阳时校正和排盘，再用白话把命盘讲给你听——不需要先学懂天干地支，也能开始理解自己的出厂参数。
-            </p>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-3">
-            {[
-              { href: "/knowledge/what-is-bazi", label: "八字是什么？五分钟读懂四柱" },
-              { href: "/knowledge/wuxing-explained", label: "五行入门：金木水火土" },
-              { href: "/knowledge/ri-gan-introduction", label: "十天干速查：认识你的日主" },
-            ].map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="card px-4 py-3 text-[0.875rem] font-medium leading-snug text-[var(--color-text-primary)] transition-colors hover:bg-[var(--color-bg-hover)]"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* ========== 使用场景 ========== */}
       <section className="px-6 py-20 md:py-28">
@@ -440,12 +401,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ========== 传统文化学堂 · 知识库入口 ========== */}
-      <KnowledgePreview />
-
-      {/* ========== 常见问题 · FAQ 预览 ========== */}
-      <FaqPreview />
-
       {/* ========== 最终 CTA ========== */}
       <section
         className="px-6 py-20 md:py-28"
@@ -460,20 +415,20 @@ export default function LandingPage() {
               className="text-[1.875rem] md:text-[2.25rem] lg:text-[2.5rem] leading-[1.2] font-medium text-[var(--color-text-primary)]"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              先生成一份首次分析，再决定要不要继续聊。
+              先选一个方向，把问题说清楚。
             </h2>
             <p className="text-[1rem] md:text-[1.0625rem] leading-relaxed text-[var(--color-text-secondary)]">
-              首次分析不需要注册。注册后可以保存结果，并获得 10 次八字解读和 10 次六爻参考额度。
+              想了解自己，先看八字；心里已经有一件明确的事，先问六爻。注册后可以保存结果，并获得 10 次八字解读和 10 次六爻参考额度。
             </p>
           </header>
 
           <ul className="space-y-3 text-left text-[0.9375rem] text-[var(--color-text-body)] md:mx-auto md:max-w-md">
             {[
-              "基础命盘和白话摘要",
+              "八字：观察性格、关系、事业方向和长期节奏",
+              "六爻：观察感情、工作、合作、选择等具体问题",
               "注册后 10 次八字解读 + 10 次六爻参考",
-              "心镜灯：持续记录情绪和生活节奏",
-              "六爻文化：面对具体问题时的补充视角",
-              "会员套餐可获得更多额度与完整功能",
+              "用白话解释结果，不需要先懂命理术语",
+              "内容仅供自我观察和决策参考",
             ].map((item) => (
               <li key={item} className="grid grid-cols-[auto_1fr] items-baseline gap-3">
                 <span
@@ -488,9 +443,9 @@ export default function LandingPage() {
           </ul>
 
           <div className="flex flex-wrap items-center gap-3 md:justify-center">
-            <PrimaryCta entry="final_cta">免费生成首次分析</PrimaryCta>
-            <SecondaryCta entry="final_cta" event="home_pricing_cta_click" href="/pricing" className="btn btn-secondary group">
-              查看会员套餐
+            <PrimaryCta entry="final_cta">开始看我的八字</PrimaryCta>
+            <SecondaryCta entry="final_cta" event="home_final_liuyao_cta_click" href="/liuyao" className="btn btn-secondary group">
+              开始问一件事
             </SecondaryCta>
           </div>
 

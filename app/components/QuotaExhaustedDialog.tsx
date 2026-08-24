@@ -9,6 +9,8 @@ interface QuotaExhaustedDialogProps {
   onClose: () => void;
   title: string;
   message: string;
+  pricingHref?: string;
+  onPricingClick?: () => void;
 }
 
 export default function QuotaExhaustedDialog({
@@ -16,6 +18,8 @@ export default function QuotaExhaustedDialog({
   onClose,
   title,
   message,
+  pricingHref = '/pricing',
+  onPricingClick,
 }: QuotaExhaustedDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const router = useRouter();
@@ -36,8 +40,9 @@ export default function QuotaExhaustedDialog({
   };
 
   const handleGoToPricing = () => {
+    onPricingClick?.();
     onClose();
-    router.push('/pricing');
+    router.push(pricingHref);
   };
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {

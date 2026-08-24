@@ -104,6 +104,23 @@ export const liuyaoApi = {
     return response.json();
   },
 
+  /**
+   * 游客免费试用：一次请求完成起卦 + 首次 AI 解卦。
+   * 后续追问仍需登录。
+   */
+  async guestStart(
+    data: PaipanRequest & { guest_session_id: string },
+    onChunk: (text: string) => void,
+    onMeta?: (meta: unknown) => void,
+  ): Promise<void> {
+    return trySSE(
+      api('/guest/liuyao/start'),
+      data,
+      onChunk,
+      onMeta,
+    );
+  },
+
   // 获取历史记录
   async getHistory(limit = 20, offset = 0): Promise<Hexagram[]> {
     const response = await fetch(

@@ -20,7 +20,7 @@ export function PrimaryCta({ entry, href = "/analysis/start", children, classNam
       className={className ?? "btn btn-primary group"}
       onClick={() =>
         trackEvent("home_primary_cta_click", {
-          payload: { entry, target: "guest_analysis_start" },
+          payload: { entry, target: href },
         })
       }
     >
