@@ -417,16 +417,17 @@ export default function LiuyaoPage() {
             }
           },
         );
-        if (guestHexagram) {
+        const completedGuestHexagram = guestHexagram as HexagramDetail | null;
+        if (completedGuestHexagram) {
           trackEvent('liuyao_result_view', {
-            payload: { hexagram_id: guestHexagram.hexagram_id, guest: true },
+            payload: { hexagram_id: completedGuestHexagram.hexagram_id, guest: true },
           });
           trackEvent('liuyao_report_view', {
             payload: liuyaoEventPayload({
-              hexagram_id: guestHexagram.hexagram_id,
+              hexagram_id: completedGuestHexagram.hexagram_id,
               guest: true,
-              main_gua: guestHexagram.main_gua,
-              change_gua: guestHexagram.change_gua,
+              main_gua: completedGuestHexagram.main_gua,
+              change_gua: completedGuestHexagram.change_gua,
             }),
           });
         }
@@ -436,7 +437,7 @@ export default function LiuyaoPage() {
         } else {
           trackEvent('liuyao_ai_generated', {
             payload: liuyaoEventPayload({
-              hexagram_id: guestHexagram?.hexagram_id,
+              hexagram_id: completedGuestHexagram?.hexagram_id,
               guest: true,
               text_length: finalText.length,
             }),
