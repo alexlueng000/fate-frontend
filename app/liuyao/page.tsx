@@ -75,6 +75,54 @@ const QUESTION_SCENARIOS = [
   },
 ];
 
+const NUMBER_MEANINGS = [
+  { name: '天', hint: '事情的起因与时机' },
+  { name: '地', hint: '当下的环境与条件' },
+  { name: '人', hint: '你的选择与行动' },
+];
+
+function CastingCeremony({ question, numbers }: { question: string; numbers: string[] }) {
+  return (
+    <div
+      className="max-w-2xl mx-auto bg-[color:var(--color-bg-elevated)] border border-[color:var(--color-border)] rounded-[4px] px-6 py-12 md:px-12 md:py-16 shadow-[var(--shadow-md)] text-center animate-fade-in"
+      role="status"
+      aria-live="polite"
+      aria-label="正在起卦"
+    >
+      <p className="text-[11px] tracking-[0.3em] text-[color:var(--color-text-muted)]">静心 · 起卦</p>
+      <h2 className="mt-4 font-serif text-xl md:text-2xl text-[color:var(--color-text-primary)]">
+        卦象正在显现
+      </h2>
+      <p className="mx-auto mt-3 max-w-md text-[13px] leading-6 text-[color:var(--color-text-secondary)] line-clamp-2">
+        {question}
+      </p>
+
+      <div className="mt-10 flex items-start justify-center gap-5 md:gap-8" aria-hidden="true">
+        {numbers.map((number, index) => (
+          <div key={`${number}-${index}`} className="flex flex-col items-center gap-3">
+            <div
+              className="flex h-16 w-16 items-center justify-center rounded-full border border-[color:var(--color-primary)]/45 bg-[color:var(--color-bg-alt)] font-serif text-xl text-[color:var(--color-primary)] shadow-[0_0_0_5px_var(--color-primary-glow)] animate-scale-in"
+              style={{ animationDelay: `${index * 650}ms` }}
+            >
+              {number}
+            </div>
+            <span className="text-[11px] tracking-[0.24em] text-[color:var(--color-text-muted)]">
+              {NUMBER_MEANINGS[index]?.name}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      <div className="mx-auto mt-10 h-px w-32 overflow-hidden bg-[color:var(--color-border)]">
+        <div className="h-full w-full origin-left animate-[scaleIn_3.8s_ease-out_both] bg-[color:var(--color-primary)]" />
+      </div>
+      <p className="mt-4 text-[12px] text-[color:var(--color-text-muted)]">
+        正在结合起卦时间与天地人三才排定六爻
+      </p>
+    </div>
+  );
+}
+
 // Detail row — uniform, no rainbow, no decorative glyphs
 function DetailRow({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
@@ -105,9 +153,9 @@ export default function LiuyaoPage() {
   const [method, setMethod] = useState<'number' | 'coin' | 'time'>('number');
   const [question, setQuestion] = useState('');
   const [selectedScenario, setSelectedScenario] = useState<string | null>(null);
-  const [gender, setGender] = useState<'male' | 'female'>('male');
   const [numbers, setNumbers] = useState<string[]>(['', '', '']);
   const [loading, setLoading] = useState(false);
+  const [castingResult, setCastingResult] = useState<{ question: string; numbers: string[] } | null>(null);
   const [result, setResult] = useState<HexagramDetail | null>(null);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
@@ -358,7 +406,7 @@ export default function LiuyaoPage() {
       const data: PaipanRequest = {
         question: question.trim(),
         method: submitMethod,
-        gender,
+        gender: 'unknown',
         numbers: submitMethod === 'number' ? numbers.map((n) => parseInt(n)) : undefined,
       };
       trackEvent('liuyao_start', {
@@ -448,7 +496,14 @@ export default function LiuyaoPage() {
         return;
       }
       const hexagram = await liuyaoApi.paipan(data);
+      setCastingResult({
+        question: question.trim(),
+        numbers: method === 'number' ? numbers : ['一', '念', '成'],
+      });
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      await new Promise((resolve) => window.setTimeout(resolve, reduceMotion ? 500 : 4200));
       setResult(hexagram);
+      setCastingResult(null);
       trackEvent('liuyao_hexagram_created', {
         payload: { hexagram_id: hexagram.hexagram_id, guest: false },
       });
@@ -480,6 +535,7 @@ export default function LiuyaoPage() {
       const msg = error instanceof Error ? error.message : '排盘失败，请重试';
       console.error('排盘失败:', error);
       setFormError(msg);
+      setCastingResult(null);
       if (!isLoggedIn) {
         setResult(null);
       }
@@ -843,7 +899,9 @@ export default function LiuyaoPage() {
           </div>
         )}
 
-        {!result ? (!isLoggedIn ? (
+        {castingResult ? (
+          <CastingCeremony question={castingResult.question} numbers={castingResult.numbers} />
+        ) : !result ? (!isLoggedIn ? (
           <div className="mx-auto max-w-4xl">
             <section className="grid grid-cols-1 gap-8 md:grid-cols-[minmax(0,1fr)_360px] md:items-start">
               <div className="pt-1 md:pt-8">
@@ -913,30 +971,6 @@ export default function LiuyaoPage() {
                   </div>
                 </div>
 
-                <fieldset className="mt-5">
-                  <legend className="block text-[11px] tracking-[0.24em] uppercase text-[color:var(--color-text-secondary)] font-medium mb-3">
-                    性别
-                  </legend>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      aria-pressed={gender === 'male'}
-                      onClick={() => setGender('male')}
-                      className={toggleClass(gender === 'male')}
-                    >
-                      男
-                    </button>
-                    <button
-                      type="button"
-                      aria-pressed={gender === 'female'}
-                      onClick={() => setGender('female')}
-                      className={toggleClass(gender === 'female')}
-                    >
-                      女
-                    </button>
-                  </div>
-                </fieldset>
-
                 <button
                   type="submit"
                   disabled={loading || booting}
@@ -974,31 +1008,6 @@ export default function LiuyaoPage() {
               </p>
 
               <form onSubmit={handleSubmit} className="space-y-7">
-                {/* Gender */}
-                <fieldset>
-                  <legend className="block text-[11px] tracking-[0.24em] uppercase text-[color:var(--color-text-secondary)] font-medium mb-3">
-                    性别
-                  </legend>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      aria-pressed={gender === 'male'}
-                      onClick={() => setGender('male')}
-                      className={toggleClass(gender === 'male')}
-                    >
-                      男
-                    </button>
-                    <button
-                      type="button"
-                      aria-pressed={gender === 'female'}
-                      onClick={() => setGender('female')}
-                      className={toggleClass(gender === 'female')}
-                    >
-                      女
-                    </button>
-                  </div>
-                </fieldset>
-
                 {/* Question */}
                 <div>
                   <label htmlFor="liuyao-question" className="block text-[11px] tracking-[0.24em] uppercase text-[color:var(--color-text-secondary)] font-medium mb-2">
@@ -1083,40 +1092,49 @@ export default function LiuyaoPage() {
                 {/* Numbers */}
                 {method === 'number' && (
                   <div className="bg-[color:var(--color-bg-alt)] p-5 rounded-[3px] border border-[color:var(--color-border)]">
-                    <label className="block text-[11px] tracking-[0.24em] uppercase text-[color:var(--color-text-secondary)] font-medium mb-3">
-                      请输入三个数字
-                    </label>
+                    <div className="mb-4">
+                      <p className="text-[11px] tracking-[0.24em] uppercase text-[color:var(--color-text-secondary)] font-medium">
+                        凭第一感觉，写下三个正整数
+                      </p>
+                      <p className="mt-2 text-[12px] leading-5 text-[color:var(--color-text-muted)]">
+                        不需要计算吉凶，也没有标准答案。短暂闭眼，想到什么就填什么。
+                      </p>
+                    </div>
                     <div className="grid grid-cols-3 gap-3">
                       {numbers.map((num, index) => (
-                        <input
-                          key={index}
-                          type="number"
-                          value={num}
-                          onChange={(e) => {
-                            const newNumbers = [...numbers];
-                            newNumbers[index] = e.target.value;
-                            setNumbers(newNumbers);
-                            if (e.target.value && index < 2) {
-                              const nextInput = e.target.parentElement?.children[index + 1] as HTMLInputElement;
-                              if (nextInput) nextInput.focus();
-                            }
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Backspace' && !numbers[index] && index > 0) {
-                              const prev = e.currentTarget.parentElement?.children[index - 1] as HTMLInputElement;
-                              if (prev) prev.focus();
-                            }
-                          }}
-                          aria-label={`第 ${index + 1} 个数字`}
-                          placeholder={`第 ${index + 1} 个`}
-                          className="p-2.5 min-h-[44px] bg-[color:var(--color-bg-elevated)] border border-[color:var(--color-border)] rounded-[3px] outline-none transition-[border-color,box-shadow] duration-200 focus:border-[color:var(--color-primary)] focus:shadow-[0_0_0_3px_var(--color-primary-glow)] text-center text-[16px] text-[color:var(--color-text-primary)] placeholder:text-[color:var(--color-text-hint)] placeholder:text-[12px]"
-                          min="1"
-                        />
+                        <label key={index} className="text-center">
+                          <span className="mb-2 block font-serif text-[15px] text-[color:var(--color-primary)]">
+                            {NUMBER_MEANINGS[index].name}
+                          </span>
+                          <input
+                            type="number"
+                            value={num}
+                            onChange={(e) => {
+                              const newNumbers = [...numbers];
+                              newNumbers[index] = e.target.value;
+                              setNumbers(newNumbers);
+                              if (e.target.value && index < 2) {
+                                const nextInput = e.currentTarget.closest('.grid')?.querySelectorAll('input')[index + 1];
+                                nextInput?.focus();
+                              }
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Backspace' && !numbers[index] && index > 0) {
+                                const prev = e.currentTarget.closest('.grid')?.querySelectorAll('input')[index - 1];
+                                prev?.focus();
+                              }
+                            }}
+                            aria-label={`${NUMBER_MEANINGS[index].name}：${NUMBER_MEANINGS[index].hint}`}
+                            placeholder="正整数"
+                            className="w-full p-2.5 min-h-[48px] bg-[color:var(--color-bg-elevated)] border border-[color:var(--color-primary)]/35 rounded-[3px] outline-none transition-[border-color,box-shadow] duration-200 focus:border-[color:var(--color-primary)] focus:shadow-[0_0_0_4px_var(--color-primary-glow)] text-center text-[18px] font-medium text-[color:var(--color-text-primary)] placeholder:text-[color:var(--color-text-hint)] placeholder:text-[12px]"
+                            min="1"
+                          />
+                          <span className="mt-2 block text-[10px] leading-4 text-[color:var(--color-text-muted)]">
+                            {NUMBER_MEANINGS[index].hint}
+                          </span>
+                        </label>
                       ))}
                     </div>
-                    <p className="text-[12px] text-[color:var(--color-text-muted)] mt-3 text-center">
-                      不必刻意思考，凭第一感觉输入即可。
-                    </p>
                   </div>
                 )}
 
@@ -1166,10 +1184,6 @@ export default function LiuyaoPage() {
                 {/* Uniform detail rows — no rainbow, no glyphs */}
                 <div className="grid grid-cols-1 md:grid-cols-2 md:gap-x-8">
                   <div>
-                    <DetailRow
-                      label="性别"
-                      value={result.gender === 'male' ? '男' : result.gender === 'female' ? '女' : '未知'}
-                    />
                     <DetailRow
                       label="排法"
                       value={result.method === 'time' ? '时间' : result.method === 'number' ? '数字' : '铜钱'}
@@ -1497,7 +1511,7 @@ export default function LiuyaoPage() {
         )}
 
         {/* Value cards — quiet, no emoji, no glassmorphism */}
-        {!result && isLoggedIn && (
+        {!result && !castingResult && isLoggedIn && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-12 max-w-3xl mx-auto">
             {[
               { title: '一事一问', desc: '六爻适合判断具体事情，不建议一次问多个问题。' },
