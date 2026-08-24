@@ -126,16 +126,16 @@ function CastingCeremony({ question, numbers }: { question: string; numbers: str
 // Detail row — uniform, no rainbow, no decorative glyphs
 function DetailRow({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <div className="flex items-baseline gap-4 py-2.5 border-b border-[color:var(--color-border)]/60 last:border-b-0">
-      <span className="shrink-0 w-20 md:w-24 text-[11px] tracking-[0.18em] uppercase text-[color:var(--color-text-muted)] font-medium">
+    <div className="grid grid-cols-[5rem_minmax(0,1fr)] gap-3 border-b border-[color:var(--color-border)]/60 py-3.5 last:border-b-0 md:grid-cols-[5.5rem_minmax(0,1fr)]">
+      <span className="pt-0.5 text-[11px] font-medium tracking-[0.18em] text-[color:var(--color-text-muted)]">
         {label}
       </span>
-      <div className="flex-1 min-w-0">
-        <div className="text-[15px] text-[color:var(--color-text-primary)] truncate" title={value}>
+      <div className="min-w-0">
+        <div className="break-words text-[14px] leading-6 text-[color:var(--color-text-primary)] md:text-[15px]" title={value}>
           {value}
         </div>
         {sub && (
-          <div className="text-[12px] text-[color:var(--color-text-secondary)] mt-0.5 truncate" title={sub}>
+          <div className="mt-1 break-words text-[12px] leading-5 text-[color:var(--color-text-secondary)]" title={sub}>
             {sub}
           </div>
         )}
@@ -1163,17 +1163,20 @@ export default function LiuyaoPage() {
         )) : (
           /* === Hexagram Result === */
           <div className="relative">
-            <div className="bg-[color:var(--color-bg-elevated)] border border-[color:var(--color-border)] rounded-[4px] shadow-[var(--shadow-md)] overflow-hidden">
+            <div className="overflow-hidden rounded-[6px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-elevated)] shadow-[var(--shadow-md)]">
               {/* Question + meta */}
-              <div className="px-6 md:px-9 pt-9 pb-7 border-b border-[color:var(--color-border)]">
-                <div className="text-center mb-7">
-                  <p className="text-[11px] tracking-[0.3em] uppercase text-[color:var(--color-text-muted)] mb-3">
+              <div className="relative border-b border-[color:var(--color-border)] px-5 pb-7 pt-8 md:px-10 md:pb-9 md:pt-10">
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[color:var(--color-primary)]/45" />
+                <div className="mb-8 text-center md:mb-10">
+                  <p className="mb-3 inline-flex items-center gap-2 text-[10px] font-medium tracking-[0.3em] text-[color:var(--color-primary)]">
+                    <span className="h-px w-5 bg-[color:var(--color-primary)]/45" />
                     所问之事
+                    <span className="h-px w-5 bg-[color:var(--color-primary)]/45" />
                   </p>
-                  <h2 className="font-serif text-[1.25rem] md:text-[1.75rem] leading-[1.3] text-[color:var(--color-text-primary)] font-medium">
+                  <h2 className="mx-auto max-w-3xl font-serif text-[1.4rem] font-medium leading-[1.45] text-[color:var(--color-text-primary)] md:text-[2rem]">
                     {result.question}
                   </h2>
-                  <p className="mt-3 text-[12px] text-[color:var(--color-text-secondary)] tracking-wide">
+                  <p className="mt-4 text-[12px] tracking-[0.08em] text-[color:var(--color-text-muted)]">
                     {new Date(result.timestamp).toLocaleString('zh-CN', {
                       year: 'numeric', month: 'long', day: 'numeric',
                       hour: '2-digit', minute: '2-digit',
@@ -1182,8 +1185,8 @@ export default function LiuyaoPage() {
                 </div>
 
                 {/* Uniform detail rows — no rainbow, no glyphs */}
-                <div className="grid grid-cols-1 md:grid-cols-2 md:gap-x-8">
-                  <div>
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+                  <div className="rounded-[4px] border border-[color:var(--color-border)] bg-[color:var(--color-bg)] px-4 md:px-5">
                     <DetailRow
                       label="排法"
                       value={result.method === 'time' ? '时间' : result.method === 'number' ? '数字' : '铜钱'}
@@ -1209,7 +1212,7 @@ export default function LiuyaoPage() {
                       />
                     )}
                   </div>
-                  <div>
+                  <div className="rounded-[4px] border border-[color:var(--color-border)] bg-[color:var(--color-bg)] px-4 md:px-5">
                     {result.lunar_date && <DetailRow label="农历" value={result.lunar_date} />}
                     {(result.jiqi?.current || result.jieqi?.current) && (
                       <DetailRow
@@ -1233,11 +1236,16 @@ export default function LiuyaoPage() {
               </div>
 
               {/* Hexagrams */}
-              <div className="px-4 md:px-9 py-9 md:py-12">
+              <div className="px-4 py-9 md:px-10 md:py-12">
+                <div className="mb-9 text-center">
+                  <p className="text-[10px] font-medium tracking-[0.3em] text-[color:var(--color-text-muted)]">卦象结构</p>
+                  <p className="mt-2 text-[12px] text-[color:var(--color-text-secondary)]">本卦为事情当下，变卦为动爻变化后的趋势</p>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-12 relative">
                   {/* Main gua */}
                   <div>
-                    <div className="text-center mb-7">
+                    <div className="mb-7 text-center">
+                      <p className="mb-3 text-[10px] font-medium tracking-[0.28em] text-[color:var(--color-primary)]">本卦 · 当下</p>
                       <h3
                         className="font-serif text-[1.875rem] md:text-[2.25rem] leading-[1.2] tracking-wider text-[color:var(--color-text-primary)] font-medium"
                       >
@@ -1245,9 +1253,6 @@ export default function LiuyaoPage() {
                       </h3>
                       <div className="mt-2 mx-auto h-px w-12 bg-[color:var(--color-border-strong)]" />
                       <div className="mt-3 flex flex-col items-center gap-1">
-                        <p className="text-[11px] tracking-[0.24em] uppercase text-[color:var(--color-text-muted)]">
-                          本卦
-                        </p>
                         {result.main_gua && (() => {
                           const hexInfo = getHexagramByName(result.main_gua);
                           return hexInfo ? (
@@ -1261,7 +1266,7 @@ export default function LiuyaoPage() {
 
                     {result.lines?.lines && Array.isArray(result.lines.lines) && (
                       <>
-                        <div className="bg-[color:var(--color-bg)] border border-[color:var(--color-border)] rounded-[4px] p-5 md:p-7">
+                        <div className="rounded-[5px] border border-[color:var(--color-border)] bg-[color:var(--color-bg)] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] md:p-7">
                           <div>
                             {[...result.lines.lines].reverse().map((line, index) =>
                               renderYaoLine(line, result.lines!.lines.length - 1 - index, false),
@@ -1300,7 +1305,8 @@ export default function LiuyaoPage() {
                         <div className="h-12 w-px bg-[color:var(--color-border-strong)]" />
                       </div>
 
-                      <div className="text-center mb-7">
+                      <div className="mb-7 text-center">
+                        <p className="mb-3 text-[10px] font-medium tracking-[0.28em] text-[color:var(--color-primary)]">变卦 · 趋势</p>
                         <h3
                           className="font-serif text-[1.875rem] md:text-[2.25rem] leading-[1.2] tracking-wider text-[color:var(--color-text-primary)] font-medium"
                         >
@@ -1308,9 +1314,6 @@ export default function LiuyaoPage() {
                         </h3>
                         <div className="mt-2 mx-auto h-px w-12 bg-[color:var(--color-border-strong)]" />
                         <div className="mt-3 flex flex-col items-center gap-1">
-                          <p className="text-[11px] tracking-[0.24em] uppercase text-[color:var(--color-text-muted)]">
-                            变卦
-                          </p>
                           {(() => {
                             const hexInfo = getHexagramByName(result.change_gua);
                             return hexInfo ? (
@@ -1322,7 +1325,7 @@ export default function LiuyaoPage() {
                         </div>
                       </div>
 
-                      <div className="bg-[color:var(--color-bg-alt)] border border-[color:var(--color-border)] rounded-[4px] p-5 md:p-7">
+                      <div className="rounded-[5px] border border-[color:var(--color-primary)]/20 bg-[color:var(--color-bg-alt)] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] md:p-7">
                         <div>
                           {[...result.change_lines.lines].reverse().map((changeLine, index) => {
                             const originalIndex = result.change_lines!.lines.length - 1 - index;
