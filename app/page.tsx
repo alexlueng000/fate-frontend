@@ -211,70 +211,98 @@ export default function LandingPage() {
         className="px-6 py-20 md:py-28"
         style={{ background: "var(--color-bg-elevated)" }}
       >
-        <div className="mx-auto max-w-3xl space-y-12">
-          <header className="space-y-3">
-            <p className="text-[0.6875rem] uppercase tracking-[0.12em] text-[var(--color-text-muted)]">
-              为什么是东方文化
-            </p>
-            <h2
-              className="text-[1.75rem] md:text-[2rem] lg:text-[2.25rem] leading-[1.25] font-medium text-[var(--color-text-primary)]"
-              style={{ fontFamily: "var(--font-display)" }}
-            >
-              用另一套语言，重新理解自己。
-            </h2>
-            <p className="text-[1rem] md:text-[1.0625rem] leading-relaxed text-[var(--color-text-secondary)]">
-              有些问题不适合被一句建议匆忙回答。我们把八字和六爻做成两个入口，一个帮你看长期的自己，一个帮你看眼前的事。
-            </p>
+        <div className="mx-auto max-w-5xl space-y-12 md:space-y-14">
+          <header className="grid gap-8 md:grid-cols-[minmax(0,1.15fr)_minmax(260px,0.85fr)] md:items-end">
+            <div className="space-y-4">
+              <p className="text-[0.6875rem] uppercase tracking-[0.12em] text-[var(--color-text-muted)]">
+                为什么是东方文化
+              </p>
+              <h2
+                className="text-[1.75rem] md:text-[2rem] lg:text-[2.25rem] leading-[1.25] font-medium text-[var(--color-text-primary)]"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                用另一套语言，重新理解自己。
+              </h2>
+              <p className="max-w-2xl text-[1rem] md:text-[1.0625rem] leading-[1.8] text-[var(--color-text-secondary)]">
+                有些问题不适合被一句建议匆忙回答。我们把八字和六爻做成两个入口，一个帮你看长期的自己，一个帮你看眼前的事。
+              </p>
+            </div>
+            <div className="border border-[var(--color-border)] bg-[var(--color-bg)] px-5 py-4">
+              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 text-center">
+                <div>
+                  <p className="font-serif text-[1.25rem] text-[var(--color-text-primary)]">长期</p>
+                  <p className="mt-1 text-[0.75rem] text-[var(--color-text-muted)]">性格、关系、节奏</p>
+                </div>
+                <span className="h-10 w-px bg-[var(--color-border)]" aria-hidden="true" />
+                <div>
+                  <p className="font-serif text-[1.25rem] text-[var(--color-primary)]">当下</p>
+                  <p className="mt-1 text-[0.75rem] text-[var(--color-text-muted)]">选择、阻力、变化</p>
+                </div>
+              </div>
+            </div>
           </header>
 
-          <ol className="space-y-10">
+          <ol className="grid gap-5 md:grid-cols-2">
             {[
               {
                 head: "看清你是谁",
+                label: "八字文化",
                 body: [
                   "八字文化分析会把出生信息转成一份结构化命盘，再用白话解释其中的性格倾向、优势位置、关系模式和容易反复卡住的地方。",
                   "它更适合处理长期问题：我为什么总用同一种方式回应压力，我适合怎样的工作节奏，我在关系里真正看重什么。你得到的不是一句定论，而是一份可以反复对照自己的观察框架。",
                 ],
-                meta: "适合：自我认知、职业方向、关系模式、长期节奏",
+                meta: ["自我认知", "职业方向", "关系模式", "长期节奏"],
               },
               {
                 head: "看清下一步",
+                label: "六爻文化",
                 body: [
                   "六爻文化参考更关注当下的一件具体事。你写下问题，系统会围绕卦象结构、动爻变化和问题本身，整理当前状态、阻力来源、可观察的变化方向。",
                   "它不会替你选 A 或 B，也不会承诺结果。它的价值在于把混在一起的担心、机会和现实条件拆开，让你在做决定前多一个清醒的角度。",
                 ],
-                meta: "适合：感情关系、工作机会、合作推进、近期选择",
+                meta: ["感情关系", "工作机会", "合作推进", "近期选择"],
               },
             ].map((item, idx) => (
               <li
                 key={item.head}
-                className="grid grid-cols-[auto_1fr] items-baseline gap-x-5 gap-y-3 border-t border-[var(--color-border)] pt-8 first:border-t-0 first:pt-0"
+                className="border border-[var(--color-border)] bg-[var(--color-bg-card)] p-6 md:p-7 shadow-[var(--shadow-sm)]"
               >
-                <span
-                  className="font-mono text-[0.75rem] tabular-nums text-[var(--color-text-hint)]"
-                  aria-hidden="true"
-                >
-                  {String(idx + 1).padStart(2, "0")}
-                </span>
-                <h3
-                  className="text-[1.125rem] md:text-[1.25rem] font-medium text-[var(--color-text-primary)]"
-                  style={{ fontFamily: "var(--font-display)" }}
-                >
-                  {item.head}
-                </h3>
-                <span aria-hidden="true" />
-                <div className="space-y-3">
+                <div className="mb-6 flex items-start justify-between gap-4 border-b border-[var(--color-border)] pb-5">
+                  <div>
+                    <p className="text-[0.75rem] text-[var(--color-text-muted)]">{item.label}</p>
+                    <h3
+                      className="mt-2 text-[1.375rem] font-medium leading-snug text-[var(--color-text-primary)]"
+                      style={{ fontFamily: "var(--font-display)" }}
+                    >
+                      {item.head}
+                    </h3>
+                  </div>
+                  <span
+                    className="font-mono text-[0.75rem] tabular-nums text-[var(--color-text-hint)]"
+                    aria-hidden="true"
+                  >
+                    {String(idx + 1).padStart(2, "0")}
+                  </span>
+                </div>
+                <div className="space-y-4">
                   {item.body.map((paragraph) => (
                     <p
                       key={paragraph}
-                      className="text-[0.9375rem] md:text-[1rem] leading-[1.75] text-[var(--color-text-body)]"
+                      className="text-[0.9375rem] leading-[1.8] text-[var(--color-text-body)]"
                     >
                       {paragraph}
                     </p>
                   ))}
-                  <p className="pt-1 text-[0.8125rem] leading-6 text-[var(--color-text-secondary)]">
-                    {item.meta}
-                  </p>
+                  <div className="flex flex-wrap gap-2 pt-2">
+                    {item.meta.map((tag) => (
+                      <span
+                        key={tag}
+                        className="border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-2.5 py-1 text-[0.75rem] text-[var(--color-text-secondary)]"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </li>
             ))}
