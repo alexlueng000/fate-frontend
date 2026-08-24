@@ -33,6 +33,7 @@ const FEATURES = [
   },
   {
     id: "feature-xinji",
+    hidden: true,
     title: "情绪出现时，先把它照亮。",
     subtitle: "心镜灯 · 看懂你的情绪",
     painPoints: [
@@ -144,6 +145,8 @@ function AnimatedSection({
 }
 
 export default function FeatureShowcase() {
+  const visibleFeatures = FEATURES.filter((f) => !f.hidden);
+
   return (
     <section
       className="px-6 py-20 md:py-28"
@@ -154,21 +157,21 @@ export default function FeatureShowcase() {
         <AnimatedSection>
           <header className="space-y-3 text-center">
             <p className="text-[0.6875rem] uppercase tracking-[0.12em] text-[var(--color-text-muted)]">
-              三个工具
+              两个工具
             </p>
             <h2
               className="text-[1.75rem] md:text-[2rem] lg:text-[2.25rem] font-medium leading-[1.25] text-[var(--color-text-primary)]"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              三个工具，帮你整理自己
+              两个工具，帮你整理自己
             </h2>
             <p className="mx-auto max-w-xl text-[1rem] md:text-[1.0625rem] text-[var(--color-text-secondary)] leading-relaxed">
-              看清性格、看懂情绪、整理选择。
+              看清性格、整理选择。
             </p>
           </header>
         </AnimatedSection>
 
-        {FEATURES.map((f, i) => (
+        {visibleFeatures.map((f, i) => (
           <AnimatedSection key={f.id} delay={i * 80}>
             <FeatureCard {...f} />
           </AnimatedSection>
