@@ -11,6 +11,8 @@ const API_DESTINATION = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:80
 
 const nextConfig: NextConfig = {
   output: 'standalone',  // Docker 部署需要
+  // 允许通过环境变量切换构建目录（默认 .next）
+  ...(process.env.NEXT_DIST_DIR ? { distDir: process.env.NEXT_DIST_DIR } : {}),
   reactStrictMode: true,
   eslint: {
     // 在构建和启动时忽略 ESLint 报错

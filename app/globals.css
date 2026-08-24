@@ -99,6 +99,11 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
+/* Offset anchor targets below the fixed header */
+section[id] {
+  scroll-margin-top: 5rem;
+}
+
 body {
   background: var(--color-bg);
   color: var(--color-text-primary);

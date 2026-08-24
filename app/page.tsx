@@ -1,14 +1,12 @@
-"use client";
-
-import { useEffect, useState } from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import Footer from "@/app/components/Footer";
 import FeatureShowcase from "@/app/components/landing/FeatureShowcase";
-import ScenarioCard from "@/app/components/landing/ScenarioCard";
-import { fetchMe, getAuthToken, useUser } from "@/app/lib/auth";
-import { trackEvent } from "@/app/lib/analytics/track";
-import { ArrowRight, ChevronRight, Gift, Loader2 } from "lucide-react";
+import FaqPreview, { LANDING_FAQS } from "@/app/components/landing/FaqPreview";
+import KnowledgePreview from "@/app/components/landing/KnowledgePreview";
+import AuthGate from "@/app/components/landing/AuthGate";
+import { PrimaryCta, SecondaryCta } from "@/app/components/landing/LandingCtas";
+import { Gift } from "lucide-react";
 
 const HERO_FEATURES = [
   {
@@ -37,60 +35,67 @@ const HERO_FEATURES = [
   },
 ] as const;
 
-export default function LandingPage() {
-  const router = useRouter();
-  const { user, setUser } = useUser();
-  const [checkingAuth, setCheckingAuth] = useState(() => Boolean(getAuthToken()));
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://fateinsight.site";
 
-  useEffect(() => {
-    let alive = true;
+export const metadata: Metadata = {
+  title: "AI八字排盘与性格分析平台 | 易凡文化",
+  description:
+    "易凡文化提供在线八字排盘与白话解读：输入出生日期、时间和地点，免费生成首次分析，从五行、日主、十神等角度理解性格倾向与节奏，配套情绪记录与六爻文化参考。",
+  alternates: {
+    canonical: '/',
+  },
+};
 
-    async function routeByAuthState() {
-      if (user) {
-        router.replace("/dashboard");
-        return;
-      }
-
-      if (!getAuthToken()) {
-        if (!alive) return;
-        setCheckingAuth(false);
-        trackEvent("home_view", { payload: { entry: "landing" } });
-        return;
-      }
-
-      const currentUser = await fetchMe();
-      if (!alive) return;
-
-      if (currentUser) {
-        setUser(currentUser);
-        router.replace("/dashboard");
-        return;
-      }
-
-      setCheckingAuth(false);
-      trackEvent("home_view", { payload: { entry: "landing" } });
-    }
-
-    void routeByAuthState();
-
-    return () => {
-      alive = false;
-    };
-  }, [router, setUser, user]);
-
-  if (checkingAuth) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-[var(--color-bg)] px-4">
-        <div className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)]" role="status" aria-live="polite">
-          <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-          正在进入命理首页
-        </div>
-      </main>
-    );
-  }
+/** Structured data: Organization + WebSite + FAQPage (mirrors visible FAQ content). */
+function StructuredData() {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": `${SITE_URL}/#organization`,
+        name: "易凡文化",
+        url: SITE_URL,
+        description:
+          "融合传统文化与 AI 技术的八字排盘、性格分析与情绪记录平台。",
+      },
+      {
+        "@type": "WebSite",
+        "@id": `${SITE_URL}/#website`,
+        url: SITE_URL,
+        name: "易凡文化",
+        inLanguage: "zh-CN",
+        publisher: { "@id": `${SITE_URL}/#organization` },
+      },
+      {
+        "@type": "FAQPage",
+        "@id": `${SITE_URL}/#faq`,
+        mainEntity: LANDING_FAQS.map((faq) => ({
+          "@type": "Question",
+          name: faq.question,
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: faq.answer,
+          },
+        })),
+      },
+    ],
+  };
 
   return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  );
+}
+
+export default function LandingPage() {
+  return (
     <main className="min-h-screen" style={{ background: "var(--color-bg)" }}>
+      <StructuredData />
+      <AuthGate />
+
       {/* ========== HERO ========== */}
       <section className="px-6 pt-20 pb-16 md:pt-28 md:pb-24">
         <div className="mx-auto grid max-w-6xl gap-12 md:gap-16 lg:grid-cols-[1.1fr_1fr] lg:items-center">
@@ -116,33 +121,17 @@ export default function LandingPage() {
               八字文化分析、情绪记录与六爻参考，帮你把性格、感受和选择整理得更清楚。
             </p>
 
-            {!user && (
-              <div className="inline-flex items-center gap-2 border border-[var(--color-primary)]/25 bg-[var(--color-primary)]/5 px-3 py-2 text-[0.875rem] font-medium text-[var(--color-primary)]">
-                <Gift className="h-4 w-4" aria-hidden="true" />
-                新用户注册即享：八字解读 10 次 + 六爻参考 10 次
-              </div>
-            )}
+            <div className="inline-flex items-center gap-2 border border-[var(--color-primary)]/25 bg-[var(--color-primary)]/5 px-3 py-2 text-[0.875rem] font-medium text-[var(--color-primary)]">
+              <Gift className="h-4 w-4" aria-hidden="true" />
+              新用户注册即享：八字解读 10 次 + 六爻参考 10 次
+            </div>
 
             {/* CTA */}
             <div className="flex flex-wrap items-center gap-3 pt-2">
-              <Link
-                href={user ? "/dashboard" : "/analysis/start"}
-                className="btn btn-primary group"
-                onClick={() => trackEvent("home_primary_cta_click", {
-                  payload: { entry: "hero", target: user ? "dashboard" : "guest_analysis_start" },
-                })}
-              >
-                {user ? "进入命理首页" : "免费生成首次分析"}
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-              </Link>
-              <Link
-                href="/demo"
-                className="btn btn-ghost group"
-                onClick={() => trackEvent("home_secondary_cta_click", { payload: { entry: "hero", target: "demo" } })}
-              >
+              <PrimaryCta entry="hero">免费生成首次分析</PrimaryCta>
+              <SecondaryCta entry="hero" event="home_secondary_cta_click" href="/demo">
                 查看示例报告
-                <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-              </Link>
+              </SecondaryCta>
             </div>
 
             {/* 信任注脚 · 排版式而非图标堆 */}
@@ -170,12 +159,8 @@ export default function LandingPage() {
               <ol className="divide-y divide-[var(--color-border)]">
                 {HERO_FEATURES.map((f, idx) => (
                   <li key={f.id}>
-                    <Link
+                    <a
                       href={f.anchor}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        document.querySelector(f.anchor)?.scrollIntoView({ behavior: "smooth" });
-                      }}
                       className="group grid grid-cols-[auto_1fr_auto] items-baseline gap-4 px-5 py-4 transition-colors hover:bg-[var(--color-bg-hover)] focus-visible:bg-[var(--color-bg-hover)] focus-visible:outline-none"
                     >
                       <span
@@ -200,11 +185,13 @@ export default function LandingPage() {
                           {f.desc}
                         </p>
                       </div>
-                      <ArrowRight
-                        className="h-4 w-4 self-center text-[var(--color-text-hint)] transition-transform group-hover:translate-x-0.5 group-hover:text-[var(--color-text-secondary)]"
+                      <span
+                        className="self-center text-[var(--color-text-hint)] transition-transform group-hover:translate-x-0.5 group-hover:text-[var(--color-text-secondary)]"
                         aria-hidden="true"
-                      />
-                    </Link>
+                      >
+                        →
+                      </span>
+                    </a>
                   </li>
                 ))}
               </ol>
@@ -280,11 +267,53 @@ export default function LandingPage() {
         <FeatureShowcase />
       </div>
 
+      {/* ========== 八字是什么 · 面向搜索意图的内容区块 ========== */}
+      <section className="px-6 py-20 md:py-28" style={{ background: "var(--color-bg-elevated)" }}>
+        <div className="mx-auto max-w-3xl space-y-10">
+          <header className="space-y-3">
+            <p className="text-[0.6875rem] uppercase tracking-[0.12em] text-[var(--color-text-muted)]">
+              八字入门
+            </p>
+            <h2
+              className="text-[1.75rem] md:text-[2rem] lg:text-[2.25rem] leading-[1.25] font-medium text-[var(--color-text-primary)]"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              八字是什么？
+            </h2>
+          </header>
+
+          <div className="space-y-6 text-[0.9375rem] md:text-[1rem] leading-[1.8] text-[var(--color-text-body)]">
+            <p>
+              八字，又称<strong>四柱</strong>，是把一个人出生的年、月、日、时，分别换算成对应的天干地支，组成四组、共八个字的一套符号体系。它起源于唐代，经宋代徐子平完善，是流传至今的传统命理核心工具。
+            </p>
+            <p>
+              在这份命盘里，<strong>日柱的天干</strong>（日主）代表你自己，其余七个字与你产生不同的关系，传统上用<strong>五行</strong>（金木水火土）、<strong>十神</strong>、<strong>六亲</strong>等概念来描述这些关系。通过分析五行的强弱与平衡，可以观察一个人的性格特质、能量节奏和关系模式。
+            </p>
+            <p>
+              在易凡文化，你只需要输入出生日期、时间和地点，系统会自动完成公历农历转换、真太阳时校正和排盘，再用白话把命盘讲给你听——不需要先学懂天干地支，也能开始理解自己的出厂参数。
+            </p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-3">
+            {[
+              { href: "/knowledge/what-is-bazi", label: "八字是什么？五分钟读懂四柱" },
+              { href: "/knowledge/wuxing-explained", label: "五行入门：金木水火土" },
+              { href: "/knowledge/ri-gan-introduction", label: "十天干速查：认识你的日主" },
+            ].map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="card px-4 py-3 text-[0.875rem] font-medium leading-snug text-[var(--color-text-primary)] transition-colors hover:bg-[var(--color-bg-hover)]"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ========== 使用场景 ========== */}
-      <section
-        className="px-6 py-20 md:py-28"
-        style={{ background: "var(--color-bg-elevated)" }}
-      >
+      <section className="px-6 py-20 md:py-28">
         <div className="mx-auto max-w-6xl">
           <header className="mb-12 space-y-3 md:mb-16 md:text-center">
             <p className="text-[0.6875rem] uppercase tracking-[0.12em] text-[var(--color-text-muted)]">
@@ -300,33 +329,63 @@ export default function LandingPage() {
           </header>
 
           <div className="grid gap-6 md:grid-cols-3 md:gap-7">
-            <ScenarioCard
-              persona="张女士"
-              role="28 岁 · 产品经理"
-              scenario="考虑跳槽那段时间，我一直拿不准方向。看完八字文化里的职业特质分析后，我多了一个整理自己优势和顾虑的角度。"
-              features={["八字文化", "心镜灯"]}
-              tags={["职业发展", "自我认知"]}
-            />
-            <ScenarioCard
-              persona="李先生"
-              role="35 岁 · 创业者"
-              scenario="创业压力大的时候，焦虑经常混在每天的琐事里。用心镜灯记了一段时间后，我才看见自己在哪些节点更容易被压力推着走。"
-              features={["心镜灯"]}
-              tags={["情绪管理", "压力释放"]}
-            />
-            <ScenarioCard
-              persona="王女士"
-              role="32 岁 · 设计师"
-              scenario="要不要接受外地的工作机会，我纠结了很久。六爻文化参考没有替我决定，但帮我把顾虑拆成几条可以比较的线。"
-              features={["六爻文化", "八字文化"]}
-              tags={["职业选择", "理性决策"]}
-            />
+            <article className="card flex flex-col gap-4 p-6">
+              <blockquote
+                className="text-[0.9375rem] leading-[1.8] text-[var(--color-text-body)]"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                「考虑跳槽那段时间，我一直拿不准方向。看完八字文化里的职业特质分析后，我多了一个整理自己优势和顾虑的角度。」
+              </blockquote>
+              <footer className="mt-auto space-y-2">
+                <p className="text-[0.875rem] font-medium text-[var(--color-text-primary)]">张女士</p>
+                <p className="text-[0.75rem] text-[var(--color-text-muted)]">28 岁 · 产品经理 · 八字文化 / 心镜灯</p>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <span className="border border-[var(--color-border)] px-2 py-0.5 text-[0.6875rem] text-[var(--color-text-secondary)]">职业发展</span>
+                  <span className="border border-[var(--color-border)] px-2 py-0.5 text-[0.6875rem] text-[var(--color-text-secondary)]">自我认知</span>
+                </div>
+              </footer>
+            </article>
+            <article className="card flex flex-col gap-4 p-6">
+              <blockquote
+                className="text-[0.9375rem] leading-[1.8] text-[var(--color-text-body)]"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                「创业压力大的时候，焦虑经常混在每天的琐事里。用心镜灯记了一段时间后，我才看见自己在哪些节点更容易被压力推着走。」
+              </blockquote>
+              <footer className="mt-auto space-y-2">
+                <p className="text-[0.875rem] font-medium text-[var(--color-text-primary)]">李先生</p>
+                <p className="text-[0.75rem] text-[var(--color-text-muted)]">35 岁 · 创业者 · 心镜灯</p>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <span className="border border-[var(--color-border)] px-2 py-0.5 text-[0.6875rem] text-[var(--color-text-secondary)]">情绪管理</span>
+                  <span className="border border-[var(--color-border)] px-2 py-0.5 text-[0.6875rem] text-[var(--color-text-secondary)]">压力释放</span>
+                </div>
+              </footer>
+            </article>
+            <article className="card flex flex-col gap-4 p-6">
+              <blockquote
+                className="text-[0.9375rem] leading-[1.8] text-[var(--color-text-body)]"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                「要不要接受外地的工作机会，我纠结了很久。六爻文化参考没有替我决定，但帮我把顾虑拆成几条可以比较的线。」
+              </blockquote>
+              <footer className="mt-auto space-y-2">
+                <p className="text-[0.875rem] font-medium text-[var(--color-text-primary)]">王女士</p>
+                <p className="text-[0.75rem] text-[var(--color-text-muted)]">32 岁 · 设计师 · 六爻文化 / 八字文化</p>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <span className="border border-[var(--color-border)] px-2 py-0.5 text-[0.6875rem] text-[var(--color-text-secondary)]">职业选择</span>
+                  <span className="border border-[var(--color-border)] px-2 py-0.5 text-[0.6875rem] text-[var(--color-text-secondary)]">理性决策</span>
+                </div>
+              </footer>
+            </article>
           </div>
         </div>
       </section>
 
-      {/* ========== 为什么选择 · 编辑型 (取代 StatCard hero-metric) ========== */}
-      <section className="px-6 py-20 md:py-28">
+      {/* ========== 为什么选择 · 编辑型 ========== */}
+      <section
+        className="px-6 py-20 md:py-28"
+        style={{ background: "var(--color-bg-elevated)" }}
+      >
         <div className="mx-auto max-w-3xl space-y-12">
           <header className="space-y-3">
             <p className="text-[0.6875rem] uppercase tracking-[0.12em] text-[var(--color-text-muted)]">
@@ -381,7 +440,13 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ========== 最终 CTA · 暖米白底 + 单点朱砂（取代 drenched primary） ========== */}
+      {/* ========== 传统文化学堂 · 知识库入口 ========== */}
+      <KnowledgePreview />
+
+      {/* ========== 常见问题 · FAQ 预览 ========== */}
+      <FaqPreview />
+
+      {/* ========== 最终 CTA ========== */}
       <section
         className="px-6 py-20 md:py-28"
         style={{ background: "var(--color-bg-alt)" }}
@@ -423,30 +488,18 @@ export default function LandingPage() {
           </ul>
 
           <div className="flex flex-wrap items-center gap-3 md:justify-center">
-            <Link
-              href={user ? "/dashboard" : "/analysis/start"}
-              className="btn btn-primary group"
-              onClick={() => trackEvent("home_primary_cta_click", {
-                payload: { entry: "final_cta", target: user ? "dashboard" : "guest_analysis_start" },
-              })}
-            >
-              {user ? "进入命理首页" : "免费生成首次分析"}
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-            </Link>
-            <Link href="/pricing" className="btn btn-secondary group">
+            <PrimaryCta entry="final_cta">免费生成首次分析</PrimaryCta>
+            <SecondaryCta entry="final_cta" event="home_pricing_cta_click" href="/pricing" className="btn btn-secondary group">
               查看会员套餐
-              <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-            </Link>
+            </SecondaryCta>
           </div>
 
-          {!user && (
-            <p className="text-[0.75rem] text-[var(--color-text-hint)]">
-              注册即表示同意
-              <Link href="/terms" className="ml-1 underline-offset-2 hover:underline">用户协议</Link>
-              <span className="mx-1">与</span>
-              <Link href="/privacy" className="underline-offset-2 hover:underline">隐私政策</Link>
-            </p>
-          )}
+          <p className="text-[0.75rem] text-[var(--color-text-hint)]">
+            注册即表示同意
+            <Link href="/terms" className="ml-1 underline-offset-2 hover:underline">用户协议</Link>
+            <span className="mx-1">与</span>
+            <Link href="/privacy" className="underline-offset-2 hover:underline">隐私政策</Link>
+          </p>
           <p className="border-t border-[var(--color-border)] pt-5 text-[0.75rem] leading-6 text-[var(--color-text-muted)]">
             本平台内容由 AI 基于传统文化资料生成，仅供文化参考，不构成医疗、投资、法律或其他专业建议。
           </p>
