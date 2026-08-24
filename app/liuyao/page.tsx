@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ImageDown } from 'lucide-react';
+import { ImageDown, LogIn, Send } from 'lucide-react';
 import { getAuthToken, useUser } from '@/app/lib/auth';
 import { liuyaoApi, PaipanRequest, HexagramDetail } from '@/app/lib/liuyao/api';
 import { historyApi } from '@/app/lib/history/api';
@@ -338,13 +338,14 @@ export default function LiuyaoPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
+    const submitMethod = isLoggedIn ? method : 'time';
 
     if (!question.trim()) {
       setFormError('请输入问事内容');
       return;
     }
 
-    if (method === 'number') {
+    if (submitMethod === 'number') {
       const nums = numbers.map((n) => parseInt(n));
       if (nums.some((n) => isNaN(n) || n <= 0)) {
         setFormError('请输入三个有效的正整数');
@@ -356,21 +357,22 @@ export default function LiuyaoPage() {
     try {
       const data: PaipanRequest = {
         question: question.trim(),
-        method,
+        method: submitMethod,
         gender,
-        numbers: method === 'number' ? numbers.map((n) => parseInt(n)) : undefined,
+        numbers: submitMethod === 'number' ? numbers.map((n) => parseInt(n)) : undefined,
       };
       trackEvent('liuyao_start', {
-        payload: liuyaoEventPayload(),
+        payload: liuyaoEventPayload({ method: submitMethod }),
       });
       trackEvent('question_submit', {
         payload: liuyaoEventPayload({
+          method: submitMethod,
           question_length: data.question.length,
         }),
       });
       trackEvent('liuyao_question_submit', {
         payload: {
-          method,
+          method: submitMethod,
           scenario: selectedScenario,
           logged_in: isLoggedIn,
         },
@@ -841,7 +843,129 @@ export default function LiuyaoPage() {
           </div>
         )}
 
-        {!result ? (
+        {!result ? (!isLoggedIn ? (
+          <div className="mx-auto max-w-4xl">
+            <section className="grid grid-cols-1 gap-8 md:grid-cols-[minmax(0,1fr)_360px] md:items-start">
+              <div className="pt-1 md:pt-8">
+                <p className="text-[12px] tracking-[0.24em] uppercase text-[color:var(--color-text-muted)]">
+                  六爻轻问
+                </p>
+                <h2 className="mt-4 font-serif text-[1.75rem] md:text-[2.5rem] leading-[1.25] tracking-[0.01em] text-[color:var(--color-text-primary)] font-medium">
+                  先问一件具体的事。
+                </h2>
+                <p className="mt-5 max-w-[34rem] text-[16px] leading-[1.8] text-[color:var(--color-text-body)]">
+                  不需要先理解六十四卦。把眼下最需要判断的那件事写清楚，系统会用当前时间起卦，并给出一次完整的 AI 解读。
+                </p>
+                <div className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  {[
+                    { title: '一事一问', desc: '只处理一个明确问题' },
+                    { title: '先看趋势', desc: '判断阻力、机会与变化' },
+                    { title: '再谈行动', desc: '给出下一步提醒' },
+                  ].map((item) => (
+                    <div
+                      key={item.title}
+                      className="border border-[color:var(--color-border)] bg-[color:var(--color-bg-elevated)] px-4 py-4 rounded-[4px]"
+                    >
+                      <h3 className="font-serif text-[15px] font-medium tracking-wide text-[color:var(--color-text-primary)]">
+                        {item.title}
+                      </h3>
+                      <p className="mt-1 text-[12px] leading-5 text-[color:var(--color-text-secondary)]">
+                        {item.desc}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <form
+                onSubmit={handleSubmit}
+                className="border border-[color:var(--color-border)] bg-[color:var(--color-bg-elevated)] rounded-[4px] p-5 md:p-6 shadow-[var(--shadow-md)]"
+              >
+                <div>
+                  <label htmlFor="liuyao-question" className="block text-[11px] tracking-[0.24em] uppercase text-[color:var(--color-text-secondary)] font-medium mb-2">
+                    所问之事
+                  </label>
+                  <textarea
+                    id="liuyao-question"
+                    value={question}
+                    onChange={(e) => setQuestion(e.target.value)}
+                    placeholder={currentPlaceholder}
+                    className="w-full h-32 p-3 bg-[color:var(--color-bg)] border border-[color:var(--color-border)] rounded-[3px] resize-none outline-none transition-[border-color,box-shadow] duration-200 focus:border-[color:var(--color-primary)] focus:shadow-[0_0_0_3px_var(--color-primary-glow)] text-[16px] leading-relaxed text-[color:var(--color-text-primary)] placeholder:text-[color:var(--color-text-hint)]"
+                  />
+                </div>
+
+                <div className="mt-5">
+                  <p className="block text-[11px] tracking-[0.24em] uppercase text-[color:var(--color-text-secondary)] font-medium mb-3">
+                    常见问题
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {QUESTION_SCENARIOS.slice(0, 4).map((scenario) => (
+                      <button
+                        key={scenario.id}
+                        type="button"
+                        aria-pressed={selectedScenario === scenario.id}
+                        onClick={() => handleScenarioClick(scenario.id)}
+                        className={toggleClass(selectedScenario === scenario.id, '!tracking-wider')}
+                      >
+                        {scenario.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <fieldset className="mt-5">
+                  <legend className="block text-[11px] tracking-[0.24em] uppercase text-[color:var(--color-text-secondary)] font-medium mb-3">
+                    性别
+                  </legend>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      aria-pressed={gender === 'male'}
+                      onClick={() => setGender('male')}
+                      className={toggleClass(gender === 'male')}
+                    >
+                      男
+                    </button>
+                    <button
+                      type="button"
+                      aria-pressed={gender === 'female'}
+                      onClick={() => setGender('female')}
+                      className={toggleClass(gender === 'female')}
+                    >
+                      女
+                    </button>
+                  </div>
+                </fieldset>
+
+                <button
+                  type="submit"
+                  disabled={loading || booting}
+                  className="btn btn-primary mt-6 w-full tracking-[0.18em]"
+                >
+                  <Send className="h-4 w-4" aria-hidden="true" />
+                  {loading || booting ? '解卦中…' : '免费试用一次'}
+                </button>
+
+                <a
+                  href={`/login?redirect=${encodeURIComponent('/liuyao')}`}
+                  className="btn btn-secondary mt-3 w-full"
+                  onClick={() => {
+                    trackEvent('liuyao_guest_login_click', {
+                      payload: liuyaoEventPayload({ target: '/login' }),
+                    });
+                  }}
+                >
+                  <LogIn className="h-4 w-4" aria-hidden="true" />
+                  登录使用完整工具
+                </a>
+
+                <p className="mt-4 text-center text-[12px] leading-5 text-[color:var(--color-text-muted)]">
+                  免登录可获得一次 AI 解卦；保存结果、继续追问和数字起卦需登录。
+                </p>
+              </form>
+            </section>
+          </div>
+        ) : (
           /* === Form === */
           <div className="max-w-2xl mx-auto">
             <div className="bg-[color:var(--color-bg-elevated)] border border-[color:var(--color-border)] rounded-[4px] p-6 md:p-9 shadow-[var(--shadow-md)]">
@@ -1018,7 +1142,7 @@ export default function LiuyaoPage() {
               </form>
             </div>
           </div>
-        ) : (
+        )) : (
           /* === Hexagram Result === */
           <div className="relative">
             <div className="bg-[color:var(--color-bg-elevated)] border border-[color:var(--color-border)] rounded-[4px] shadow-[var(--shadow-md)] overflow-hidden">
@@ -1373,7 +1497,7 @@ export default function LiuyaoPage() {
         )}
 
         {/* Value cards — quiet, no emoji, no glassmorphism */}
-        {!result && (
+        {!result && isLoggedIn && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-12 max-w-3xl mx-auto">
             {[
               { title: '一事一问', desc: '六爻适合判断具体事情，不建议一次问多个问题。' },
