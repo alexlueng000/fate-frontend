@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import Header from './components/Header';
 import SideNav from './components/Navigation/SideNav';
 import BottomNav from './components/Navigation/BottomNav';
-import { UserProvider, useUser, fetchMe } from './lib/auth';
+import { UserProvider, useUser, fetchMe, getAuthToken } from './lib/auth';
 import { DisclaimerModal } from './components/DisclaimerModal';
 import { hasAcceptedDisclaimer, setDisclaimerAccepted } from './lib/disclaimer';
 
@@ -14,6 +14,7 @@ function LayoutBody({ children }: { children: ReactNode }) {
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const fetchAttempted = useRef(false);
   const pathname = usePathname();
+  const isLoggedIn = Boolean(user) || Boolean(getAuthToken());
 
   // 检查用户认证（只执行一次）
   useEffect(() => {
@@ -39,9 +40,9 @@ function LayoutBody({ children }: { children: ReactNode }) {
   };
 
   // 判断是否显示功能导航（只在主功能页面显示）
-  const showFunctionNav = ['/dashboard', '/report', '/panel', '/xinji', '/liuyao', '/videos', '/membership'].some(path =>
+  const showFunctionNav = ['/dashboard', '/report', '/panel', '/xinji', '/videos', '/membership'].some(path =>
     pathname === path || pathname.startsWith(path + '/')
-  );
+  ) || (isLoggedIn && (pathname === '/liuyao' || pathname.startsWith('/liuyao/')));
 
   return (
     <div className="flex flex-col h-screen">
