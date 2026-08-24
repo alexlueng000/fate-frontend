@@ -223,28 +223,32 @@ export default function LandingPage() {
               用另一套语言，重新理解自己。
             </h2>
             <p className="text-[1rem] md:text-[1.0625rem] leading-relaxed text-[var(--color-text-secondary)]">
-              不替你做决定，只帮你把性格、情绪和选择整理得更清楚。
+              有些问题不适合被一句建议匆忙回答。我们把八字和六爻做成两个入口，一个帮你看长期的自己，一个帮你看眼前的事。
             </p>
           </header>
 
-          <ol className="space-y-8">
+          <ol className="space-y-10">
             {[
               {
                 head: "看清你是谁",
-                body: "八字文化分析会把出生信息转成一份结构化命盘，用白话解释你的性格倾向、优势和需要留意的地方。",
-              },
-              {
-                head: "看懂你的情绪",
-                body: "心镜灯让你持续记录感受。时间拉长后，你会更容易看见情绪变化和生活节奏之间的关系。",
+                body: [
+                  "八字文化分析会把出生信息转成一份结构化命盘，再用白话解释其中的性格倾向、优势位置、关系模式和容易反复卡住的地方。",
+                  "它更适合处理长期问题：我为什么总用同一种方式回应压力，我适合怎样的工作节奏，我在关系里真正看重什么。你得到的不是一句定论，而是一份可以反复对照自己的观察框架。",
+                ],
+                meta: "适合：自我认知、职业方向、关系模式、长期节奏",
               },
               {
                 head: "看清下一步",
-                body: "面对具体问题时，六爻文化参考会帮你拆开不同因素，补充一个整理思路的角度。",
+                body: [
+                  "六爻文化参考更关注当下的一件具体事。你写下问题，系统会围绕卦象结构、动爻变化和问题本身，整理当前状态、阻力来源、可观察的变化方向。",
+                  "它不会替你选 A 或 B，也不会承诺结果。它的价值在于把混在一起的担心、机会和现实条件拆开，让你在做决定前多一个清醒的角度。",
+                ],
+                meta: "适合：感情关系、工作机会、合作推进、近期选择",
               },
             ].map((item, idx) => (
               <li
                 key={item.head}
-                className="grid grid-cols-[auto_1fr] items-baseline gap-x-5 gap-y-2 border-t border-[var(--color-border)] pt-6 first:border-t-0 first:pt-0"
+                className="grid grid-cols-[auto_1fr] items-baseline gap-x-5 gap-y-3 border-t border-[var(--color-border)] pt-8 first:border-t-0 first:pt-0"
               >
                 <span
                   className="font-mono text-[0.75rem] tabular-nums text-[var(--color-text-hint)]"
@@ -259,9 +263,19 @@ export default function LandingPage() {
                   {item.head}
                 </h3>
                 <span aria-hidden="true" />
-                <p className="text-[0.9375rem] md:text-[1rem] leading-[1.7] text-[var(--color-text-body)]">
-                  {item.body}
-                </p>
+                <div className="space-y-3">
+                  {item.body.map((paragraph) => (
+                    <p
+                      key={paragraph}
+                      className="text-[0.9375rem] md:text-[1rem] leading-[1.75] text-[var(--color-text-body)]"
+                    >
+                      {paragraph}
+                    </p>
+                  ))}
+                  <p className="pt-1 text-[0.8125rem] leading-6 text-[var(--color-text-secondary)]">
+                    {item.meta}
+                  </p>
+                </div>
               </li>
             ))}
           </ol>
