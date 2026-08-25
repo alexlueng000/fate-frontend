@@ -29,6 +29,33 @@ const HERO_ENTRIES = [
   },
 ] as const;
 
+const TRUST_ITEMS = [
+  {
+    head: "参考，不裁决",
+    kicker: "AI 只整理线索",
+    body: "系统会结合传统文化框架和你提供的信息，整理性格、关系、选择与节律里的可观察线索。它不会承诺结果，也不会把任何一句话包装成必须服从的决定。",
+    note: "适合把复杂问题先摊开，再由你自己判断轻重。",
+  },
+  {
+    head: "白话，不设门槛",
+    kicker: "术语有人翻译",
+    body: "遇到日主、十神、六亲、动爻这类概念时，会优先解释它在现实语境里的含义。懂术语的人可以继续看结构，不懂的人也不必先去补课。",
+    note: "先读懂意思，再决定要不要深入术语。",
+  },
+  {
+    head: "记录，可回看",
+    kicker: "把变化留下来",
+    body: "八字解读、六爻提问、心镜灯记录会尽量保持连续，让你能回看自己在不同阶段问过什么、在意什么、哪些问题反复出现。",
+    note: "不是一次性结论，而是一份可以复盘的个人档案。",
+  },
+  {
+    head: "资料，可管理",
+    kicker: "隐私有边界",
+    body: "出生信息、档案和历史记录都有对应管理入口。涉及个人资料的处理，会按隐私政策采取必要保护措施，并避免把敏感问题渲染成恐吓式结论。",
+    note: "严肃问题用克制方式说清楚，不制造焦虑。",
+  },
+] as const;
+
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://fateinsight.site";
 
 export const metadata: Metadata = {
@@ -386,56 +413,73 @@ export default function LandingPage() {
 
       {/* ========== 为什么选择 · 编辑型 ========== */}
       <section
-        className="px-6 py-20 md:py-28"
-        style={{ background: "var(--color-bg-elevated)" }}
+        className="overflow-hidden px-6 py-20 md:py-28"
+        style={{
+          background:
+            "linear-gradient(180deg, var(--color-bg-elevated) 0%, var(--color-bg) 100%)",
+        }}
       >
-        <div className="mx-auto max-w-3xl space-y-12">
-          <header className="space-y-3">
-            <p className="text-[0.6875rem] uppercase tracking-[0.12em] text-[var(--color-text-muted)]">
-              你可以放心
+        <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.25fr)] lg:items-start">
+          <header className="motion-reveal space-y-6 lg:sticky lg:top-24">
+            <div className="space-y-3">
+              <p className="text-[0.6875rem] uppercase tracking-[0.12em] text-[var(--color-text-muted)]">
+                你可以放心
+              </p>
+              <h2
+                className="max-w-xl text-[1.75rem] font-medium leading-[1.25] text-[var(--color-text-primary)] md:text-[2rem] lg:text-[2.25rem]"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                给你参考，不替你做决定。
+              </h2>
+            </div>
+            <p className="max-w-xl text-[1rem] leading-[1.8] text-[var(--color-text-secondary)] md:text-[1.0625rem]">
+              我们希望它像一面镜子，帮你看清信息之间的关系，而不是替你给人生下结论。能说清楚的地方说清楚，不确定的地方保留边界。
             </p>
-            <h2
-              className="text-[1.75rem] md:text-[2rem] lg:text-[2.25rem] leading-[1.25] font-medium text-[var(--color-text-primary)]"
-              style={{ fontFamily: "var(--font-display)" }}
-            >
-              给你参考，不替你做决定。
-            </h2>
+            <div className="trust-statement motion-reveal delay-200 border border-[var(--color-border)] bg-[var(--color-bg-card)] px-5 py-5 shadow-[var(--shadow-sm)]">
+              <p
+                className="text-[1.125rem] leading-[1.65] text-[var(--color-text-primary)]"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                你仍然是那个做选择的人。
+              </p>
+              <p className="mt-3 text-[0.875rem] leading-[1.75] text-[var(--color-text-secondary)]">
+                AI 负责整理材料、解释概念、提醒盲点；它不制造命令，也不把复杂人生缩成一句“应该”。
+              </p>
+            </div>
           </header>
 
-          <ol className="space-y-10">
-            {[
-              {
-                head: "只给参考，不替你拍板",
-                body: "AI 会整理传统文化内容和你的输入信息，但不会承诺结果，也不会代替你作出人生决定。",
-              },
-              {
-                head: "术语有人帮你翻译",
-                body: "遇到日主、十神、六亲这类概念时，页面会尽量用白话解释，方便初学者阅读。",
-              },
-              {
-                head: "资料可管理，有保护措施",
-                body: "出生信息、档案和历史记录有对应的管理入口。涉及个人资料的处理，会按隐私政策采取必要保护措施。",
-              },
-            ].map((item, idx) => (
+          <ol className="grid gap-4 md:grid-cols-2">
+            {TRUST_ITEMS.map((item, idx) => (
               <li
                 key={item.head}
-                className="grid grid-cols-[auto_1fr] items-baseline gap-x-5 gap-y-2 border-t border-[var(--color-border)] pt-8 first:border-t-0 first:pt-0"
+                className="motion-reveal trust-card group border border-[var(--color-border)] bg-[var(--color-bg-card)] p-5 shadow-[var(--shadow-sm)] md:p-6"
+                style={{ animationDelay: `${120 + idx * 90}ms` }}
               >
-                <span
-                  className="font-mono text-[0.75rem] tabular-nums text-[var(--color-text-hint)]"
-                  aria-hidden="true"
-                >
-                  {String(idx + 1).padStart(2, "0")}
-                </span>
-                <h3
-                  className="text-[1.125rem] md:text-[1.25rem] font-medium text-[var(--color-text-primary)]"
-                  style={{ fontFamily: "var(--font-display)" }}
-                >
-                  {item.head}
-                </h3>
-                <span aria-hidden="true" />
-                <p className="text-[0.9375rem] md:text-[1rem] leading-[1.7] text-[var(--color-text-body)]">
+                <div className="mb-5 flex items-start justify-between gap-4">
+                  <div className="space-y-2">
+                    <p className="text-[0.75rem] text-[var(--color-text-muted)]">
+                      {item.kicker}
+                    </p>
+                    <h3
+                      className="text-[1.25rem] font-medium leading-snug text-[var(--color-text-primary)]"
+                      style={{ fontFamily: "var(--font-display)" }}
+                    >
+                      {item.head}
+                    </h3>
+                  </div>
+                  <span
+                    className="trust-index font-mono text-[0.75rem] tabular-nums text-[var(--color-text-hint)]"
+                    aria-hidden="true"
+                  >
+                    {String(idx + 1).padStart(2, "0")}
+                  </span>
+                </div>
+                <span className="ink-rule mb-5 block h-px w-full bg-[var(--color-border)]" aria-hidden="true" />
+                <p className="text-[0.9375rem] leading-[1.8] text-[var(--color-text-body)] md:text-[1rem]">
                   {item.body}
+                </p>
+                <p className="mt-5 border-t border-[var(--color-border-subtle)] pt-4 text-[0.8125rem] leading-[1.7] text-[var(--color-text-secondary)]">
+                  {item.note}
                 </p>
               </li>
             ))}

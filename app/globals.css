@@ -149,9 +149,29 @@ body {
   51%, 100% { opacity: 0; }
 }
 
+@keyframes revealSoft {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ruleDraw {
+  from { transform: scaleX(0); opacity: 0; }
+  to   { transform: scaleX(1); opacity: 1; }
+}
+
 .animate-fade-in    { animation: fadeIn  500ms var(--ease-out) both; }
 .animate-slide-up   { animation: slideUp 600ms var(--ease-out) both; }
 .animate-scale-in   { animation: scaleIn 400ms var(--ease-out) both; }
+
+.motion-reveal {
+  animation: revealSoft 700ms var(--ease-out) both;
+  will-change: transform, opacity;
+}
+
+.ink-rule {
+  transform-origin: left center;
+  animation: ruleDraw 850ms var(--ease-out) both;
+}
 
 .delay-100 { animation-delay: 100ms; }
 .delay-200 { animation-delay: 200ms; }
@@ -187,6 +207,60 @@ body {
   border-color: var(--color-border-accent);
   transform: translateY(-1px);
   box-shadow: var(--shadow-lg);
+}
+
+.trust-card {
+  position: relative;
+  overflow: hidden;
+  transition: border-color var(--duration-base) var(--ease-out),
+              transform var(--duration-base) var(--ease-out),
+              box-shadow var(--duration-base) var(--ease-out),
+              background var(--duration-base) var(--ease-out);
+}
+
+.trust-card::after {
+  content: "";
+  position: absolute;
+  inset: auto 1.25rem 0;
+  height: 2px;
+  background: var(--color-primary);
+  opacity: 0;
+  transform: scaleX(0.25);
+  transform-origin: left center;
+  transition: opacity var(--duration-base) var(--ease-out),
+              transform var(--duration-base) var(--ease-out);
+}
+
+.trust-card:hover {
+  border-color: var(--color-border-accent);
+  background: var(--color-bg-elevated);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+.trust-card:hover::after {
+  opacity: 0.9;
+  transform: scaleX(1);
+}
+
+.trust-index {
+  transition: color var(--duration-base) var(--ease-out),
+              transform var(--duration-base) var(--ease-out);
+}
+
+.trust-card:hover .trust-index {
+  color: var(--color-primary);
+  transform: translateY(-1px);
+}
+
+.trust-statement {
+  transition: border-color var(--duration-base) var(--ease-out),
+              box-shadow var(--duration-base) var(--ease-out);
+}
+
+.trust-statement:hover {
+  border-color: var(--color-border-accent);
+  box-shadow: var(--shadow-md);
 }
 
 /* ==================== Buttons ==================== */
