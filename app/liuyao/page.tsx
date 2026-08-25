@@ -331,6 +331,7 @@ export default function LiuyaoPage() {
 
   useEffect(() => {
     if (restoringFromHistory || conversationId || booting) return;
+    if (!isLoggedIn) return;
     if (!result?.hexagram_id) {
       setConversationId(null);
       setMsgs([]);
@@ -349,7 +350,7 @@ export default function LiuyaoPage() {
     } catch {}
     setConversationId(null);
     setMsgs([]);
-  }, [result?.hexagram_id, restoringFromHistory, conversationId, booting]);
+  }, [result?.hexagram_id, restoringFromHistory, conversationId, booting, isLoggedIn]);
 
   useEffect(() => {
     if (conversationId) saveConversation(conversationId, msgs, { setActive: false });
@@ -426,73 +427,43 @@ export default function LiuyaoPage() {
         },
       });
       if (!isLoggedIn) {
-        setBooting(true);
-        setResult(null);
+        const hexagram = await liuyaoApi.guestPaipan(
+          { ...data, guest_session_id: getGuestSessionId() },
+        );
+        setCastingResult({
+          question: question.trim(),
+          numbers: ['一', '念', '成'],
+        });
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        await new Promise((resolve) => window.setTimeout(resolve, reduceMotion ? 500 : 4200));
+        setResult(hexagram);
+        setCastingResult(null);
         setConversationId(null);
-        setMsgs([{ role: 'assistant', content: '', streaming: true }]);
+        setMsgs([]);
         setChatError(null);
         setInput('');
-
-        const assistantIdx = 0;
-        let streamedText = '';
-        let guestHexagram: HexagramDetail | null = null;
-        await liuyaoApi.guestStart(
-          { ...data, guest_session_id: getGuestSessionId() },
-          (delta) => {
-            streamedText = delta;
-            setMsgs((prev) => {
-              const next = [...prev];
-              if (assistantIdx >= 0 && assistantIdx < next.length) {
-                next[assistantIdx] = { ...next[assistantIdx], content: delta };
-              }
-              return next;
-            });
-          },
-          (meta) => {
-            const hexagram = readGuestHexagram(meta);
-            if (hexagram) {
-              guestHexagram = hexagram;
-              setResult(hexagram);
-              trackEvent('liuyao_hexagram_created', {
-                payload: { hexagram_id: hexagram.hexagram_id, guest: true },
-              });
-              trackEvent('hexagram_generated', {
-                payload: liuyaoEventPayload({
-                  hexagram_id: hexagram.hexagram_id,
-                  guest: true,
-                  main_gua: hexagram.main_gua,
-                  change_gua: hexagram.change_gua,
-                }),
-              });
-            }
-          },
-        );
-        const completedGuestHexagram = guestHexagram as HexagramDetail | null;
-        if (completedGuestHexagram) {
-          trackEvent('liuyao_result_view', {
-            payload: { hexagram_id: completedGuestHexagram.hexagram_id, guest: true },
-          });
-          trackEvent('liuyao_report_view', {
-            payload: liuyaoEventPayload({
-              hexagram_id: completedGuestHexagram.hexagram_id,
-              guest: true,
-              main_gua: completedGuestHexagram.main_gua,
-              change_gua: completedGuestHexagram.change_gua,
-            }),
-          });
-        }
-        const finalText = finalizeAssistant(assistantIdx, streamedText);
-        if (!finalText) {
-          setChatError('这次解卦没有成功生成内容，你的免费试用次数不会重复扣除。');
-        } else {
-          trackEvent('liuyao_ai_generated', {
-            payload: liuyaoEventPayload({
-              hexagram_id: completedGuestHexagram?.hexagram_id,
-              guest: true,
-              text_length: finalText.length,
-            }),
-          });
-        }
+        trackEvent('liuyao_hexagram_created', {
+          payload: { hexagram_id: hexagram.hexagram_id, guest: true },
+        });
+        trackEvent('hexagram_generated', {
+          payload: liuyaoEventPayload({
+            hexagram_id: hexagram.hexagram_id,
+            guest: true,
+            main_gua: hexagram.main_gua,
+            change_gua: hexagram.change_gua,
+          }),
+        });
+        trackEvent('liuyao_result_view', {
+          payload: { hexagram_id: hexagram.hexagram_id, guest: true },
+        });
+        trackEvent('liuyao_report_view', {
+          payload: liuyaoEventPayload({
+            hexagram_id: hexagram.hexagram_id,
+            guest: true,
+            main_gua: hexagram.main_gua,
+            change_gua: hexagram.change_gua,
+          }),
+        });
         return;
       }
       const hexagram = await liuyaoApi.paipan(data);
@@ -565,6 +536,16 @@ export default function LiuyaoPage() {
     return finalText;
   };
 
+  const payloadFromHexagram = (hexagram: HexagramDetail): PaipanRequest => ({
+    question: hexagram.question,
+    method: (['number', 'coin', 'time'].includes(hexagram.method) ? hexagram.method : 'time') as PaipanRequest['method'],
+    gender: hexagram.gender || 'unknown',
+    numbers: hexagram.numbers?.numbers,
+    timestamp: hexagram.timestamp,
+    location: hexagram.location,
+    solar_time: hexagram.solar_time,
+  });
+
   const handleStartChat = async (targetHexagram: HexagramDetail | null = result) => {
     if (!targetHexagram?.hexagram_id) return;
     setBooting(true);
@@ -582,6 +563,44 @@ export default function LiuyaoPage() {
     setMsgs([{ role: 'assistant', content: '', streaming: true }]);
 
     try {
+      if (!isLoggedIn) {
+        let guestHexagram: HexagramDetail | null = null;
+        await liuyaoApi.guestStart(
+          { ...payloadFromHexagram(targetHexagram), guest_session_id: getGuestSessionId() },
+          (delta) => {
+            streamedText = delta;
+            setMsgs((prev) => {
+              const next = [...prev];
+              if (assistantIdx >= 0 && assistantIdx < next.length) {
+                next[assistantIdx] = { ...next[assistantIdx], content: delta };
+              }
+              return next;
+            });
+          },
+          (meta) => {
+            const hexagram = readGuestHexagram(meta);
+            if (hexagram) {
+              guestHexagram = hexagram;
+              setResult(hexagram);
+            }
+          },
+        );
+        const completedGuestHexagram = guestHexagram || targetHexagram;
+        const finalText = finalizeAssistant(assistantIdx, streamedText);
+        if (!finalText) {
+          setChatError('这次解卦没有成功生成内容，你的免费试用次数不会重复扣除。');
+          return;
+        }
+        trackEvent('liuyao_ai_generated', {
+          payload: liuyaoEventPayload({
+            hexagram_id: completedGuestHexagram.hexagram_id,
+            guest: true,
+            text_length: finalText.length,
+          }),
+        });
+        return;
+      }
+
       await liuyaoApi.startChat(
         targetHexagram.hexagram_id,
         (delta) => {
@@ -912,7 +931,7 @@ export default function LiuyaoPage() {
                   先问一件具体的事。
                 </h2>
                 <p className="mt-5 max-w-[34rem] text-[16px] leading-[1.8] text-[color:var(--color-text-body)]">
-                  不需要先理解六十四卦。把眼下最需要判断的那件事写清楚，系统会用当前时间起卦，并给出一次完整的 AI 解读。
+                  不需要先理解六十四卦。把眼下最需要判断的那件事写清楚，系统会先用当前时间起卦，再由你决定是否开始 AI 解读。
                 </p>
                 <div className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-3">
                   {[
@@ -977,7 +996,7 @@ export default function LiuyaoPage() {
                   className="btn btn-primary mt-6 w-full tracking-[0.18em]"
                 >
                   <Send className="h-4 w-4" aria-hidden="true" />
-                  {loading || booting ? '解卦中…' : '免费试用一次'}
+                  {loading || booting ? '起卦中…' : '免费起卦一次'}
                 </button>
 
                 <a
@@ -994,7 +1013,7 @@ export default function LiuyaoPage() {
                 </a>
 
                 <p className="mt-4 text-center text-[12px] leading-5 text-[color:var(--color-text-muted)]">
-                  免登录可获得一次 AI 解卦；保存结果、继续追问和数字起卦需登录。
+                  免登录可先起卦，并获得一次 AI 解卦；保存结果、继续追问和数字起卦需登录。
                 </p>
               </form>
             </section>
@@ -1146,16 +1165,16 @@ export default function LiuyaoPage() {
                     className="btn btn-primary tracking-[0.24em]"
                   >
                     {loading || booting
-                      ? '解卦中…'
+                      ? '起卦中…'
                       : isLoggedIn
                         ? '立即解卦'
-                        : '免费试用一次'}
+                        : '免费起卦一次'}
                   </button>
                 </div>
                 <p className="-mt-3 text-center text-[12px] leading-5 text-[color:var(--color-text-muted)]">
                   {isLoggedIn
                     ? '内容仅供娱乐参考，请理性看待。'
-                    : '免登录可免费起卦并获得一次 AI 解卦，继续追问需要登录。'}
+                    : '免登录可先起卦，并获得一次 AI 解卦，继续追问需要登录。'}
                 </p>
               </form>
             </div>

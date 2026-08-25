@@ -105,7 +105,28 @@ export const liuyaoApi = {
   },
 
   /**
-   * 游客免费试用：一次请求完成起卦 + 首次 AI 解卦。
+   * 游客免登录起卦：只生成卦象，不消耗免费 AI 解卦次数。
+   */
+  async guestPaipan(data: PaipanRequest & { guest_session_id: string }): Promise<HexagramDetail> {
+    const response = await fetch(api('/guest/liuyao/paipan'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: 'Request failed' }));
+      throw new Error(error.detail || 'Failed to create guest paipan');
+    }
+
+    return response.json();
+  },
+
+  /**
+   * 游客免费试用：基于同一问题与起卦参数生成首次 AI 解卦。
    * 后续追问仍需登录。
    */
   async guestStart(
