@@ -112,7 +112,7 @@ export async function loginWeb(payload: { email: string; password: string }) {
 }
 
 export async function sendPhoneCode(phone: string): Promise<void> {
-  const resp = await fetch(api('/auth/phone/send-code'), {
+  const resp = await fetch(api('/auth/sms/send'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ phone, purpose: 'login' }),
@@ -138,7 +138,7 @@ export async function loginPhone(payload: {
   code: string;
   nickname?: string;
 }): Promise<LoginResp> {
-  const resp = await fetch(api('/auth/phone/login'), {
+  const resp = await fetch(api('/auth/sms/login'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',

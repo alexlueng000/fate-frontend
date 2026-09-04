@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { validateChinaPhone, sanitizePhone } from '@/app/lib/phone';
 import { loginPhone, saveAuth, checkProfileStatus } from '@/app/lib/auth';
 import { resolvePostAuthRedirect } from '@/app/lib/onboarding';
+import { api } from '@/app/lib/api';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Loader2, ShieldCheck, Smartphone, Sparkles } from 'lucide-react';
 
@@ -124,7 +125,7 @@ export default function PhoneLoginForm() {
         payload.captcha_randstr = randstr;
       }
 
-      const resp = await fetch('/api/auth/phone/send-code', {
+      const resp = await fetch(api('/auth/sms/send'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
