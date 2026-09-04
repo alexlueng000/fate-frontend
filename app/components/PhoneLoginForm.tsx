@@ -49,7 +49,7 @@ export default function PhoneLoginForm() {
     }
 
     const script = document.createElement('script');
-    script.src = 'https://ssl.captcha.qq.com/TCaptcha.js';
+    script.src = 'https://turing.captcha.qcloud.com/TJCaptcha.js';
     script.async = true;
     script.onload = () => setCaptchaLoaded(true);
     script.onerror = () => {
