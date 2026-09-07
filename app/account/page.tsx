@@ -2,181 +2,87 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { useUser, fetchMe, logout } from '@/app/lib/auth';
-import { User, Mail, LogOut, Settings, History, ChevronRight, MessageSquare, Zap, FileText } from 'lucide-react';
+import { useUser, fetchMe, getAuthToken, logout } from '@/app/lib/auth';
 import Footer from '@/app/components/Footer';
+import AccountOverview, { type AccountQuota } from './AccountOverview';
+import styles from './account.module.css';
 
 export default function AccountPage() {
   const router = useRouter();
   const { user: me, setUser } = useUser();
-  const [quota, setQuota] = useState<{ total: number; used: number; remaining: number; is_unlimited: boolean } | null>(null);
+  const [quota, setQuota] = useState<AccountQuota | null>(null);
+  const [quotaLoading, setQuotaLoading] = useState(true);
+  const [quotaError, setQuotaError] = useState('');
+  const [retry, setRetry] = useState(0);
+  const [loggingOut, setLoggingOut] = useState(false);
+  const [logoutError, setLogoutError] = useState('');
 
   useEffect(() => {
+    let active = true;
     if (!me) {
-      fetchMe().then((u) => {
-        if (u) setUser(u);
+      fetchMe().then((user) => {
+        if (!active) return;
+        if (user) setUser(user);
         else router.replace('/login?redirect=/account');
       });
     }
+    return () => { active = false; };
   }, [me, setUser, router]);
 
   useEffect(() => {
-    const token = localStorage.getItem('auth_token');
-    if (!token) return;
+    if (!me?.id) return;
+    const controller = new AbortController();
+    const token = getAuthToken();
+    setQuotaLoading(true);
+    setQuotaError('');
     fetch('/api/quota/me', {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
       credentials: 'include',
+      signal: controller.signal,
     })
-      .then(r => r.ok ? r.json() : null)
-      .then(data => { if (data) setQuota(data); })
-      .catch(() => {});
-  }, []);
+      .then(async (response) => {
+        if (!response.ok) throw new Error('暂时无法获取额度，请重试');
+        const data: AccountQuota = await response.json();
+        if (!controller.signal.aborted) setQuota(data);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setQuotaError('暂时无法获取额度，请重试');
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setQuotaLoading(false);
+      });
+    return () => controller.abort();
+  }, [me?.id, retry]);
 
-  const handleLogout = () => {
-    logout();
-    router.replace('/');
-  };
-
-  if (!me) {
-    return (
-      <main className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 rounded-full border-2 border-[var(--color-gold)] border-t-transparent animate-spin" />
-      </main>
-    );
+  async function handleLogout() {
+    if (loggingOut) return;
+    setLoggingOut(true);
+    setLogoutError('');
+    try {
+      await logout();
+      router.replace('/');
+    } catch {
+      setLogoutError('退出失败，请重试');
+      setLoggingOut(false);
+    }
   }
 
   return (
-    <main className="min-h-screen flex flex-col pt-20">
-      <div className="flex-1 py-12 px-4">
-        <div className="max-w-2xl mx-auto space-y-6">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <h1
-              className="text-3xl font-bold text-[var(--color-text-primary)] mb-2"
-              style={{ fontFamily: 'var(--font-display)' }}
-            >
-              我的账户
-            </h1>
-            <p className="text-[var(--color-text-muted)]">管理你的个人信息和设置</p>
-          </div>
-
-          {/* Profile Card */}
-          <div className="card p-6">
-            <div className="flex items-center gap-4 mb-6">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-gold)] flex items-center justify-center text-white text-2xl font-bold">
-                {me.nickname?.[0] || me.username?.[0] || '?'}
-              </div>
-              <div>
-                <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">
-                  {me.nickname || me.username}
-                </h2>
-                <p className="text-sm text-[var(--color-text-muted)]">@{me.username}</p>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-[var(--color-bg-elevated)]">
-                <User className="w-5 h-5 text-[var(--color-text-muted)]" />
-                <div className="flex-1">
-                  <div className="text-xs text-[var(--color-text-hint)]">用户名</div>
-                  <div className="text-[var(--color-text-primary)]">{me.username}</div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-[var(--color-bg-elevated)]">
-                <Mail className="w-5 h-5 text-[var(--color-text-muted)]" />
-                <div className="flex-1">
-                  <div className="text-xs text-[var(--color-text-hint)]">邮箱</div>
-                  <div className="text-[var(--color-text-primary)]">{me.email || '未设置'}</div>
-                </div>
-              </div>
-
-              {quota && (
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-[var(--color-bg-elevated)]">
-                  <Zap className="w-5 h-5 text-[var(--color-gold)]" />
-                  <div className="flex-1">
-                    <div className="text-xs text-[var(--color-text-hint)]">剩余次数</div>
-                    {quota.is_unlimited ? (
-                      <div className="text-[var(--color-text-primary)]">无限制</div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <span className={`font-medium ${quota.remaining <= 3 ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-primary)]'}`}>
-                          {quota.remaining}
-                        </span>
-                        <span className="text-xs text-[var(--color-text-hint)]">/ 共 {quota.total} 次（已用 {quota.used}）</span>
-                      </div>
-                    )}
-                  </div>
-                  <Link href="/pricing" className="text-xs text-[var(--color-primary)] hover:underline">
-                    购买次数
-                  </Link>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="card p-2">
-            <Link
-              href="/profile/edit"
-              className="flex items-center gap-3 p-4 rounded-xl hover:bg-[var(--color-bg-hover)] transition-colors"
-            >
-              <FileText className="w-5 h-5 text-[var(--color-gold)]" />
-              <span className="flex-1 text-[var(--color-text-primary)]">编辑个人档案</span>
-              <ChevronRight className="w-5 h-5 text-[var(--color-text-hint)]" />
-            </Link>
-
-            <Link
-              href="/panel"
-              className="flex items-center gap-3 p-4 rounded-xl hover:bg-[var(--color-bg-hover)] transition-colors"
-            >
-              <History className="w-5 h-5 text-[var(--color-gold)]" />
-              <span className="flex-1 text-[var(--color-text-primary)]">我的解读记录</span>
-              <ChevronRight className="w-5 h-5 text-[var(--color-text-hint)]" />
-            </Link>
-
-            <Link
-              href="/feedback"
-              className="flex items-center gap-3 p-4 rounded-xl hover:bg-[var(--color-bg-hover)] transition-colors"
-            >
-              <MessageSquare className="w-5 h-5 text-[var(--color-gold)]" />
-              <span className="flex-1 text-[var(--color-text-primary)]">意见反馈</span>
-              <ChevronRight className="w-5 h-5 text-[var(--color-text-hint)]" />
-            </Link>
-
-            {me.is_admin && (
-              <Link
-                href="/admin"
-                className="flex items-center gap-3 p-4 rounded-xl hover:bg-[var(--color-bg-hover)] transition-colors"
-              >
-                <Settings className="w-5 h-5 text-[var(--color-gold)]" />
-                <span className="flex-1 text-[var(--color-text-primary)]">管理后台</span>
-                <ChevronRight className="w-5 h-5 text-[var(--color-text-hint)]" />
-              </Link>
-            )}
-
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center gap-3 p-4 rounded-xl hover:bg-[var(--color-bg-hover)] transition-colors text-left"
-            >
-              <LogOut className="w-5 h-5 text-[var(--color-primary)]" />
-              <span className="flex-1 text-[var(--color-primary)]">退出登录</span>
-            </button>
-          </div>
-
-          {/* Back Link */}
-          <div className="text-center">
-            <Link
-              href="/"
-              className="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-gold)] transition-colors"
-            >
-              返回首页
-            </Link>
-          </div>
+    <div className={styles.page}>
+      {me ? (
+        <AccountOverview
+          user={me} quota={quota} quotaLoading={quotaLoading} quotaError={quotaError}
+          loggingOut={loggingOut} logoutError={logoutError}
+          onRetry={() => setRetry((value) => value + 1)} onLogout={handleLogout}
+        />
+      ) : (
+        <div className={styles.loading} role="status" aria-label="正在加载账户">
+          <div className={styles.loadingTitle} aria-hidden="true" />
+          <div className={styles.loadingPanel} aria-hidden="true" />
+          <p className={styles.loadingText}>正在加载账户…</p>
         </div>
-      </div>
+      )}
       <Footer />
-    </main>
+    </div>
   );
 }
