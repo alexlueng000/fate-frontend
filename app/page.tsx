@@ -9,50 +9,50 @@ import { Gift } from "lucide-react";
 const HERO_ENTRIES = [
   {
     id: "bazi",
-    eyebrow: "认识自己",
-    title: "八字分析",
-    desc: "适合你想了解长期的自己：性格底色、关系模式、做事节奏、容易卡住的地方，以及更适合你的发力方式。",
-    helper: "你只需要提供出生日期、时间和地点。系统会完成八字排盘，并用更日常的语言解释其中的结构。",
+    eyebrow: "想更了解自己",
+    title: "最近总在想“我为什么会这样”？",
+    desc: "从性格、关系和人生节奏开始，重新认识自己，也看见那些长期存在、却很少被认真说出来的倾向。",
+    helper: "只需要准备出生日期、时间和地点。看不懂命理术语也没关系，我们会尽量用日常的话慢慢说明白。",
     points: ["性格倾向", "关系模式", "事业方向", "人生阶段", "长期节奏"],
     href: "/analysis/start",
-    cta: "开始看我的八字",
+    cta: "从了解自己开始",
   },
   {
     id: "liuyao",
-    eyebrow: "看一件具体的事",
-    title: "六爻起卦",
-    desc: "适合你正面对一个明确问题：一段关系要不要继续、某个机会值不值得投入、一次合作是否顺畅，或者一个选择该如何看待。",
-    helper: "你写下问题，完成起卦后，系统会围绕这件事本身，分析当前状态、关键影响、可能变化和需要留意的地方。",
+    eyebrow: "心里放着一件事",
+    title: "有件拿不准的事，想再看清一点？",
+    desc: "把问题写下来，我们陪你看看其中的机会、阻力与变化，把混在一起的担心和现实条件一条条摊开。",
+    helper: "不急着马上作决定。先围绕这件事看看现在处在什么位置，还有哪些容易忽略的线索。",
     points: ["感情关系", "工作机会", "合作推进", "选择判断", "近期进展"],
     href: "/liuyao",
-    cta: "开始问一件事",
+    cta: "说说我正在纠结的事",
   },
 ] as const;
 
 const TRUST_ITEMS = [
   {
-    head: "参考，不裁决",
-    kicker: "AI 只整理线索",
-    body: "系统会结合传统文化框架和你提供的信息，整理性格、关系、选择与节律里的可观察线索。它不会承诺结果，也不会把任何一句话包装成必须服从的决定。",
-    note: "适合把复杂问题先摊开，再由你自己判断轻重。",
+    head: "先听懂你的问题",
+    kicker: "认真回应，也保留分寸",
+    body: "我们会结合传统文化和你说出的现实处境，把那些纠缠在一起的感受、选择与线索慢慢理清。能说明白的认真说明白，不确定的地方也会诚实保留。",
+    note: "不催你接受某个答案，先陪你看见问题的全貌。",
   },
   {
-    head: "白话，不设门槛",
-    kicker: "术语有人翻译",
+    head: "不用先懂命理",
+    kicker: "把难懂的话讲明白",
     body: "遇到日主、十神、六亲、动爻这类概念时，会优先解释它在现实语境里的含义。懂术语的人可以继续看结构，不懂的人也不必先去补课。",
-    note: "先读懂意思，再决定要不要深入术语。",
+    note: "你只需要带着自己的问题来，其余的交给我们解释。",
   },
   {
-    head: "记录，可回看",
-    kicker: "把变化留下来",
+    head: "把一路的变化留下来",
+    kicker: "值得回看的，不只是一份结果",
     body: "八字解读、六爻提问、心镜灯记录会尽量保持连续，让你能回看自己在不同阶段问过什么、在意什么、哪些问题反复出现。",
-    note: "不是一次性结论，而是一份可以复盘的个人档案。",
+    note: "过一段时间再回头，也许会看见当时没有发现的自己。",
   },
   {
-    head: "资料，可管理",
-    kicker: "隐私有边界",
+    head: "你的故事，由你保管",
+    kicker: "隐私始终有边界",
     body: "出生信息、档案和历史记录都有对应管理入口。涉及个人资料的处理，会按隐私政策采取必要保护措施，并避免把敏感问题渲染成恐吓式结论。",
-    note: "严肃问题用克制方式说清楚，不制造焦虑。",
+    note: "认真对待每一份信任，也不拿严肃的问题制造焦虑。",
   },
 ] as const;
 
@@ -121,25 +121,25 @@ export default function LandingPage() {
                 color: "var(--color-text-primary)",
               }}
             >
-              用东方视角，
+              有些困惑，
               <br className="hidden md:block" />
-              看清<span style={{ color: "var(--color-primary)" }}>自己</span>，也看清事情。
+              需要换个角度<span style={{ color: "var(--color-primary)" }}>慢慢看</span>。
             </h1>
 
             <p className="max-w-xl text-[1rem] leading-relaxed text-[var(--color-text-body)] md:text-[1.0625rem]">
-              八字观察自己，六爻观察事情。用传统方法结合 AI 分析，帮你把性格、关系、选择和当下的问题整理得更清楚。
+              想更了解自己，可以从八字看见性格、关系与人生节奏；正为一件事犹豫，也可以借六爻梳理当下的线索。不急着给答案，先把真正困扰你的地方看清楚。
             </p>
 
             <div className="inline-flex items-center gap-2 border border-[var(--color-primary)]/25 bg-[var(--color-primary)]/5 px-3 py-2 text-[0.875rem] font-medium text-[var(--color-primary)]">
               <Gift className="h-4 w-4" aria-hidden="true" />
-              新用户注册即享：八字解读 10 次 + 六爻参考 10 次
+              第一次来？我们为你准备了 10 次八字解读和 10 次六爻参考
             </div>
 
             {/* CTA */}
             <div className="flex flex-wrap items-center gap-3 pt-2">
-              <PrimaryCta entry="hero">开始看我的八字</PrimaryCta>
+              <PrimaryCta entry="hero">从了解自己开始</PrimaryCta>
               <SecondaryCta entry="hero" event="home_liuyao_cta_click" href="/liuyao">
-                开始问一件事
+                我有一件事想问
               </SecondaryCta>
             </div>
 
@@ -161,10 +161,10 @@ export default function LandingPage() {
                   className="text-[1.25rem] font-medium leading-snug text-[var(--color-text-primary)]"
                   style={{ fontFamily: "var(--font-display)" }}
                 >
-                  你现在想看哪一种问题？
+                  此刻，你更想弄明白什么？
                 </h2>
                 <p className="text-[0.875rem] leading-relaxed text-[var(--color-text-secondary)]">
-                  一个适合了解自己，一个适合观察具体事情。不用先懂八字或六爻，按你当下最想问的方向开始。
+                  不需要先懂八字或六爻。跟着此刻最放不下、最想知道的那件事，选择一个入口就好。
                 </p>
               </header>
 
@@ -226,7 +226,7 @@ export default function LandingPage() {
                 ))}
               </ol>
               <footer className="border-t border-[var(--color-border)] px-5 py-4 text-[0.8125rem] leading-relaxed text-[var(--color-text-muted)]">
-                想了解“我是谁、我为什么总这样”，选八字。心里已经有一件明确的事，选六爻。
+                不必一次想明白所有事。先从此刻最在意的那一个问题开始。
               </footer>
             </div>
           </aside>
@@ -251,7 +251,7 @@ export default function LandingPage() {
                 用另一套语言，重新理解自己。
               </h2>
               <p className="max-w-2xl text-[1rem] md:text-[1.0625rem] leading-[1.8] text-[var(--color-text-secondary)]">
-                有些问题不适合被一句建议匆忙回答。我们把八字和六爻做成两个入口，一个帮你看长期的自己，一个帮你看眼前的事。
+                有时候，我们不是没有答案，只是被焦虑、习惯和别人的期待遮住了。东方文化提供的是另一面镜子，让你从性格、关系与时间的变化里，再看自己一次。
               </p>
             </div>
             <div className="border border-[var(--color-border)] bg-[var(--color-bg)] px-5 py-4">
@@ -272,20 +272,20 @@ export default function LandingPage() {
           <ol className="grid gap-5 md:grid-cols-2">
             {[
               {
-                head: "看清你是谁",
+                head: "看见那个一直被忽略的自己",
                 label: "八字文化",
                 body: [
-                  "八字文化分析会把出生信息转成一份结构化命盘，再用白话解释其中的性格倾向、优势位置、关系模式和容易反复卡住的地方。",
-                  "它更适合处理长期问题：我为什么总用同一种方式回应压力，我适合怎样的工作节奏，我在关系里真正看重什么。你得到的不是一句定论，而是一份可以反复对照自己的观察框架。",
+                  "为什么面对压力时，你总会用同一种方式回应？为什么有些关系让你格外在意？八字不会替你定义人生，但可以帮你看见那些长期存在、却很少被认真说出来的倾向。",
+                  "你得到的不是一句定论，而是一份可以慢慢对照自己的观察：哪些是你的力量，哪些地方容易卡住，又该怎样用更适合自己的方式向前走。",
                 ],
                 meta: ["自我认知", "职业方向", "关系模式", "长期节奏"],
               },
               {
-                head: "看清下一步",
+                head: "给眼前的犹豫一点空间",
                 label: "六爻文化",
                 body: [
-                  "六爻文化参考更关注当下的一件具体事。你写下问题，系统会围绕卦象结构、动爻变化和问题本身，整理当前状态、阻力来源、可观察的变化方向。",
-                  "它不会替你选 A 或 B，也不会承诺结果。它的价值在于把混在一起的担心、机会和现实条件拆开，让你在做决定前多一个清醒的角度。",
+                  "当一件事反复盘旋在心里，答案往往不是简单的“要”或“不要”。六爻更关注当下这一件具体的事，陪你看看现在的状态、可能的阻力与变化。",
+                  "它不会替你选 A 或 B，但会把混在一起的担心、机会和现实条件一条条摊开，让你在做决定前，多一点从容，也多一个清醒的角度。",
                 ],
                 meta: ["感情关系", "工作机会", "合作推进", "近期选择"],
               },
@@ -429,11 +429,11 @@ export default function LandingPage() {
                 className="max-w-xl text-[1.75rem] font-medium leading-[1.25] text-[var(--color-text-primary)] md:text-[2rem] lg:text-[2.25rem]"
                 style={{ fontFamily: "var(--font-display)" }}
               >
-                给你参考，不替你做决定。
+                我们会认真回应，也会诚实保留不确定。
               </h2>
             </div>
             <p className="max-w-xl text-[1rem] leading-[1.8] text-[var(--color-text-secondary)] md:text-[1.0625rem]">
-              我们希望它像一面镜子，帮你看清信息之间的关系，而不是替你给人生下结论。能说清楚的地方说清楚，不确定的地方保留边界。
+              AI 帮你整理线索，传统文化提供观察角度。我们不会催你接受某个答案，只希望陪你把眼前的困惑看得更完整一些。
             </p>
             <div className="trust-statement motion-reveal delay-200 border border-[var(--color-border)] bg-[var(--color-bg-card)] px-5 py-5 shadow-[var(--shadow-sm)]">
               <p
@@ -443,7 +443,7 @@ export default function LandingPage() {
                 你仍然是那个做选择的人。
               </p>
               <p className="mt-3 text-[0.875rem] leading-[1.75] text-[var(--color-text-secondary)]">
-                AI 负责整理材料、解释概念、提醒盲点；它不制造命令，也不把复杂人生缩成一句“应该”。
+                无论看到怎样的解读，真正了解自己的那个人，始终是你。
               </p>
             </div>
           </header>
@@ -501,10 +501,12 @@ export default function LandingPage() {
               className="text-[1.875rem] md:text-[2.25rem] lg:text-[2.5rem] leading-[1.2] font-medium text-[var(--color-text-primary)]"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              先选一个方向，把问题说清楚。
+              不必一次想明白所有事。
+              <br />
+              从此刻最在意的问题开始。
             </h2>
             <p className="text-[1rem] md:text-[1.0625rem] leading-relaxed text-[var(--color-text-secondary)]">
-              想了解自己，先看八字；心里已经有一件明确的事，先问六爻。注册后可以保存结果，并获得 10 次八字解读和 10 次六爻参考额度。
+              想重新认识自己，可以先看八字；心里正放着一件事，可以先问六爻。慢一点也没关系，我们陪你把它说清楚。
             </p>
           </header>
 
@@ -529,9 +531,9 @@ export default function LandingPage() {
           </ul>
 
           <div className="flex flex-wrap items-center gap-3 md:justify-center">
-            <PrimaryCta entry="final_cta">开始看我的八字</PrimaryCta>
+            <PrimaryCta entry="final_cta">从了解自己开始</PrimaryCta>
             <SecondaryCta entry="final_cta" event="home_final_liuyao_cta_click" href="/liuyao" className="btn btn-secondary group">
-              开始问一件事
+              说说我正在纠结的事
             </SecondaryCta>
           </div>
 

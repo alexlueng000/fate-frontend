@@ -440,3 +440,121 @@ body {
 .wuxing-earth { color: var(--color-wuxing-earth); border-color: color-mix(in oklch, var(--color-wuxing-earth) 25%, transparent); }
 .wuxing-metal { color: var(--color-wuxing-metal); border-color: color-mix(in oklch, var(--color-wuxing-metal) 25%, transparent); }
 .wuxing-water { color: var(--color-wuxing-water); border-color: color-mix(in oklch, var(--color-wuxing-water) 25%, transparent); }
+
+/* ==================== Admin prompt editor ==================== */
+.prompt-config-page {
+  padding-top: 5rem;
+  padding-bottom: 3rem;
+  background:
+    radial-gradient(circle at 90% 0%, color-mix(in srgb, var(--color-primary) 8%, transparent), transparent 30rem),
+    linear-gradient(180deg, #fffaf2 0%, #fff7e8 48%, #fdf8ef 100%);
+}
+
+.prompt-config-page > header {
+  border-bottom: 0;
+  background: transparent;
+  padding: 0.75rem 1rem 0;
+}
+
+.prompt-config-page > header > div:first-child {
+  max-width: 80rem;
+  min-height: 4.75rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--color-bg-elevated) 92%, transparent);
+  box-shadow: 0 8px 30px rgba(72, 43, 33, 0.07);
+}
+
+.prompt-config-page > header h1 {
+  position: relative;
+  padding-left: 1rem;
+  font-family: var(--font-display);
+  letter-spacing: 0.02em;
+}
+
+.prompt-config-page > header h1::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0.3rem;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--color-primary), var(--color-gold));
+  content: "";
+}
+
+.prompt-config-page > header button,
+.prompt-config-page aside button,
+.prompt-config-page [class*="max-w-4xl"] button {
+  transition: transform 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+}
+
+.prompt-config-page > header button:hover,
+.prompt-config-page aside button:hover,
+.prompt-config-page [class*="max-w-4xl"] button:hover {
+  transform: translateY(-1px);
+}
+
+.prompt-config-page > section {
+  max-width: 80rem;
+  align-items: stretch;
+}
+
+.prompt-config-page > section > div {
+  position: relative;
+  overflow: hidden;
+  border-color: var(--color-border);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--color-bg-elevated) 96%, transparent);
+  padding: 1rem;
+  box-shadow: 0 12px 34px rgba(72, 43, 33, 0.07);
+}
+
+.prompt-config-page > section > div::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-gold));
+  content: "";
+  opacity: 0.8;
+}
+
+.prompt-config-page textarea,
+.prompt-config-page input {
+  border-color: var(--color-border);
+  background: #fffdf9;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.prompt-config-page textarea {
+  padding: 1.25rem;
+  line-height: 1.85;
+  box-shadow: inset 0 1px 3px rgba(72, 43, 33, 0.04);
+}
+
+.prompt-config-page textarea:focus,
+.prompt-config-page input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-primary) 10%, transparent);
+}
+
+.prompt-config-page pre {
+  color: var(--color-text-body);
+  font-family: var(--font-body);
+  font-size: 0.925rem;
+  line-height: 1.9;
+}
+
+.prompt-config-page aside {
+  top: 10.5rem;
+  bottom: 1.5rem;
+  border-color: var(--color-border);
+  box-shadow: 0 24px 64px rgba(45, 27, 22, 0.18);
+}
+
+@media (max-width: 767px) {
+  .prompt-config-page { padding-top: 4.5rem; }
+  .prompt-config-page > header { top: 4rem; }
+  .prompt-config-page > header > div:first-child { flex-wrap: wrap; }
+  .prompt-config-page > header > div:first-child > span:nth-of-type(2) { margin-left: 0; }
+  .prompt-config-page aside { inset: auto 0.75rem 0.75rem; width: auto; max-height: 70vh; }
+}

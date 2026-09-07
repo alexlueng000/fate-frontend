@@ -50,6 +50,18 @@ interface OverviewData {
   feedbacks: {
     pending: number;
   };
+  rates: {
+    new_user_activation: number;
+    first_read_followup: number;
+    retention_7d: number;
+    paid_conversion: number;
+    samples: {
+      new_users: number;
+      interpreted_conversations: number;
+      retention_cohort: number;
+      paid_users: number;
+    };
+  };
 }
 
 interface TrendData {
@@ -86,10 +98,11 @@ function PrimaryMetric({
   icon: React.ElementType;
 }) {
   return (
-    <div className="card p-6 border border-[var(--color-border)]">
+    <div className="group relative overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-6 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg">
+      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-gold)] opacity-80" />
       <div className="flex items-start gap-4">
-        <div className="w-10 h-10 rounded flex items-center justify-center bg-[var(--color-bg-alt)]">
-          <Icon className="w-5 h-5 text-[var(--color-text-secondary)]" />
+        <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-[color-mix(in_srgb,var(--color-primary)_10%,transparent)]">
+          <Icon className="w-5 h-5 text-[var(--color-primary)]" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm text-[var(--color-text-muted)] mb-1">{title}</p>
@@ -112,14 +125,16 @@ function PrimaryMetric({
 function SecondaryMetric({
   label,
   value,
-  icon: Icon
+  icon: Icon,
+  hint
 }: {
   label: string;
   value: number | string;
   icon?: React.ElementType;
+  hint?: string;
 }) {
   return (
-    <div className="flex items-center gap-3 py-3 border-b border-[var(--color-border)] last:border-b-0">
+    <div className="group flex items-center gap-3 rounded-xl px-3 py-3 transition-colors hover:bg-[var(--color-bg-alt)]">
       {Icon && (
         <div className="w-8 h-8 rounded flex items-center justify-center bg-[var(--color-bg-alt)] flex-shrink-0">
           <Icon className="w-4 h-4 text-[var(--color-text-muted)]" />
@@ -127,6 +142,7 @@ function SecondaryMetric({
       )}
       <div className="flex-1 min-w-0">
         <p className="text-sm text-[var(--color-text-secondary)]">{label}</p>
+        {hint && <p className="mt-0.5 truncate text-xs text-[var(--color-text-hint)]">{hint}</p>}
       </div>
       <p className="text-lg font-medium text-[var(--color-text-primary)] tabular-nums">
         {typeof value === 'number' ? value.toLocaleString() : value}
@@ -227,10 +243,10 @@ export default function DashboardPage() {
   }
 
   return (
-    <main className="min-h-screen pt-20 pb-12 px-4">
-      <div className="max-w-6xl mx-auto">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top_right,color-mix(in_srgb,var(--color-primary)_7%,transparent),transparent_34%)] pt-24 pb-16 px-4 sm:px-6">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-8 rounded-2xl border border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-bg-elevated)_88%,transparent)] p-5 shadow-sm backdrop-blur">
           <div className="flex items-center gap-4">
             <Link
               href="/admin"
@@ -254,7 +270,7 @@ export default function DashboardPage() {
           <button
             onClick={() => fetchData(true)}
             disabled={refreshing}
-            className="btn-secondary flex items-center gap-2"
+            className="btn-secondary flex items-center gap-2 rounded-xl px-4 py-2"
             aria-live="polite"
           >
             <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
@@ -281,7 +297,7 @@ export default function DashboardPage() {
         {overview && (
           <>
             {/* Primary Metrics - 2 column grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
               <PrimaryMetric
                 title="总用户数"
                 value={overview.users.total}
@@ -297,14 +313,14 @@ export default function DashboardPage() {
             </div>
 
             {/* Secondary Metrics - Compact list in card */}
-            <div className="card p-6 mb-6 border border-[var(--color-border)]">
+            <div className="card rounded-2xl p-6 mb-6 border border-[var(--color-border)] shadow-sm">
               <h3
                 className="text-base font-medium text-[var(--color-text-primary)] mb-4"
                 style={{ fontFamily: 'var(--font-display)' }}
               >
                 关键指标
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 lg:gap-3">
                 <SecondaryMetric
                   label="活跃用户（7日）"
                   value={overview.users.active_7d}
@@ -317,23 +333,27 @@ export default function DashboardPage() {
                 />
                 <SecondaryMetric
                   label="新用户成功率"
-                  value="待接入"
+                  value={`${overview.rates.new_user_activation.toFixed(2)}%`}
                   icon={UserCheck}
+                  hint={`近30日新用户中已有对话 · ${overview.rates.samples.new_users} 人样本`}
                 />
                 <SecondaryMetric
                   label="首次解读后问率"
-                  value="待接入"
+                  value={`${overview.rates.first_read_followup.toFixed(2)}%`}
                   icon={Target}
+                  hint={`用户消息不少于2条 · ${overview.rates.samples.interpreted_conversations} 个对话`}
                 />
                 <SecondaryMetric
                   label="7日复访率"
-                  value="待接入"
+                  value={`${overview.rates.retention_7d.toFixed(2)}%`}
                   icon={Repeat}
+                  hint={`注册后第2–7日再次使用 · ${overview.rates.samples.retention_cohort} 人 cohort`}
                 />
                 <SecondaryMetric
                   label="付费转化率"
-                  value="待接入"
+                  value={`${overview.rates.paid_conversion.toFixed(2)}%`}
                   icon={Activity}
+                  hint={`已支付用户 / 总用户 · ${overview.rates.samples.paid_users} 人付费`}
                 />
                 <SecondaryMetric
                   label="本周新增"
@@ -353,7 +373,7 @@ export default function DashboardPage() {
             {/* Charts Row 1 */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
               {/* User Registration Trend */}
-              <div className="card p-6 border border-[var(--color-border)]">
+              <div className="card rounded-2xl p-6 border border-[var(--color-border)] shadow-sm">
                 <h3
                   className="text-base font-medium text-[var(--color-text-primary)] mb-4"
                   style={{ fontFamily: 'var(--font-display)' }}
@@ -423,7 +443,7 @@ export default function DashboardPage() {
               </div>
 
               {/* User Source Distribution */}
-              <div className="card p-6 border border-[var(--color-border)]">
+              <div className="card rounded-2xl p-6 border border-[var(--color-border)] shadow-sm">
                 <h3
                   className="text-base font-medium text-[var(--color-text-primary)] mb-4"
                   style={{ fontFamily: 'var(--font-display)' }}
@@ -439,12 +459,9 @@ export default function DashboardPage() {
                           cx="50%"
                           cy="50%"
                           labelLine={false}
-                          label={(props) => {
-                            const data = props.payload as SourceData;
-                            const percent = props.percent as number;
-                            return `${data.label} ${(percent * 100).toFixed(0)}%`;
-                          }}
-                          outerRadius={80}
+                          innerRadius={58}
+                          outerRadius={88}
+                          paddingAngle={2}
                           fill="var(--color-primary)"
                           dataKey="count"
                         >
@@ -476,11 +493,25 @@ export default function DashboardPage() {
                     </div>
                   )}
                 </div>
+                {usersSource.length > 0 && (
+                  <div className="mt-3 flex flex-wrap justify-center gap-x-5 gap-y-2">
+                    {usersSource.map((item, index) => {
+                      const total = usersSource.reduce((sum, row) => sum + row.count, 0);
+                      return (
+                        <div key={item.source} className="flex items-center gap-2 text-xs text-[var(--color-text-secondary)]">
+                          <span className="h-2 w-2 rounded-full" style={{ background: PIE_COLORS[index % PIE_COLORS.length] }} />
+                          <span>{item.label}</span>
+                          <span className="font-medium text-[var(--color-text-primary)]">{total ? ((item.count / total) * 100).toFixed(1) : '0.0'}%</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Charts Row 2 */}
-            <div className="card p-6 border border-[var(--color-border)]">
+            <div className="card rounded-2xl p-6 border border-[var(--color-border)] shadow-sm">
               <h3
                 className="text-base font-medium text-[var(--color-text-primary)] mb-4"
                 style={{ fontFamily: 'var(--font-display)' }}

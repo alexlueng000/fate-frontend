@@ -257,9 +257,9 @@ export default function SystemPromptPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#fff7e8] text-neutral-800">
+    <main className="prompt-config-page min-h-screen bg-[#fff7e8] text-neutral-800">
       {/* 顶部工具条 */}
-      <header className="sticky top-0 z-10 backdrop-blur bg-[#fff7e8]/80 border-b border-[#f0d9a6]">
+      <header className="sticky top-20 z-10 backdrop-blur bg-[#fff7e8]/80 border-b border-[#f0d9a6]">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
           <h1 className="text-xl md:text-2xl font-bold text-[#a83232]">系统提示词</h1>
           <span className="text-sm text-[#4a2c2a]">Key: {cfgKey} · v{version}</span>
@@ -307,7 +307,7 @@ export default function SystemPromptPage() {
 
         {/* 预览（限制高度 + 内部滚动） */}
         <div className="rounded-2xl border border-[#f0d9a6] bg-white/90 p-3 flex flex-col">
-          <div className="mb-2 text-[#4a2c2a] text-sm">预览（原样显示 / 可改为 Markdown 渲染）</div>
+          <div className="mb-2 text-[#4a2c2a] text-sm">实时预览</div>
           <div className="relative flex-1 min-h-[60vh] md:min-h-[70vh] max-h-[75vh]">
             <div className="absolute inset-0 overflow-y-auto overflow-x-hidden rounded-xl bg-[#fff9f0] border border-[#f7e4c6] p-4">
               <pre className="whitespace-pre-wrap break-words break-all font-mono text-[14px]">

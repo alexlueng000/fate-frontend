@@ -142,8 +142,8 @@ export default function BaziIntroPage() {
   }
 
   return (
-    <main className="min-h-screen pt-20 pb-8 px-4">
-      <div className="max-w-4xl mx-auto">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top_right,color-mix(in_srgb,var(--color-primary)_7%,transparent),transparent_34%)] pt-24 pb-12 px-4 sm:px-6">
+      <div className="max-w-5xl mx-auto">
         <Link
           href="/admin"
           className="inline-flex items-center gap-2 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors mb-6"
@@ -152,9 +152,9 @@ export default function BaziIntroPage() {
           返回管理后台
         </Link>
 
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
+        <div className="flex flex-col gap-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded bg-[var(--color-primary)]/10 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-xl bg-[var(--color-primary)]/10 flex items-center justify-center">
               <MessageSquare className="w-6 h-6 text-[var(--color-primary)]" />
             </div>
             <div>
@@ -186,25 +186,25 @@ export default function BaziIntroPage() {
         </div>
 
         {err && (
-          <div className="mb-4 rounded border border-[var(--color-primary)]/30 bg-[var(--color-primary)]/10 px-4 py-3 text-sm text-[var(--color-primary)]">
+          <div className="mb-4 rounded-xl border border-[var(--color-primary)]/30 bg-[var(--color-primary)]/10 px-4 py-3 text-sm text-[var(--color-primary)]">
             {err}
           </div>
         )}
 
         {hasChanges && (
-          <div className="mb-4 rounded border border-[var(--color-gold)]/40 bg-[var(--color-gold)]/10 px-4 py-3 text-sm text-[var(--color-gold-dark)]">
+          <div className="mb-4 rounded-xl border border-[var(--color-gold)]/40 bg-[var(--color-gold)]/10 px-4 py-3 text-sm text-[var(--color-gold-dark)]">
             有未保存的修改
           </div>
         )}
 
-        <section className="rounded border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4 sm:p-6">
+        <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-5 shadow-sm sm:p-7">
           <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-2">
             开场白内容
           </label>
           <textarea
             value={content}
             onChange={(event) => updateContent(event.target.value)}
-            className="w-full min-h-[320px] rounded border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-4 py-3 text-base leading-7 text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20"
+            className="w-full min-h-[360px] resize-y rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-5 py-4 text-base leading-8 text-[var(--color-text-primary)] shadow-inner transition focus:border-[var(--color-primary)] focus:outline-none focus:ring-4 focus:ring-[var(--color-primary)]/10"
             placeholder="输入八字页面首次进入时展示的开场白"
           />
 
@@ -214,7 +214,7 @@ export default function BaziIntroPage() {
           <input
             value={notes}
             onChange={(event) => updateNotes(event.target.value)}
-            className="w-full rounded border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-4 py-3 text-base text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20"
+            className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-4 py-3 text-base text-[var(--color-text-primary)] transition focus:border-[var(--color-primary)] focus:outline-none focus:ring-4 focus:ring-[var(--color-primary)]/10"
             placeholder="配置备注"
           />
 

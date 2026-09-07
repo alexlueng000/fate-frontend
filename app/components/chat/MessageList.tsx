@@ -1,7 +1,8 @@
 'use client';
 import { Msg, Paipan } from '@/app/lib/chat/types';
 import { ComponentType, ReactNode } from 'react';
-import { Bot, User, Loader2, RotateCcw } from 'lucide-react';
+import Image from 'next/image';
+import { User, Loader2, RotateCcw } from 'lucide-react';
 import { MessageRating } from './MessageRating';
 import { SimplifyButton } from './SimplifyButton';
 import { SimplifyPanel } from './SimplifyPanel';
@@ -63,8 +64,8 @@ export function MessageList({
       >
         <div className="flex h-full min-h-[300px] items-center justify-center">
           <div className="mx-auto max-w-md text-center">
-            <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center border border-[var(--color-border)] bg-[var(--color-bg)]">
-              <Bot className="h-7 w-7 text-[var(--color-text-muted)]" aria-hidden="true" />
+            <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] shadow-sm">
+              <Image src="/images/yifan-assistant-avatar.webp" alt="一帆命理助手" width={56} height={56} className="h-full w-full object-cover" priority />
             </div>
             {emptyTitle && (
               <h2 className="text-[1.25rem] font-medium text-[var(--color-text-primary)]" style={{ fontFamily: 'var(--font-display)' }}>
@@ -104,13 +105,13 @@ export function MessageList({
         return (
           <div key={i} className={`flex gap-2 sm:gap-3 ${isAssistant ? '' : 'flex-row-reverse'}`}>
             {/* Avatar - 桌面端显示，移动端隐藏 */}
-            <div className={`hidden sm:flex flex-shrink-0 w-8 h-8 rounded-lg items-center justify-center ${
+            <div className={`hidden sm:flex flex-shrink-0 w-8 h-8 overflow-hidden rounded-lg items-center justify-center ${
               isAssistant
-                ? 'bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-gold)]'
+                ? 'bg-[#fff8ee] border border-[var(--color-border)] shadow-sm'
                 : 'bg-[var(--color-bg-hover)] border border-[var(--color-border)]'
             }`}>
               {isAssistant ? (
-                <Bot className="w-4 h-4 text-white" />
+                <Image src="/images/yifan-assistant-avatar.webp" alt="一帆命理助手" width={32} height={32} className="h-full w-full object-cover" />
               ) : (
                 <User className="w-4 h-4 text-[var(--color-text-secondary)]" />
               )}

@@ -236,8 +236,8 @@ export default function LiuyaoSystemPromptPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#fff7e8] text-neutral-800">
-      <header className="sticky top-0 z-10 backdrop-blur bg-[#fff7e8]/80 border-b border-[#f0d9a6]">
+    <main className="prompt-config-page min-h-screen bg-[#fff7e8] text-neutral-800">
+      <header className="sticky top-20 z-10 backdrop-blur bg-[#fff7e8]/80 border-b border-[#f0d9a6]">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
           <h1 className="text-xl md:text-2xl font-bold text-[#a83232]">六爻提示词</h1>
           <span className="text-sm text-[#4a2c2a]">Key: {CONFIG_KEY} · v{version}</span>
