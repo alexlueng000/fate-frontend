@@ -54,13 +54,15 @@ export default function Header() {
 
   function goLogin() {
     const currentPath = window.location.pathname || '/';
-    const redirectTarget = currentPath === '/' ? '/dashboard' : currentPath;
+    if (currentPath === '/login' || currentPath === '/register') {
+      const redirect = new URLSearchParams(window.location.search).get('redirect');
+      const query = redirect && redirect.startsWith('/') && !redirect.startsWith('//')
+        ? `?redirect=${encodeURIComponent(redirect)}` : '';
+      router.push(`/login${query}`);
+      return;
+    }
+    const redirectTarget = ['/', '/login', '/register', '/forgot-password'].includes(currentPath) ? '/dashboard' : currentPath;
     router.push(`/login?redirect=${encodeURIComponent(redirectTarget)}`);
-  }
-  function goRegister() {
-    const currentPath = window.location.pathname || '/';
-    const redirectTarget = currentPath === '/' ? '/dashboard' : currentPath;
-    router.push(`/register?redirect=${encodeURIComponent(redirectTarget)}`);
   }
   async function doLogout() {
     await logout();
@@ -145,17 +147,9 @@ export default function Header() {
           {/* ── Right: Actions ── */}
           <div className="flex items-center gap-2">
             {!me ? (
-              <>
-                <button
-                  onClick={goLogin}
-                  className="h-9 px-3 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors"
-                >
-                  登录
-                </button>
-                <button onClick={goRegister} className={outlineBtnClass}>
-                  注册
-                </button>
-              </>
+              <button onClick={goLogin} className={`${outlineBtnClass} !h-11 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]`}>
+                登录 / 注册
+              </button>
             ) : (
               <>
                 {/* 个人中心 — icon only on md, text on lg+ */}

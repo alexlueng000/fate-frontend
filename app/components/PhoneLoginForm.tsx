@@ -1,30 +1,28 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import Script from 'next/script';
+import Link from 'next/link';
 import { validateChinaPhone, sanitizePhone } from '@/app/lib/phone';
 import { loginPhone, saveAuth, checkProfileStatus } from '@/app/lib/auth';
 import { resolvePostAuthRedirect } from '@/app/lib/onboarding';
 import { api } from '@/app/lib/api';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Loader2, ShieldCheck, Smartphone, Sparkles } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+import styles from '@/app/components/auth/auth.module.css';
 
-type TencentCaptchaResponse = {
-  ret: number;
-  ticket?: string;
-  randstr?: string;
-};
-
+type TencentCaptchaResponse = { ret: number; ticket?: string; randstr?: string };
 type TencentCaptchaConstructor = new (
   appId: string,
   callback: (res: TencentCaptchaResponse) => void,
 ) => { show: () => void };
 
-// Declare Tencent Captcha global type
 declare global {
-  interface Window {
-    TencentCaptcha?: TencentCaptchaConstructor;
-  }
+  interface Window { TencentCaptcha?: TencentCaptchaConstructor }
 }
+
+// Keep the resend deadline when switching between authentication methods.
+let resendAvailableAt = 0;
 
 export default function PhoneLoginForm() {
   const router = useRouter();
@@ -36,245 +34,179 @@ export default function PhoneLoginForm() {
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
   const [countdown, setCountdown] = useState(0);
-  const [loading, setLoading] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [loggingIn, setLoggingIn] = useState(false);
   const [error, setError] = useState('');
-  const [captchaLoaded, setCaptchaLoaded] = useState(false);
+  const [status, setStatus] = useState('');
+  const [phoneTouched, setPhoneTouched] = useState(false);
+  const codeRef = useRef<HTMLInputElement>(null);
+  const sendInFlight = useRef(false);
+  const loginInFlight = useRef(false);
+  const mounted = useRef(true);
 
-  // Load Tencent Captcha SDK
   useEffect(() => {
-    // Check if script already loaded
-    if (window.TencentCaptcha) {
-      setCaptchaLoaded(true);
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.src = 'https://turing.captcha.qcloud.com/TJCaptcha.js';
-    script.async = true;
-    script.onload = () => setCaptchaLoaded(true);
-    script.onerror = () => {
-      console.error('Failed to load Tencent Captcha SDK');
-      setCaptchaLoaded(false);
-    };
-    document.body.appendChild(script);
-
+    mounted.current = true;
+    const updateCountdown = () => setCountdown(Math.max(0, Math.ceil((resendAvailableAt - Date.now()) / 1000)));
+    updateCountdown();
+    const timer = setInterval(updateCountdown, 1000);
     return () => {
-      // Cleanup script on unmount
-      if (script.parentNode) {
-        script.parentNode.removeChild(script);
-      }
+      mounted.current = false;
+      clearInterval(timer);
     };
   }, []);
 
-  // Handle phone input
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = sanitizePhone(e.target.value);
-    if (value.length <= 11) {
-      setPhone(value);
-      setError('');
-    }
-  };
-
-  // Handle code input
-  const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = sanitizePhone(e.target.value);
-    if (value.length <= 6) {
-      setCode(value);
-      setError('');
-    }
-  };
-
-  // Send verification code with captcha
-  const handleSendCode = async () => {
-    if (!validateChinaPhone(phone)) {
-      setError('请输入有效的11位手机号');
-      return;
-    }
-
-    // Show captcha if SDK loaded
-    if (captchaLoaded && window.TencentCaptcha) {
-      // Get captcha app ID from environment or use a placeholder
-      const captchaAppId = process.env.NEXT_PUBLIC_CAPTCHA_APP_ID || '2000000000';
-
-      const captcha = new window.TencentCaptcha(captchaAppId, async (res) => {
-        if (res.ret === 0) {
-          // Captcha verified, send SMS code
-          await sendSmsCode(res.ticket, res.randstr);
-        } else {
-          // User closed captcha or verification failed
-          console.log('Captcha verification cancelled or failed');
-        }
-      });
-
-      captcha.show();
-    } else {
-      // Fallback: send without captcha (dev mode)
-      await sendSmsCode();
-    }
-  };
-
-  // Send SMS code to backend
-  const sendSmsCode = async (ticket?: string, randstr?: string) => {
-    setLoading(true);
-    setError('');
-
+  async function sendSmsCode(targetPhone: string, ticket?: string, randstr?: string) {
     try {
-      const payload: Record<string, string> = { phone, purpose: 'login' };
+      const payload: Record<string, string> = { phone: targetPhone, purpose: 'login' };
       if (ticket && randstr) {
         payload.captcha_ticket = ticket;
         payload.captcha_randstr = randstr;
       }
-
       const resp = await fetch(api('/auth/sms/send'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-
       if (!resp.ok) {
-        const text = await resp.text();
-        let errorMsg = '发送验证码失败';
-        try {
-          const json = JSON.parse(text);
-          errorMsg = json.detail || json.message || errorMsg;
-        } catch {
-          errorMsg = text || errorMsg;
-        }
-        throw new Error(errorMsg);
+        const body = await resp.json().catch(() => null);
+        const message = body?.detail || body?.message;
+        throw new Error(typeof message === 'string' ? message : '发送失败，请稍后重试');
       }
-
-      // Start countdown
+      resendAvailableAt = Date.now() + 60_000;
+      if (!mounted.current) return;
       setCountdown(60);
-      const timer = setInterval(() => {
-        setCountdown((prev) => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+      setStatus(`验证码已发送至 ${targetPhone.slice(0, 3)} **** ${targetPhone.slice(-4)}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '发送验证码失败');
+      if (mounted.current) setError(err instanceof Error ? err.message : '发送失败，请稍后重试');
     } finally {
-      setLoading(false);
+      sendInFlight.current = false;
+      if (mounted.current) {
+        setSending(false);
+        // Focus after the disabled field becomes available again.
+        requestAnimationFrame(() => { if (mounted.current) codeRef.current?.focus(); });
+      }
     }
-  };
+  }
 
-  // Handle login
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  async function handleSendCode() {
+    if (sendInFlight.current || loginInFlight.current || Date.now() < resendAvailableAt) return;
     if (!validateChinaPhone(phone)) {
-      setError('请输入有效的11位手机号');
+      setPhoneTouched(true);
       return;
     }
-
-    if (code.length !== 6) {
-      setError('请输入6位验证码');
-      return;
-    }
-
-    setLoading(true);
+    sendInFlight.current = true;
+    setSending(true);
     setError('');
+    setStatus('');
+    try {
+      if (window.TencentCaptcha) {
+        const captcha = new window.TencentCaptcha(
+          process.env.NEXT_PUBLIC_CAPTCHA_APP_ID || '2000000000',
+          (res) => {
+            if (!mounted.current) return;
+            if (res.ret === 0) {
+              void sendSmsCode(phone, res.ticket, res.randstr);
+            } else {
+              sendInFlight.current = false;
+              setSending(false);
+              setStatus('验证未完成，请重新获取验证码');
+            }
+          },
+        );
+        captcha.show();
+      } else {
+        // Preserve the existing backend-controlled development fallback.
+        await sendSmsCode(phone);
+      }
+    } catch {
+      sendInFlight.current = false;
+      setSending(false);
+      setError('安全验证暂时不可用，请重试');
+    }
+  }
 
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault();
+    if (loginInFlight.current || sendInFlight.current) return;
+    if (!validateChinaPhone(phone) || !/^\d{6}$/.test(code)) {
+      setError('请输入有效手机号和6位验证码');
+      return;
+    }
+    loginInFlight.current = true;
+    setLoggingIn(true);
+    setError('');
     try {
       const resp = await loginPhone({ phone, code });
       saveAuth(resp);
-      const status = await checkProfileStatus();
-      router.push(resolvePostAuthRedirect(status, redirectTarget));
+      const profile = await checkProfileStatus();
+      router.replace(resolvePostAuthRedirect(profile, redirectTarget));
     } catch (err) {
-      setError(err instanceof Error ? err.message : '登录失败');
-    } finally {
-      setLoading(false);
+      setError(err instanceof Error ? err.message : '登录失败，请重试');
+      setLoggingIn(false);
+      loginInFlight.current = false;
     }
-  };
+  }
 
-  const canSendCode = phone.length === 11 && countdown === 0 && !loading;
-  const canLogin = phone.length === 11 && code.length === 6 && !loading;
-
+  const phoneInvalid = phoneTouched && phone.length > 0 && !validateChinaPhone(phone);
+  const busy = sending || loggingIn;
   return (
-    <form onSubmit={handleLogin} className="space-y-3">
-      {/* Phone input */}
-      <div>
-        <label htmlFor="phone" className="block text-xs text-[var(--color-text-secondary)] mb-1.5">
-          手机号
-        </label>
-        <div className="relative">
-          <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
-          <input
-            id="phone"
-            type="tel"
-            inputMode="numeric"
-            value={phone}
-            onChange={handlePhoneChange}
-            placeholder="请输入11位手机号"
-            className="input !pl-12"
-            disabled={loading}
-          />
-        </div>
-      </div>
-
-      {/* Verification code input with send button */}
-      <div>
-        <label htmlFor="code" className="block text-xs text-[var(--color-text-secondary)] mb-1.5">
-          验证码
-        </label>
-        <div className="flex gap-2">
-          <div className="relative min-w-0 flex-1">
-            <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
+    <>
+      <Script src="https://turing.captcha.qcloud.com/TJCaptcha.js" strategy="afterInteractive" />
+      <form onSubmit={handleLogin} className={styles.form}>
+        <div>
+          <label htmlFor="phone" className={styles.label}>手机号</label>
+          <div className={styles.phoneField}>
+            <span className={styles.prefix} aria-hidden="true">+86</span>
             <input
-              id="code"
-              type="tel"
-              inputMode="numeric"
-              value={code}
-              onChange={handleCodeChange}
-              placeholder="请输入6位验证码"
-              className="input !pl-12"
-              disabled={loading}
+              id="phone" name="phone" type="tel" inputMode="tel" autoComplete="tel-national"
+              className={`${styles.input} ${styles.phoneInput}`}
+              value={phone} placeholder="请输入11位手机号" required
+              aria-invalid={phoneInvalid} aria-describedby={phoneInvalid ? 'phone-error' : undefined}
+              onBlur={() => setPhoneTouched(true)}
+              onChange={(e) => {
+                setPhone(sanitizePhone(e.target.value).slice(0, 11));
+                setCode(''); setError(''); setStatus('');
+              }}
+              disabled={busy}
             />
           </div>
-          <button
-            type="button"
-            onClick={handleSendCode}
-            disabled={!canSendCode}
-            className="btn btn-secondary min-w-[118px] px-3 text-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {countdown > 0 ? `${countdown}秒后重试` : '获取验证码'}
+          {phoneInvalid && <p id="phone-error" className={styles.hint}>请输入有效的中国大陆手机号</p>}
+        </div>
+        <div>
+          <label htmlFor="code" className={styles.label}>短信验证码</label>
+          <div className={styles.codeRow}>
+            <input
+              ref={codeRef} id="code" name="code" type="text" inputMode="numeric"
+              autoComplete="one-time-code" pattern="[0-9]{6}" required
+              className={styles.input} placeholder="6位验证码" value={code}
+              onChange={(e) => { setCode(sanitizePhone(e.target.value).slice(0, 6)); setError(''); }}
+              disabled={busy}
+            />
+            <button type="button" onClick={handleSendCode}
+              disabled={!validateChinaPhone(phone) || countdown > 0 || busy}
+              className={styles.sendButton}>
+              {sending ? '发送中…' : countdown > 0 ? `${countdown}秒后重发` : '获取验证码'}
+            </button>
+          </div>
+          <div aria-live="polite">
+            {status && <p className={styles.hint}>{status}</p>}
+          </div>
+        </div>
+        {error && <p role="alert" className={styles.error}>{error}</p>}
+        <div>
+          <p className={`${styles.note} mb-4`}>未注册的手机号验证后将自动创建账号</p>
+          <button type="submit" disabled={!validateChinaPhone(phone) || code.length !== 6 || busy} className={styles.primary}>
+            {loggingIn && <Loader2 size={18} className="animate-spin" aria-hidden="true" />}
+            {loggingIn ? '登录中…' : '登录 / 注册'}
           </button>
+          <p className={`${styles.hint} !mt-4`}>
+            点击登录 / 注册，即表示同意
+            <Link href="/terms" target="_blank" rel="noopener noreferrer" className="inline-block underline underline-offset-4">《服务条款》</Link>
+            和
+            <Link href="/privacy" target="_blank" rel="noopener noreferrer" className="inline-block underline underline-offset-4">《隐私政策》</Link>
+          </p>
         </div>
-      </div>
-
-      {/* Error message */}
-      {error && (
-        <div className="rounded-xl border border-[var(--color-primary)]/30 bg-[var(--color-primary)]/10 px-4 py-2.5 text-sm text-[var(--color-primary)]">
-          {error}
-        </div>
-      )}
-
-      {/* Submit button */}
-      <button
-        type="submit"
-        disabled={!canLogin}
-        className="w-full btn btn-primary py-3 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {loading ? (
-          <>
-            <Loader2 className="w-5 h-5 animate-spin" />
-            登录中...
-          </>
-        ) : (
-          <>
-            <Sparkles className="w-5 h-5" />
-            登录
-          </>
-        )}
-      </button>
-
-      {/* Help text */}
-      <p className="text-sm text-center text-[var(--color-text-muted)]">
-        未注册的手机号将自动创建账号
-      </p>
-    </form>
+      </form>
+    </>
   );
 }

@@ -1,0 +1,66 @@
+.page {
+  min-height: calc(100dvh - 4rem);
+  display: flex; align-items: center; justify-content: center;
+  padding: 48px 24px 80px; color: var(--color-text-primary);
+}
+.panel { width: 100%; max-width: 456px; }
+.heading { margin-bottom: 32px; }
+.brand { color: var(--color-primary); font-size: 13px; letter-spacing: 0.16em; margin-bottom: 20px; }
+.heading h1 { font-family: var(--font-display); font-size: 28px; font-weight: 500; line-height: 1.35; }
+.description { margin-top: 12px; color: var(--color-text-body); font-size: 16px; line-height: 1.7; }
+.form { display: flex; flex-direction: column; gap: 24px; }
+.label { display: block; margin-bottom: 8px; color: var(--color-text-body); font-size: 14px; font-weight: 500; }
+.input {
+  width: 100%; min-width: 0; height: 52px; padding: 12px 14px;
+  border: 1px solid var(--color-border-strong); border-radius: 3px;
+  background: var(--color-bg-elevated); color: var(--color-text-primary);
+  font-size: 16px; line-height: 1.5; transition: border-color 180ms ease-out;
+}
+.input::placeholder { color: var(--color-text-secondary); opacity: 1; }
+.input:focus { outline: 2px solid var(--color-primary); outline-offset: 2px; border-color: var(--color-primary); }
+.input:disabled { opacity: 0.65; }
+.phoneField { position: relative; }
+.prefix { position: absolute; inset: 0 auto 0 16px; display: flex; align-items: center; gap: 14px; font-size: 16px; color: var(--color-text-body); pointer-events: none; }
+.prefix::after { content: ''; width: 1px; height: 20px; background: var(--color-border-strong); }
+.phoneInput { padding-left: 78px; }
+.codeRow { display: flex; gap: 10px; }
+.codeRow .input { flex: 1; }
+.sendButton {
+  flex-shrink: 0; min-width: 112px; min-height: 52px; padding: 0 12px;
+  border: 1px solid var(--color-border-strong); border-radius: 3px;
+  color: var(--color-primary); background: var(--color-bg-elevated); font-size: 14px;
+}
+.sendButton:hover:not(:disabled) { background: var(--color-bg-hover); border-color: var(--color-primary); }
+.sendButton:disabled { color: var(--color-text-secondary); cursor: not-allowed; }
+.primary {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; min-height: 52px; padding: 12px 20px; border-radius: 3px;
+  background: var(--color-primary); color: var(--color-text-inverse); font-size: 16px; font-weight: 500;
+  transition: background-color 180ms ease-out;
+}
+.primary:hover:not(:disabled) { background: var(--color-primary-hover); }
+.primary:active:not(:disabled) { background: var(--color-primary-active); }
+.primary:disabled { background: var(--color-bg-hover); color: var(--color-text-secondary); cursor: not-allowed; }
+.note { font-size: 14px; line-height: 1.7; color: var(--color-text-body); }
+.hint { margin-top: 8px; font-size: 13px; line-height: 1.65; color: var(--color-text-body); }
+.error { color: var(--color-primary); font-size: 14px; line-height: 1.7; }
+.status { color: var(--color-text-body); font-size: 14px; line-height: 1.7; }
+.footer { border-top: 1px solid var(--color-border); margin-top: 28px; padding-top: 16px; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 20px; }
+.link { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; color: var(--color-text-body); font-size: 14px; text-decoration: underline; text-decoration-color: var(--color-border-strong); text-underline-offset: 5px; }
+.link:hover { color: var(--color-primary); text-decoration-color: currentColor; }
+.primary:focus-visible, .sendButton:focus-visible, .link:focus-visible, .eye:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
+.passwordLabel { display: flex; justify-content: space-between; align-items: center; margin-top: -10px; }
+.passwordLabel .label { margin: 0; }
+.passwordField { position: relative; }
+.passwordField .input { padding-right: 52px; }
+.eye { position: absolute; right: 4px; top: 4px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: var(--color-text-body); border-radius: 3px; }
+@media (min-width: 640px) {
+  .panel { padding: 40px; max-width: 488px; border: 1px solid var(--color-border); border-radius: 4px; background: var(--color-bg-elevated); }
+  .heading h1 { font-size: 32px; }
+}
+@media (max-width: 639px) {
+  .page { align-items: flex-start; padding-top: 40px; padding-bottom: calc(32px + env(safe-area-inset-bottom)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .page *, .page *::before, .page *::after { animation: none !important; transition: none !important; }
+}

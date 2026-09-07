@@ -5,11 +5,10 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { loginWeb, saveAuth, useUser, checkProfileStatus } from '@/app/lib/auth';
 import { resolvePostAuthRedirect } from '@/app/lib/onboarding';
-import { Mail, Lock, Eye, EyeOff, Loader2, Sparkles, Smartphone } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
 import PhoneLoginForm from '@/app/components/PhoneLoginForm';
-
-// 八卦符号
-const BAGUA = ['☰', '☱', '☲', '☳', '☴', '☵', '☶', '☷'];
+import AuthShell from '@/app/components/auth/AuthShell';
+import styles from '@/app/components/auth/auth.module.css';
 
 type LoginTab = 'email' | 'phone';
 
@@ -22,7 +21,7 @@ export default function LoginClient() {
     ? redirect === '/' ? '/dashboard' : redirect
     : null;
 
-  const [activeTab, setActiveTab] = useState<LoginTab>('email');
+  const activeTab: LoginTab = searchParams.get('method') === 'email' ? 'email' : 'phone';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
@@ -49,8 +48,8 @@ export default function LoginClient() {
   const pwOk = useMemo(() => password.length >= 1, [password]);
 
   const canSubmit = useMemo(() => {
-    return emailOk && pwOk && !submitting;
-  }, [emailOk, pwOk, submitting]);
+    return emailOk && pwOk && !submitting && !loginSuccess;
+  }, [emailOk, pwOk, submitting, loginSuccess]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -73,92 +72,26 @@ export default function LoginClient() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background Elements */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[var(--color-primary)] rounded-full opacity-10 blur-[100px] animate-pulse-glow" />
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-[var(--color-gold)] rounded-full opacity-10 blur-[80px] animate-pulse-glow delay-500" />
-
-        {/* Rotating Bagua */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] opacity-[0.02] animate-rotate-slow">
-          {BAGUA.map((symbol, i) => (
-            <span
-              key={i}
-              className="absolute text-5xl text-[var(--color-gold)]"
-              style={{
-                left: '50%',
-                top: '50%',
-                transform: `rotate(${i * 45}deg) translateY(-250px) rotate(-${i * 45}deg)`,
-              }}
-            >
-              {symbol}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      {/* Login Card */}
-      <div className="relative w-full max-w-md card p-6 animate-scale-in">
-        {/* Header */}
-        <div className="text-center mb-4">
-          <h1
-            className="text-xl font-bold text-[var(--color-text-primary)] mb-1"
-            style={{ fontFamily: 'var(--font-display)' }}
-          >
-            欢迎回来
-          </h1>
-          <p className="text-xs text-[var(--color-text-muted)]">
-            登录以继续使用易凡文化
-          </p>
-        </div>
-
-        {/* Tab Switcher */}
-        <div className="flex gap-2 mb-4 p-1 bg-[var(--color-bg-secondary)] rounded-lg">
-          <button
-            type="button"
-            onClick={() => setActiveTab('email')}
-            className={`flex-1 py-2 px-4 rounded text-sm font-medium transition-all ${
-              activeTab === 'email'
-                ? 'bg-white text-[var(--color-text-primary)] shadow-sm'
-                : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
-            }`}
-          >
-            <Mail className="w-4 h-4 inline-block mr-1.5 -mt-0.5" />
-            邮箱登录
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('phone')}
-            className={`flex-1 py-2 px-4 rounded text-sm font-medium transition-all ${
-              activeTab === 'phone'
-                ? 'bg-white text-[var(--color-text-primary)] shadow-sm'
-                : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
-            }`}
-          >
-            <Smartphone className="w-4 h-4 inline-block mr-1.5 -mt-0.5" />
-            手机登录
-          </button>
-        </div>
-
+    <AuthShell title={activeTab === 'phone' ? '登录 / 注册' : '邮箱登录'} description={activeTab === 'phone' ? '使用手机号，继续探索自己' : '使用已有邮箱账户，继续你的探索'}>
         {/* Error Alert */}
-        {err && (
-          <div className="mb-3 rounded-xl border border-[var(--color-primary)]/30 bg-[var(--color-primary)]/10 px-4 py-2.5 text-sm text-[var(--color-primary)]">
+        {activeTab === 'email' && err && (
+          <div role="alert" className={styles.error}>
             {err}
           </div>
         )}
 
         {/* Email Login Form */}
         {activeTab === 'email' && (
-          <form onSubmit={handleSubmit} className="space-y-3">
+          <form onSubmit={handleSubmit} className={styles.form}>
           {/* Email */}
           <div>
-            <label className="block text-xs text-[var(--color-text-secondary)] mb-1.5">
+            <label htmlFor="email" className={styles.label}>
               邮箱
             </label>
             <div className="relative">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
               <input
-                className="input !pl-12"
+                id="email" className={`${styles.input} !pl-12`} required disabled={submitting}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
@@ -175,12 +108,12 @@ export default function LoginClient() {
           {/* Password */}
           <div>
             <div className="flex justify-between items-center mb-1.5">
-              <label className="block text-xs text-[var(--color-text-secondary)]">
+              <label htmlFor="password" className={styles.label}>
                 密码
               </label>
               <Link
                 href="/forgot-password"
-                className="text-xs text-[var(--color-gold)] hover:text-[var(--color-gold-light)] transition-colors"
+                className={styles.link}
               >
                 忘记密码？
               </Link>
@@ -188,7 +121,7 @@ export default function LoginClient() {
             <div className="relative">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
               <input
-                className="input !pl-12 pr-12"
+                id="password" className={`${styles.input} !pl-12 !pr-12`} required disabled={submitting}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 type={showPw ? 'text' : 'password'}
@@ -198,7 +131,7 @@ export default function LoginClient() {
               <button
                 type="button"
                 aria-label={showPw ? '隐藏密码' : '显示密码'}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--color-text-hint)] hover:text-[var(--color-text-secondary)] transition-colors"
+                className={styles.eye}
                 onClick={() => setShowPw((v) => !v)}
               >
                 {showPw ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
@@ -210,37 +143,33 @@ export default function LoginClient() {
           <button
             type="submit"
             disabled={!canSubmit}
-            className="w-full btn btn-primary py-3 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+            className={styles.primary}
           >
-            {submitting ? (
+            {submitting || loginSuccess ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
                 登录中…
               </>
             ) : (
               <>
-                <Sparkles className="w-5 h-5" />
                 登录
               </>
             )}
           </button>
 
-          {/* Footer */}
-          <p className="text-sm text-center text-[var(--color-text-muted)]">
-            还没有账号？
-            <Link
-              href={redirectTarget ? `/register?redirect=${encodeURIComponent(redirectTarget)}` : '/register'}
-              className="ml-1 text-[var(--color-gold)] hover:text-[var(--color-gold-light)] transition-colors"
-            >
-              去注册
-            </Link>
-          </p>
         </form>
         )}
 
         {/* Phone Login Form */}
         {activeTab === 'phone' && <PhoneLoginForm />}
+      <div className={styles.footer}>
+        {activeTab === 'phone' ? (
+          <Link className={styles.link} href={redirectTarget ? `/login?method=email&redirect=${encodeURIComponent(redirectTarget)}` : '/login?method=email'}><Mail size={16} aria-hidden="true" />使用邮箱登录</Link>
+        ) : <>
+          <Link className={styles.link} href={redirectTarget ? `/login?redirect=${encodeURIComponent(redirectTarget)}` : '/login'}>手机登录 / 注册</Link>
+          <Link className={styles.link} href={redirectTarget ? `/register?method=email&redirect=${encodeURIComponent(redirectTarget)}` : '/register?method=email'}>注册邮箱账户</Link>
+        </>}
       </div>
-    </div>
+    </AuthShell>
   );
 }
