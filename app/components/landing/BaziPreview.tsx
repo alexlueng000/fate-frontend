@@ -1,5 +1,7 @@
 "use client";
 
+import MotionScene, { motionDelay } from "@/app/components/landing/MotionScene";
+
 const PILLARS = [
   { label: "YEAR",  zh: "年柱", tian: "甲", di: "子", tian_wx: "wood",  di_wx: "water" },
   { label: "MONTH", zh: "月柱", tian: "丁", di: "卯", tian_wx: "fire",  di_wx: "wood"  },
@@ -22,7 +24,7 @@ const wxBg = (wx: Wuxing) =>
 
 export default function BaziPreview() {
   return (
-    <div className="w-full max-w-md space-y-5">
+    <MotionScene className="w-full max-w-md space-y-5">
       <div className="text-[0.6875rem] uppercase tracking-[0.12em] text-[var(--color-text-muted)] text-center">
         示例命盘
       </div>
@@ -44,15 +46,16 @@ export default function BaziPreview() {
         </thead>
         <tbody>
           <tr>
-            {PILLARS.map((p) => (
+            {PILLARS.map((p, index) => (
               <td
                 key={p.label + "-tian"}
                 className="border-r border-[var(--color-border)] py-3 text-center last:border-r-0"
                 style={{ background: wxBg(p.tian_wx as Wuxing) }}
               >
                 <span
-                  className="text-[1.625rem] font-medium leading-none"
-                  style={{ fontFamily: "var(--font-display)", color: WX_VAR[p.tian_wx as Wuxing] }}
+                  data-reveal
+                  className="inline-block text-[1.625rem] font-medium leading-none"
+                  style={{ ...motionDelay(index * 120), fontFamily: "var(--font-display)", color: WX_VAR[p.tian_wx as Wuxing] }}
                 >
                   {p.tian}
                 </span>
@@ -60,15 +63,16 @@ export default function BaziPreview() {
             ))}
           </tr>
           <tr>
-            {PILLARS.map((p) => (
+            {PILLARS.map((p, index) => (
               <td
                 key={p.label + "-di"}
                 className="border-r border-t border-[var(--color-border)] py-2.5 text-center last:border-r-0"
                 style={{ background: wxBg(p.di_wx as Wuxing) }}
               >
                 <span
-                  className="text-[1.125rem] leading-none"
-                  style={{ fontFamily: "var(--font-display)", color: WX_VAR[p.di_wx as Wuxing] }}
+                  data-reveal
+                  className="inline-block text-[1.125rem] leading-none"
+                  style={{ ...motionDelay(index * 120 + 70), fontFamily: "var(--font-display)", color: WX_VAR[p.di_wx as Wuxing] }}
                 >
                   {p.di}
                 </span>
@@ -79,7 +83,7 @@ export default function BaziPreview() {
       </table>
 
       {/* 大运流年 · 时间轴 */}
-      <section className="space-y-2">
+      <section data-reveal className="space-y-2" style={motionDelay(500)}>
         <h4 className="text-[0.6875rem] uppercase tracking-[0.12em] text-[var(--color-text-muted)]">
           大运流年
         </h4>
@@ -119,7 +123,7 @@ export default function BaziPreview() {
             { label: "土", pct: 12, wx: "earth" as Wuxing },
             { label: "金", pct: 13, wx: "metal" as Wuxing },
             { label: "水", pct: 12, wx: "water" as Wuxing },
-          ].map((it) => (
+          ].map((it, index) => (
             <li key={it.label} className="grid grid-cols-[1.25rem_1fr_2rem] items-center gap-2">
               <span
                 className="text-[0.875rem]"
@@ -132,8 +136,10 @@ export default function BaziPreview() {
                 style={{ background: "var(--color-bg-deep)" }}
               >
                 <div
-                  className="h-full transition-all duration-700"
+                  data-draw
+                  className="h-full"
                   style={{
+                    ...motionDelay(800 + index * 90),
                     width: `${it.pct}%`,
                     background: WX_VAR[it.wx],
                   }}
@@ -146,6 +152,9 @@ export default function BaziPreview() {
           ))}
         </ul>
       </section>
-    </div>
+      <p data-reveal style={motionDelay(1600)} className="border-t border-[var(--color-border)] pt-4 text-[0.875rem] leading-[1.75] text-[var(--color-text-secondary)]">
+        先看见自己的倾向，再把它放回生活里慢慢对照。
+      </p>
+    </MotionScene>
   );
 }

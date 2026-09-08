@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import MotionScene from "@/app/components/landing/MotionScene";
 import FeatureCard from "./FeatureCard";
 import BaziPreview from "./BaziPreview";
 import EmotionChart from "./EmotionChart";
@@ -84,66 +84,6 @@ const FEATURES = [
   },
 ];
 
-function useReducedMotion() {
-  const [reduced, setReduced] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const onChange = () => setReduced(mq.matches);
-    onChange();
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }, []);
-  return reduced;
-}
-
-function AnimatedSection({
-  children,
-  delay = 0,
-}: {
-  children: React.ReactNode;
-  delay?: number;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
-  const reduced = useReducedMotion();
-
-  useEffect(() => {
-    if (reduced) {
-      setVisible(true);
-      return;
-    }
-    const node = ref.current;
-    if (!node) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          const t = setTimeout(() => setVisible(true), delay);
-          observer.disconnect();
-          return () => clearTimeout(t);
-        }
-      },
-      { threshold: 0.1 }
-    );
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, [delay, reduced]);
-
-  return (
-    <div
-      ref={ref}
-      style={{
-        opacity: visible ? 1 : 0,
-        transform: visible ? "translateY(0)" : "translateY(16px)",
-        transition: reduced
-          ? "none"
-          : "opacity 600ms cubic-bezier(0.16, 1, 0.3, 1), transform 600ms cubic-bezier(0.16, 1, 0.3, 1)",
-      }}
-    >
-      {children}
-    </div>
-  );
-}
-
 export default function FeatureShowcase() {
   const visibleFeatures = FEATURES.filter((f) => !f.hidden);
 
@@ -154,8 +94,8 @@ export default function FeatureShowcase() {
     >
       <div className="mx-auto max-w-5xl space-y-20 md:space-y-28">
         {/* 标题 */}
-        <AnimatedSection>
-          <header className="space-y-3 text-center">
+        <MotionScene>
+          <header data-reveal className="space-y-3 text-center">
             <p className="text-[0.6875rem] uppercase tracking-[0.12em] text-[var(--color-text-muted)]">
               两个工具
             </p>
@@ -169,12 +109,10 @@ export default function FeatureShowcase() {
               看清性格、整理选择。
             </p>
           </header>
-        </AnimatedSection>
+        </MotionScene>
 
-        {visibleFeatures.map((f, i) => (
-          <AnimatedSection key={f.id} delay={i * 80}>
-            <FeatureCard {...f} />
-          </AnimatedSection>
+        {visibleFeatures.map((f) => (
+          <FeatureCard key={f.id} {...f} />
         ))}
       </div>
     </section>

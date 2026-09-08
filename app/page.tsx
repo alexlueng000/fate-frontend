@@ -4,7 +4,9 @@ import Footer from "@/app/components/Footer";
 import FeatureShowcase from "@/app/components/landing/FeatureShowcase";
 import AuthGate from "@/app/components/landing/AuthGate";
 import { PrimaryCta, SecondaryCta } from "@/app/components/landing/LandingCtas";
-import { Gift } from "lucide-react";
+import { ChevronDown, Gift } from "lucide-react";
+import HeroConversation from "@/app/components/landing/HeroConversation";
+import motion from "@/app/components/landing/LandingMotion.module.css";
 
 const HERO_ENTRIES = [
   {
@@ -101,7 +103,7 @@ function StructuredData() {
 
 export default function LandingPage() {
   return (
-    <main className="min-h-screen" style={{ background: "var(--color-bg)" }}>
+    <main className={`${motion.page} min-h-screen`} style={{ background: "var(--color-bg)" }}>
       <StructuredData />
       <AuthGate />
 
@@ -109,7 +111,7 @@ export default function LandingPage() {
       <section className="px-6 pt-20 pb-16 md:pt-28 md:pb-24">
         <div className="mx-auto grid max-w-6xl gap-12 md:gap-16 lg:grid-cols-[1.1fr_1fr] lg:items-center">
           {/* 左：主文案 */}
-          <div className="animate-fade-in space-y-7">
+          <div className={`${motion.heroCopy} space-y-7`}>
             <p className="text-[0.75rem] uppercase tracking-[0.14em] text-[var(--color-text-muted)]">
               AI · 东方文化 · 自我观察
             </p>
@@ -150,8 +152,8 @@ export default function LandingPage() {
             </p>
           </div>
 
-          {/* 右：首次路径 · 静态、克制 */}
-          <aside className="animate-fade-in delay-200">
+          {/* A short demonstration followed by progressively disclosed entry guidance. */}
+          <aside className={motion.heroAside}>
             <div className="card overflow-hidden">
               <header className="space-y-2 border-b border-[var(--color-border)] px-5 py-5">
                 <p className="text-[0.6875rem] uppercase tracking-[0.12em] text-[var(--color-text-muted)]">
@@ -168,14 +170,12 @@ export default function LandingPage() {
                 </p>
               </header>
 
+              <HeroConversation />
               <ol className="divide-y divide-[var(--color-border)]">
                 {HERO_ENTRIES.map((entry, idx) => (
-                  <li key={entry.id}>
-                    <Link
-                      href={entry.href}
-                      className="group block px-5 py-5 transition-colors hover:bg-[var(--color-bg-hover)] focus-visible:bg-[var(--color-bg-hover)] focus-visible:outline-none"
-                    >
-                      <div className="mb-3 grid grid-cols-[auto_1fr] items-baseline gap-4">
+                  <li key={entry.id} className="px-5 py-4 transition-colors hover:bg-[var(--color-bg-hover)] focus-within:bg-[var(--color-bg-hover)]">
+                    <details className={motion.entry}>
+                      <summary className="grid grid-cols-[auto_1fr_auto] items-baseline gap-4">
                       <span
                         className="font-mono text-[0.6875rem] text-[var(--color-text-hint)] tabular-nums"
                         aria-hidden="true"
@@ -193,8 +193,9 @@ export default function LandingPage() {
                           {entry.title}
                         </h3>
                       </div>
-                      </div>
-                      <div className="space-y-3 pl-0 md:pl-[2.2rem]">
+                        <ChevronDown className="h-4 w-4 text-[var(--color-text-muted)]" aria-hidden="true" />
+                      </summary>
+                      <div className="space-y-3 pt-3 pl-0 md:pl-[2.2rem]">
                         <p className="text-[0.875rem] leading-[1.75] text-[var(--color-text-body)]">
                           {entry.desc}
                         </p>
@@ -211,7 +212,9 @@ export default function LandingPage() {
                             </span>
                           ))}
                         </div>
-                        <span className="inline-flex items-center gap-1 pt-1 text-[0.875rem] font-medium text-[var(--color-primary)]">
+                      </div>
+                    </details>
+                    <Link href={entry.href} className={`${motion.entryLink} group mt-1 inline-flex items-center gap-1 text-[0.875rem] font-medium text-[var(--color-primary)] underline-offset-4 hover:underline focus-visible:underline md:ml-[2.2rem]`}>
                           {entry.cta}
                           <span
                             className="transition-transform group-hover:translate-x-0.5"
@@ -219,8 +222,6 @@ export default function LandingPage() {
                           >
                             →
                           </span>
-                        </span>
-                      </div>
                     </Link>
                   </li>
                 ))}
