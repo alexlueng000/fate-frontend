@@ -34,7 +34,7 @@ export default function BottomNav() {
             <header className="flex items-center justify-between border-b border-[var(--color-border)] px-4 py-3">
               <div>
                 <p className="text-[15px] font-medium text-[var(--color-text-primary)]">更多功能</p>
-                <p className="mt-1 text-xs text-[var(--color-text-muted)]">报告、记录与学习入口</p>
+                <p className="mt-1 text-xs text-[var(--color-text-muted)]">意见反馈、命理报告与解读记录</p>
               </div>
               <button
                 type="button"

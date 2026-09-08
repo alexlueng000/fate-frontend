@@ -8,6 +8,17 @@ export type TaskContext = CareerTaskContext | RelationshipTaskContext;
 
 export type HistoryType = 'bazi' | 'liuyao';
 export type HistoryClearType = HistoryType | 'all';
+export type ConversationDigest = {
+  title: string | null;
+  custom_title: string | null;
+  topic: string | null;
+  question: string | null;
+  summary: string | null;
+  status: 'empty' | 'pending' | 'ready' | 'failed';
+  generated_at: string | null;
+  source_message_id: number;
+  stale: boolean;
+};
 
 export type HexagramSummary = {
   hexagram_id: string;
@@ -26,6 +37,7 @@ export type ConversationListItem = {
   bazi_summary?: string | null;
   hexagram?: HexagramSummary | null;
   task_context?: TaskContext | null;
+  digest?: ConversationDigest | null;
 };
 
 export type ConversationListResp = {
@@ -63,12 +75,15 @@ export const historyApi = {
   async list(
     type: HistoryType,
     offset = 0,
-    limit = 20
+    limit = 20,
+    query = '',
+    signal?: AbortSignal,
   ): Promise<ConversationListResp> {
-    const url = api(`/conversations?type=${type}&offset=${offset}&limit=${limit}`);
+    const url = api(`/conversations?type=${type}&offset=${offset}&limit=${limit}&q=${encodeURIComponent(query)}`);
     const response = await fetch(url, {
       headers: getAuthHeaders(),
       credentials: 'include',
+      signal,
     });
     if (!response.ok) {
       const error = await response.json().catch(() => ({ detail: 'Request failed' }));
@@ -129,4 +144,19 @@ export function hasDisplayableConversationContent(item: ConversationListItem): b
   ];
 
   return !emptyMarkers.some((marker) => preview.includes(marker));
+}
+
+export async function digestRequest(id: number, options: { generate?: boolean; refresh?: boolean; title?: string; signal?: AbortSignal } = {}): Promise<ConversationDigest> {
+  const renaming = options.title !== undefined;
+  const response = await fetch(api(`/conversations/${id}/${renaming ? 'title' : 'digest'}`), {
+    method: renaming ? 'PATCH' : options.generate ? 'POST' : 'GET',
+    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+    credentials: 'include', signal: options.signal,
+    body: renaming ? JSON.stringify({ title: options.title }) : options.generate ? JSON.stringify({ refresh: options.refresh ?? false }) : undefined,
+  });
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new Error(typeof body?.detail === 'string' ? body.detail : '暂时无法整理记录，请稍后重试');
+  }
+  return response.json();
 }
