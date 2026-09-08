@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { checkRouteAccess } from './auth';
+import { profileSetupTarget } from '@/app/lib/onboarding';
 
 /**
  * 路由守卫 Hook
@@ -37,7 +38,14 @@ export function useRouteGuard(
       if (!mounted) return;
 
       if (!result.allowed) {
-        router.replace(result.redirect);
+        const currentPath = window.location.pathname + window.location.search + window.location.hash;
+        if (result.redirect === '/login') {
+          router.replace(`/login?redirect=${encodeURIComponent(currentPath)}`);
+        } else if (result.redirect === '/profile/create') {
+          router.replace(profileSetupTarget(currentPath));
+        } else {
+          router.replace(result.redirect);
+        }
       } else {
         setLoading(false);
       }
