@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { packageText } from '@/app/lib/product-display';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
@@ -245,7 +246,7 @@ export default function AdminOrdersPage() {
                         <p className="mt-1 text-xs text-[var(--color-text-muted)]">{order.user_email || order.user_phone || '—'}</p>
                       </td>
                       <td className="px-4 py-4">
-                        <p>{order.product_name}</p>
+                        <p>{order.product_kind === 'subscription' ? packageText(order.product_name) : order.product_name}</p>
                         <p className="mt-1 text-xs text-[var(--color-text-muted)]">{order.product_code}</p>
                         <p className="mt-2 font-semibold">{formatMoney(order.amount_cents)}</p>
                       </td>
@@ -327,7 +328,7 @@ export default function AdminOrdersPage() {
               <button type="button" onClick={() => setRefundOrder(null)} className="rounded-lg p-2 hover:bg-[var(--color-bg-hover)]" aria-label="关闭"><X className="h-5 w-5" /></button>
             </div>
             <div className="mt-5 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-              款项将原路退回微信。退款成功后，系统会撤销该订单尚未使用的额度和对应会员期限。
+              款项将原路退回微信。退款成功后，系统会撤销该订单尚未使用的额度和对应套餐期限。
             </div>
             {refundOrder.entitlement_trace === 'MISSING' && (
               <div className="mt-3 flex gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />该历史订单缺少权益流水，退款后可能需要人工处理权益。</div>

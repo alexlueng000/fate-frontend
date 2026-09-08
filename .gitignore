@@ -12,6 +12,12 @@
 
 # testing
 /coverage
+/playwright-report/
+/test-results/
+/blob-report/
+
+# local preview routes
+/app/onboarding-preview-test/
 
 # next.js
 /.next/
@@ -23,7 +29,9 @@
 
 # misc
 .DS_Store
+Thumbs.db
 *.pem
+/.pnpm-store/
 
 # debug
 npm-debug.log*

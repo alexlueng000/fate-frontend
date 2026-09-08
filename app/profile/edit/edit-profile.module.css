@@ -135,7 +135,7 @@
   border: 0;
 }
 
-.fieldGroup + .fieldGroup,
+.formSection > .fieldGroup + .fieldGroup,
 .dateTimeGrid + .fieldGroup { margin-top: 24px; }
 
 .fieldLabel {

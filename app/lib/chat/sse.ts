@@ -11,7 +11,72 @@ export class QuotaExhaustedError extends Error {
   }
 }
 
+export const CHAT_FAILURE_MESSAGE = '抱歉，本次解读生成失败。你可以刷新页面后重新提问，或稍后再试。';
+
+type StreamOptions = { signal?: AbortSignal; mobilePacing?: boolean };
+
 export async function trySSE(
+  url: string,
+  body: unknown,
+  onDelta: (text: string) => void,
+  onMeta?: (meta: unknown) => void,
+  opts?: StreamOptions,
+): Promise<void> {
+  const controller = new AbortController();
+  const abort = () => controller.abort(opts?.signal?.reason);
+  opts?.signal?.addEventListener('abort', abort, { once: true });
+  if (opts?.signal?.aborted) abort();
+  const paced = opts?.mobilePacing && typeof window !== 'undefined'
+    && window.matchMedia('(max-width: 767px)').matches
+    && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let target = '';
+  let visible = '';
+  let idleTimer: ReturnType<typeof setTimeout>;
+  const resetIdle = () => {
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => controller.abort(new Error(CHAT_FAILURE_MESSAGE)), 90_000);
+  };
+  const totalTimer = setTimeout(() => controller.abort(new Error(CHAT_FAILURE_MESSAGE)), 300_000);
+  const emit = () => {
+    if (visible === target) return;
+    // Preserve Unicode code points and reveal about 28 characters per second.
+    const length = Array.from(visible).length;
+    visible = Array.from(target).slice(0, length + 3).join('');
+    onDelta(visible);
+  };
+  const paceTimer = paced ? setInterval(emit, 108) : undefined;
+  resetIdle();
+  try {
+    await readSSE(url, body, (text) => {
+      if (text !== target) resetIdle();
+      target = text;
+      if (!paced || text.includes(CHAT_FAILURE_MESSAGE)) {
+        visible = text;
+        onDelta(text);
+      } else if (!text.startsWith(visible)) {
+        // Final Markdown normalization can rewrite already displayed text.
+        visible = Array.from(text).slice(0, Array.from(visible).length).join('');
+        onDelta(visible);
+      }
+    }, onMeta, { signal: controller.signal });
+    clearTimeout(idleTimer!);
+    clearTimeout(totalTimer);
+    if (!target.trim()) throw new Error(CHAT_FAILURE_MESSAGE);
+    // Keep the message streaming until the display queue is drained.
+    while (visible !== target) {
+      controller.signal.throwIfAborted();
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
+  } finally {
+    clearTimeout(idleTimer!);
+    clearTimeout(totalTimer);
+    clearInterval(paceTimer);
+    opts?.signal?.removeEventListener('abort', abort);
+    controller.abort();
+  }
+}
+
+async function readSSE(
   url: string,
   body: unknown,
   onDelta: (text: string) => void,   // 回调"当前整段最新文本"（已规范化）
@@ -131,8 +196,9 @@ export async function trySSE(
   };
 
   const scheduleEmit = () => {
-    if (rafId) cancelAnimationFrame(rafId);
+    if (rafId !== null) return;
     rafId = requestAnimationFrame(() => {
+      rafId = null;
       const normalized = normalize(text);
       if (normalized !== lastEmitted) {
         lastEmitted = normalized;
@@ -212,19 +278,19 @@ export async function trySSE(
         const obj: Record<string, unknown> = JSON.parse(t);
 
         const looksLikeMeta =
-          typeof (obj as any)?.conversation_id === 'string' ||
-          typeof (obj as any)?.conversationId === 'string' ||
-          typeof (obj as any)?.meta === 'object';
+          typeof obj?.conversation_id === 'string' ||
+          typeof obj?.conversationId === 'string' ||
+          typeof obj?.meta === 'object';
 
         const seg: string =
-          (typeof (obj as any)?.delta   === 'string' && (obj as any).delta)   ||
-          (typeof (obj as any)?.text    === 'string' && (obj as any).text)    ||
-          (typeof (obj as any)?.content === 'string' && (obj as any).content) ||
-          (typeof (obj as any)?.message === 'string' && (obj as any).message) || '';
+          (typeof obj?.delta   === 'string' && obj.delta)   ||
+          (typeof obj?.text    === 'string' && obj.text)    ||
+          (typeof obj?.content === 'string' && obj.content) ||
+          (typeof obj?.message === 'string' && obj.message) || '';
 
         if (looksLikeMeta) {
-          onMeta?.((obj as any).meta ?? obj);
-          log('meta(obj)=', (obj as any).meta ?? obj);
+          onMeta?.(obj.meta ?? obj);
+          log('meta(obj)=', obj.meta ?? obj);
           if (!seg) return; // 纯 meta 不落正文
         }
 
@@ -240,11 +306,11 @@ export async function trySSE(
         }
 
         // 有结构化文本字段（即使为空），不当作纯文本处理
-        if ((obj as any)?.replace === true ||
-            typeof (obj as any)?.delta   === 'string' ||
-            typeof (obj as any)?.text    === 'string' ||
-            typeof (obj as any)?.content === 'string' ||
-            typeof (obj as any)?.message === 'string') {
+        if (obj?.replace === true ||
+            typeof obj?.delta   === 'string' ||
+            typeof obj?.text    === 'string' ||
+            typeof obj?.content === 'string' ||
+            typeof obj?.message === 'string') {
           return;
         }
 
@@ -274,32 +340,39 @@ export async function trySSE(
   };
 
   // —— 读取 & 解析 —— //
-  while (true) {
-    const { value, done } = await reader.read();
-    if (done) break;
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
 
-    const chunk = decoder.decode(value, { stream: true });
-    rawBuf += chunk;
-    log('chunk bytes=', chunk.length);
+      const chunk = decoder.decode(value, { stream: true });
+      rawBuf += chunk;
+      rawBuf = rawBuf.replace(/\r\n/g, '\n');
+      log('chunk bytes=', chunk.length);
 
-    let idx: number;
-    while ((idx = rawBuf.indexOf('\n\n')) !== -1) {
-      const block = rawBuf.slice(0, idx);
-      rawBuf = rawBuf.slice(idx + 2);
-      processBlock(block);
+      let idx: number;
+      while ((idx = rawBuf.indexOf('\n\n')) !== -1) {
+        const block = rawBuf.slice(0, idx);
+        rawBuf = rawBuf.slice(idx + 2);
+        processBlock(block);
+      }
     }
-  }
 
-  // 末尾残块
-  if (rawBuf.trim()) {
-    processBlock(rawBuf);
-  }
+    // 末尾残块
+    if (rawBuf.trim()) {
+      processBlock(rawBuf);
+    }
 
-  // 最后一发
-  const normalized = normalize(text);
-  if (normalized !== lastEmitted) {
-    lastEmitted = normalized;
-    onDelta(normalized);
-    log('emit(final) len=', normalized.length);
+    // 最后一发
+    const normalized = normalize(text);
+    if (normalized !== lastEmitted) {
+      lastEmitted = normalized;
+      onDelta(normalized);
+      log('emit(final) len=', normalized.length);
+    }
+  } finally {
+    if (rafId !== null) cancelAnimationFrame(rafId);
+    await reader.cancel().catch(() => {});
+    reader.releaseLock();
   }
 }

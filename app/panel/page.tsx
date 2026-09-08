@@ -13,7 +13,7 @@ import { MiniPillars } from '@/app/components/chat/MiniPillars';
 import { Msg, QUICK_BUTTONS, normalizeMarkdown } from '@/app/lib/chat/types';
 import { parseSuggestedQuestions } from '@/app/lib/chat/parser';
 import { api, fetchBaziIntro, fetchQuickButtons, pickReply } from '@/app/lib/chat/api';
-import { trySSE, QuotaExhaustedError } from '@/app/lib/chat/sse';
+import { trySSE, QuotaExhaustedError, CHAT_FAILURE_MESSAGE } from '@/app/lib/chat/sse';
 import { QuotaBar } from '@/app/components/QuotaBar';
 import QuotaExhaustedDialog from '@/app/components/QuotaExhaustedDialog';
 import ConfirmDialog from '@/app/components/ConfirmDialog';
@@ -402,68 +402,8 @@ export default function PanelPage() {
     [conversationId, input, loading, booting],
   );
 
-  // ===== Reinitialize session =====
-  const reinitSession = async () => {
-    const token = localStorage.getItem('auth_token');
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-
-    const initRes = await fetch(api('/chat/init'), {
-      method: 'POST',
-      headers,
-      credentials: 'include',
-    });
-    if (!initRes.ok) throw new Error(await readApiError(initRes));
-    const { conversation_id: cid } = await initRes.json();
-
-    sessionStorage.setItem('conversation_id', cid);
-    setConversationId(cid);
-    return cid;
-  };
-
   // ===== Send / Stream =====
-  const sendOnce = async (content: string, retryOnSessionLost = true, displayMessage?: string) => {
-    const token = localStorage.getItem('auth_token');
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-    const res = await fetch(api('/chat'), {
-      method: 'POST', headers,
-      body: JSON.stringify({
-        conversation_id: conversationId,
-        message: content,
-        display_message: displayMessage,
-        task_context: taskContext,
-      }),
-    });
-    if (!res.ok) {
-      const errorText = await readApiError(res);
-      if (res.status === 429) throw new QuotaExhaustedError(errorText);
-      // Check if session is lost
-      if (retryOnSessionLost && errorText.includes('会话不存在')) {
-        const newCid = await reinitSession();
-        // Retry with new conversation_id
-        const retryRes = await fetch(api('/chat'), {
-          method: 'POST', headers,
-          body: JSON.stringify({
-            conversation_id: newCid,
-            message: content,
-            display_message: displayMessage,
-            task_context: taskContext,
-          }),
-        });
-        if (!retryRes.ok) {
-          const retryError = await readApiError(retryRes);
-          if (retryRes.status === 429) throw new QuotaExhaustedError(retryError);
-          throw new Error(retryError);
-        }
-        return pickReply(await retryRes.json()).trim();
-      }
-      throw new Error(errorText);
-    }
-    return pickReply(await res.json()).trim();
-  };
-
-  const sendStream = async (content: string, retryOnSessionLost = true, displayMessage?: string) => {
+  const sendStream = async (content: string, displayMessage?: string) => {
     if (!conversationId) throw new Error('缺少会话，请刷新页面重试');
     if (streamingLockRef.current) return;
     streamingLockRef.current = true;
@@ -509,7 +449,8 @@ export default function PanelPage() {
               return next;
             });
           }
-        }
+        },
+        { mobilePacing: true }
       );
       setMsgs(prev => {
         if (myIndex < 0 || myIndex >= prev.length) return prev;
@@ -521,30 +462,20 @@ export default function PanelPage() {
       });
     } catch (e) {
       if (e instanceof QuotaExhaustedError) throw e;
-      // Check if session is lost and retry
-      const errorMsg = e instanceof Error ? e.message : String(e);
-      if (retryOnSessionLost && errorMsg.includes('会话不存在')) {
-        try {
-          await reinitSession();
-          // Retry once with new session
-          streamingLockRef.current = false;
-          await sendStream(content, false, displayMessage);
-          return;
-        } catch {
-          // If retry fails, fall through to sendOnce
-        }
-      }
-
-      const full = await sendOnce(content, false, displayMessage);
+      console.error('[chat] stream failed', e);
       setMsgs(prev => {
         if (myIndex < 0 || myIndex >= prev.length) return prev;
         const next = [...prev];
-        const { questions, cleanedContent } = parseSuggestedQuestions(full || '（后端未返回解读内容）');
-        const normalized = normalizeMarkdown(cleanedContent);
-        next[myIndex] = { role: 'assistant', streaming: false, content: normalized, suggestedQuestions: questions };
+        const partial = next[myIndex].content.trim();
+        next[myIndex] = {
+          ...next[myIndex],
+          streaming: false,
+          content: partial ? partial + '\n\n' + CHAT_FAILURE_MESSAGE : CHAT_FAILURE_MESSAGE,
+        };
         return next;
       });
     } finally {
+      void refreshQuota();
       streamingLockRef.current = false;
       lastFullRef.current = '';
     }
@@ -578,7 +509,7 @@ export default function PanelPage() {
     setMsgs(m => [...m, { role: 'user', content: displayMessage }]);
     setLoading(true);
     try {
-      await sendStream(content, true, displayMessage);
+      await sendStream(content, displayMessage);
       void refreshQuota();
     } catch (e: unknown) {
       if (e instanceof QuotaExhaustedError) handleQuotaExhausted(e);

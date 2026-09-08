@@ -148,15 +148,24 @@ export function hasDisplayableConversationContent(item: ConversationListItem): b
 
 export async function digestRequest(id: number, options: { generate?: boolean; refresh?: boolean; title?: string; signal?: AbortSignal } = {}): Promise<ConversationDigest> {
   const renaming = options.title !== undefined;
+  const fallback = renaming
+    ? '标题暂时无法保存，请稍后重试。'
+    : '摘要暂时无法加载，请稍后重试。你可以点击“继续对话”查看完整内容。';
   const response = await fetch(api(`/conversations/${id}/${renaming ? 'title' : 'digest'}`), {
     method: renaming ? 'PATCH' : options.generate ? 'POST' : 'GET',
     headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
     credentials: 'include', signal: options.signal,
     body: renaming ? JSON.stringify({ title: options.title }) : options.generate ? JSON.stringify({ refresh: options.refresh ?? false }) : undefined,
+  }).catch((error: unknown) => {
+    if (options.signal?.aborted) throw error;
+    throw new Error(fallback);
   });
   if (!response.ok) {
-    const body = await response.json().catch(() => null);
-    throw new Error(typeof body?.detail === 'string' ? body.detail : '暂时无法整理记录，请稍后重试');
+    // Use controlled copy instead of exposing server or proxy error details.
+    if (response.status === 401) throw new Error('登录已过期，请重新登录后再试。');
+    if (response.status === 429) throw new Error('操作较频繁，请稍后再试。');
+    if (response.status === 409 && !renaming) throw new Error('暂时没有可整理的解读内容，你可以先继续对话。');
+    throw new Error(fallback);
   }
-  return response.json();
+  return response.json().catch(() => { throw new Error(fallback); });
 }

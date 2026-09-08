@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { withPackageDisplay } from '@/app/lib/product-display';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { ArrowLeft, BadgeDollarSign, RefreshCw, Save } from 'lucide-react';
@@ -44,7 +45,7 @@ export default function AdminProductsPage() {
     setError(null);
     try {
       const data = await getAdminProducts();
-      setProducts(data);
+      setProducts(data.map(withPackageDisplay));
       setPrices(Object.fromEntries(data.map((product) => [product.id, formatYuan(product.price_cents)])));
     } catch (reason) {
       setError((reason as Error).message || '商品加载失败');
@@ -67,7 +68,7 @@ export default function AdminProductsPage() {
     setError(null);
     setMessage(null);
     try {
-      const updated = await updateAdminProductPrice(product.id, cents);
+      const updated = withPackageDisplay(await updateAdminProductPrice(product.id, cents));
       setProducts((current) => current.map((item) => (item.id === updated.id ? updated : item)));
       setPrices((current) => ({ ...current, [updated.id]: formatYuan(updated.price_cents) }));
       setMessage(`${updated.name}的价格已更新为 ¥${formatYuan(updated.price_cents)}，新订单立即生效。`);
@@ -123,7 +124,7 @@ export default function AdminProductsPage() {
                       <p className="font-medium text-[var(--color-text-primary)]">{product.name}</p>
                       <p className="mt-1 font-mono text-xs text-[var(--color-text-muted)]">{product.code}</p>
                     </td>
-                    <td className="px-5 py-4 text-[var(--color-text-muted)]">{product.kind === 'subscription' ? '会员套餐' : product.kind === 'topup' ? '加购包' : '单次商品'}</td>
+                    <td className="px-5 py-4 text-[var(--color-text-muted)]">{product.kind === 'subscription' ? '套餐' : product.kind === 'topup' ? '加购包' : '单次商品'}</td>
                     <td className="px-5 py-4">{product.active ? '在售' : '已下架'}</td>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-2">

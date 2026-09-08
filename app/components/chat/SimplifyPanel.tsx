@@ -26,7 +26,7 @@ export function SimplifyPanel({ status, content, expanded, error, Markdown }: Pr
           </div>
         )}
         {status === 'error' && !content && (
-          <p className="text-sm text-red-500">{error || '生成失败，请重试'}</p>
+          <p className="text-sm text-red-500">{error ? `${error}。可刷新页面后重试。` : '生成失败，可刷新页面后重试。'}</p>
         )}
         {content && (
           <div className="msg-md text-sm">

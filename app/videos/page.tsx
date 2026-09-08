@@ -34,7 +34,7 @@ export default function VideosPage() {
             视频学习
           </h1>
           <p className="mt-3 max-w-[62ch] text-[15px] leading-7 text-[var(--color-text-secondary)]">
-            会员可观看完整课程。这里先作为课程入口，后续可以接入腾讯云 VOD 的临时播放地址。
+            选购包含课程权益的套餐，可在有效期内观看对应课程。
           </p>
         </header>
 
@@ -89,7 +89,7 @@ export default function VideosPage() {
                         <span className="block truncate font-serif text-[16px]">{lesson.title}</span>
                         <span className="mt-1 flex items-center gap-3 text-[13px] text-[var(--color-text-muted)]">
                           <span className="inline-flex items-center gap-1"><Clock size={13} />{formatDuration(lesson.duration_seconds)}</span>
-                          {lesson.access_level === 'member' && <span className="inline-flex items-center gap-1"><Lock size={13} />会员</span>}
+                          {lesson.access_level === 'member' && <span className="inline-flex items-center gap-1"><Lock size={13} />套餐课程</span>}
                         </span>
                       </span>
                     </Link>

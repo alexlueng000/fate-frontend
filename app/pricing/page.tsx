@@ -1,5 +1,7 @@
 'use client';
 
+import { withPackageDisplay } from '@/app/lib/product-display';
+
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import QRCode from 'qrcode';
@@ -52,7 +54,7 @@ export default function PricingPage() {
     let cancelled = false;
     getMembershipPlans()
       .then((data) => {
-        if (!cancelled) setProducts(data.slice(0, 2));
+        if (!cancelled) setProducts(data.slice(0, 2).map(withPackageDisplay));
       })
       .catch((reason: unknown) => {
         if (!cancelled) setError((reason as Error).message || '套餐加载失败');
@@ -116,7 +118,7 @@ export default function PricingPage() {
         const liuyao = productGrant(product, 'liuyao_chat');
         return {
           product,
-          name: index === 0 ? '基础套餐' : '高级套餐',
+          name: product.name,
           description:
             product.description ||
             (index === 0 ? '适合初次体验完整功能' : '适合持续探索与深度使用'),
@@ -124,7 +126,7 @@ export default function PricingPage() {
           features: [
             `${bazi} 次传统文化 AI 对话（八字文化）`,
             `${liuyao} 次传统文化卦象解析（六爻文化）`,
-            '会员有效期 30 天，续费顺延',
+            '套餐有效期 30 天，续费顺延',
             'AI 智能分析与传统文化知识库',
           ],
         };
@@ -184,7 +186,7 @@ export default function PricingPage() {
             选择一种与自己相处的方式
           </h1>
           <p className="font-serif text-[1.0625rem] leading-[1.7] text-[var(--color-text-body)]">
-            八字看长期趋势，六爻看具体事项；会员额度与会员中心实时保持一致。
+            八字看长期趋势，六爻看具体事项；按需选择套餐，额度不足时可购买叠加包。
           </p>
           <div className="mt-10 inline-flex items-center gap-8 text-sm text-[var(--color-text-secondary)]">
             <span className="font-serif">八字</span>
@@ -289,18 +291,18 @@ export default function PricingPage() {
           <dl className="grid gap-10 md:grid-cols-2 md:gap-x-12 md:gap-y-12">
             <div>
               <dt className="mb-3 font-serif text-[17px] font-medium text-[var(--color-text-primary)]">
-                套餐数据从哪里来？
+                购买后在哪里查看额度？
               </dt>
               <dd className="font-serif text-[15px] leading-[1.75] text-[var(--color-text-body)]">
-                价格、额度和商品说明直接读取会员中心同一套商品配置，两处不会再出现不同步。
+                登录后进入“套餐与额度”，即可查看当前套餐、剩余额度和套餐到期时间。
               </dd>
             </div>
             <div>
               <dt className="mb-3 font-serif text-[17px] font-medium text-[var(--color-text-primary)]">
-                会员额度会过期吗？
+                套餐额度会过期吗？
               </dt>
               <dd className="font-serif text-[15px] leading-[1.75] text-[var(--color-text-body)]">
-                月付会员权益有效期为 30 天；续费后会员期限顺延，具体权益以会员中心展示为准。
+                套餐权益有效期为 30 天；续费后套餐期限顺延，具体权益以“套餐与额度”页面展示为准。
               </dd>
             </div>
           </dl>
@@ -340,7 +342,7 @@ export default function PricingPage() {
                   支付成功，权益已开通
                 </h2>
                 <p className="mt-3 text-[15px] text-[var(--color-text-secondary)]">
-                  {checkoutProduct?.name ?? '会员套餐'}已生效，可直接开始使用。
+                  {checkoutProduct?.name ?? '套餐'}已生效，可直接开始使用。
                 </p>
                 <button
                   type="button"
@@ -359,7 +361,7 @@ export default function PricingPage() {
                     微信扫码支付
                   </p>
                   <h2 id="checkout-title" className="font-serif text-xl text-[var(--color-text-primary)] sm:text-2xl">
-                    {checkoutProduct?.name ?? '会员套餐'}
+                    {checkoutProduct?.name ?? '套餐'}
                   </h2>
                   <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
                     支付金额 {formatPrice(checkout.order.amount_cents)}
@@ -411,7 +413,7 @@ export default function PricingPage() {
                   </div>
                   <div className={mobilePayment ? 'text-center' : ''}>
                     <p className={`${mobilePayment ? 'text-[12px] leading-5' : 'text-[15px] leading-7'} text-[var(--color-text-body)]`}>
-                      请使用微信扫描二维码完成支付。页面会自动确认订单并发放会员权益，请勿重复下单。
+                      请使用微信扫描二维码完成支付。页面会自动确认订单并发放套餐权益，请勿重复下单。
                     </p>
                     {!mobilePayment && (
                       <button

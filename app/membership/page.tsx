@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { withPackageDisplay } from '@/app/lib/product-display';
 import QRCode from 'qrcode';
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -33,7 +34,7 @@ function formatPrice(cents: number) {
 }
 
 function formatDate(value?: string) {
-  if (!value) return '未开通';
+  if (!value) return '未购买';
   return new Intl.DateTimeFormat('zh-CN', {
     year: 'numeric',
     month: '2-digit',
@@ -93,7 +94,7 @@ export default function MembershipPage() {
         getMembershipPlans(),
         getTopupPackages(),
       ]);
-      setPlans(planData);
+      setPlans(planData.map(withPackageDisplay));
       setTopups(topupData);
 
       if (getAuthToken()) {
@@ -219,13 +220,13 @@ export default function MembershipPage() {
         <header className="mb-8 flex flex-col gap-5 border-b border-[var(--color-border)] pb-6 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="mb-3 text-[13px] font-medium uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
-              Membership
+              Packages
             </p>
             <h1 className="font-serif text-[1.75rem] font-medium leading-tight text-[var(--color-text-primary)]">
-              会员与额度
+              套餐与额度
             </h1>
             <p className="mt-3 max-w-[62ch] text-[16px] leading-7 text-[var(--color-text-secondary)]">
-              新用户注册即享 10 次八字文化 AI 对话和 10 次六爻文化卦象解析；基础版各提供 30 次，高级版各提供 100 次，额度不足时可购买叠加包。
+              新用户注册即享 10 次八字文化 AI 对话和 10 次六爻文化卦象解析；基础套餐各提供 30 次，高级套餐各提供 100 次，额度不足时可购买叠加包。
             </p>
           </div>
           <button
@@ -252,9 +253,9 @@ export default function MembershipPage() {
 
         <section className="mb-8 grid gap-3 sm:grid-cols-3">
           <div className="border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
-            <p className="mb-2 text-[13px] text-[var(--color-text-muted)]">会员状态</p>
+            <p className="mb-2 text-[13px] text-[var(--color-text-muted)]">套餐状态</p>
             <p className="font-serif text-xl text-[var(--color-text-primary)]">
-              {membership?.active ? `已开通${currentPlan ? ` · ${currentPlan.name}` : ''}` : '未开通'}
+              {membership?.active ? `已生效${currentPlan ? ` · ${currentPlan.name}` : ''}` : membership?.membership ? '已到期' : '未购买'}
             </p>
             <p className="mt-2 text-[13px] text-[var(--color-text-secondary)]">
               到期：{formatDate(membership?.membership?.current_period_end)}
@@ -275,7 +276,7 @@ export default function MembershipPage() {
         {!isAuthed && (
           <div className="mb-8 border border-[var(--color-border)] bg-[var(--color-bg-card)] p-5">
             <p className="text-[15px] leading-7 text-[var(--color-text-body)]">
-              新用户注册可获得 10 次八字解读和 10 次六爻解卦。登录后可查看额度、购买月卡和叠加包。
+              新用户注册可获得 10 次八字解读和 10 次六爻解卦。登录后可查看额度、购买套餐和叠加包。
             </p>
             <Link
               href="/login?redirect=/membership"
@@ -290,7 +291,7 @@ export default function MembershipPage() {
         <section className="mb-10">
           <div className="mb-4 flex items-center gap-2">
             <Crown size={20} className="text-[var(--color-primary)]" />
-            <h2 className="font-serif text-xl font-medium text-[var(--color-text-primary)]">会员套餐</h2>
+            <h2 className="font-serif text-xl font-medium text-[var(--color-text-primary)]">套餐</h2>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             {loading && <div className="h-44 animate-pulse bg-[var(--color-bg-card)]" />}
@@ -323,7 +324,7 @@ export default function MembershipPage() {
                         ? `续费${plan.name}`
                         : membership?.active
                           ? `切换为${plan.name}`
-                          : `开通${plan.name}`}
+                          : `购买${plan.name}`}
                   </button>
                 </article>
               );

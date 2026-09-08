@@ -20,7 +20,7 @@ import {
 } from '@/app/lib/chat/types';
 import { parseSuggestedQuestions, restoreStoredMessage } from '@/app/lib/chat/parser';
 import { api, fetchQuickButtons, pickReply } from '@/app/lib/chat/api';
-import { trySSE, QuotaExhaustedError } from '@/app/lib/chat/sse';
+import { trySSE, QuotaExhaustedError, CHAT_FAILURE_MESSAGE } from '@/app/lib/chat/sse';
 import {
   saveConversation, loadConversation, getActiveConversationId,
   savePaipanLocal, loadPaipanLocal, repairCorruptedConversations,
@@ -312,7 +312,9 @@ export default function ChatPage() {
         if (e instanceof QuotaExhaustedError) {
           handleQuotaExhausted(e);
         } else {
-          setErr(e instanceof Error ? e.message : String(e));
+          setErr(CHAT_FAILURE_MESSAGE);
+          setMsgs(prev => prev.map(msg => msg.streaming
+            ? { ...msg, streaming: false, content: CHAT_FAILURE_MESSAGE } : msg));
         }
       } finally {
         if (alive) setBooting(false);
@@ -376,7 +378,8 @@ export default function ChatPage() {
             sessionStorage.setItem('conversation_id', cid);
             setConversationId(cid);
           }
-        }
+        },
+        { mobilePacing: true }
       );
 
       setMsgs((prev) => {
@@ -392,30 +395,22 @@ export default function ChatPage() {
         };
         return next;
       });
-    } catch {
-      // 降级为一次性
-      const token = getAuthToken();
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-      const res = await fetch(api('/chat'), {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ conversation_id: conversationId, message: content, display_message: displayMessage }),
-      });
-      if (!res.ok) throw new Error(await res.text());
-      const data = await res.json();
-      const full = pickReply(data).trim();
-      setMsgs((prev) => {
+    } catch (e) {
+      if (e instanceof QuotaExhaustedError) throw e;
+      console.error('[chat] stream failed', e);
+      setMsgs(prev => {
         if (assistantIndex < 0 || assistantIndex >= prev.length) return prev;
         const next = [...prev];
-        const { questions, cleanedContent } = parseSuggestedQuestions(full);
+        const partial = next[assistantIndex].content.trim();
         next[assistantIndex] = {
-          role: 'assistant',
-          content: normalizeMarkdown(cleanedContent || '（后端未返回解读内容）'),
-          suggestedQuestions: questions,
+          ...next[assistantIndex],
+          streaming: false,
+          content: partial ? partial + '\n\n' + CHAT_FAILURE_MESSAGE : CHAT_FAILURE_MESSAGE,
         };
         return next;
       });
+    } finally {
+      void refreshQuota();
     }
   };
 

@@ -85,7 +85,7 @@ export default function Header() {
     { href: '/knowledge', label: '传统文化学堂' },
     { href: '/about', label: '关于我们' },
     { href: '/faq', label: '常见问题' },
-    { href: '/pricing', label: '套餐与会员' },
+    { href: '/pricing', label: '套餐与额度' },
   ];
 
   const MOBILE_APP_LINKS: MobileNavLink[] = [
@@ -98,7 +98,7 @@ export default function Header() {
   ];
 
   const MOBILE_ACCOUNT_LINKS: MobileNavLink[] = [
-    { href: '/membership', label: '会员中心', icon: Crown },
+    { href: '/membership', label: '套餐与额度', icon: Crown },
     { href: '/profile/edit', label: '编辑个人档案', icon: FileEdit },
     { href: '/account', label: '我的账户', icon: User },
     { href: '/feedback', label: '意见反馈', icon: MessageSquare },
@@ -207,7 +207,7 @@ export default function Header() {
                         onClick={() => setMenuOpen(false)}
                       >
                         <Crown className="w-4 h-4 shrink-0" />
-                        会员中心
+                        套餐与额度
                       </Link>
                       <Link
                         href="/profile/edit"

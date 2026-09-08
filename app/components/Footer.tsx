@@ -37,7 +37,7 @@ export default function Footer() {
             联系我们
           </Link>
           <Link href="/pricing" className="hover:text-[var(--color-gold)] transition-colors">
-            会员服务
+            套餐与额度
           </Link>
           <Link href="/privacy" className="hover:text-[var(--color-gold)] transition-colors">
             隐私政策

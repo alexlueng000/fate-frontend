@@ -208,9 +208,9 @@ export default function VideoLessonPage() {
           {!loading && locked && (
             <div className="flex aspect-video flex-col items-center justify-center bg-[var(--color-bg-alt)] px-5 text-center">
               <Lock className="mb-4 text-[var(--color-primary)]" size={30} />
-              <h2 className="font-serif text-xl text-[var(--color-text-primary)]">会员课程</h2>
+              <h2 className="font-serif text-xl text-[var(--color-text-primary)]">套餐课程</h2>
               <p className="mt-3 max-w-[48ch] text-[14px] leading-6 text-[var(--color-text-secondary)]">
-                开通 39 元会员月卡后，可以观看会员视频，并获得八字和六爻额度。
+                购买包含课程权益的套餐后，即可在有效期内观看。价格和具体权益请查看“套餐与额度”页面。
               </p>
               <button
                 type="button"
@@ -218,7 +218,7 @@ export default function VideoLessonPage() {
                 className="mt-5 inline-flex min-h-11 items-center justify-center bg-[var(--color-primary)] px-5 text-[14px] font-medium text-[var(--color-text-inverse)]"
                 style={{ borderRadius: 'var(--radius-md)' }}
               >
-                开通会员
+                查看套餐
               </button>
             </div>
           )}

@@ -74,7 +74,7 @@ const SECTIONS: MenuSection[] = [
         href: '/admin/products',
         icon: BadgeDollarSign,
         title: '商品价格',
-        description: '配置会员套餐与加购包价格',
+        description: '配置套餐与加购包价格',
         tone: 'primary',
       },
     ],
