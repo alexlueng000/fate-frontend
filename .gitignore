@@ -21,6 +21,8 @@
 
 # next.js
 /.next/
+/.next-demo/
+/.next-p0-check/
 /.next-seo-test/
 /out/
 

@@ -1,5 +1,7 @@
 'use client';
 
+import TimeCorrectionNotice from '@/app/components/chat/TimeCorrectionNotice';
+
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { MoreVertical, FileText, Edit3, Trash2, ChevronDown, ArrowUp } from 'lucide-react';
@@ -131,6 +133,7 @@ export default function PanelPage() {
   const [err, setErr] = useState<string | null>(null);
 
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [timeCorrection, setTimeCorrection] = useState<import('@/app/lib/chat/types').TimeCorrectionInfo | null>(null);
   const [fourPillars, setFourPillars] = useState<FourPillarsData | null>(null);
   const [showMenu, setShowMenu] = useState(false);
   // 命盘区在桌面端和移动端都可收起，默认收起以给对话留出更多高度。
@@ -287,7 +290,7 @@ export default function PanelPage() {
       if (!currentUser) { router.replace('/login?redirect=/panel'); return; }
       if (!me) setUser(currentUser);
 
-      const token = localStorage.getItem('auth_token');
+      const token = getAuthToken();
       if (!token) { router.replace('/login?redirect=/panel'); return; }
 
       // Fetch profile
@@ -332,7 +335,7 @@ export default function PanelPage() {
       setBooting(true);
 
       try {
-        const token = localStorage.getItem('auth_token');
+        const token = getAuthToken();
         const headers: Record<string, string> = { 'Content-Type': 'application/json' };
         if (token) headers['Authorization'] = `Bearer ${token}`;
 
@@ -391,7 +394,10 @@ export default function PanelPage() {
         if (!res.ok) return;
         const data = await res.json();
         const fp = data?.mingpan?.four_pillars;
-        if (alive && fp) setFourPillars(fp);
+        if (alive && fp) {
+          setFourPillars(fp);
+          setTimeCorrection(data.mingpan);
+        }
       } catch { /* ignore – header will keep showing skeleton */ }
     })();
     return () => { alive = false; };
@@ -856,6 +862,7 @@ export default function PanelPage() {
       </div>
 
       {/* Inline error below messages. Loading is shown inside the pending assistant reply. */}
+      <TimeCorrectionNotice info={timeCorrection} />
       {err && (
         <div className="flex-shrink-0 px-4 pb-1">
           {err && (

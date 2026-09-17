@@ -22,10 +22,10 @@ export function formatRelative(iso: string): string {
 }
 
 export function previewText(item: ConversationListItem, fallback: string) {
-  return item.last_user_message || item.last_assistant_preview || fallback;
+  return item.digest?.question || item.hexagram?.question || item.last_user_message || fallback;
 }
 
 export function displayTitle(item: ConversationListItem, type: HistoryType) {
-  if (type === 'bazi') return item.bazi_summary ? `八字 · ${item.bazi_summary}` : item.title || '八字解读';
-  return item.hexagram?.main_gua ? `六爻 · ${item.hexagram.main_gua}` : item.title || '六爻问事';
+  return item.digest?.custom_title || item.digest?.title || item.title
+    || (type === 'bazi' ? '八字解读' : '六爻问事');
 }

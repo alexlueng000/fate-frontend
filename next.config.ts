@@ -9,7 +9,10 @@ import type { NextConfig } from 'next';
 // 注意：localhost 指的是运行前端的服务器，不是用户的浏览器
 const API_DESTINATION = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000';
 
+const localPreview = process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_LOCAL_PREVIEW === '1';
+
 const nextConfig: NextConfig = {
+  ...(localPreview ? { env: { NEXT_PUBLIC_API_BASE: '/api' } } : {}),
   output: 'standalone',  // Docker 部署需要
   // 允许通过环境变量切换构建目录（默认 .next）
   ...(process.env.NEXT_DIST_DIR ? { distDir: process.env.NEXT_DIST_DIR } : {}),
@@ -34,6 +37,11 @@ const nextConfig: NextConfig = {
     return config;
   },
   async rewrites() {
+    if (localPreview) return {
+      beforeFiles: [{ source: '/api/:path*', destination: '/local-preview-api/:path*' }],
+      afterFiles: [],
+      fallback: [],
+    };
     return [
       {
         source: '/api/:path*',

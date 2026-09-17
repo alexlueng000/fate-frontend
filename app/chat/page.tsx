@@ -1,5 +1,7 @@
 'use client';
 
+import TimeCorrectionNotice from '@/app/components/chat/TimeCorrectionNotice';
+
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -685,6 +687,7 @@ export default function ChatPage() {
           )}
         />
 
+        <TimeCorrectionNotice info={paipan} />
         <MessageList
           scrollRef={scrollRef}
           messages={msgs}

@@ -375,7 +375,7 @@ export default function ProfileSetupFlow({ user, returnTo = '/report' }: { user:
               />
             </div>
             <p className="mt-1.5 text-xs text-[var(--color-text-muted)]">
-              出生地会用于历法和真太阳时换算，地点越明确，计算参考越稳定。
+              出生地用于历法计算与经度时差修正，目前不含均时差。
             </p>
             {fieldErrors.birthLocation && (
               <p id="birth-location-error" className="mt-1.5 text-xs text-[var(--color-primary)]" role="alert">

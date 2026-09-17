@@ -56,32 +56,20 @@ function typeLabel(type: HistoryType) {
   return type === 'bazi' ? '八字 · 长期趋势' : '六爻 · 具体事项';
 }
 
-function currentStuckPoint(type: HistoryType) {
-  return type === 'bazi'
-    ? '适合继续把长期趋势落到当前阶段，而不是重新开一个泛泛的解读。'
-    : '适合继续围绕这件具体事判断下一步，不必重新起一个相同问题。';
-}
-
-function recommendedNextStep(type: HistoryType) {
-  return type === 'bazi'
-    ? '建议继续看：这个阶段真正要调整的节奏和取舍。'
-    : '建议继续判断：是否值得推进下一步，还是应降低投入。';
-}
-
 export function ContinueLastCard({ latest, loading }: ContinueLastCardProps) {
   if (loading) return <LoadingState />;
   if (!latest) return <EmptyState />;
 
   const href = conversationHref(latest.item, latest.type);
   const question = previewText(latest.item, latest.type === 'bazi' ? '上次的八字问题' : '上次的六爻问题');
-  const conclusion = latest.item.last_assistant_preview || '上次已经留下了判断线索，可以从这里接着看。';
+  const conclusion = latest.item.digest?.summary || latest.item.last_assistant_preview || '暂无解读摘要，可打开记录查看。';
 
   return (
     <div className="border border-[var(--color-border-strong)] bg-[var(--color-bg-elevated)] p-5 shadow-[0_2px_12px_rgba(60,40,20,0.08)] sm:p-8">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-sm font-medium text-[var(--color-text-secondary)]">
           <RefreshCw className="h-4 w-4 text-[var(--color-text-muted)]" strokeWidth={1.6} />
-          当前最适合继续
+          继续上次解读
         </div>
         <span className="text-xs text-[var(--color-text-muted)]">{formatRelative(latest.item.updated_at)}</span>
       </div>
@@ -98,16 +86,8 @@ export function ContinueLastCard({ latest, loading }: ContinueLastCardProps) {
           </p>
           <div className="mt-5 grid gap-3 border-t border-[var(--color-border)] pt-4">
             <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
-              <span className="font-medium text-[var(--color-text-primary)]">上次判断：</span>
+              <span className="font-medium text-[var(--color-text-primary)]">解读摘要：</span>
               {conclusion}
-            </p>
-            <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
-              <span className="font-medium text-[var(--color-text-primary)]">当前卡点：</span>
-              {currentStuckPoint(latest.type)}
-            </p>
-            <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
-              <span className="font-medium text-[var(--color-text-primary)]">推荐下一步：</span>
-              {recommendedNextStep(latest.type)}
             </p>
           </div>
         </div>

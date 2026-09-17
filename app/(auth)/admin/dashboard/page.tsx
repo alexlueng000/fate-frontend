@@ -263,7 +263,7 @@ export default function DashboardPage() {
                 数据概览
               </h1>
               <p className="text-sm text-[var(--color-text-muted)]">
-                实时统计数据
+                统计概览 · 今日按北京时间，近 7 / 30 日为滚动窗口
               </p>
             </div>
           </div>
@@ -312,6 +312,8 @@ export default function DashboardPage() {
               />
             </div>
 
+            <p className="mb-4 text-sm text-[var(--color-text-secondary)]">当前包含全部历史账号，尚未排除测试账号和历史来源。以下比例统计范围不同，不构成同一漏斗；解读完成率暂未采集。</p>
+
             {/* Secondary Metrics - Compact list in card */}
             <div className="card rounded-2xl p-6 mb-6 border border-[var(--color-border)] shadow-sm">
               <h3
@@ -322,7 +324,7 @@ export default function DashboardPage() {
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 lg:gap-3">
                 <SecondaryMetric
-                  label="活跃用户（7日）"
+                  label="提问用户（近7日）"
                   value={overview.users.active_7d}
                   icon={TrendingUp}
                 />
@@ -332,35 +334,35 @@ export default function DashboardPage() {
                   icon={AlertCircle}
                 />
                 <SecondaryMetric
-                  label="新用户成功率"
-                  value={`${overview.rates.new_user_activation.toFixed(2)}%`}
+                  label="新用户建会话率"
+                  value={overview.rates.samples.new_users ? `${overview.rates.new_user_activation.toFixed(2)}%` : '暂无样本'}
                   icon={UserCheck}
-                  hint={`近30日新用户中已有对话 · ${overview.rates.samples.new_users} 人样本`}
+                  hint={`创建会话，不代表完成解读 · ${overview.rates.samples.new_users} 人样本`}
                 />
                 <SecondaryMetric
-                  label="首次解读后问率"
-                  value={`${overview.rates.first_read_followup.toFixed(2)}%`}
+                  label="历史对话多次输入率"
+                  value={overview.rates.samples.interpreted_conversations ? `${overview.rates.first_read_followup.toFixed(2)}%` : '暂无样本'}
                   icon={Target}
-                  hint={`用户消息不少于2条 · ${overview.rates.samples.interpreted_conversations} 个对话`}
+                  hint={`非空用户消息至少2条，含补充和重试 · ${overview.rates.samples.interpreted_conversations} 个对话`}
                 />
                 <SecondaryMetric
                   label="7日复访率"
-                  value={`${overview.rates.retention_7d.toFixed(2)}%`}
+                  value={overview.rates.samples.retention_cohort ? `${overview.rates.retention_7d.toFixed(2)}%` : '暂无样本'}
                   icon={Repeat}
-                  hint={`注册后第2–7日再次使用 · ${overview.rates.samples.retention_cohort} 人 cohort`}
+                  hint={`注册后24–168小时再次发送消息 · ${overview.rates.samples.retention_cohort} 人 cohort`}
                 />
                 <SecondaryMetric
-                  label="付费转化率"
-                  value={`${overview.rates.paid_conversion.toFixed(2)}%`}
+                  label="累计付费用户占比"
+                  value={overview.users.total ? `${overview.rates.paid_conversion.toFixed(2)}%` : '暂无样本'}
                   icon={Activity}
                   hint={`已支付用户 / 总用户 · ${overview.rates.samples.paid_users} 人付费`}
                 />
                 <SecondaryMetric
-                  label="本周新增"
+                  label="近7日新增"
                   value={overview.users.this_week}
                 />
                 <SecondaryMetric
-                  label="本月新增"
+                  label="近30日新增"
                   value={overview.users.this_month}
                 />
                 <SecondaryMetric

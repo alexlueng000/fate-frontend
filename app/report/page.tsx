@@ -1,12 +1,17 @@
 'use client';
 
+import TimeCorrectionNotice from '@/app/components/chat/TimeCorrectionNotice';
+
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useRouteGuard } from '@/app/lib/useRouteGuard';
 import { getAuthToken } from '@/app/lib/auth';
 import { api } from '@/app/lib/api';
 import { trackEvent } from '@/app/lib/analytics/track';
-import Markdown from '@/app/components/Markdown';
+import ReportReader from '@/app/components/report/ReportReader';
+import SectionQuestion from '@/app/components/report/SectionQuestion';
+import type { ReportSection } from '@/app/lib/report/sections';
+import { LOCAL_PREVIEW } from '@/app/lib/local-preview/config';
 import { getWuxing, wuxingColor, type Wuxing } from '@/app/components/WuXing';
 import { Paipan } from '@/app/lib/chat/types';
 import { parseSuggestedQuestions } from '@/app/lib/chat/parser';
@@ -21,56 +26,6 @@ interface ProfileBrief {
   birth_time: string;
   birth_location: string;
   display_info: string;
-}
-
-const SECTION_LABEL_PATTERN =
-  '(?:个人画像|个人属性|人物画像|整体画像|性格特点|性格剖析|性格解读|做事方式|事业与财运|事业建议|财运建议|感情与人际|人际与感情|适合方向|适合行业|行动建议|三年关键节点|流年提示|流年|十年大运|大运流年|命理依据)';
-const SECTION_LABEL_RE = new RegExp(`^${SECTION_LABEL_PATTERN}[：:，,\\s]*`);
-
-function stripMarkdown(text: string): string {
-  return text
-    .replace(/```[\s\S]*?```/g, '')
-    .replace(/^#{3,4}\s+/gm, '')
-    .replace(new RegExp(`^\\s*${SECTION_LABEL_PATTERN}[：:，,\\s]*`, 'gm'), '')
-    .replace(/^\s*[-—–－]{3,}\s*$/gm, '')
-    .replace(/\*\*|__|[*_>`]/g, '')
-    .replace(/\[[^\]]+\]\([^)]+\)/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function buildReportSummary(report: string): {
-  portrait: string;
-  insights: Array<{ label: string; text: string }>;
-  focus: string;
-  questions: string[];
-} {
-  const parsed = parseSuggestedQuestions(report);
-  const plain = stripMarkdown(parsed.cleanedContent);
-  const looksLikeTitle = (value: string) => {
-    const compact = value.replace(/\s+/g, '').replace(/[。！？?：:，,、]/g, '');
-    return compact.length <= 18 && SECTION_LABEL_RE.test(compact);
-  };
-  const sentences = plain
-    .split(/(?<=[。！？?])\s*/)
-    .map((line) => line.trim())
-    .filter((line) => line.length >= 12 && !line.includes('仅供') && !looksLikeTitle(line));
-  const fallbackQuestions = [
-    '这份报告里，哪一点最值得我现在优先调整？',
-    '从性格与做事方式看，我接下来适合怎么发力？',
-    '未来三年我最需要留意的节奏变化是什么？',
-  ];
-
-  return {
-    portrait: sentences[0] || '这份报告会先帮你看见自己的核心特质，再展开专业命盘信息。',
-    insights: [
-      { label: '性格', text: sentences[1] || '先从性格倾向和行为模式理解自己。' },
-      { label: '做事', text: sentences[2] || '再观察优势、挑战与适合投入的方向。' },
-      { label: '关系', text: sentences[3] || '最后把分析转为可以继续追问和复盘的问题。' },
-    ],
-    focus: sentences[4] || '当前最值得关注的是：哪些判断与你的真实处境相符。',
-    questions: parsed.questions.length ? parsed.questions.slice(0, 3) : fallbackQuestions,
-  };
 }
 
 function PillarChar({ char }: { char: string }) {
@@ -99,8 +54,9 @@ export default function ReportPage() {
   const [aiReport, setAiReport] = useState<string>('');
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [selectedSection, setSelectedSection] = useState<ReportSection | null>(null);
+  const questionRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const reportViewTrackedRef = useRef(false);
   const summaryTrackedRef = useRef(false);
@@ -182,7 +138,8 @@ export default function ReportPage() {
           const cached = (() => {
             try { return JSON.parse(localStorage.getItem(cacheKey) || 'null'); } catch { return null; }
           })();
-          if (cached?.conversation_id) {
+          if (LOCAL_PREVIEW) setConversationId('local-preview-chat');
+          if (cached?.conversation_id && cached.report_content === profileData.ai_report) {
             setConversationId(cached.conversation_id);
             saveConversation(cached.conversation_id, [{ role: 'assistant', content: profileData.ai_report }]);
           }
@@ -227,7 +184,7 @@ export default function ReportPage() {
             saveConversation(convId, [{ role: 'assistant', content: finalText }]);
             try {
               const cacheKey = `report_cache_${profileData.id}`;
-              localStorage.setItem(cacheKey, JSON.stringify({ conversation_id: convId }));
+              localStorage.setItem(cacheKey, JSON.stringify({ conversation_id: convId, report_content: finalText }));
             } catch {}
             saveReportToDb(finalText);
           }
@@ -252,7 +209,7 @@ export default function ReportPage() {
               setConversationId(convId);
               try {
                 const cacheKey = `report_cache_${profileData.id}`;
-                localStorage.setItem(cacheKey, JSON.stringify({ conversation_id: convId }));
+                localStorage.setItem(cacheKey, JSON.stringify({ conversation_id: convId, report_content: finalText }));
               } catch {}
               saveReportToDb(finalText);
             }
@@ -306,8 +263,7 @@ export default function ReportPage() {
       ]
     : [];
   const parsedReport = parseSuggestedQuestions(aiReport);
-  const reportContent = parsedReport.cleanedContent;
-  const summary = buildReportSummary(aiReport);
+  const questions = parsedReport.questions.slice(0, 3);
 
   return (
     <div className="min-h-screen bg-[var(--color-bg)]" ref={scrollRef}>
@@ -322,41 +278,48 @@ export default function ReportPage() {
           </p>
         </header>
 
-        {/* 首次价值摘要 */}
-        <section className="mb-12" aria-labelledby="report-summary-heading">
-          <p className="text-[11px] font-medium tracking-[0.16em] uppercase text-[var(--color-text-muted)] mb-3">
-            先看懂自己
-          </p>
-          <h2
-            id="report-summary-heading"
-            className="font-serif text-2xl sm:text-3xl leading-[1.35] text-[var(--color-text-primary)] mb-5"
-          >
-            {aiReport ? summary.portrait : '正在整理你的核心特质。'}
-          </h2>
+        {paipan && (
+          <section aria-label="四柱摘要" className="mb-6">
+            <div className="mb-3 flex items-center justify-between text-xs">
+              <h2 className="font-medium tracking-widest text-[var(--color-text-secondary)]">四柱命盘</h2>
+              <span className="text-[var(--color-text-muted)]">天干 · 地支 · 五行</span>
+            </div>
+            <div className="grid grid-cols-4 gap-2 sm:gap-3">
+              {pillars.map(({ label, pillar, highlight }) => {
+                const accent = wuxingColor(getWuxing(pillar?.[0] || ''));
+                return (
+                  <div
+                    key={label}
+                    className="relative overflow-hidden rounded-xl border px-1 py-4 text-center sm:px-3 sm:py-5"
+                    style={{
+                      background: `linear-gradient(155deg, color-mix(in srgb, ${accent} 12%, var(--color-bg-card)), var(--color-bg-card))`,
+                      borderColor: highlight ? 'var(--color-primary)' : `color-mix(in srgb, ${accent} 25%, var(--color-border))`,
+                      boxShadow: highlight ? '0 4px 18px var(--color-primary-glow)' : undefined,
+                    }}
+                  >
+                    <div aria-hidden="true" className="absolute inset-x-0 top-0 h-0.5" style={{ background: highlight ? 'var(--color-primary)' : accent }} />
+                    <p className={`mb-4 text-xs font-medium tracking-widest ${highlight ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-secondary)]'}`}>{label}</p>
+                    <div className="flex justify-center gap-2 sm:gap-4">
+                      {[0, 1].map(index => {
+                        const char = pillar?.[index] || '';
+                        const element = getWuxing(char);
+                        return (
+                          <div key={index} className="flex flex-col items-center gap-2">
+                            <span className="font-serif text-[28px] leading-none sm:text-4xl" style={{ color: wuxingColor(element) }}>{char || '—'}</span>
+                            <span className="rounded-full px-1.5 py-0.5 text-[10px] sm:px-2 sm:text-[11px]" style={{ color: wuxingColor(element), background: `color-mix(in srgb, ${wuxingColor(element)} 9%, transparent)` }}>{element || '—'}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <p className={`mt-3 text-[10px] sm:text-xs ${highlight ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-muted)]'}`}>{highlight ? '日干为日主' : '天干 / 地支'}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
 
-          <div className="space-y-4 border-t border-b border-[var(--color-border-subtle)] py-5">
-            {(aiReport ? summary.insights : [
-              { label: '性格', text: '先生成一句话人物画像。' },
-              { label: '做事', text: '再提炼三个更容易理解的关键洞察。' },
-              { label: '关系', text: '专业命盘信息会放在后面，方便展开查看。' },
-            ]).map((item) => (
-              <div key={item.label} className="grid grid-cols-[auto_1fr] gap-3">
-                <span className="mt-0.5 inline-flex min-w-10 justify-center rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2 py-0.5 text-xs font-medium text-[var(--color-primary)]">
-                  {item.label}
-                </span>
-                <p className="text-sm sm:text-base leading-7 text-[var(--color-text-body)]">
-                  {item.text}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-5">
-            <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
-              {aiReport ? summary.focus : '生成过程中可以先等待完整报告，再继续追问最关心的部分。'}
-            </p>
-          </div>
-        </section>
+        <TimeCorrectionNotice info={paipan} />
 
         {/* 命理解读 */}
         <section className="mb-12" aria-labelledby="reading-heading">
@@ -377,11 +340,13 @@ export default function ReportPage() {
               </p>
             </div>
           )}
-          {reportContent && (
-            <div className="msg-md">
-              <Markdown content={reportContent} />
-            </div>
-          )}
+          {aiReport && <ReportReader content={aiReport} streaming={streaming} onAsk={section => {
+            setSelectedSection(section);
+            requestAnimationFrame(() => questionRef.current?.scrollIntoView({ block: 'center' }));
+          }} />}
+          <div ref={questionRef}>
+            {selectedSection && <SectionQuestion key={selectedSection.id} section={selectedSection} conversationId={conversationId} onClose={() => setSelectedSection(null)} />}
+          </div>
           {streaming && aiReport && (
             <div
               role="status"
@@ -405,10 +370,10 @@ export default function ReportPage() {
         {/* CTA */}
         <div className="mb-12 border-t border-b border-[var(--color-border)] py-7">
           <h2 className="font-serif text-base font-semibold text-[var(--color-text-primary)] tracking-wide">
-            建议你先问 3 个问题
+            继续讨论报告
           </h2>
           <div className="mt-5 space-y-3">
-            {summary.questions.map((question, index) => (
+            {questions.map((question, index) => (
               <button
                 key={question}
                 type="button"

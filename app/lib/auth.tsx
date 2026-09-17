@@ -9,6 +9,7 @@ import {
   type ReactElement,   // ✅ 新增
 } from 'react';
 import { api } from './api';
+import { LOCAL_PREVIEW, previewUser } from './local-preview/config';
 import { clearAllChatData } from './chat/storage';
 
 export type User = {
@@ -178,6 +179,7 @@ export function saveAuth(resp: LoginResp) {
 }
 
 export function currentUser(): User | null {
+  if (LOCAL_PREVIEW) return previewUser;
   // SSR 安全检查
   if (typeof window === 'undefined' || typeof sessionStorage === 'undefined') {
     return null;
@@ -191,6 +193,7 @@ export function currentUser(): User | null {
 }
 
 export function clearAuth() {
+  if (LOCAL_PREVIEW) return;
   // SSR 安全检查
   if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
     localStorage.removeItem('auth_token');
@@ -203,6 +206,7 @@ export function clearAuth() {
 }
 
 export function getAuthToken(): string | null {
+  if (LOCAL_PREVIEW) return 'local-preview-only';
   // SSR 安全检查
   if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
     return null;

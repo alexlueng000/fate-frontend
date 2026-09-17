@@ -1,5 +1,7 @@
 'use client';
 
+import TimeCorrectionNotice from '@/app/components/chat/TimeCorrectionNotice';
+
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { calculateDetailedPaipan } from '@/app/lib/bazi/calculator';
@@ -10,7 +12,7 @@ type Calendar = 'gregorian' | 'lunar';
 
 type FourPillars = { year: string[]; month: string[]; day: string[]; hour: string[] };
 type DayunItem = { age: number; start_year: number; pillar: string[] };
-type Mingpan = { four_pillars: FourPillars; dayun: DayunItem[] };
+type Mingpan = import('@/app/lib/chat/types').TimeCorrectionInfo & { four_pillars: FourPillars; dayun: DayunItem[] };
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
 
@@ -58,6 +60,7 @@ export default function Page() {
         throw new Error(t || `HTTP ${res.status}`);
       }
       const data = await res.json();
+      if (data.error) throw new Error(String(data.error));
       setBirthdayAdjusted(data.birthday_adjusted || null);
       setMingpan(data.mingpan || null);
     } catch (e: unknown) {
@@ -74,10 +77,7 @@ export default function Page() {
       return;
     }
     try {
-      sessionStorage.setItem('paipan', JSON.stringify({
-        four_pillars: mingpan.four_pillars,
-        dayun: mingpan.dayun,
-      }));
+      sessionStorage.setItem('paipan', JSON.stringify(mingpan));
       // 清掉旧的会话（可选，避免串会话）
       sessionStorage.removeItem('conversation_id');
       sessionStorage.removeItem('bootstrap_reply');
@@ -195,6 +195,8 @@ export default function Page() {
         </div>
 
 
+        {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
+
         {/* ===== 命理分析报告标题 ===== */}
         {mingpan && (
           <div className="text-center space-y-3">
@@ -202,9 +204,12 @@ export default function Page() {
             <div className="text-sm text-stone-600">
               {gender} | {birthDate} {birthTime} | {birthplace}
             </div>
+            {birthdayAdjusted && <p className="text-sm text-stone-600">计算所用公历时间：{birthdayAdjusted}</p>}
             <div className="h-px w-24 mx-auto bg-gradient-to-r from-transparent via-stone-400 to-transparent" />
           </div>
         )}
+
+        <TimeCorrectionNotice info={mingpan} />
 
         {/* ===== 四柱命盘卡片 ===== */}
         <div className="rounded-3xl bg-white/90 shadow-lg ring-1 ring-black/5">

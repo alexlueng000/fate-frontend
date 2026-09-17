@@ -3,6 +3,8 @@
 import { ReactNode, useEffect, useState, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import Header from './components/Header';
+import { LOCAL_PREVIEW } from './lib/local-preview/config';
+import PreviewBanner from './lib/local-preview/PreviewBanner';
 import SideNav from './components/Navigation/SideNav';
 import BottomNav from './components/Navigation/BottomNav';
 import { UserProvider, useUser, fetchMe, getAuthToken } from './lib/auth';
@@ -27,7 +29,7 @@ function LayoutBody({ children }: { children: ReactNode }) {
   // 检查免责声明状态（延迟执行避免 SSR 问题）
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (!hasAcceptedDisclaimer()) {
+      if (!LOCAL_PREVIEW && !hasAcceptedDisclaimer()) {
         setShowDisclaimer(true);
       }
     }, 100);
@@ -61,6 +63,7 @@ function LayoutBody({ children }: { children: ReactNode }) {
 
         {/* 主内容区 */}
         <main className={`flex-1 overflow-auto ${showFunctionNav ? 'mb-16 sm:mb-0' : ''}`}>
+          {LOCAL_PREVIEW && <PreviewBanner />}
           {children}
         </main>
       </div>

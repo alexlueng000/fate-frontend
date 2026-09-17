@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "dev:demo": "NEXT_PUBLIC_LOCAL_PREVIEW=1 NEXT_PUBLIC_API_BASE=/api NEXT_DIST_DIR=.next-demo next dev --hostname 127.0.0.1 --port 3010"
   },
   "dependencies": {
     "highlight.js": "^11.11.1",
@@ -21,7 +22,9 @@
     "rehype-highlight": "^7.0.2",
     "rehype-raw": "^7.0.0",
     "remark-breaks": "^4.0.0",
-    "remark-gfm": "^4.0.1"
+    "remark-gfm": "^4.0.1",
+    "unified": "^11.0.5",
+    "remark-parse": "^11.0.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

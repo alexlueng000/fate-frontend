@@ -274,7 +274,7 @@ function EditProfileContent() {
                   <MapPin aria-hidden />
                   <input id="birth-location" type="text" value={birthLocation} onChange={(event) => { setBirthLocation(event.target.value); if (event.target.value.trim()) setFieldErrors((current) => ({ ...current, birthLocation: undefined })); }} placeholder="例如：北京市朝阳区" aria-invalid={Boolean(fieldErrors.birthLocation)} aria-describedby={fieldErrors.birthLocation ? 'birth-location-error' : 'birth-location-help'} />
                 </div>
-                <p id="birth-location-help" className={styles.fieldHelp}>地点越明确，真太阳时换算的参考越稳定。</p>
+                <p id="birth-location-help" className={styles.fieldHelp}>出生地用于经度时差修正，目前不含均时差。</p>
                 {fieldErrors.birthLocation && <p id="birth-location-error" className={styles.fieldError} role="alert">{fieldErrors.birthLocation}</p>}
               </div>
             </section>

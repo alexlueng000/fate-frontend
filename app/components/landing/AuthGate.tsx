@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { fetchMe, getAuthToken, useUser } from "@/app/lib/auth";
 import { trackEvent } from "@/app/lib/analytics/track";
+import { LOCAL_PREVIEW } from "@/app/lib/local-preview/config";
 
 /**
  * Client-side auth gate for the landing page.
@@ -16,6 +17,8 @@ export default function AuthGate() {
   const { user, setUser } = useUser();
 
   useEffect(() => {
+    // Let the demo account inspect the public homepage without being redirected.
+    if (LOCAL_PREVIEW) return;
     let alive = true;
 
     async function run() {

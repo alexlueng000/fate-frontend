@@ -20,7 +20,12 @@ export type Msg = {
 };
 export type FourPillars = { year: string[]; month: string[]; day: string[]; hour: string[] };
 export type DayunItem = { age: number; start_year: number; pillar: string[] };
-export type Paipan = { four_pillars: FourPillars; dayun: DayunItem[] };
+export type TimeCorrectionInfo = {
+  time_correction_method?: string;
+  warnings?: string[];
+  calculation_version?: string;
+};
+export type Paipan = TimeCorrectionInfo & { four_pillars: FourPillars; dayun: DayunItem[] };
 export type Wuxing = '木' | '火' | '土' | '金' | '水';
 
 export const QUICK_BUTTONS: Array<{ label: string; prompt: string }> = [

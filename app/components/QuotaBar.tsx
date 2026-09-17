@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { getAuthToken } from '@/app/lib/auth';
 import { useEffect, useState } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { getMyQuotas, type MyQuotas } from '@/app/lib/api';
@@ -78,7 +79,7 @@ export function QuotaBar({ type, refreshKey = 0, className = '' }: QuotaBarProps
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (!localStorage.getItem('auth_token')) return;
+    if (!getAuthToken()) return;
     let alive = true;
     getMyQuotas()
       .then((d) => { if (alive) setData(d); })
