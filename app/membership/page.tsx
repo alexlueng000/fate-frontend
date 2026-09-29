@@ -1,6 +1,7 @@
 'use client';
 
 import PaymentDialog from '@/app/components/PaymentDialog';
+import PaymentErrorDialog from '@/app/components/PaymentErrorDialog';
 import { startWeChatCheckout, useWeChatPaymentReturn, type WeChatCheckout } from '@/app/lib/wechat-payment';
 
 import Link from 'next/link';
@@ -69,7 +70,8 @@ export default function MembershipPage() {
   const [paymentResult, setPaymentResult] = useState<PaymentResult | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  useWeChatPaymentReturn(setCheckout, setError);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  useWeChatPaymentReturn(setCheckout, setPaymentError);
 
   const isAuthed = useMemo(() => typeof window !== 'undefined' && Boolean(getAuthToken()), []);
   const checkoutProduct = useMemo(() => {
@@ -166,6 +168,7 @@ export default function MembershipPage() {
       window.location.href = `/login?redirect=${encodeURIComponent('/membership')}`;
       return;
     }
+    setPaymentError(null);
     setPayingCode(productCode);
     setCheckout(null);
     setQrDataUrl(null);
@@ -176,7 +179,7 @@ export default function MembershipPage() {
       const result = await startWeChatCheckout(productCode);
       setCheckout(result);
     } catch (e) {
-      setError((e as Error).message || '创建支付订单失败');
+      setPaymentError((e as Error).message || '创建支付订单失败');
     } finally {
       setPayingCode(null);
     }
@@ -346,6 +349,10 @@ export default function MembershipPage() {
         </section>
 
       </div>
+
+      {paymentError && (
+        <PaymentErrorDialog message={paymentError} onClose={() => setPaymentError(null)} />
+      )}
 
       {checkout && (
         <PaymentDialog checkout={checkout} productName={checkoutProduct?.name ?? '待支付订单'}

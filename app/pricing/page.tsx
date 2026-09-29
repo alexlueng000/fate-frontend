@@ -1,6 +1,7 @@
 'use client';
 
 import PaymentDialog from '@/app/components/PaymentDialog';
+import PaymentErrorDialog from '@/app/components/PaymentErrorDialog';
 import { startWeChatCheckout, useWeChatPaymentReturn, type WeChatCheckout } from '@/app/lib/wechat-payment';
 
 import { withPackageDisplay } from '@/app/lib/product-display';
@@ -37,7 +38,8 @@ export default function PricingPage() {
   const [checkout, setCheckout] = useState<WeChatCheckout | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [paymentComplete, setPaymentComplete] = useState(false);
-  useWeChatPaymentReturn(setCheckout, setError);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  useWeChatPaymentReturn(setCheckout, setPaymentError);
 
   const checkoutProduct = useMemo(
     () => products.find((product) => product.id === checkout?.order.product_id) ?? null,
@@ -137,6 +139,7 @@ export default function PricingPage() {
       router.push(`/login?redirect=${encodeURIComponent('/pricing')}`);
       return;
     }
+    setPaymentError(null);
     setPayingCode(product.code);
     setError(null);
     setPaymentComplete(false);
@@ -144,7 +147,7 @@ export default function PricingPage() {
       const result = await startWeChatCheckout(product.code);
       setCheckout(result);
     } catch (reason: unknown) {
-      setError((reason as Error).message || '创建支付订单失败');
+      setPaymentError((reason as Error).message || '创建支付订单失败');
     } finally {
       setPayingCode(null);
     }
@@ -292,6 +295,10 @@ export default function PricingPage() {
           </dl>
         </section>
       </div>
+
+      {paymentError && (
+        <PaymentErrorDialog message={paymentError} onClose={() => setPaymentError(null)} />
+      )}
 
       {checkout && (
         <PaymentDialog checkout={checkout} productName={checkoutProduct?.name ?? '套餐'}
