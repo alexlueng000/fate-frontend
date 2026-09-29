@@ -1,18 +1,19 @@
 'use client';
 
+import PaymentDialog from '@/app/components/PaymentDialog';
+import { startWeChatCheckout, useWeChatPaymentReturn, type WeChatCheckout } from '@/app/lib/wechat-payment';
+
 import { withPackageDisplay } from '@/app/lib/product-display';
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import QRCode from 'qrcode';
-import { Check, CheckCircle2, Copy, QrCode, X } from 'lucide-react';
+import { Check } from 'lucide-react';
 import Footer from '@/app/components/Footer';
 import {
-  createWeChatNativeCheckout,
   getMembershipPlans,
   getOrder,
   type ProductDetail,
-  type WeChatNativeCheckoutResult,
 } from '@/app/lib/api';
 import { getAuthToken } from '@/app/lib/auth';
 import { trackEvent } from '@/app/lib/analytics/track';
@@ -33,11 +34,10 @@ export default function PricingPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [payingCode, setPayingCode] = useState<string | null>(null);
-  const [checkout, setCheckout] = useState<WeChatNativeCheckoutResult | null>(null);
+  const [checkout, setCheckout] = useState<WeChatCheckout | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [paymentComplete, setPaymentComplete] = useState(false);
-  const [mobilePayment, setMobilePayment] = useState(false);
-  const [wechatBrowser, setWechatBrowser] = useState(false);
+  useWeChatPaymentReturn(setCheckout, setError);
 
   const checkoutProduct = useMemo(
     () => products.find((product) => product.id === checkout?.order.product_id) ?? null,
@@ -68,11 +68,6 @@ export default function PricingPage() {
   }, []);
 
   useEffect(() => {
-    setMobilePayment(window.matchMedia('(max-width: 639px)').matches);
-    setWechatBrowser(/MicroMessenger/i.test(window.navigator.userAgent));
-  }, []);
-
-  useEffect(() => {
     let cancelled = false;
     async function renderQr() {
       if (!checkout?.code_url) {
@@ -80,9 +75,9 @@ export default function PricingPage() {
         return;
       }
       const dataUrl = await QRCode.toDataURL(checkout.code_url, {
-        margin: 1,
+        margin: 2,
         width: 240,
-        color: { dark: '#2A2522', light: '#FBF8F4' },
+        color: { dark: '#2A2522', light: '#FFFFFF' },
       });
       if (!cancelled) setQrDataUrl(dataUrl);
     }
@@ -146,7 +141,7 @@ export default function PricingPage() {
     setError(null);
     setPaymentComplete(false);
     try {
-      const result = await createWeChatNativeCheckout(product.code);
+      const result = await startWeChatCheckout(product.code);
       setCheckout(result);
     } catch (reason: unknown) {
       setError((reason as Error).message || '创建支付订单失败');
@@ -161,19 +156,8 @@ export default function PricingPage() {
     setPaymentComplete(false);
   }
 
-  async function copyPaymentLink() {
-    if (!checkout?.code_url) return;
-    await navigator.clipboard.writeText(checkout.code_url);
-  }
 
-  function openWeChatPayment() {
-    if (!checkout?.code_url) return;
-    window.location.href = checkout.code_url;
-  }
 
-  async function copyCurrentPageLink() {
-    await navigator.clipboard.writeText(window.location.href);
-  }
 
   return (
     <div className="flex min-h-screen flex-col bg-[var(--color-bg)]">
@@ -310,128 +294,14 @@ export default function PricingPage() {
       </div>
 
       {checkout && (
-        <div
-          className="fixed inset-0 z-[60] flex items-center justify-center px-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="checkout-title"
-        >
-          <button
-            type="button"
-            className="absolute inset-0 bg-[rgba(42,37,34,0.48)]"
-            aria-label="关闭支付弹窗"
-            onClick={closeCheckout}
-          />
-          <section
-            className="relative z-10 max-h-[calc(100dvh-1.5rem)] w-full max-w-sm overflow-y-auto border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4 shadow-[var(--shadow-lg)] sm:max-w-xl sm:p-8"
-            style={{ borderRadius: 'var(--radius-lg)' }}
-          >
-            <button
-              type="button"
-              onClick={closeCheckout}
-              className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
-              aria-label="关闭"
-            >
-              <X size={20} />
-            </button>
-
-            {paymentComplete ? (
-              <div className="py-8 text-center">
-                <CheckCircle2 className="mx-auto mb-5 text-[var(--color-primary)]" size={42} strokeWidth={1.5} />
-                <h2 id="checkout-title" className="font-serif text-2xl text-[var(--color-text-primary)]">
-                  支付成功，权益已开通
-                </h2>
-                <p className="mt-3 text-[15px] text-[var(--color-text-secondary)]">
-                  {checkoutProduct?.name ?? '套餐'}已生效，可直接开始使用。
-                </p>
-                <button
-                  type="button"
-                  onClick={() => router.push('/dashboard')}
-                  className="mt-7 bg-[var(--color-primary)] px-8 py-3 text-[15px] font-medium text-[var(--color-text-inverse)]"
-                  style={{ borderRadius: 'var(--radius-md)' }}
-                >
-                  返回命理首页
-                </button>
-              </div>
-            ) : (
-              <>
-                <div className="pr-12">
-                  <p className="mb-2 flex items-center gap-2 text-[13px] font-medium text-[var(--color-primary)]">
-                    <QrCode size={16} />
-                    微信扫码支付
-                  </p>
-                  <h2 id="checkout-title" className="font-serif text-xl text-[var(--color-text-primary)] sm:text-2xl">
-                    {checkoutProduct?.name ?? '套餐'}
-                  </h2>
-                  <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
-                    支付金额 {formatPrice(checkout.order.amount_cents)}
-                  </p>
-                </div>
-
-                {mobilePayment && (
-                  <div className="mt-4 rounded-[var(--radius-md)] bg-[var(--color-bg-alt)] p-3 text-center sm:mt-6 sm:p-4">
-                    <p className="text-[15px] font-medium text-[var(--color-text-primary)]">
-                      {wechatBrowser ? '在微信中完成支付' : '当前浏览器不能直接调起微信支付'}
-                    </p>
-                    {wechatBrowser ? (
-                      <button
-                        type="button"
-                        onClick={openWeChatPayment}
-                        className="mt-3 min-h-11 w-full bg-[var(--color-primary)] px-5 text-[15px] font-medium text-[var(--color-text-inverse)]"
-                        style={{ borderRadius: 'var(--radius-md)' }}
-                      >
-                        打开微信支付
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => void copyCurrentPageLink()}
-                        className="mt-3 min-h-11 w-full border border-[var(--color-border-strong)] px-5 text-[14px] font-medium text-[var(--color-text-primary)]"
-                        style={{ borderRadius: 'var(--radius-md)' }}
-                      >
-                        复制页面链接，去微信打开
-                      </button>
-                    )}
-                    <p className="mt-3 text-[13px] leading-6 text-[var(--color-text-secondary)]">
-                      {wechatBrowser
-                        ? '如果没有自动打开，请长按下方二维码，选择“识别图中二维码”。'
-                        : '也可以使用另一台设备的微信扫描下方二维码。'}
-                    </p>
-                  </div>
-                )}
-
-                <div className={`mt-4 grid gap-4 sm:mt-6 sm:gap-6 ${mobilePayment ? '' : 'sm:grid-cols-[240px_1fr] sm:items-center'}`}>
-                  <div className={`mx-auto flex items-center justify-center border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-3 ${
-                    mobilePayment ? 'h-40 w-40' : 'h-60 w-60'
-                  }`}>
-                    {qrDataUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={qrDataUrl} alt="微信支付二维码" className="h-full w-full" />
-                    ) : (
-                      <div className="h-9 w-9 animate-spin rounded-full border-2 border-[var(--color-primary)] border-t-transparent" />
-                    )}
-                  </div>
-                  <div className={mobilePayment ? 'text-center' : ''}>
-                    <p className={`${mobilePayment ? 'text-[12px] leading-5' : 'text-[15px] leading-7'} text-[var(--color-text-body)]`}>
-                      请使用微信扫描二维码完成支付。页面会自动确认订单并发放套餐权益，请勿重复下单。
-                    </p>
-                    {!mobilePayment && (
-                      <button
-                        type="button"
-                        onClick={() => void copyPaymentLink()}
-                        className="mt-5 inline-flex min-h-11 items-center gap-2 border border-[var(--color-border-strong)] px-4 text-sm text-[var(--color-text-primary)]"
-                        style={{ borderRadius: 'var(--radius-md)' }}
-                      >
-                        <Copy size={16} />
-                        复制支付链接
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </>
-            )}
-          </section>
-        </div>
+        <PaymentDialog checkout={checkout} productName={checkoutProduct?.name ?? '套餐'}
+          qrDataUrl={qrDataUrl} error={error} onClose={closeCheckout}
+          onComplete={() => router.push('/dashboard')}
+          success={paymentComplete ? {
+            title: '支付成功，权益已开通',
+            description: `${checkoutProduct?.name ?? '套餐'}已生效，可以开始使用了。`,
+            actionLabel: '开始使用',
+          } : undefined} />
       )}
       <Footer />
     </div>
