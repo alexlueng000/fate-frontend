@@ -22,6 +22,7 @@ import { parseSuggestedQuestions, restoreStoredMessage } from '@/app/lib/chat/pa
 import { saveConversation, loadConversation } from '@/app/lib/chat/storage';
 import { QuotaExhaustedError, ReplyNotSavedError } from '@/app/lib/chat/sse';
 import { readPendingQuestion, savePendingQuestion, hasSavedReply, type PendingQuestion } from '@/app/lib/liuyao/recovery';
+import { newTurnKey, savedTurnStatus } from '@/app/lib/chat/turns';
 import { QuotaChip } from '@/app/components/QuotaChip';
 import QuotaExhaustedDialog from '@/app/components/QuotaExhaustedDialog';
 import {
@@ -371,7 +372,7 @@ export default function LiuyaoPage() {
     if (!conversationId || booting || sending) return;
     const draft = readPendingQuestion(user?.id, conversationId);
     if (!draft) return;
-    if (hasSavedReply(msgs, draft)) {
+    if (!draft.requestKey && hasSavedReply(msgs, draft)) {
       savePendingQuestion(user?.id, conversationId, null);
       setPendingQuestion(null);
       setInput(draft.prompt === (draft.submittedPrompt ?? draft.prompt) ? '' : draft.prompt);
@@ -380,7 +381,7 @@ export default function LiuyaoPage() {
     } else {
       setPendingQuestion(draft);
       setInput(draft.prompt);
-      setChatError('上次回复的保存状态尚未确认，问题草稿已保留。');
+      if (!draft.retryable) setChatError('上次回复的保存状态尚未确认，问题草稿已保留。');
     }
   }, [conversationId, user?.id, booting, sending, msgs]);
 
@@ -390,6 +391,13 @@ export default function LiuyaoPage() {
     if (!Number.isSafeInteger(id) || id <= 0) return;
     setReloadingChat(true);
     try {
+      const draft = pendingQuestion || readPendingQuestion(user?.id, conversationId);
+      const status = draft?.requestKey ? await savedTurnStatus(draft.requestKey) : null;
+      if (status?.conversation_id && status.conversation_id !== conversationId) throw new Error('请求与当前会话不一致，请返回解读记录重新打开。');
+      if (status?.state === 'pending') {
+        setChatError('这个问题仍在生成，请稍后重新加载。原解读与草稿已保留。');
+        return;
+      }
       const detail = await historyApi.detail(id);
       if (detail.type !== 'liuyao' || detail.hexagram?.hexagram_id !== result.hexagram_id) throw new Error('记录与当前卦象不一致，请返回解读记录重新打开。');
       const restored = detail.messages.filter((message, index) => !(index === 0 && message.role === 'user'
@@ -397,21 +405,23 @@ export default function LiuyaoPage() {
       setMsgs(restored);
       setTaskContext(detail.task_context ?? null);
       saveConversation(conversationId, restored, { setActive: false });
+      if (status?.state === 'succeeded' && !restored.some(message => message.role === 'assistant' && message.meta?.messageId === status.message_id)) {
+        throw new Error('请求已保存，但当前记录尚未包含该回复，请稍后重新加载。');
+      }
       if (!restored.some(message => message.role === 'assistant' && message.content.trim())) {
         setChatError('还未读取到已保存的完整解读，请稍后再次重新加载。');
         return;
       }
-      const draft = pendingQuestion || readPendingQuestion(user?.id, conversationId);
-      if (draft && hasSavedReply(restored, draft)) {
+      if (draft && ((status?.state === 'succeeded' && restored.some(message => message.role === 'assistant' && message.meta?.messageId === status.message_id))
+        || (!draft.requestKey && hasSavedReply(restored, draft)))) {
         savePendingQuestion(user?.id, conversationId, null);
         setPendingQuestion(null);
         setInput(draft.prompt === (draft.submittedPrompt ?? draft.prompt) ? '' : draft.prompt);
         setRecoveryNotice('已读取到这次问题的保存结果，无需重复发送。');
       } else {
-        // This read confirms the current archive, not that an unknown worker
-        // has stopped. Keep the attempted question editable for the user.
-        savePendingQuestion(user?.id, conversationId, null);
-        setPendingQuestion(null);
+        const retry = draft?.requestKey ? { ...draft, retryable: true } : null;
+        savePendingQuestion(user?.id, conversationId, retry);
+        setPendingQuestion(retry);
         if (draft) setInput(draft.prompt);
         setRecoveryNotice(draft ? '已更新保存记录，问题草稿已保留，请核对后继续。' : '已更新保存记录。');
       }
@@ -740,10 +750,18 @@ export default function LiuyaoPage() {
   };
 
   const sendStream = async (
-    runner: (onDelta: (text: string) => void, onMeta: (meta: unknown) => void) => Promise<void>,
+    runner: (onDelta: (text: string) => void, onMeta: (meta: unknown) => void, requestKey: string) => Promise<void>,
     userContent?: string,
     attemptedPrompt = userContent,
+    quickLabel?: string,
   ) => {
+    const prior = conversationId ? readPendingQuestion(user?.id, conversationId) : null;
+    const reuse = prior?.retryable && prior.submittedPrompt === attemptedPrompt && prior.display === userContent && prior.quickLabel === quickLabel;
+    const requestKey = reuse && prior.requestKey ? prior.requestKey : newTurnKey();
+    const draft: PendingQuestion = { prompt: attemptedPrompt || '', submittedPrompt: attemptedPrompt, display: userContent || attemptedPrompt || '',
+      baselineMessageId: Math.max(0, ...msgs.map(message => message.meta?.messageId ?? 0)), requestKey, quickLabel };
+    if (conversationId) savePendingQuestion(user?.id, conversationId, draft);
+    setPendingQuestion(draft);
     const assistantIdx = msgs.length + (userContent ? 1 : 0);
     let streamedText = '';
     setChatError(null);
@@ -773,6 +791,7 @@ export default function LiuyaoPage() {
           if (messageId) setMsgs(previous => previous.map((message, index) => index === assistantIdx
             ? { ...message, meta: { ...message.meta, messageId } } : message));
         },
+        requestKey,
       );
       const finalText = finalizeAssistant(assistantIdx, streamedText);
       if (!finalText) {
@@ -799,8 +818,6 @@ export default function LiuyaoPage() {
         return next;
       });
       if (attemptedPrompt && conversationId) {
-        const draft = { prompt: attemptedPrompt, submittedPrompt: attemptedPrompt, display: userContent || attemptedPrompt,
-          baselineMessageId: Math.max(0, ...msgs.map(message => message.meta?.messageId ?? 0)) };
         setPendingQuestion(draft);
         savePendingQuestion(user?.id, conversationId, draft);
         setInput(attemptedPrompt);
@@ -826,10 +843,13 @@ export default function LiuyaoPage() {
       }),
     });
     try {
+      const prior = readPendingQuestion(user?.id, conversationId);
+      const retryQuick = prior?.retryable && prior.submittedPrompt === content && prior.quickLabel ? prior : null;
       await sendStream(
-        (onDelta, onMeta) =>
-          liuyaoApi.sendChat(result.hexagram_id, conversationId, content, onDelta, onMeta, actionAbortRef.current?.signal),
-        content,
+        (onDelta, onMeta, requestKey) => retryQuick
+          ? liuyaoApi.quickChat(result.hexagram_id, conversationId, retryQuick.quickLabel!, content, onDelta, onMeta, actionAbortRef.current?.signal, requestKey)
+          : liuyaoApi.sendChat(result.hexagram_id, conversationId, content, onDelta, onMeta, actionAbortRef.current?.signal, requestKey),
+        retryQuick?.display || content, content, retryQuick?.quickLabel,
       );
       void refreshLiuyaoQuota();
     } finally {
@@ -854,10 +874,11 @@ export default function LiuyaoPage() {
     });
     try {
       await sendStream(
-        (onDelta, onMeta) =>
-          liuyaoApi.quickChat(result.hexagram_id, conversationId, label, prompt, onDelta, onMeta, actionAbortRef.current?.signal),
+        (onDelta, onMeta, requestKey) =>
+          liuyaoApi.quickChat(result.hexagram_id, conversationId, label, prompt, onDelta, onMeta, actionAbortRef.current?.signal, requestKey),
         label,
         prompt,
+        label,
       );
       void refreshLiuyaoQuota();
     } finally {
@@ -882,8 +903,8 @@ export default function LiuyaoPage() {
     });
     try {
       await sendStream(
-        (onDelta, onMeta) =>
-          liuyaoApi.sendChat(result.hexagram_id, conversationId, q, onDelta, onMeta, actionAbortRef.current?.signal),
+        (onDelta, onMeta, requestKey) =>
+          liuyaoApi.sendChat(result.hexagram_id, conversationId, q, onDelta, onMeta, actionAbortRef.current?.signal, requestKey),
         q,
       );
       void refreshLiuyaoQuota();

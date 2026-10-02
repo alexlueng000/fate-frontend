@@ -237,10 +237,11 @@ export const liuyaoApi = {
     onChunk: (text: string) => void,
     onMeta?: (meta: unknown) => void,
     signal?: AbortSignal,
+    requestKey?: string,
   ): Promise<void> {
     return trySSE(
       api(`/liuyao/${hexagramId}/chat`),
-      { conversation_id: conversationId, message },
+      { conversation_id: conversationId, message, request_key: requestKey },
       onChunk,
       onMeta,
       { signal },
@@ -258,10 +259,11 @@ export const liuyaoApi = {
     onChunk: (text: string) => void,
     onMeta?: (meta: unknown) => void,
     signal?: AbortSignal,
+    requestKey?: string,
   ): Promise<void> {
     return trySSE(
       api(`/liuyao/${hexagramId}/chat/quick`),
-      { conversation_id: conversationId, label, prompt },
+      { conversation_id: conversationId, label, prompt, request_key: requestKey },
       onChunk,
       onMeta,
       { signal },

@@ -1,6 +1,7 @@
 import type { Msg } from '@/app/lib/chat/types';
 
-export type PendingQuestion = { prompt: string; submittedPrompt?: string; display: string; baselineMessageId: number };
+export type PendingQuestion = { prompt: string; submittedPrompt?: string; display: string; baselineMessageId: number;
+  requestKey?: string; retryable?: boolean; quickLabel?: string };
 const key = (owner: string | number, cid: string) => `liuyao:pending:${owner}:${cid}`;
 
 export function readPendingQuestion(owner: string | number | undefined, cid: string): PendingQuestion | null {
@@ -10,6 +11,9 @@ export function readPendingQuestion(owner: string | number | undefined, cid: str
     if (!raw) return null;
     const value = JSON.parse(raw);
     return typeof value.prompt === 'string' && value.prompt.length <= 4000
+      && (value.requestKey === undefined || (typeof value.requestKey === 'string' && /^[a-f0-9]{32}$/.test(value.requestKey)))
+      && (value.retryable === undefined || typeof value.retryable === 'boolean')
+      && (value.quickLabel === undefined || (typeof value.quickLabel === 'string' && value.quickLabel.length <= 64))
       && (value.submittedPrompt === undefined || (typeof value.submittedPrompt === 'string' && value.submittedPrompt.length <= 4000)) && typeof value.display === 'string'
       && value.display.length <= 4000 && Number.isInteger(value.baselineMessageId) && value.baselineMessageId >= 0 ? value : null;
   } catch { return null; }
