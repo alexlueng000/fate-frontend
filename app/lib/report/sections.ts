@@ -5,6 +5,16 @@ import remarkGfm from 'remark-gfm';
 export const REPORT_TITLES = ['个人画像', '性格特点', '做事方式', '人际与感情', '行动建议', '三年关键节点', '免责声明'] as const;
 export type ReportSection = { id: string; title: string; source: string; body: string; years: { title: string; source: string }[]; introduction: string };
 
+/** Quote the saved source as editable user text, never as new user facts.
+ * URL hand-offs use a short excerpt; the server retains the full original.
+ */
+export function chapterQuestion(title: string, source: string, quoteLimit?: number) {
+  const original = source.trim();
+  const clipped = quoteLimit !== undefined && Array.from(original).length > quoteLimit;
+  const quote = clipped ? Array.from(original).slice(0, quoteLimit).join('') : original;
+  return `关于这份最初保存的报告中的“${title}”，请解释主要依据，并说明需要我补充哪些现实信息。\n\n引用报告原文：\n${quote}${clipped ? '\n（这里只摘录章节开头，完整原文见这份报告。）' : ''}`;
+}
+
 /** Root AST headings only: fenced code and quoted/list headings remain content. */
 export function splitReport(source: string) {
   const tree = unified().use(remarkParse).use(remarkGfm).parse(source);

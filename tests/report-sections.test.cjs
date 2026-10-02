@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports -- CommonJS Node harness loads TypeScript in an isolated VM. */
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -48,4 +49,23 @@ test('legacy normalized headings retain source and recognize all seven chapters'
   assert.equal(report.standard, true);
   assert.deepEqual(Array.from(report.sections, section => section.title), Array.from(REPORT_TITLES));
   assert.equal(report.preamble + report.sections.map(section => section.source).join(''), text);
+});
+
+test('chapter questions quote the saved source without inventing user background', async () => {
+  const { chapterQuestion } = await loaded;
+  const source = '### 做事方式\n\n原文中的观察、链接和用户尚未确认的建议。';
+  const question = chapterQuestion('做事方式', source);
+  assert.ok(question.includes('最初保存的报告'));
+  assert.equal(question.split('引用报告原文：\n')[1], source);
+});
+
+test('long chapter hand-offs keep Unicode intact and fit the proxy request line', async () => {
+  const { chapterQuestion } = await loaded;
+  const source = '### 三年关键节点\n\n' + '原文😀'.repeat(5000);
+  const question = chapterQuestion('三年关键节点', source, 350);
+  const quote = question.split('引用报告原文：\n')[1].split('\n（')[0];
+  assert.equal(Array.from(quote).length, 350);
+  assert.equal(quote, Array.from(source).slice(0, 350).join(''));
+  assert.ok(question.includes('这里只摘录章节开头'));
+  assert.ok(Buffer.byteLength('/chat?conv_id=9001&question=' + encodeURIComponent(question)) < 8192);
 });

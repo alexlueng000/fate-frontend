@@ -59,3 +59,23 @@ test('personal report preserves all seven chapters', async ({ page }) => {
   await page.getByRole('button', { name: /07\s*免责声明/ }).click();
   await expect(page.getByText('这是免责声明的测试原文。')).toBeVisible();
 });
+
+test('chapter entry carries a bounded original excerpt into an editable question', async ({ page }) => {
+  const body = '这是原始章节中的依据与观察。'.repeat(300);
+  const sections = [{ title: '核心观察', body }, ...report.sections.slice(1)];
+  const original = sections.map(section => `### ${section.title}\n\n${section.body}`).join('\n\n');
+  await page.route('**/api/conversations/9001/report', route => route.fulfill({ json: { ...report, content: original, sections } }));
+  await page.route('**/api/conversations/9001', route => route.fulfill({ json: { id: 9001, type: 'bazi', title: question, task_context: context,
+    profile: report.profile, messages: [{ id: 1, role: 'user', content: question }, { id: 2, role: 'assistant', content: original }] } }));
+  await page.goto('/reports/9001');
+  const link = page.getByRole('link', { name: '针对这一节提问', exact: true }).first();
+  const url = new URL((await link.getAttribute('href'))!, 'http://127.0.0.1:3010');
+  const draft = url.searchParams.get('question')!;
+  expect(draft).toContain('最初保存的报告中的“核心观察”');
+  expect(draft).toContain('引用报告原文：\n### 核心观察');
+  expect(draft).toContain('这是原始章节中的依据与观察。');
+  expect(draft.length).toBeLessThan(500);
+  expect(url.href.length).toBeLessThan(8192);
+  await link.click();
+  await expect(page.getByRole('textbox', { name: '对话输入框' })).toHaveValue(draft);
+});

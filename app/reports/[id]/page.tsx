@@ -7,7 +7,7 @@ import { ArrowLeft, ArrowUpRight, BookOpen } from 'lucide-react';
 import Markdown from '@/app/components/Markdown';
 import { historyApi, type ConversationReport } from '@/app/lib/history/api';
 import { useRouteGuard } from '@/app/lib/useRouteGuard';
-import { splitReport } from '@/app/lib/report/sections';
+import { chapterQuestion, splitReport } from '@/app/lib/report/sections';
 import { parseSuggestedQuestions } from '@/app/lib/chat/parser';
 import { ReviewNotes } from '@/app/components/consultation/ReviewNotes';
 import styles from './report.module.css';
@@ -85,7 +85,7 @@ export default function SavedReportPage() {
         {parsed.preamble.trim() && <div className={styles.preamble}><Markdown content={`${parsed.preamble}\n\n${parsed.definitions}`} /></div>}
         {report.sections.map((section, i) => <details className={`${styles.section} ${i === 0 ? styles.core : ''}`} key={i} id={`saved-section-${i}`} tabIndex={-1} open={section.title !== '分析依据'}>
           <summary><span className={styles.number}>{String(i + 1).padStart(2, '0')}</span><h2>{section.title}</h2><span className={styles.toggle} aria-hidden>展开 / 收起</span></summary>
-          <div className={styles.body}><Markdown content={`${section.body}\n\n${parsed.definitions}`} />{section.title !== '免责声明' && <Link className={styles.ask} href={`${continueUrl}&question=${encodeURIComponent(`关于报告中的“${section.title}”，我想进一步了解其中的建议。`)}`}>针对这一节提问<ArrowUpRight size={15} aria-hidden /></Link>}</div>
+          <div className={styles.body}><Markdown content={`${section.body}\n\n${parsed.definitions}`} />{section.title !== '免责声明' && <Link className={styles.ask} href={`${continueUrl}&question=${encodeURIComponent(chapterQuestion(section.title, `### ${section.title}\n\n${section.body}`, 350))}`}>针对这一节提问<ArrowUpRight size={15} aria-hidden /></Link>}</div>
         </details>)}
       </>}
       {suggestions.length > 0 && <section className={styles.followups}><p className={styles.eyebrow}>接下来，可以继续探索</p>{suggestions.map(question => <Link key={question} href={`${continueUrl}&question=${encodeURIComponent(question)}`}>{question}<ArrowUpRight size={16} aria-hidden /></Link>)}</section>}

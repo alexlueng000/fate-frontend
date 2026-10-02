@@ -51,10 +51,12 @@ function remoteDraft(remote: ConversationTurn): Draft | null {
     display, taskContext: context, retryable: remote.state === 'retryable' };
 }
 
-export function useSavedBaziTurn({ owner, cid, input, setMessages, setInput, taskContext, onRestored }: {
+export function useSavedBaziTurn({ owner, cid, input, setMessages, setInput, taskContext, onRestored, onAnswer, suggestedInput }: {
   owner?: number; cid: string | null; input: string; setMessages: Dispatch<SetStateAction<Msg[]>>;
   setInput: Dispatch<SetStateAction<string>>; taskContext: TaskContext | null;
   onRestored: (detail: ConversationDetailResp) => void;
+  onAnswer?: (content: string) => void;
+  suggestedInput?: string;
 }) {
   const [draft, setDraft] = useState<Draft | null>(null);
   const [busy, setBusy] = useState(false);
@@ -66,6 +68,8 @@ export function useSavedBaziTurn({ owner, cid, input, setMessages, setInput, tas
   const generation = useRef(0);
   const restoredCallback = useRef(onRestored);
   useEffect(() => { restoredCallback.current = onRestored; }, [onRestored]);
+  const answerCallback = useRef(onAnswer);
+  useEffect(() => { answerCallback.current = onAnswer; }, [onAnswer]);
 
   useEffect(() => {
     const version = ++generation.current;
@@ -85,12 +89,12 @@ export function useSavedBaziTurn({ owner, cid, input, setMessages, setInput, tas
     if (!owner || !cid || !discovery.remote || draftRef.current) return;
     const saved = remoteDraft(discovery.remote);
     if (!saved) return;
-    const adopted = { ...saved, prompt: input || saved.prompt };
+    const adopted = { ...saved, prompt: input && input !== suggestedInput ? input : saved.prompt };
     draftRef.current = adopted; setDraft(adopted); storeDraft(owner, cid, adopted);
     setInput(adopted.prompt);
     if (!saved.retryable) setError('另一个页面的问题仍在生成，原问题草稿已恢复。请先检查保存结果。');
     else setNotice('已恢复尚未完成的问题，可以核对后手动重试。');
-  }, [owner, cid, discovery.remote, input, setInput]);
+  }, [owner, cid, discovery.remote, input, setInput, suggestedInput]);
 
   const update = (value: Draft | null) => {
     draftRef.current = value; setDraft(value);
@@ -123,10 +127,11 @@ export function useSavedBaziTurn({ owner, cid, input, setMessages, setInput, tas
       { role: 'assistant', content: '', streaming: true, meta: { kind: marker } }]);
     controller.current = new AbortController();
     let mismatchedConversation = false;
+    let completedText = '';
     try {
       await trySSE(api('/chat'), { conversation_id: cid, request_key: attempt.requestKey,
         message: attempt.submittedPrompt, display_message: attempt.display, task_context: attempt.taskContext },
-        text => { if (current()) setMessages(messages => messages.map(message => message.role === 'assistant' && message.meta?.kind === marker ? { ...message, content: text } : message)); },
+        text => { if (current()) { completedText = text; setMessages(messages => messages.map(message => message.role === 'assistant' && message.meta?.kind === marker ? { ...message, content: text } : message)); } },
         meta => {
           if (!current() || typeof meta !== 'object' || !meta) return;
           const value = meta as { message_id?: number; conversation_id?: string };
@@ -145,6 +150,8 @@ export function useSavedBaziTurn({ owner, cid, input, setMessages, setInput, tas
       }));
       update(null);
       discovery.clear();
+      answerCallback.current?.(normalizeMarkdown(parseSuggestedQuestions(completedText).cleanedContent));
+      return true;
     } catch (failure) {
       if (!current()) return;
       setMessages(messages => messages.filter(message => message.meta?.kind !== marker));
@@ -189,7 +196,8 @@ export function useSavedBaziTurn({ owner, cid, input, setMessages, setInput, tas
       if (detail.type !== 'bazi' || detail.id !== id(cid)) throw new Error('保存记录与当前会话不一致。');
       const restored = detail.messages.filter((message, index) => (message.role === 'user' || message.role === 'assistant')
         && !(index === 0 && message.role === 'user' && message.content.startsWith('我的命盘信息如下'))).map(restoreStoredMessage);
-      if (status.state === 'succeeded' && !restored.some(message => message.role === 'assistant' && message.meta?.messageId === status.message_id)) {
+      const savedAnswer = detail.messages.find(message => message.role === 'assistant' && message.id === status.message_id);
+      if (status.state === 'succeeded' && (!savedAnswer || savedAnswer.content !== status.reply)) {
         throw new Error('请求已保存，但当前记录尚未包含该回复，请稍后重新加载。');
       }
       setMessages(messages => restored.length ? restored : messages.filter(message => message.meta?.kind === 'intro'));
@@ -198,6 +206,7 @@ export function useSavedBaziTurn({ owner, cid, input, setMessages, setInput, tas
       if (status.state === 'succeeded') {
         update(null);
         setInput(edited.prompt === edited.originalPrompt ? '' : edited.prompt);
+        answerCallback.current?.(normalizeMarkdown(parseSuggestedQuestions(status.reply!).cleanedContent));
         setNotice('已读取到这次问题的保存结果，无需重复发送。');
       } else {
         update({ ...edited, retryable: true }); setInput(edited.prompt);

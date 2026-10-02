@@ -8,6 +8,10 @@ const profile = { id: 90001, gender: 'male', birth_date: '1993-03-09', birth_tim
   bazi_chart: { mingpan: { four_pillars: { year: ['甲', '子'], month: ['丙', '寅'], day: ['戊', '辰'], hour: ['庚', '午'] }, dayun: [] } },
 };
 
+test.beforeEach(async ({ page }) => {
+  await page.route('**/api/chat/conversations/*/request', route => route.fulfill({ json: { state: 'idle', conversation_id: 'bazi_conv_9001' } }));
+});
+
 test('personal report is saved by server and resumes chapter questions after reload', async ({ page }, info) => {
   let saved = false;
   let generated = 0;
@@ -20,7 +24,10 @@ test('personal report is saved by server and resumes chapter questions after rel
     return route.fulfill({ contentType: 'text/event-stream', body: `data: {"meta":{"conversation_id":"bazi_conv_9001"}}\n\ndata: ${JSON.stringify({ text: report, replace: true })}\n\ndata: {"meta":{"message_id":2}}\n\ndata: [DONE]\n\n` });
   });
   await page.route('**/api/chat', route => {
-    askedConversation = route.request().postDataJSON().conversation_id;
+    const payload = route.request().postDataJSON();
+    askedConversation = payload.conversation_id;
+    expect(payload.request_key).toMatch(/^[a-f0-9]{32}$/);
+    expect(payload.message).toContain('引用报告原文：');
     return route.fulfill({ contentType: 'text/event-stream', body: 'data: {"text":"针对本节的测试追问回复。","replace":true}\n\ndata: [DONE]\n\n' });
   });
   await page.route('**/api/conversations/9001', route => route.fulfill({ json: { id: 9001, type: 'bazi', title: '个人报告',
