@@ -21,8 +21,9 @@ import { Msg, normalizeMarkdown } from '@/app/lib/chat/types';
 import { parseSuggestedQuestions, restoreStoredMessage } from '@/app/lib/chat/parser';
 import { saveConversation } from '@/app/lib/chat/storage';
 import { QuotaExhaustedError } from '@/app/lib/chat/sse';
-import { readPendingQuestion, savePendingQuestion, hasSavedReply, type PendingQuestion } from '@/app/lib/liuyao/recovery';
+import { readPendingQuestion, savePendingQuestion, hasSavedReply, questionFromRemote, type PendingQuestion } from '@/app/lib/liuyao/recovery';
 import { newTurnKey, savedTurnStatus } from '@/app/lib/chat/turns';
+import { useTurnDiscovery } from '@/app/lib/chat/useTurnDiscovery';
 import { QuotaChip } from '@/app/components/QuotaChip';
 import QuotaExhaustedDialog from '@/app/components/QuotaExhaustedDialog';
 import {
@@ -176,6 +177,9 @@ export default function LiuyaoPage() {
   const [pendingQuestion, setPendingQuestion] = useState<PendingQuestion | null>(null);
   const [reloadingChat, setReloadingChat] = useState(false);
   const [openingRecovery, setOpeningRecovery] = useState<'checking' | 'pending' | 'unknown' | 'retryable' | null>(null);
+  const turnDiscovery = useTurnDiscovery(user?.id, booting ? null : conversationId, 'liuyao');
+  const blockedByRequest = turnDiscovery.checking || !!turnDiscovery.error || turnDiscovery.remote?.state === 'pending';
+  const visibleChatError = turnDiscovery.error || chatError;
   const chatScrollRef = useRef<HTMLDivElement | null>(null);
   const regenerationLockRef = useRef(false);
   const actionAbortRef = useRef<AbortController | null>(null);
@@ -425,13 +429,42 @@ export default function LiuyaoPage() {
     }
   }, [conversationId, user?.id, booting, sending, msgs]);
 
+  useEffect(() => {
+    const remote = turnDiscovery.remote;
+    if (!remote || !conversationId || !user?.id) return;
+    const local = readPendingQuestion(user.id, conversationId);
+    if (local) {
+      if (remote.state === 'pending') {
+        setChatError(remote.request_key !== local.requestKey ? '另一个页面的问题仍在生成。当前草稿已保留，请先检查保存结果。'
+          : '这个问题仍在生成，请稍后重新加载。原解读与草稿已保留。');
+      }
+      return;
+    }
+    const saved = questionFromRemote(remote);
+    if (saved) {
+      const adopted = { ...saved, prompt: input || saved.prompt };
+      savePendingQuestion(user.id, conversationId, adopted); setPendingQuestion(adopted); setInput(adopted.prompt);
+      if (remote.state === 'pending') setChatError('另一个页面的问题仍在生成，原问题草稿已恢复。请先检查保存结果。');
+      else { setChatError(null); setRecoveryNotice('已恢复尚未完成的问题，可以核对后手动重试。'); }
+    } else if (remote.state === 'pending') {
+      setChatError('另一个页面的问题仍在生成，请稍后重新加载保存记录。');
+    } else {
+      setRecoveryNotice('旧请求没有保存原问题草稿，可查看已有记录后自行填写新问题。');
+    }
+  }, [turnDiscovery.remote, conversationId, user?.id, input]);
+
   const reloadSavedConversation = async () => {
     if (!conversationId || !result || reloadingChat || regenerationLockRef.current) return;
     const id = Number(conversationId.replace(/^(liuyao_conv_|conv_)/, ''));
     if (!Number.isSafeInteger(id) || id <= 0) return;
     setReloadingChat(true);
     try {
-      const draft = pendingQuestion || readPendingQuestion(user?.id, conversationId);
+      const remote = await turnDiscovery.refresh();
+      let draft = pendingQuestion || readPendingQuestion(user?.id, conversationId);
+      if (remote?.state === 'pending' && (!draft || remote.request_key !== draft.requestKey)) {
+        setChatError('另一个页面的问题仍在生成，请稍后重新加载。当前草稿已保留。'); return;
+      }
+      if (!draft && remote) draft = questionFromRemote(remote);
       const status = draft?.requestKey ? await savedTurnStatus(draft.requestKey) : null;
       if (status?.conversation_id && status.conversation_id !== conversationId) throw new Error('请求与当前会话不一致，请返回解读记录重新打开。');
       if (status?.state === 'pending') {
@@ -463,7 +496,9 @@ export default function LiuyaoPage() {
         savePendingQuestion(user?.id, conversationId, retry);
         setPendingQuestion(retry);
         if (draft) setInput(draft.prompt);
-        setRecoveryNotice(draft ? '已更新保存记录，问题草稿已保留，请核对后继续。' : '已更新保存记录。');
+        setRecoveryNotice(draft ? '已更新保存记录，问题草稿已保留，请核对后继续。'
+          : remote?.state === 'retryable' && !questionFromRemote(remote)
+            ? '旧请求没有保存原问题草稿，可查看已有记录后自行填写新问题。' : '已更新保存记录。');
       }
       setChatError(null);
       void refreshLiuyaoQuota();
@@ -473,8 +508,8 @@ export default function LiuyaoPage() {
   };
 
   const canSend = useMemo(
-    () => !!conversationId && !!input.trim() && !sending && !booting && !reloadingChat && !chatError,
-    [conversationId, input, sending, booting, reloadingChat, chatError],
+    () => !!conversationId && !!input.trim() && !sending && !booting && !reloadingChat && !visibleChatError && !blockedByRequest,
+    [conversationId, input, sending, booting, reloadingChat, visibleChatError, blockedByRequest],
   );
 
   const shareSource = useMemo(
@@ -845,6 +880,7 @@ export default function LiuyaoPage() {
       }
       if (conversationId) savePendingQuestion(user?.id, conversationId, null);
       setPendingQuestion(null);
+      turnDiscovery.clear();
     } catch (error: unknown) {
       if (error instanceof QuotaExhaustedError) {
         handleLiuyaoQuotaExhausted(error, -1);
@@ -873,7 +909,7 @@ export default function LiuyaoPage() {
   };
 
   const send = async () => {
-    if (!conversationId || !result?.hexagram_id || regenerationLockRef.current || chatError) return;
+    if (!conversationId || !result?.hexagram_id || regenerationLockRef.current || visibleChatError || blockedByRequest) return;
     const content = input.trim();
     if (!content) return;
     regenerationLockRef.current = true;
@@ -906,7 +942,7 @@ export default function LiuyaoPage() {
   };
 
   const sendQuick = async (label: string, prompt: string) => {
-    if (!conversationId || !result?.hexagram_id || regenerationLockRef.current || chatError) return;
+    if (!conversationId || !result?.hexagram_id || regenerationLockRef.current || visibleChatError || blockedByRequest) return;
     regenerationLockRef.current = true;
     actionAbortRef.current = new AbortController();
     setSending(true);
@@ -935,7 +971,7 @@ export default function LiuyaoPage() {
   };
 
   const handleQuestionClick = async (q: string) => {
-    if (!conversationId || sending || !result?.hexagram_id || regenerationLockRef.current || chatError) return;
+    if (!conversationId || sending || !result?.hexagram_id || regenerationLockRef.current || visibleChatError || blockedByRequest) return;
     regenerationLockRef.current = true;
     actionAbortRef.current = new AbortController();
     setSending(true);
@@ -969,7 +1005,7 @@ export default function LiuyaoPage() {
   };
 
   const regenerate = async () => {
-    if (!conversationId || !result?.hexagram_id || sending || regenerationLockRef.current) return;
+    if (!conversationId || !result?.hexagram_id || sending || regenerationLockRef.current || blockedByRequest) return;
     regenerationLockRef.current = true;
     actionAbortRef.current = new AbortController();
     setSending(true);
@@ -1599,9 +1635,9 @@ export default function LiuyaoPage() {
                   <div className="mt-2 mx-auto h-px w-10 bg-[color:var(--color-primary)]/40" />
                 </div>
 
-                {chatError && <div role="alert" className="mb-5 rounded-[24px] border border-[color:var(--color-primary)]/30 bg-[color:var(--color-primary)]/[0.04] px-6 py-6 text-center">
+                {visibleChatError && <div role="alert" className="mb-5 rounded-[24px] border border-[color:var(--color-primary)]/30 bg-[color:var(--color-primary)]/[0.04] px-6 py-6 text-center">
                   <p className="text-[15px] font-medium text-[color:var(--color-text-primary)]">这次回复未能确认完成</p>
-                  <p className="mx-auto mt-2 max-w-md text-[13px] leading-6 text-[color:var(--color-text-secondary)]">{chatError}</p>
+                  <p className="mx-auto mt-2 max-w-md text-[13px] leading-6 text-[color:var(--color-text-secondary)]">{visibleChatError}</p>
                   <p className="mt-2 text-xs text-[color:var(--color-text-muted)]">成功保存的回复才计次。网络中断时，先检查保存结果再继续。</p>
                   {conversationId && <button type="button" onClick={() => void reloadSavedConversation()} disabled={booting || sending || reloadingChat}
                     className="btn btn-secondary mt-4">{reloadingChat ? '正在重新加载…' : '重新加载对话'}</button>}
@@ -1666,7 +1702,7 @@ export default function LiuyaoPage() {
                           Markdown={MarkdownView}
                           onQuestionClick={handleQuestionClick}
                           onRegenerate={regenerate}
-                          loading={sending || booting || reloadingChat || !!chatError}
+                          loading={sending || booting || reloadingChat || !!visibleChatError || blockedByRequest}
                           containerClassName="rounded-[24px] border border-[color:var(--color-border)] bg-[color:var(--color-bg)] max-h-[640px]"
                         />
                       );
@@ -1674,7 +1710,7 @@ export default function LiuyaoPage() {
                     {isLoggedIn && <ReadingLink conversationId={conversationId} />}
                     {isLoggedIn && (
                       <QuickActions
-                        disabled={sending || booting || !conversationId || !!chatError}
+                        disabled={sending || booting || !conversationId || !!visibleChatError || blockedByRequest}
                         buttons={liuyaoQuickButtons}
                         onClick={sendQuick}
                       />
@@ -1693,7 +1729,7 @@ export default function LiuyaoPage() {
                         onKeyDown={onInputKeyDown}
                         canSend={canSend}
                         sending={sending}
-                        disabled={booting || !conversationId || reloadingChat}
+                        disabled={booting || !conversationId || reloadingChat || turnDiscovery.checking}
                         onSend={send}
                         onRegenerate={regenerate}
                         showRegenerate={false}

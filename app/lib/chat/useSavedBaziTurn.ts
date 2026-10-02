@@ -7,6 +7,8 @@ import { parseSuggestedQuestions, restoreStoredMessage } from './parser';
 import { normalizeMarkdown, type Msg } from './types';
 import { trySSE } from './sse';
 import { newTurnKey, savedTurnStatus } from './turns';
+import type { ConversationTurn } from './turns';
+import { useTurnDiscovery } from './useTurnDiscovery';
 
 type Draft = { requestKey: string; prompt: string; originalPrompt: string; submittedPrompt: string; display: string;
   taskContext: TaskContext | null; retryable: boolean };
@@ -36,8 +38,21 @@ function sameConversation(left: string, right: string) {
   return Number.isSafeInteger(numeric) && numeric > 0 && numeric === id(right);
 }
 
-export function useSavedBaziTurn({ owner, cid, setMessages, setInput, taskContext, onRestored }: {
-  owner?: number; cid: string | null; setMessages: Dispatch<SetStateAction<Msg[]>>;
+function remoteDraft(remote: ConversationTurn): Draft | null {
+  const payload = remote.request_payload;
+  if (!payload || typeof payload.message !== 'string' || !payload.message.trim() || payload.message.length > 16000) return null;
+  const context = payload.task_context && typeof payload.task_context === 'object' ? payload.task_context as TaskContext : null;
+  const display = typeof payload.display_message === 'string' && payload.display_message ? payload.display_message : payload.message;
+  if (display.length > 16000) return null;
+  const topic = context?.taskType === 'career' ? context.facts?.topic : undefined;
+  const editable = context && display === context.title
+    ? (typeof topic === 'string' && topic ? topic : display) : payload.message;
+  return { requestKey: remote.request_key, prompt: editable, originalPrompt: editable, submittedPrompt: payload.message,
+    display, taskContext: context, retryable: remote.state === 'retryable' };
+}
+
+export function useSavedBaziTurn({ owner, cid, input, setMessages, setInput, taskContext, onRestored }: {
+  owner?: number; cid: string | null; input: string; setMessages: Dispatch<SetStateAction<Msg[]>>;
   setInput: Dispatch<SetStateAction<string>>; taskContext: TaskContext | null;
   onRestored: (detail: ConversationDetailResp) => void;
 }) {
@@ -65,6 +80,18 @@ export function useSavedBaziTurn({ owner, cid, setMessages, setInput, taskContex
     return () => { generation.current = version + 1; controller.current?.abort(); };
   }, [owner, cid, setInput, setMessages]);
 
+  const discovery = useTurnDiscovery(owner, cid, 'bazi');
+  useEffect(() => {
+    if (!owner || !cid || !discovery.remote || draftRef.current) return;
+    const saved = remoteDraft(discovery.remote);
+    if (!saved) return;
+    const adopted = { ...saved, prompt: input || saved.prompt };
+    draftRef.current = adopted; setDraft(adopted); storeDraft(owner, cid, adopted);
+    setInput(adopted.prompt);
+    if (!saved.retryable) setError('另一个页面的问题仍在生成，原问题草稿已恢复。请先检查保存结果。');
+    else setNotice('已恢复尚未完成的问题，可以核对后手动重试。');
+  }, [owner, cid, discovery.remote, input, setInput]);
+
   const update = (value: Draft | null) => {
     draftRef.current = value; setDraft(value);
     if (owner && cid) storeDraft(owner, cid, value);
@@ -77,7 +104,8 @@ export function useSavedBaziTurn({ owner, cid, setMessages, setInput, taskContex
 
   const run = async (content: string, displayMessage?: string) => {
     if (!owner || !cid) throw new Error('请登录并重新加载会话后再试。');
-    if (lock.current || (draftRef.current && !draftRef.current.retryable)) return;
+    if (lock.current || discovery.checking || discovery.error || discovery.remote?.state === 'pending'
+      || (draftRef.current && !draftRef.current.retryable)) return;
     lock.current = true; setBusy(true); setNotice(null); setError(null);
     const version = generation.current;
     const previous = draftRef.current;
@@ -116,6 +144,7 @@ export function useSavedBaziTurn({ owner, cid, setMessages, setInput, taskContex
           meta: message.meta?.messageId ? { messageId: message.meta.messageId } : undefined };
       }));
       update(null);
+      discovery.clear();
     } catch (failure) {
       if (!current()) return;
       setMessages(messages => messages.filter(message => message.meta?.kind !== marker));
@@ -129,12 +158,28 @@ export function useSavedBaziTurn({ owner, cid, setMessages, setInput, taskContex
   };
 
   const recover = async () => {
-    const pending = draftRef.current;
-    if (!owner || !cid || !pending || lock.current) return;
+    let pending = draftRef.current;
+    if (!owner || !cid || lock.current) return;
     lock.current = true; setBusy(true);
     const version = generation.current;
     const current = () => version === generation.current;
     try {
+      const remote = await discovery.refresh();
+      if (!current()) return;
+      if (remote?.state === 'pending' && (!pending || remote.request_key !== pending.requestKey)) {
+        setError('另一个页面的问题仍在生成，请稍后重新加载。当前草稿已保留。'); return;
+      }
+      if (!pending && remote) pending = remoteDraft(remote);
+      if (!pending) {
+        const detail = await historyApi.detail(id(cid));
+        if (!current()) return;
+        if (detail.type !== 'bazi' || detail.id !== id(cid)) throw new Error('保存记录与当前会话不一致。');
+        const restored = detail.messages.filter((message, index) => (message.role === 'user' || message.role === 'assistant')
+          && !(index === 0 && message.role === 'user' && message.content.startsWith('我的命盘信息如下'))).map(restoreStoredMessage);
+        setMessages(messages => restored.length ? restored : messages.filter(message => message.meta?.kind === 'intro'));
+        restoredCallback.current(detail); setError(null); setNotice('已更新保存记录，请核对后继续。');
+        return;
+      }
       const status = await savedTurnStatus(pending.requestKey);
       if (!current()) return;
       if (status.conversation_id && !sameConversation(status.conversation_id, cid)) throw new Error('请求与当前会话不一致，请重新打开原记录。');
@@ -164,6 +209,13 @@ export function useSavedBaziTurn({ owner, cid, setMessages, setInput, taskContex
     } finally { if (current()) { lock.current = false; setBusy(false); } }
   };
 
+  const foreignPending = discovery.remote?.state === 'pending' && discovery.remote.request_key !== draft?.requestKey;
   return { run, recover, onInputChange, stop: () => controller.current?.abort(),
-    blocked: !!draft && !draft.retryable, busy, error, notice, hasDraft: !!draft };
+    blocked: (!!draft && !draft.retryable) || !!discovery.error || discovery.remote?.state === 'pending',
+    busy: busy || discovery.checking,
+    error: discovery.error || (foreignPending ? '另一个页面的问题仍在生成，请先检查保存结果。当前草稿已保留。' : error)
+      || (discovery.remote?.state === 'pending' ? '这个问题仍在生成，请稍后重新加载。原解读与草稿已保留。' : null),
+    notice: discovery.remote?.state === 'retryable' && !draft && !remoteDraft(discovery.remote)
+      ? '旧请求没有保存原问题草稿，可查看已有记录后自行填写新问题。' : notice,
+    hasDraft: !!draft || !!discovery.error || discovery.remote?.state === 'pending' };
 }

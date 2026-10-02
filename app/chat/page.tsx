@@ -63,7 +63,7 @@ export default function ChatPage() {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const topAnchorRef = useRef<HTMLDivElement>(null);
   const bottomAnchorRef = useRef<HTMLDivElement>(null);
-  const turn = useSavedBaziTurn({ owner: me?.id, cid: conversationId, setMessages: setMsgs, setInput, taskContext,
+  const turn = useSavedBaziTurn({ owner: me?.id, cid: conversationId, input, setMessages: setMsgs, setInput, taskContext,
     onRestored: detail => {
       setTaskContext(detail.task_context ?? null);
       setBrowserOnlyHistory(false);

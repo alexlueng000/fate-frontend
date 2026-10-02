@@ -15,6 +15,8 @@ async function handle(request: NextRequest, context: { params: Promise<{ path?: 
   const path = '/' + ((await context.params).path ?? []).join('/');
   const method = request.method;
   if (method === 'GET') {
+    const turn = path.match(/^\/chat\/conversations\/((?:bazi_conv_|liuyao_conv_|conv_)?\d+)\/request$/);
+    if (turn) return json({ state: 'idle', conversation_id: turn[1], demo: true });
     if (path === '/me') return json(previewUser);
     if (path === '/profile/me') return json(previewProfile);
     if (path === '/config/quick_buttons') return json(QUICK_BUTTONS);

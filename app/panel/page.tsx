@@ -148,7 +148,7 @@ export default function PanelPage() {
       setTimeCorrection(snapshot);
     }
   };
-  const turn = useSavedBaziTurn({ owner: me?.id, cid: conversationId, setMessages: setMsgs, setInput,
+  const turn = useSavedBaziTurn({ owner: me?.id, cid: conversationId, input, setMessages: setMsgs, setInput,
     taskContext, onRestored: applySavedContext });
 
   const scrollRef = useRef<HTMLDivElement>(null);

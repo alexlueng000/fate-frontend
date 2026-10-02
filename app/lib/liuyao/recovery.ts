@@ -1,4 +1,5 @@
 import type { Msg } from '@/app/lib/chat/types';
+import type { ConversationTurn } from '@/app/lib/chat/turns';
 
 export type PendingQuestion = { prompt: string; submittedPrompt?: string; display: string; baselineMessageId: number;
   requestKey?: string; retryable?: boolean; quickLabel?: string };
@@ -25,6 +26,18 @@ export function savePendingQuestion(owner: string | number | undefined, cid: str
     if (draft) sessionStorage.setItem(key(owner, cid), JSON.stringify(draft));
     else sessionStorage.removeItem(key(owner, cid));
   } catch { /* In-memory draft remains available when storage is unavailable. */ }
+}
+
+export function questionFromRemote(remote: ConversationTurn): PendingQuestion | null {
+  const payload = remote.request_payload;
+  if (!payload) return null;
+  const quick = typeof payload.label === 'string' && typeof payload.prompt === 'string';
+  const prompt = quick ? payload.prompt : payload.message;
+  if (typeof prompt !== 'string' || !prompt.trim() || prompt.length > 4000) return null;
+  const display = quick ? payload.label as string : prompt;
+  if (display.length > (quick ? 64 : 4000)) return null;
+  return { prompt, submittedPrompt: prompt, display, baselineMessageId: remote.baseline_message_id,
+    requestKey: remote.request_key, retryable: remote.state === 'retryable', ...(quick ? { quickLabel: display } : {}) };
 }
 
 /** Only IDs from saved messages can prove that this attempted question completed. */
