@@ -99,3 +99,12 @@ test('abort during mobile drain stops further updates', async () => {
   await new Promise(resolve => setTimeout(resolve, 150));
   assert.equal(updates.length, count);
 });
+
+test('paid stream errors never render as a successful answer', async () => {
+  const { trySSE } = setup(async () => new Response('data: {"text":"partial","replace":true}\n\ndata: {"error":"生成失败，不扣额度"}\n\n', { headers: { 'Content-Type': 'text/event-stream' } }));
+  await assert.rejects(trySSE('/consultations/1/messages', {}, () => {}, undefined, { requireDone: true }), /生成失败/);
+});
+test('paid stream requires a durable completion signal', async () => {
+  const { trySSE } = setup(async () => new Response('data: {"text":"partial","replace":true}\n\n', { headers: { 'Content-Type': 'text/event-stream' } }));
+  await assert.rejects(trySSE('/consultations/1/messages', {}, () => {}, undefined, { requireDone: true }), /连接已中断/);
+});

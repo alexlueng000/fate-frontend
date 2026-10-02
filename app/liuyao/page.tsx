@@ -16,6 +16,7 @@ import MarkdownView from '@/app/components/Markdown';
 import { MessageList } from '@/app/components/chat/MessageList';
 import { InputArea } from '@/app/components/chat/InputArea';
 import { QuickActions } from '@/app/components/chat/QuickActions';
+import { ReadingLink } from '@/app/components/consultation/ReadingLink';
 import { Msg, normalizeMarkdown } from '@/app/lib/chat/types';
 import { parseSuggestedQuestions, restoreStoredMessage } from '@/app/lib/chat/parser';
 import { saveConversation, loadConversation } from '@/app/lib/chat/storage';
@@ -1483,6 +1484,7 @@ export default function LiuyaoPage() {
                         />
                       );
                     })()}
+                    {isLoggedIn && <ReadingLink conversationId={conversationId} />}
                     {isLoggedIn && (
                       <QuickActions
                         disabled={sending || booting || !conversationId || !!chatError}

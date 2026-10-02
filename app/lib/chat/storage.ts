@@ -90,6 +90,8 @@ export function clearAllChatData() {
     });
     // 清理 sessionStorage 中的会话 ID
     sessionStorage.removeItem('conversation_id');
+    localStorage.removeItem('task:career:latest');
+    sessionStorage.removeItem('task:career:pending_bazi_prompt');
   } catch {}
 }
 

@@ -47,6 +47,13 @@ type DashboardData = {
 
 const NEW_ANALYSIS_ENTRIES = [
   {
+    title: '把事业问题想清楚',
+    description: '从职业方向或具体机会开始，整理背景、分析依据和下一步行动。',
+    cta: '说说我的问题',
+    href: '/career',
+    icon: MessageSquare,
+  },
+  {
     title: '八字长期趋势',
     description: '适合看长期方向、性格优势、事业路径、关系模式和阶段运势。',
     cta: '开始八字分析',

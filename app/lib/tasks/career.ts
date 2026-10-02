@@ -21,6 +21,8 @@ export type CareerTaskContext = {
   lastProgressAt?: string;
   reviewDueAt?: string;
   progressNotes?: CareerTaskProgress[];
+  /** Explicit user inputs only; never derived from an assistant summary. */
+  facts?: Pick<CareerTaskDraft, 'topic' | 'currentSituation' | 'options' | 'timeframe'>;
 };
 
 export type CareerTaskProgress = {
@@ -43,7 +45,7 @@ function withFallback(value: string, fallback: string) {
 export function buildCareerBaziPrompt(draft: CareerTaskDraft) {
   const topic = withFallback(draft.topic, '我正在看工作或事业方向');
   const currentSituation = withFallback(draft.currentSituation, '目前还没有补充具体背景');
-  const timeframe = withFallback(draft.timeframe, '未来 30 天');
+  const timeframe = withFallback(draft.timeframe, '尚未指定，请在需要时向我确认');
   const options = withFallback(draft.options, '暂无明确选项，先看长期方向');
 
   return [
@@ -54,12 +56,11 @@ export function buildCareerBaziPrompt(draft: CareerTaskDraft) {
     `正在比较或纠结的选项：${options}`,
     `我希望重点看：${timeframe}`,
     '',
-    '请按以下结构输出：',
-    '1. 命局里的事业特质：用白话说明我更适合的工作方式、岗位类型或能力方向。',
-    '2. 当前阶段节奏：结合大运、流年或流月，看现在更适合进取、稳定、转换还是蓄力。',
-    '3. 需要避免的决策倾向：不要吓人，不说绝对话。',
-    '4. 未来 30 天行动建议：给 3 个具体、低压力、可执行的小动作。',
-    '5. 复盘点：告诉我什么时候回来复盘，以及如果出现具体 offer 或合作，应该如何转去六爻判断。',
+    '如果缺少作答所必需的信息，请先澄清；否则首次解读请使用以下三级标题：',
+    '### 核心观察：简明说明传统文化视角下的观察，不承诺结果。',
+    '### 分析依据：区分命盘信息、传统解释与我提供的现实事实；不要编造未提供的背景。',
+    '### 现实建议：提供 1–3 个可执行动作和复盘条件，尊重我指定的时间范围。',
+    '后续追问直接回答，不重复完整报告。',
   ].join('\n');
 }
 
@@ -106,6 +107,7 @@ export function createCareerTaskContext(draft: CareerTaskDraft): CareerTaskConte
       : '按解读里的观察时间点回来复盘，避免一次定死。',
     href: buildCareerTaskHref(draft),
     updatedAt: new Date().toISOString(),
+    facts: { topic: clean(draft.topic), currentSituation: clean(draft.currentSituation), options: clean(draft.options), timeframe: clean(draft.timeframe) },
   };
 }
 
@@ -153,10 +155,13 @@ export function savePendingCareerBaziPrompt(prompt: string) {
   } catch {}
 }
 
+export function clearPendingCareerBaziPrompt() {
+  try { sessionStorage.removeItem(CAREER_PENDING_BAZI_PROMPT_KEY); } catch {}
+}
+
 export function takePendingCareerBaziPrompt(): string | null {
   try {
     const prompt = sessionStorage.getItem(CAREER_PENDING_BAZI_PROMPT_KEY);
-    sessionStorage.removeItem(CAREER_PENDING_BAZI_PROMPT_KEY);
     return prompt && prompt.trim().length > 0 ? prompt : null;
   } catch {
     return null;

@@ -1,6 +1,7 @@
 'use client';
 
 import TimeCorrectionNotice from '@/app/components/chat/TimeCorrectionNotice';
+import { ReadingLink } from '@/app/components/consultation/ReadingLink';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -10,6 +11,8 @@ import Markdown from '@/app/components/Markdown';
 import { QuickActions } from '@/app/components/chat/QuickActions';
 import { MessageList } from '@/app/components/chat/MessageList';
 import { InputArea } from '@/app/components/chat/InputArea';
+import { ContextDrawer } from '@/app/components/consultation/primitives';
+import { ReviewNotes } from '@/app/components/consultation/ReviewNotes';
 import { MiniPillars } from '@/app/components/chat/MiniPillars';
 
 import { Msg, QUICK_BUTTONS, normalizeMarkdown } from '@/app/lib/chat/types';
@@ -26,7 +29,7 @@ import {
 import { trackEvent } from '@/app/lib/analytics/track';
 import {
   loadCareerTaskContext,
-  takePendingCareerBaziPrompt,
+  takePendingCareerBaziPrompt, clearPendingCareerBaziPrompt,
   type CareerTaskContext,
 } from '@/app/lib/tasks/career';
 import {
@@ -171,12 +174,12 @@ export default function PanelPage() {
     if (task === 'career') {
       setTaskContext(loadCareerTaskContext());
       if (auto === '1') {
-        pendingAutoPromptRef.current = takePendingCareerBaziPrompt();
+        pendingAutoPromptRef.current ||= takePendingCareerBaziPrompt();
       }
     } else if (task === 'relationship') {
       setTaskContext(loadRelationshipTaskContext());
       if (auto === '1') {
-        pendingAutoPromptRef.current = takePendingRelationshipBaziPrompt();
+        pendingAutoPromptRef.current ||= takePendingRelationshipBaziPrompt();
       }
     }
   }, []);
@@ -287,11 +290,12 @@ export default function PanelPage() {
       } catch {}
 
       const currentUser = me ?? await fetchMe();
-      if (!currentUser) { router.replace('/login?redirect=/panel'); return; }
+      const returnTo = '/panel' + window.location.search;
+      if (!currentUser) { router.replace(`/login?redirect=${encodeURIComponent(returnTo)}`); return; }
       if (!me) setUser(currentUser);
 
       const token = getAuthToken();
-      if (!token) { router.replace('/login?redirect=/panel'); return; }
+      if (!token) { router.replace(`/login?redirect=${encodeURIComponent(returnTo)}`); return; }
 
       // Fetch profile
       try {
@@ -299,9 +303,9 @@ export default function PanelPage() {
           headers: { Authorization: `Bearer ${token}` },
           credentials: 'include',
         });
-        if (!profileRes.ok) { router.replace('/profile/create'); return; }
+        if (!profileRes.ok) { router.replace(`/profile/create?next=${encodeURIComponent(returnTo)}`); return; }
         const profileData = await profileRes.json();
-        if (!profileData) { router.replace('/profile/create'); return; }
+        if (!profileData) { router.replace(`/profile/create?next=${encodeURIComponent(returnTo)}`); return; }
         if (alive) setProfile(profileData);
       } catch {
         // profile fetch failed, continue anyway
@@ -309,7 +313,8 @@ export default function PanelPage() {
 
       // Try restore existing session
       const active = getActiveConversationId() || sessionStorage.getItem('conversation_id');
-      if (active) {
+      const startingTask = new URLSearchParams(window.location.search).get('auto') === '1';
+      if (active && !startingTask) {
         const cached = loadConversation(active);
         if (cached?.length && alive) {
           const introContent = await fetchBaziIntro();
@@ -531,6 +536,10 @@ export default function PanelPage() {
     if (!prompt || !taskContext || taskContext.mode !== 'bazi') return;
 
     autoTaskStartedRef.current = true;
+    if (taskContext.taskType === 'career') clearPendingCareerBaziPrompt();
+    const url = new URL(window.location.href);
+    url.searchParams.delete('auto');
+    window.history.replaceState(window.history.state, '', url);
     pendingAutoPromptRef.current = null;
     const visibleMessage = taskContext.title || '任务分析';
     void sendHiddenTaskPrompt(prompt, visibleMessage);
@@ -699,6 +708,27 @@ export default function PanelPage() {
     <div className="h-full flex flex-col bg-[var(--color-bg)]">
 
       {/* Profile status bar */}
+      {taskContext && (
+        <div className="border-b border-[var(--color-border)] px-4 py-3">
+          <p className="font-serif text-lg">{taskContext.title}</p>
+          <div className="mt-2 flex flex-wrap items-center gap-4">
+            <ReadingLink conversationId={conversationId} />
+            <ContextDrawer
+              title="这次解读的命盘与背景"
+              description="排盘信息来自已保存的出生档案；背景由你提供。"
+              trigger={<button className="consult-secondary">查看命盘与背景</button>}
+            >
+              <MiniPillars fourPillars={fourPillars} loading={!fourPillars && !!profile} />
+              {taskContext.taskType === 'career' && <>
+                <p className="my-5 whitespace-pre-wrap leading-7">{taskContext.facts?.currentSituation || '尚未补充现实背景'}</p>
+                {conversationId && Number(conversationId.replace(/\D/g, '')) > 0 && (
+                  <ReviewNotes conversationId={Number(conversationId.replace(/\D/g, ''))} context={taskContext} />
+                )}
+              </>}
+            </ContextDrawer>
+          </div>
+        </div>
+      )}
       <header className="flex-shrink-0 border-b border-[var(--color-border)] bg-[var(--color-bg-elevated)]">
         <h1 className="sr-only">八字对话 · 当前命盘</h1>
 

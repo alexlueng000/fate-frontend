@@ -68,6 +68,8 @@ export function InputArea({
   }, [autoFocus]);
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    // Selecting a Chinese IME candidate must never submit the question.
+    if (e.nativeEvent.isComposing || e.keyCode === 229) return;
     onKeyDown?.(e);
     if (e.defaultPrevented) return;
 
@@ -78,12 +80,12 @@ export function InputArea({
 
     if (isCmdEnter) {
       e.preventDefault();
-      if (!sending && !disabled && canSend) onSend();
+      if (!sending && !disabled && canSend && (maxLength == null || value.length <= maxLength)) onSend();
       return;
     }
     if (allowEnterToSend && e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      if (!sending && !disabled && canSend) onSend();
+      if (!sending && !disabled && canSend && (maxLength == null || value.length <= maxLength)) onSend();
       return;
     }
     if (e.key === 'Escape') (e.target as HTMLTextAreaElement).blur();
@@ -118,7 +120,7 @@ export function InputArea({
               onChange={(e) => onChange(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={placeholder}
-              className="w-full min-h-[72px] max-h-[160px] resize-none rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-3 py-2.5 text-[15px] leading-relaxed text-[var(--color-text-primary)] placeholder:text-[var(--color-text-hint)] outline-none focus:border-[var(--color-primary)]/40 focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/24 disabled:opacity-50 transition-colors"
+              className="w-full min-h-[72px] max-h-[160px] resize-none rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-3 py-2.5 text-[16px] leading-relaxed text-[var(--color-text-primary)] placeholder:text-[var(--color-text-hint)] outline-none focus:border-[var(--color-primary)]/40 focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/24 disabled:opacity-50 transition-colors"
               disabled={disabled}
               rows={1}
               aria-label="对话输入框"
@@ -137,7 +139,7 @@ export function InputArea({
           {!sending ? (
             <button
               onClick={onSend}
-              disabled={!canSend || disabled}
+              disabled={!canSend || disabled || Boolean(countInfo?.warn)}
               aria-label="发送"
               title="发送"
               className="flex-shrink-0 w-11 h-11 rounded-full bg-[var(--color-primary)] text-white flex items-center justify-center hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/24"
@@ -169,7 +171,7 @@ export function InputArea({
   }
 
   return (
-    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-2 sm:p-3">
+    <div className="rounded-[4px] border border-[var(--color-border)] bg-[var(--color-bg-card)] p-2 sm:p-3">
       <div className="flex gap-2">
         {/* Input */}
         <div className="flex-1 relative">
@@ -179,7 +181,7 @@ export function InputArea({
             onChange={(e) => onChange(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
-            className="w-full min-h-[40px] max-h-[160px] resize-none rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-3 py-2 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-hint)] outline-none focus:border-[var(--color-gold-dark)] focus:ring-1 focus:ring-[var(--color-gold)]/20 disabled:opacity-50 transition-all"
+            className="w-full min-h-[40px] max-h-[160px] resize-none rounded-[3px] border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-3 py-2 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-hint)] outline-none focus:border-[var(--color-gold-dark)] focus:ring-1 focus:ring-[var(--color-gold)]/20 disabled:opacity-50 transition-all"
             disabled={disabled}
             rows={1}
             aria-label="对话输入框"
@@ -200,8 +202,8 @@ export function InputArea({
           {!sending ? (
             <button
               onClick={onSend}
-              disabled={!canSend || disabled}
-              className="h-[40px] px-4 rounded-lg bg-[var(--color-primary)] text-white font-medium flex items-center gap-1.5 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md shadow-[var(--color-primary)]/20"
+              disabled={!canSend || disabled || Boolean(countInfo?.warn)}
+              className="h-[40px] px-4 rounded-[3px] bg-[var(--color-primary)] text-white font-medium flex items-center gap-1.5 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md shadow-[var(--color-primary)]/20"
             >
               <Send className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">发送</span>
@@ -210,7 +212,7 @@ export function InputArea({
             <button
               onClick={() => onStop?.()}
               disabled={disabled}
-              className="h-[40px] px-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-elevated)] text-[var(--color-text-secondary)] font-medium flex items-center gap-1.5 hover:bg-[var(--color-bg-hover)] disabled:opacity-50 transition-all"
+              className="h-[40px] px-4 rounded-[3px] border border-[var(--color-border)] bg-[var(--color-bg-elevated)] text-[var(--color-text-secondary)] font-medium flex items-center gap-1.5 hover:bg-[var(--color-bg-hover)] disabled:opacity-50 transition-all"
             >
               <Square className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">停止</span>
@@ -222,7 +224,7 @@ export function InputArea({
               <button
                 onClick={onRegenerate}
                 disabled={sending || disabled}
-                className="flex-1 h-8 px-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-elevated)] text-[var(--color-text-muted)] text-sm flex items-center justify-center hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-secondary)] disabled:opacity-50 transition-all"
+                className="flex-1 h-8 px-2 rounded-[3px] border border-[var(--color-border)] bg-[var(--color-bg-elevated)] text-[var(--color-text-muted)] text-sm flex items-center justify-center hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-secondary)] disabled:opacity-50 transition-all"
                 title="重新解读"
               >
                 <RotateCcw className="w-3 h-3" />
@@ -233,7 +235,7 @@ export function InputArea({
               <button
                 onClick={handleClear}
                 disabled={sending || disabled}
-                className={`${actionsInline ? 'h-[40px] px-3' : 'h-8 px-2'} flex-1 rounded-lg border border-[var(--color-primary)]/30 bg-[var(--color-primary)]/5 text-[var(--color-primary)] text-sm flex items-center justify-center hover:bg-[var(--color-primary)]/10 disabled:opacity-50 transition-all`}
+                className={`${actionsInline ? 'h-[40px] px-3' : 'h-8 px-2'} flex-1 rounded-[3px] border border-[var(--color-primary)]/30 bg-[var(--color-primary)]/5 text-[var(--color-primary)] text-sm flex items-center justify-center hover:bg-[var(--color-primary)]/10 disabled:opacity-50 transition-all`}
                 title="清空对话"
               >
                 <Trash2 className="w-3 h-3" />

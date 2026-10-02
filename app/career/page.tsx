@@ -1,267 +1,93 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import {
-  ArrowLeft,
-  ArrowRight,
-  BriefcaseBusiness,
-  CheckCircle2,
-  Compass,
-  FileText,
-  ListChecks,
-} from 'lucide-react';
-
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { useRouteGuard } from '@/app/lib/useRouteGuard';
-import {
-  buildCareerTaskHref,
-  buildCareerBaziPrompt,
-  createCareerTaskContext,
-  savePendingCareerBaziPrompt,
-  saveCareerTaskContext,
-  type CareerTaskDraft,
-  type CareerTaskMode,
-} from '@/app/lib/tasks/career';
+import { buildCareerTaskHref, buildCareerBaziPrompt, createCareerTaskContext, savePendingCareerBaziPrompt, saveCareerTaskContext, type CareerTaskMode } from '@/app/lib/tasks/career';
 import { trackEvent } from '@/app/lib/analytics/track';
+import { ContextDrawer } from '@/app/components/consultation/primitives';
 
-const MODE_OPTIONS: Array<{
-  mode: CareerTaskMode;
-  eyebrow: string;
-  title: string;
-  description: string;
-  checks: string[];
-  icon: typeof FileText;
-}> = [
-  {
-    mode: 'bazi',
-    eyebrow: '我想看长期方向',
-    title: '用八字看事业阶段',
-    description: '适合看你更适合什么工作方式、今年适合进取还是稳定、未来一段时间该强化什么能力。',
-    checks: ['事业特质、岗位类型、工作节奏', '当前阶段宜进取还是宜稳定', '未来 30 天行动建议'],
-    icon: FileText,
-  },
-  {
-    mode: 'liuyao',
-    eyebrow: '我有一个具体选择',
-    title: '用六爻判断一件事',
-    description: '适合判断某个 offer、合作、跳槽机会、谈判或当下是否该推进，重点看风险和观察时间点。',
-    checks: ['当前状态、成败倾向、风险点', '建议行动和不宜做的事', '接下来要观察的信号'],
-    icon: Compass,
-  },
-];
-
-const FLOW_STEPS = ['确认问题', '补充背景', '选择方法', '转成行动'];
+const EXAMPLES = ['我想找到更适合自己的职业方向', '现在的工作没有成长，下一步怎么走？', '收到一个新 offer，我该考虑哪些条件？'];
 
 export default function CareerTaskPage() {
   const router = useRouter();
-  const routeLoading = useRouteGuard(true, false);
-  const [mode, setMode] = useState<CareerTaskMode>('bazi');
+  const loading = useRouteGuard(true, false);
+  const [step, setStep] = useState(0);
   const [topic, setTopic] = useState('');
-  const [currentSituation, setCurrentSituation] = useState('');
+  const [currentSituation, setSituation] = useState('');
   const [options, setOptions] = useState('');
   const [timeframe, setTimeframe] = useState('未来 30 天');
+  const [mode, setMode] = useState<CareerTaskMode>('bazi');
+  const [starting, setStarting] = useState(false);
+  const [error, setError] = useState('');
 
-  const draft: CareerTaskDraft = useMemo(() => ({
-    mode,
-    topic,
-    currentSituation,
-    options,
-    timeframe,
-  }), [currentSituation, mode, options, timeframe, topic]);
-
-  const canStart = topic.trim().length > 0 || currentSituation.trim().length > 0 || options.trim().length > 0;
-
+  useEffect(() => { if (!loading) trackEvent('career_triage_view'); }, [loading]);
   useEffect(() => {
-    if (routeLoading) return;
-    trackEvent('career_triage_view');
-  }, [routeLoading]);
+    if (step > 0) document.getElementById('career-step-title')?.focus();
+  }, [step]);
 
-  const startTask = () => {
-    const context = createCareerTaskContext(draft);
-    saveCareerTaskContext(context);
-    if (draft.mode === 'bazi') {
-      savePendingCareerBaziPrompt(buildCareerBaziPrompt(draft));
-    }
-    trackEvent('career_triage_submit', {
-      payload: {
-        mode: draft.mode,
-        has_topic: Boolean(draft.topic.trim()),
-        has_current_situation: Boolean(draft.currentSituation.trim()),
-        has_options: Boolean(draft.options.trim()),
-        has_timeframe: Boolean(draft.timeframe.trim()),
-      },
-    });
-    router.push(buildCareerTaskHref(draft));
-  };
-
-  if (routeLoading) {
-    return (
-      <main className="min-h-full bg-[var(--color-bg)] px-4 py-6 sm:px-8 sm:py-8">
-        <div className="mx-auto flex min-h-[55vh] max-w-5xl items-center justify-center">
-          <div className="text-sm text-[var(--color-text-secondary)]">正在进入事业选择</div>
-        </div>
-      </main>
-    );
+  function next() {
+    if (topic.trim().length < 4) { setError('请用一句话描述你想了解的事业问题。'); return; }
+    if (step === 1 && mode === 'liuyao' && !options.trim()) { setError('请补充这次要讨论的具体机会或选项。'); return; }
+    setError(''); setStep(step + 1);
   }
-
-  return (
-    <main className="min-h-full bg-[var(--color-bg)] px-4 pb-24 pt-5 sm:px-8 sm:pb-10 sm:pt-7">
-      <div className="mx-auto w-full max-w-5xl">
-        <header className="mb-6 border-b border-[var(--color-border)] pb-5 sm:mb-8">
-          <button
-            type="button"
-            onClick={() => router.push('/dashboard')}
-            className="mb-5 inline-flex min-h-11 items-center gap-2 rounded-[3px] border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-3 text-sm font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)]"
-          >
-            <ArrowLeft className="h-4 w-4" strokeWidth={1.6} />
-            返回命理首页
-          </button>
-          <p className="mb-2 text-[13px] font-medium tracking-[0.04em] text-[var(--color-text-muted)]">事业选择</p>
-          <h1 className="font-serif text-[1.45rem] font-medium leading-tight text-[var(--color-text-primary)] sm:text-[1.9rem]">
-            先把问题分清，再进入对应方法。
-          </h1>
-          <p className="mt-3 max-w-2xl text-[16px] leading-7 text-[var(--color-text-secondary)]">
-            八字看长期趋势，六爻看具体事项。你不用先懂术语，只要把当前卡住的地方说清楚。
-          </p>
-        </header>
-
-        <section className="grid gap-4 lg:grid-cols-2">
-          {MODE_OPTIONS.map((item) => {
-            const Icon = item.icon;
-            const active = mode === item.mode;
-            return (
-              <button
-                key={item.mode}
-                type="button"
-                aria-pressed={active}
-                onClick={() => setMode(item.mode)}
-                className={`group border p-5 text-left transition-colors focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)] sm:p-6 ${
-                  active
-                    ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5'
-                    : 'border-[var(--color-border-strong)] bg-[var(--color-bg-elevated)] hover:bg-[var(--color-bg-hover)]'
-                }`}
-              >
-                <div className="mb-5 flex items-center justify-between gap-4">
-                  <div className={`flex h-11 w-11 items-center justify-center rounded-full border ${
-                    active
-                      ? 'border-[var(--color-primary)]/25 text-[var(--color-primary)]'
-                      : 'border-[var(--color-border)] text-[var(--color-primary)]'
-                  }`}>
-                    <Icon className="h-5 w-5" strokeWidth={1.6} />
-                  </div>
-                  <span className={`text-xs font-medium tracking-[0.04em] ${
-                    active ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-muted)]'
-                  }`}>
-                    {active ? '已选择' : '点击选择'}
-                  </span>
-                </div>
-                <p className="text-sm font-medium text-[var(--color-text-secondary)]">{item.eyebrow}</p>
-                <h2 className="mt-2 font-serif text-xl font-medium leading-snug text-[var(--color-text-primary)]">
-                  {item.title}
-                </h2>
-                <p className="mt-3 text-[16px] leading-7 text-[var(--color-text-body)]">
-                  {item.description}
-                </p>
-                <div className="mt-5 space-y-2 text-sm leading-6 text-[var(--color-text-secondary)]">
-                  {item.checks.map((check) => (
-                    <div key={check} className="flex gap-2">
-                      <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-[var(--color-primary)]" strokeWidth={1.6} />
-                      <span>{check}</span>
-                    </div>
-                  ))}
-                </div>
-              </button>
-            );
-          })}
-        </section>
-
-        <section className="mt-5 border border-[var(--color-border-strong)] bg-[var(--color-bg-elevated)] p-5 sm:p-6">
-          <div className="mb-5 flex items-center gap-2 text-sm font-medium text-[var(--color-text-secondary)]">
-            <BriefcaseBusiness className="h-4 w-4 text-[var(--color-primary)]" strokeWidth={1.6} />
-            补充关键信息
-          </div>
-
-          <div className="grid gap-4">
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-[var(--color-text-primary)]">你现在最想判断什么？</span>
-              <input
-                value={topic}
-                onChange={(event) => setTopic(event.target.value)}
-                placeholder={mode === 'bazi' ? '例如：今年是否适合换工作' : '例如：这个 offer 要不要接'}
-                className="min-h-11 w-full rounded-[3px] border border-[var(--color-border)] bg-[var(--color-bg)] px-4 text-[16px] text-[var(--color-text-primary)] outline-none transition-colors placeholder:text-[var(--color-text-hint)] focus:border-[var(--color-primary)] focus:ring-[3px] focus:ring-[rgba(181,68,52,0.12)]"
-              />
-            </label>
-
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-[var(--color-text-primary)]">当前情况</span>
-              <textarea
-                value={currentSituation}
-                onChange={(event) => setCurrentSituation(event.target.value)}
-                placeholder="例如：现在工作稳定但成长慢，最近有一个新机会，薪资更高但不确定性也更强。"
-                rows={4}
-                className="w-full resize-none rounded-[3px] border border-[var(--color-border)] bg-[var(--color-bg)] px-4 py-3 text-[16px] leading-7 text-[var(--color-text-primary)] outline-none transition-colors placeholder:text-[var(--color-text-hint)] focus:border-[var(--color-primary)] focus:ring-[3px] focus:ring-[rgba(181,68,52,0.12)]"
-              />
-            </label>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <label className="block">
-                <span className="mb-2 block text-sm font-medium text-[var(--color-text-primary)]">
-                  正在比较的选项
-                </span>
-                <input
-                  value={options}
-                  onChange={(event) => setOptions(event.target.value)}
-                  placeholder={mode === 'bazi' ? '例如：继续稳定上班 / 转去业务岗' : '例如：接受 A 公司 offer'}
-                  className="min-h-11 w-full rounded-[3px] border border-[var(--color-border)] bg-[var(--color-bg)] px-4 text-[16px] text-[var(--color-text-primary)] outline-none transition-colors placeholder:text-[var(--color-text-hint)] focus:border-[var(--color-primary)] focus:ring-[3px] focus:ring-[rgba(181,68,52,0.12)]"
-                />
-              </label>
-              <label className="block">
-                <span className="mb-2 block text-sm font-medium text-[var(--color-text-primary)]">希望重点看多久</span>
-                <input
-                  value={timeframe}
-                  onChange={(event) => setTimeframe(event.target.value)}
-                  placeholder="例如：未来 30 天 / 今年下半年 / 这两周"
-                  className="min-h-11 w-full rounded-[3px] border border-[var(--color-border)] bg-[var(--color-bg)] px-4 text-[16px] text-[var(--color-text-primary)] outline-none transition-colors placeholder:text-[var(--color-text-hint)] focus:border-[var(--color-primary)] focus:ring-[3px] focus:ring-[rgba(181,68,52,0.12)]"
-                />
-              </label>
-            </div>
-          </div>
-
-          <div className="mt-5 grid gap-3 border-t border-[var(--color-border)] pt-5 sm:grid-cols-[1fr_auto] sm:items-center">
-            <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
-              {mode === 'bazi'
-                ? '下一步会进入八字对话，并要求 AI 给出未来 30 天行动建议和复盘点。'
-                : '下一步会进入六爻问事，先完成排盘，再看风险点、行动建议和观察时间。'}
-            </p>
-            <button
-              type="button"
-              onClick={startTask}
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[3px] bg-[var(--color-primary)] px-5 text-sm font-medium text-[var(--color-text-inverse)] transition-colors hover:bg-[var(--color-primary-hover)] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)] disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={!canStart}
-            >
-              进入分析
-              <ArrowRight className="h-4 w-4" strokeWidth={1.6} />
-            </button>
-          </div>
-        </section>
-
-        <section className="mt-4 border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-5 sm:p-6">
-          <div className="mb-4 flex items-center gap-2 text-sm font-medium text-[var(--color-text-secondary)]">
-            <ListChecks className="h-4 w-4 text-[var(--color-primary)]" strokeWidth={1.6} />
-            这条任务流会怎么走
-          </div>
-          <div className="grid gap-px border border-[var(--color-border)] bg-[var(--color-border)] md:grid-cols-4">
-            {FLOW_STEPS.map((label, index) => (
-              <div key={label} className="bg-[var(--color-bg)] p-4">
-                <p className="text-xs font-medium tracking-[0.04em] text-[var(--color-text-muted)]">
-                  {String(index + 1).padStart(2, '0')}
-                </p>
-                <p className="mt-2 text-sm font-medium text-[var(--color-text-primary)]">{label}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-      </div>
-    </main>
-  );
+  function start() {
+    if (starting) return;
+    setStarting(true);
+    const draft = { mode, topic, currentSituation, options, timeframe };
+    saveCareerTaskContext(createCareerTaskContext(draft));
+    if (mode === 'bazi') savePendingCareerBaziPrompt(buildCareerBaziPrompt(draft));
+    trackEvent('career_triage_submit', { payload: { mode, has_topic: true, has_current_situation: Boolean(currentSituation.trim()), has_options: Boolean(options.trim()) } });
+    router.push(buildCareerTaskHref(draft));
+  }
+  if (loading) return <main className="consult-page" aria-busy="true">正在准备事业解读…</main>;
+  return <main className="consult-page">
+    <Link href="/dashboard" className="mb-8 inline-flex min-h-11 items-center gap-2 text-sm text-[var(--color-text-secondary)]"><ArrowLeft size={16} />返回首页</Link>
+    <div className="flex items-center justify-between gap-4 border-b border-[var(--color-border)] pb-4">
+      <p className="consult-eyebrow !mb-0">事业 · 把下一步想清楚</p>
+      <span className="text-sm text-[var(--color-text-muted)]">{step + 1} / 3</span>
+    </div>
+    <ol aria-label="提问进度" className="my-6 flex gap-6 text-sm">
+      {['说说问题', '补充背景', '确认开始'].map((label, index) => <li key={label} aria-current={index === step ? 'step' : undefined} className={index === step ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-muted)]'}>{label}</li>)}
+    </ol>
+    {step === 0 && <section>
+      <h1 id="career-step-title" tabIndex={-1}>最近，工作上的什么事<br />让你停下来想了想？</h1>
+      <p className="my-5 leading-7 text-[var(--color-text-secondary)]">不需要懂命理术语。先说出问题，我们再一起整理背景和选择。</p>
+      <label htmlFor="career-question" className="mb-2 block text-sm">你的问题 <span className="text-[var(--color-primary)]">必填</span></label>
+      <textarea id="career-question" className="consult-field" rows={4} maxLength={400} value={topic} onChange={e => setTopic(e.target.value)} placeholder="例如：我想换工作，但不确定自己真正想要什么。" aria-describedby={error ? 'career-error' : undefined} />
+      <p className="mt-5 mb-3 text-sm text-[var(--color-text-muted)]">也可以从这里开始</p>
+      <div className="grid gap-2">{EXAMPLES.map(question => <button type="button" key={question} onClick={() => { setTopic(question); document.getElementById('career-question')?.focus(); }} className="consult-secondary text-left text-sm">{question}</button>)}</div>
+    </section>}
+    {step === 1 && <section>
+      <h1 id="career-step-title" tabIndex={-1}>这次，你更想理清什么？</h1>
+      <p className="my-5 leading-7 text-[var(--color-text-secondary)]">{topic}</p>
+      <fieldset className="grid gap-3 sm:grid-cols-2"><legend className="sr-only">解读方向</legend>
+        {([{ value: 'bazi', title: '了解长期方向', text: '结合八字，探索工作特点和阶段。' }, { value: 'liuyao', title: '讨论具体选择', text: '带着明确事项起卦，整理观察与行动。' }] as const).map(item => <label key={item.value} className={`cursor-pointer border p-5 ${mode === item.value ? 'border-[var(--color-primary)] bg-[var(--color-bg-alt)]' : 'border-[var(--color-border)]'}`}>
+          <input type="radio" name="career-mode" value={item.value} checked={mode === item.value} onChange={() => setMode(item.value)} className="mr-2 accent-[var(--color-primary)]" />{item.title}<p className="mt-3 text-sm leading-6 text-[var(--color-text-secondary)]">{item.text}</p>
+        </label>)}
+      </fieldset>
+      <label className="mt-6 block"><span className="mb-2 block text-sm">当前处境（选填）</span><textarea rows={3} maxLength={1200} className="consult-field" value={currentSituation} onChange={e => setSituation(e.target.value)} placeholder="有哪些已知条件、担心或现实限制？只填写你愿意分享的内容。" /></label>
+      <label className="mt-5 block"><span className="mb-2 block text-sm">具体机会或选项{mode === 'liuyao' ? '（必填）' : '（选填）'}</span><textarea rows={2} maxLength={800} className="consult-field" value={options} onChange={e => setOptions(e.target.value)} placeholder="例如：留在现岗位，或接受一家新公司的 offer。" /></label>
+      <label className="mt-5 block"><span className="mb-2 block text-sm">希望关注的时间范围</span><input className="consult-field" maxLength={100} value={timeframe} onChange={e => setTimeframe(e.target.value)} placeholder="例如：未来 30 天，或 offer 的答复期限" /></label>
+    </section>}
+    {step === 2 && <section>
+      <h1 id="career-step-title" tabIndex={-1}>从这个问题开始。</h1>
+      <p className="my-6 text-xl leading-8">{topic}</p>
+      <dl className="divide-y divide-[var(--color-border)] border-y border-[var(--color-border)]">
+        {[['解读方向', mode === 'bazi' ? '八字 · 长期方向' : '六爻 · 具体事项'], ['当前背景', currentSituation || '未补充'], ['机会或选项', options || '未指定'], ['关注时间', timeframe || '未指定']].map(([label, value]) => <div key={label} className="grid grid-cols-[100px_1fr] gap-4 py-4"><dt className="text-sm text-[var(--color-text-muted)]">{label}</dt><dd className="whitespace-pre-wrap break-words leading-7">{value}</dd></div>)}
+      </dl>
+      <p className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">{mode === 'bazi' ? '下一步使用你的出生档案。如尚未建档，会先引导补充。' : '下一步完成起卦，再进入这件事的解读。'} 解读提供传统文化视角与现实行动参考，决定由你做出。</p>
+      <ContextDrawer title="本次解读会怎样进行" description="围绕一个问题展开，避免重复填写。" trigger={<button className="mt-4 consult-secondary">了解解读流程</button>}>
+        <ol className="space-y-5 leading-7"><li>1. 确认必要信息，缺少关键条件时先澄清。</li><li>2. 展示核心观察，可展开查看分析依据。</li><li>3. 围绕同一问题追问，记录你愿意尝试的行动。</li><li>4. 从历史记录继续讨论和复盘。</li></ol>
+        <p className="mt-6 text-sm leading-7 text-[var(--color-text-secondary)]">进入页面不会扣除次数。实际提问按当前账号权益处理，购买前会明确展示适用范围。</p>
+      </ContextDrawer>
+    </section>}
+    {error && <p id="career-error" role="alert" className="mt-4 text-[var(--color-primary)]">{error}</p>}
+    <div className="mt-8 flex items-center justify-between gap-4">
+      {step > 0 ? <button className="consult-secondary" onClick={() => { setError(''); setStep(step - 1); }}>上一步</button> : <Link href="/panel" className="text-sm underline underline-offset-4">直接进入对话</Link>}
+      <button className="consult-primary inline-flex items-center gap-3" disabled={starting || (step === 0 && topic.trim().length < 4)} onClick={step === 2 ? start : next}>{starting ? '正在进入…' : step === 2 ? (mode === 'bazi' ? '开始事业解读' : '前往起卦') : '继续'}<ArrowRight size={16} /></button>
+    </div>
+  </main>;
 }

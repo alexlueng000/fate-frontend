@@ -2,13 +2,14 @@
 import { Msg, Paipan } from '@/app/lib/chat/types';
 import { ComponentType, ReactNode } from 'react';
 import Image from 'next/image';
-import { User, Loader2, RotateCcw } from 'lucide-react';
+import { Loader2, RotateCcw } from 'lucide-react';
 import { MessageRating } from './MessageRating';
 import { SimplifyButton } from './SimplifyButton';
 import { SimplifyPanel } from './SimplifyPanel';
 import { SuggestedQuestions } from './SuggestedQuestions';
 import { parseSuggestedQuestions } from '@/app/lib/chat/parser';
 import { WaitingResponse } from './WaitingResponse';
+import { ReadingBody } from '@/app/components/consultation/ReadingBody';
 
 export function MessageList({
   scrollRef,
@@ -104,44 +105,29 @@ export function MessageList({
 
         return (
           <div key={i} className={`flex gap-2 sm:gap-3 ${isAssistant ? '' : 'flex-row-reverse'}`}>
-            {/* Avatar - 桌面端显示，移动端隐藏 */}
-            <div className={`hidden sm:flex flex-shrink-0 w-8 h-8 overflow-hidden rounded-lg items-center justify-center ${
-              isAssistant
-                ? 'bg-[#fff8ee] border border-[var(--color-border)] shadow-sm'
-                : 'bg-[var(--color-bg-hover)] border border-[var(--color-border)]'
-            }`}>
-              {isAssistant ? (
-                <Image src="/images/yifan-assistant-avatar.webp" alt="一帆命理助手" width={32} height={32} className="h-full w-full object-cover" />
-              ) : (
-                <User className="w-4 h-4 text-[var(--color-text-secondary)]" />
-              )}
-            </div>
-
             {/* Message Bubble */}
             <div className="flex flex-col min-w-0 flex-1">
               <div
-                className={`rounded-xl px-3 py-2.5 sm:px-4 sm:py-3 ${
+                className={`rounded-[4px] px-3 py-2.5 sm:px-4 sm:py-3 ${
                   isAssistant
-                    ? 'bg-[var(--color-bg-card)] border border-[var(--color-border)] text-[var(--color-text-primary)]'
-                    : 'bg-[var(--color-primary)] text-white max-w-[85%] sm:max-w-[75%] ml-auto'
+                    ? 'bg-transparent text-[var(--color-text-primary)]'
+                    : 'bg-[var(--color-bg-alt)] text-[var(--color-text-primary)] max-w-[90%] sm:max-w-[75%] ml-auto'
                 }`}
               >
                 {isAssistant ? (
                   m.streaming && !displayContent.trim() ? (
                     <WaitingResponse />
                   ) : isIntro ? (
-                    <div className="border-l-2 border-[var(--color-gold)] pl-3">
+                    <div className="py-2">
                       <div className="msg-md">
                         <Markdown content={displayContent} />
                       </div>
                     </div>
                   ) : (
-                    <div className="msg-md">
-                      <Markdown content={displayContent} />
-                    </div>
+                    <ReadingBody content={displayContent} streaming={m.streaming} Markdown={Markdown} />
                   )
                 ) : (
-                  <p className="text-sm">{content}</p>
+                  <p className="whitespace-pre-wrap break-words text-base leading-7">{content}</p>
                 )}
               </div>
 
@@ -163,12 +149,12 @@ export function MessageList({
                       <span>{regenerating ? '重新解读中…' : '重新解读'}</span>
                     </button>
                   )}
-                  <SimplifyButton
+                  {onSimplify && <SimplifyButton
                     status={m.simplify?.status ?? 'idle'}
                     expanded={m.simplify?.expanded ?? false}
                     onRequest={() => onSimplify?.(i)}
                     onToggle={() => onSimplifyToggle?.(i)}
-                  />
+                  />}
                   {m.meta?.messageId && (
                     <MessageRating
                       messageId={m.meta.messageId}

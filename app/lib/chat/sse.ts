@@ -13,7 +13,7 @@ export class QuotaExhaustedError extends Error {
 
 export const CHAT_FAILURE_MESSAGE = '抱歉，本次解读生成失败。你可以刷新页面后重新提问，或稍后再试。';
 
-type StreamOptions = { signal?: AbortSignal; mobilePacing?: boolean };
+type StreamOptions = { signal?: AbortSignal; mobilePacing?: boolean; requireDone?: boolean };
 
 export async function trySSE(
   url: string,
@@ -58,7 +58,7 @@ export async function trySSE(
         visible = Array.from(text).slice(0, Array.from(visible).length).join('');
         onDelta(visible);
       }
-    }, onMeta, { signal: controller.signal });
+    }, onMeta, { signal: controller.signal, requireDone: opts?.requireDone });
     clearTimeout(idleTimer!);
     clearTimeout(totalTimer);
     if (!target.trim()) throw new Error(CHAT_FAILURE_MESSAGE);
@@ -81,9 +81,8 @@ async function readSSE(
   body: unknown,
   onDelta: (text: string) => void,   // 回调"当前整段最新文本"（已规范化）
   onMeta?: (meta: unknown) => void,
-  opts?: { signal?: AbortSignal }    // ✅ 支持中止旧流
+  opts?: { signal?: AbortSignal; requireDone?: boolean }    // ✅ 支持中止旧流
 ): Promise<void> {
-  const log = (...a: unknown[]) => console.log('[SSE]', ...a);
 
   // 构建请求头，自动添加 Authorization
   const headers: Record<string, string> = {
@@ -129,6 +128,8 @@ async function readSSE(
   let text   = '';       // 聚合后的全文
   let lastEmitted = '';
   let rafId: number | null = null;
+  let streamError: string | null = null;
+  let receivedDone = false;
 
   // —— FINAL & STABLE —— //
   const normalize = (s: string): string => {
@@ -203,7 +204,6 @@ async function readSSE(
       if (normalized !== lastEmitted) {
         lastEmitted = normalized;
         onDelta(normalized);
-        log('emit len=', normalized.length, 'tail=', normalized.slice(-30).replace(/\n/g, '\\n'));
       }
     });
   };
@@ -245,10 +245,8 @@ async function readSSE(
       (text === '' || seg.startsWith(text.slice(0, Math.min(text.length, 16))));
     if (looksFull) {
       text = seg;                      // 替换整段
-      log('replace(full) len=', seg.length);
     } else {
       text += seg;                     // 追加片段
-      log('append(seg) len=', seg.length);
     }
     scheduleEmit();
   };
@@ -257,17 +255,16 @@ async function readSSE(
   const handleDataLine = (line: string, eventName: string | null) => {
     const payload = line;             // 不去掉头部空格
     const t = payload.trim();
-    if (t === '' || t === '[DONE]') return;
+    if (t === '[DONE]') { receivedDone = true; return; }
+    if (t === '') return;
 
     // 显式 meta 事件
     if (eventName === 'meta') {
       try {
         const obj = JSON.parse(t);
         onMeta?.(obj?.meta ?? obj);
-        log('meta(event)=', obj?.meta ?? obj);
       } catch {
         onMeta?.(t);
-        log('meta(event,text)=', t);
       }
       return;
     }
@@ -276,6 +273,7 @@ async function readSSE(
     if (t[0] === '{' || t[0] === '[') {
       try {
         const obj: Record<string, unknown> = JSON.parse(t);
+        if (typeof obj.error === 'string') { streamError = obj.error; return; }
 
         const looksLikeMeta =
           typeof obj?.conversation_id === 'string' ||
@@ -290,14 +288,12 @@ async function readSSE(
 
         if (looksLikeMeta) {
           onMeta?.(obj.meta ?? obj);
-          log('meta(obj)=', obj.meta ?? obj);
           if (!seg) return; // 纯 meta 不落正文
         }
 
         if (seg) {
           if ((obj as { replace?: boolean })?.replace === true) {
             text = seg;
-            log('replace(flag) len=', seg.length);
             scheduleEmit();
           } else {
             appendSegmentSmart(seg);
@@ -348,13 +344,13 @@ async function readSSE(
       const chunk = decoder.decode(value, { stream: true });
       rawBuf += chunk;
       rawBuf = rawBuf.replace(/\r\n/g, '\n');
-      log('chunk bytes=', chunk.length);
 
       let idx: number;
       while ((idx = rawBuf.indexOf('\n\n')) !== -1) {
         const block = rawBuf.slice(0, idx);
         rawBuf = rawBuf.slice(idx + 2);
         processBlock(block);
+        if (streamError) throw new Error(streamError);
       }
     }
 
@@ -362,13 +358,14 @@ async function readSSE(
     if (rawBuf.trim()) {
       processBlock(rawBuf);
     }
+    if (streamError) throw new Error(streamError);
+    if (opts?.requireDone && !receivedDone) throw new Error('连接已中断，请刷新确认本次解读状态。');
 
     // 最后一发
     const normalized = normalize(text);
     if (normalized !== lastEmitted) {
       lastEmitted = normalized;
       onDelta(normalized);
-      log('emit(final) len=', normalized.length);
     }
   } finally {
     if (rafId !== null) cancelAnimationFrame(rafId);
