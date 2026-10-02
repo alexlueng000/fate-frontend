@@ -206,6 +206,20 @@ export const liuyaoApi = {
 
   // ===== 多轮对话（推荐使用）=====
 
+  /** Read the owned first-generation state; never start a model request. */
+  async openingStatus(hexagramId: string): Promise<{ state: 'idle' | 'pending' | 'retryable' | 'succeeded'; conversation_id?: string; message_id?: number }> {
+    const response = await fetch(api(`/liuyao/${encodeURIComponent(hexagramId)}/chat/status`), {
+      headers: getAuthHeaders(), cache: 'no-store',
+    });
+    if (!response.ok) throw new Error('暂时无法查询首次解读，请稍后重新加载。');
+    const value = await response.json();
+    if (!value || !['idle', 'pending', 'retryable', 'succeeded'].includes(value.state)) throw new Error('首次解读状态不完整，请稍后重新加载。');
+    if (value.state === 'succeeded' && (typeof value.conversation_id !== 'string' || !Number.isSafeInteger(value.message_id) || value.message_id <= 0)) {
+      throw new Error('首次解读保存记录不完整，请从解读记录检查原对话。');
+    }
+    return value;
+  },
+
   /**
    * 开启六爻多轮对话（流式）。
    * 调用 POST /liuyao/{hexagramId}/chat/start，消耗 1 次 liuyao_chat 配额。

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ImageDown, LogIn, Send } from 'lucide-react';
 import { getAuthToken, useUser } from '@/app/lib/auth';
@@ -19,8 +19,8 @@ import { QuickActions } from '@/app/components/chat/QuickActions';
 import { ReadingLink } from '@/app/components/consultation/ReadingLink';
 import { Msg, normalizeMarkdown } from '@/app/lib/chat/types';
 import { parseSuggestedQuestions, restoreStoredMessage } from '@/app/lib/chat/parser';
-import { saveConversation, loadConversation } from '@/app/lib/chat/storage';
-import { QuotaExhaustedError, ReplyNotSavedError } from '@/app/lib/chat/sse';
+import { saveConversation } from '@/app/lib/chat/storage';
+import { QuotaExhaustedError } from '@/app/lib/chat/sse';
 import { readPendingQuestion, savePendingQuestion, hasSavedReply, type PendingQuestion } from '@/app/lib/liuyao/recovery';
 import { newTurnKey, savedTurnStatus } from '@/app/lib/chat/turns';
 import { QuotaChip } from '@/app/components/QuotaChip';
@@ -175,6 +175,7 @@ export default function LiuyaoPage() {
   const [recoveryNotice, setRecoveryNotice] = useState<string | null>(null);
   const [pendingQuestion, setPendingQuestion] = useState<PendingQuestion | null>(null);
   const [reloadingChat, setReloadingChat] = useState(false);
+  const [openingRecovery, setOpeningRecovery] = useState<'checking' | 'pending' | 'unknown' | 'retryable' | null>(null);
   const chatScrollRef = useRef<HTMLDivElement | null>(null);
   const regenerationLockRef = useRef(false);
   const actionAbortRef = useRef<AbortController | null>(null);
@@ -293,13 +294,22 @@ export default function LiuyaoPage() {
   }, [msgs, sending, booting]);
 
   useEffect(() => {
-    const urlConvId = new URLSearchParams(window.location.search).get('conv_id');
-    if (!urlConvId) return;
+    const query = new URLSearchParams(window.location.search);
+    const urlConvId = query.get('conv_id');
+    const urlHexagramId = query.get('hexagram_id');
+    if (!urlConvId && !urlHexagramId) return;
     let alive = true;
 
     (async () => {
       setRestoringFromHistory(true);
       try {
+        if (!urlConvId && urlHexagramId) {
+          const hexagram = await liuyaoApi.getHexagram(urlHexagramId);
+          if (!alive) return;
+          if (hexagram.hexagram_id !== urlHexagramId) throw new Error('卦象记录不一致，请从解读记录重新打开。');
+          setResult(hexagram);
+          return;
+        }
         const detail = await historyApi.detail(Number(urlConvId));
         if (!alive) return;
         if (detail.type !== 'liuyao') {
@@ -321,7 +331,7 @@ export default function LiuyaoPage() {
         });
         const restoredMsgs: Msg[] = filtered.map(restoreStoredMessage);
 
-        setConversationId(cid);
+        setConversationId(restoredMsgs.some(message => message.role === 'assistant' && message.content.trim()) ? cid : null);
         setMsgs(restoredMsgs);
         try {
           saveConversation(cid, restoredMsgs, { setActive: false });
@@ -341,28 +351,58 @@ export default function LiuyaoPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    if (restoringFromHistory || conversationId || booting) return;
-    if (!isLoggedIn) return;
-    if (!result?.hexagram_id) {
-      setConversationId(null);
-      setMsgs([]);
-      return;
-    }
+  const loadOpening = useCallback(async (hexagram: HexagramDetail, current: () => boolean = () => true) => {
+    setOpeningRecovery('checking');
     try {
-      const cid = localStorage.getItem(LIUYAO_ACTIVE_CONV_KEY(result.hexagram_id));
-      if (cid) {
-        const cached = loadConversation(cid);
-        if (cached?.length) {
-          setConversationId(cid);
-          setMsgs(cached);
-          return;
-        }
+      const status = await liuyaoApi.openingStatus(hexagram.hexagram_id);
+      if (!current()) return;
+      if (status.conversation_id && status.state !== 'succeeded') {
+        const id = Number(status.conversation_id.replace(/^(liuyao_conv_|conv_)/, ''));
+        if (!Number.isSafeInteger(id) || id <= 0) throw new Error('首次解读会话编号不完整。');
+        const detail = await historyApi.detail(id);
+        if (!current()) return;
+        if (detail.type !== 'liuyao' || detail.hexagram?.hexagram_id !== hexagram.hexagram_id) throw new Error('保存记录与当前卦象不一致。');
+        setTaskContext(detail.task_context ?? null);
       }
-    } catch {}
-    setConversationId(null);
-    setMsgs([]);
-  }, [result?.hexagram_id, restoringFromHistory, conversationId, booting, isLoggedIn]);
+      if (status.state === 'succeeded') {
+        const id = Number(status.conversation_id!.replace(/^(liuyao_conv_|conv_)/, ''));
+        if (!Number.isSafeInteger(id) || id <= 0) throw new Error('首次解读会话编号不完整，请从解读记录重新打开。');
+        const detail = await historyApi.detail(id);
+        if (!current()) return;
+        if (detail.type !== 'liuyao' || detail.hexagram?.hexagram_id !== hexagram.hexagram_id) throw new Error('保存记录与当前卦象不一致。');
+        const restored = detail.messages.filter((message, index) => (message.role === 'user' || message.role === 'assistant')
+          && !(index === 0 && message.role === 'user' && message.content.startsWith('请基于以下卦象做第一次解读'))).map(restoreStoredMessage);
+        if (!restored.some(message => message.role === 'assistant' && message.meta?.messageId === status.message_id)) {
+          throw new Error('首次解读已保存，但记录尚未包含该回复，请稍后重新加载。');
+        }
+        const cid = `liuyao_conv_${id}`;
+        setMsgs(restored); setConversationId(cid); setTaskContext(detail.task_context ?? null);
+        saveConversation(cid, restored, { setActive: false });
+        setOpeningRecovery(null); setChatError(null);
+        setRecoveryNotice('已读取到首次解读的保存结果，无需再次生成。');
+      } else if (status.state === 'pending') {
+        setOpeningRecovery('pending');
+        setChatError('同一卦象的首次解读仍在生成。可以稍后重新加载保存结果，无需再次发送。');
+      } else {
+        setOpeningRecovery(status.state === 'retryable' ? 'retryable' : null);
+        setChatError(null);
+        setRecoveryNotice(status.state === 'retryable' ? '已确认首次解读尚未完成，可以手动重试；原卦象和背景会保留。' : null);
+      }
+    } catch (error) {
+      if (!current()) return;
+      setOpeningRecovery('unknown');
+      setChatError(error instanceof Error ? error.message : '暂时无法查询首次解读，请稍后重新加载。');
+    }
+  }, []);
+
+  useEffect(() => {
+    if (restoringFromHistory || conversationId || booting || !isLoggedIn || !result?.hexagram_id) return;
+    let alive = true;
+    // An owned server read replaces unverified global browser caches and also
+    // finds a first generation started from another tab/device.
+    void loadOpening(result, () => alive);
+    return () => { alive = false; };
+  }, [result, restoringFromHistory, conversationId, booting, isLoggedIn, user?.id, loadOpening]);
 
   useEffect(() => {
     if (conversationId) saveConversation(conversationId, msgs, { setActive: false });
@@ -550,6 +590,12 @@ export default function LiuyaoPage() {
       const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       await new Promise((resolve) => window.setTimeout(resolve, reduceMotion ? 500 : 4200));
       setResult(hexagram);
+      // Persist the owned hexagram's URL before starting AI. Reload can locate
+      // its durable request even when the stream never delivered a chat ID.
+      const recoveryUrl = new URL(window.location.href);
+      recoveryUrl.searchParams.delete('conv_id'); recoveryUrl.searchParams.delete('question');
+      recoveryUrl.searchParams.set('hexagram_id', hexagram.hexagram_id);
+      window.history.replaceState(null, '', recoveryUrl);
       setCastingResult(null);
       trackEvent('liuyao_hexagram_created', {
         payload: { hexagram_id: hexagram.hexagram_id, guest: false },
@@ -573,6 +619,8 @@ export default function LiuyaoPage() {
       setConversationId(null);
       setMsgs([]);
       setChatError(null);
+      setPendingQuestion(null);
+      setOpeningRecovery(null);
       setInput('');
       if (autoStartAfterPaipan) {
         setLoading(false);
@@ -624,10 +672,11 @@ export default function LiuyaoPage() {
 
   const handleStartChat = async (targetHexagram: HexagramDetail | null = result) => {
     if (!targetHexagram?.hexagram_id || regenerationLockRef.current) return;
+    if (isLoggedIn && targetHexagram.hexagram_id === result?.hexagram_id && openingRecovery
+      && openingRecovery !== 'retryable') return;
     regenerationLockRef.current = true;
     const controller = new AbortController();
     actionAbortRef.current = controller;
-    let startedConversationId = '';
     setBooting(true);
     setChatError(null);
     setRecoveryNotice(null);
@@ -698,7 +747,6 @@ export default function LiuyaoPage() {
         (meta) => {
           const cid = readConvId(meta);
           if (cid && targetHexagram.hexagram_id) {
-            startedConversationId = cid;
             setConversationId(cid);
             try {
               localStorage.setItem(LIUYAO_ACTIVE_CONV_KEY(targetHexagram.hexagram_id), cid);
@@ -725,6 +773,7 @@ export default function LiuyaoPage() {
         }),
       });
       void refreshLiuyaoQuota();
+      setOpeningRecovery(null);
     } catch (error: unknown) {
       if (error instanceof QuotaExhaustedError) {
         handleLiuyaoQuotaExhausted(error, assistantIdx);
@@ -734,13 +783,10 @@ export default function LiuyaoPage() {
         console.error('开启对话失败:', error);
         setChatError(msg);
         setMsgs([]);
-        // An explicit server error confirms no saved reply. A dropped stream
-        // may have committed; retain its ID so recovery only reads the archive.
-        const confirmedFailure = error instanceof ReplyNotSavedError;
-        setConversationId(confirmedFailure ? null : startedConversationId || null);
-        if (confirmedFailure && startedConversationId) {
-          try { localStorage.removeItem(LIUYAO_ACTIVE_CONV_KEY(targetHexagram.hexagram_id)); } catch {}
-        }
+        // Resolve by owned hexagram, even if the stream dropped before its CID
+        // arrived. Explicit errors also read the state before manual retry.
+        setConversationId(null);
+        if (isLoggedIn) setOpeningRecovery('unknown');
       }
     } finally {
       regenerationLockRef.current = false;
@@ -1526,9 +1572,13 @@ export default function LiuyaoPage() {
                     setChatError(null);
                     setRecoveryNotice(null);
                     setPendingQuestion(null);
+                    setOpeningRecovery(null);
                     setInput('');
+                    const newUrl = new URL(window.location.href);
+                    newUrl.searchParams.delete('conv_id'); newUrl.searchParams.delete('hexagram_id'); newUrl.searchParams.delete('question');
+                    window.history.replaceState(null, '', newUrl);
                   }}
-                  disabled={booting || sending || reloadingChat}
+                  disabled={booting || sending || reloadingChat || openingRecovery === 'checking' || openingRecovery === 'pending'}
                   className="btn btn-secondary"
                 >
                   重新起卦
@@ -1555,6 +1605,9 @@ export default function LiuyaoPage() {
                   <p className="mt-2 text-xs text-[color:var(--color-text-muted)]">成功保存的回复才计次。网络中断时，先检查保存结果再继续。</p>
                   {conversationId && <button type="button" onClick={() => void reloadSavedConversation()} disabled={booting || sending || reloadingChat}
                     className="btn btn-secondary mt-4">{reloadingChat ? '正在重新加载…' : '重新加载对话'}</button>}
+                  {!conversationId && isLoggedIn && openingRecovery && <button type="button" onClick={() => void loadOpening(result)}
+                    disabled={booting || openingRecovery === 'checking'} className="btn btn-secondary mt-4">
+                    {openingRecovery === 'checking' ? '正在检查保存结果…' : '重新加载首次解读'}</button>}
                 </div>}
                 {recoveryNotice && <p role="status" className="mb-4 text-sm text-[color:var(--color-text-secondary)]">{recoveryNotice}</p>}
                 {booting && <button type="button" className="reading-pill mb-4" onClick={() => actionAbortRef.current?.abort()}>停止生成</button>}
@@ -1569,10 +1622,11 @@ export default function LiuyaoPage() {
                     <button
                       type="button"
                       onClick={() => void handleStartChat()}
-                      disabled={booting}
+                      disabled={booting || (isLoggedIn && !!openingRecovery && openingRecovery !== 'retryable')}
                       className="btn btn-primary"
                     >
-                      {booting ? '启动中…' : '开始 AI 解卦'}
+                      {booting ? '启动中…' : openingRecovery === 'checking' ? '检查保存结果…' : openingRecovery === 'pending'
+                        ? '解读正在生成…' : openingRecovery === 'unknown' ? '先检查保存结果' : openingRecovery === 'retryable' ? '重试 AI 解卦' : '开始 AI 解卦'}
                     </button>
                   </div>
                 ) : (
