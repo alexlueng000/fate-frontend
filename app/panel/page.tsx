@@ -17,7 +17,7 @@ import { MiniPillars } from '@/app/components/chat/MiniPillars';
 
 import { Msg, QUICK_BUTTONS, normalizeMarkdown } from '@/app/lib/chat/types';
 import { parseSuggestedQuestions } from '@/app/lib/chat/parser';
-import { api, fetchBaziIntro, fetchQuickButtons, pickReply } from '@/app/lib/chat/api';
+import { api, fetchBaziIntro, fetchQuickButtons, pickReply, readApiError } from '@/app/lib/chat/api';
 import { trySSE, QuotaExhaustedError, CHAT_FAILURE_MESSAGE } from '@/app/lib/chat/sse';
 import { QuotaBar } from '@/app/components/QuotaBar';
 import QuotaExhaustedDialog from '@/app/components/QuotaExhaustedDialog';
@@ -55,18 +55,6 @@ interface FourPillarsData {
   month?: string[];
   day?: string[];
   hour?: string[];
-}
-
-async function readApiError(response: Response): Promise<string> {
-  const text = await response.text().catch(() => '');
-  if (!text) return `请求失败（${response.status}）`;
-  try {
-    const data = JSON.parse(text) as { detail?: unknown; message?: unknown };
-    const detail = data.detail ?? data.message;
-    return typeof detail === 'string' && detail.trim() ? detail : '请求失败，请稍后重试';
-  } catch {
-    return text;
-  }
 }
 
 function HeaderMenu({
@@ -542,9 +530,10 @@ export default function PanelPage() {
   };
 
   const regenerate = async () => {
-    if (!conversationId || regenerating) return;
+    if (!conversationId || regenerating || streamingLockRef.current) return;
     const lastIdx = [...msgs].map((m, i) => ({ m, i })).reverse().find(x => x.m.role === 'assistant')?.i;
     if (lastIdx == null) return;
+    streamingLockRef.current = true;
     setErr(null);
     setRegenerating(true);
     setLoading(true);
@@ -555,36 +544,41 @@ export default function PanelPage() {
       const res = await fetch(api('/chat/regenerate'), {
         method: 'POST',
         headers,
-        body: JSON.stringify({ conversation_id: conversationId }),
+        body: JSON.stringify({ conversation_id: conversationId, expected_message_id: msgs[lastIdx].meta?.messageId }),
       });
       if (!res.ok) throw new Error(await readApiError(res));
-      const full = pickReply(await res.json()).trim();
+      const data = await res.json();
+      const full = pickReply(data).trim();
+      if (!full) throw new Error('未收到完整解读，原回答已保留。');
       const { questions, cleanedContent } = parseSuggestedQuestions(full);
       const newReply = normalizeMarkdown(cleanedContent || '（后端未返回解读内容）');
       setMsgs(prev => {
-        const next = [...prev];
-        next[lastIdx] = { role: 'assistant', content: newReply, suggestedQuestions: questions };
-        return next;
+        return [...prev, { role: 'assistant', content: newReply, suggestedQuestions: questions,
+          meta: { kind: 'regenerated', messageId: data.message_id } }];
       });
     } catch (e: unknown) { setErr(e instanceof Error ? e.message : String(e)); }
     finally {
+      streamingLockRef.current = false;
       setRegenerating(false);
       setLoading(false);
     }
   };
 
   const clearChat = async () => {
-    if (!conversationId) return;
+    if (!conversationId || streamingLockRef.current) return;
+    streamingLockRef.current = true;
     setErr(null);
     setLoading(true);
     try {
+      const token = getAuthToken();
       const res = await fetch(api('/chat/clear'), {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }, credentials: 'include',
         body: JSON.stringify({ conversation_id: conversationId }),
       });
       if (!res.ok) throw new Error(await readApiError(res));
       const data = await res.json().catch(() => null);
-      if (!data?.ok) throw new Error(data?.error || '清空失败');
+      if (!data?.ok || typeof data.conversation_id !== 'string' || data.conversation_id === conversationId) throw new Error(data?.error || '未能确认新会话，请重新加载。');
+      const cid = data.conversation_id;
       // Clearing removes the conversation history/context, but the page should
       // immediately return to its ready state instead of the empty loading
       // placeholder. Reuse the admin-managed opening message.
@@ -594,10 +588,18 @@ export default function PanelPage() {
         content: introContent,
         meta: { kind: 'intro' },
       };
+      // Publish the new ID and its empty context together. While the intro is
+      // loading, the persistence effect must not copy old messages to this ID.
+      setConversationId(cid);
+      setTaskContext(null);
+      pendingAutoPromptRef.current = '';
+      setInput('');
       setMsgs([introMsg]);
-      saveConversation(conversationId, [introMsg]);
+      saveConversation(cid, [introMsg]);
+      sessionStorage.setItem('conversation_id', cid);
+      router.replace('/panel');
     } catch (e: unknown) { setErr(e instanceof Error ? e.message : String(e)); }
-    finally { setLoading(false); }
+    finally { streamingLockRef.current = false; setLoading(false); }
   };
 
   const sendQuick = async (label: string, fullPrompt: string) => {
@@ -800,7 +802,7 @@ export default function PanelPage() {
       <ConfirmDialog
         open={clearDialogOpen}
         title="清空当前对话？"
-        message={'清空后，本页的聊天内容和 AI 对话上下文将被移除。\n命盘档案和历史解读记录不会受到影响。'}
+        message={'将开始一段空白对话，不再沿用当前问题和背景。\n原对话与报告保留在解读记录中，随时可以重新打开。'}
         confirmLabel="确认清空"
         busy={loading}
         onClose={() => setClearDialogOpen(false)}

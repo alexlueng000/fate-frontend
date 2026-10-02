@@ -21,7 +21,7 @@ import {
   Msg, Paipan, QUICK_BUTTONS, normalizeMarkdown,
 } from '@/app/lib/chat/types';
 import { parseSuggestedQuestions, restoreStoredMessage } from '@/app/lib/chat/parser';
-import { api, fetchQuickButtons, pickReply } from '@/app/lib/chat/api';
+import { api, fetchQuickButtons, pickReply, readApiError } from '@/app/lib/chat/api';
 import { trySSE, QuotaExhaustedError, CHAT_FAILURE_MESSAGE } from '@/app/lib/chat/sse';
 import {
   saveConversation, loadConversation, getActiveConversationId,
@@ -49,6 +49,7 @@ export default function ChatPage() {
   const [quotaRefreshKey, setQuotaRefreshKey] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const mountedRef = useRef(true);
+  const regenerationLockRef = useRef(false);
   const chatViewTrackedRef = useRef(false);
   const firstMessageTrackedRef = useRef(false);
   const [quotaDialogOpen, setQuotaDialogOpen] = useState(false);
@@ -478,10 +479,10 @@ export default function ChatPage() {
   };
 
   const regenerate = async () => {
-    if (!conversationId) return;
+    if (!conversationId || sending || regenerationLockRef.current) return;
     const lastAssistantIdx = [...msgs].map((m, i) => ({ m, i })).reverse().find(x => x.m.role === 'assistant')?.i;
     if (lastAssistantIdx == null) return;
-
+    regenerationLockRef.current = true;
     setSending(true);
     setErr(null);
     try {
@@ -491,20 +492,22 @@ export default function ChatPage() {
       const res = await fetch(api('/chat/regenerate'), {
         method: 'POST',
         headers,
-        body: JSON.stringify({ conversation_id: conversationId }),
+        body: JSON.stringify({ conversation_id: conversationId, expected_message_id: msgs[lastAssistantIdx].meta?.messageId }),
       });
-      if (!res.ok) throw new Error(await res.text());
+      if (!res.ok) throw new Error(await readApiError(res));
       const data = await res.json();
-      const newReply = normalizeMarkdown(pickReply(data).trim() || '（后端未返回解读内容）');
+      const full = pickReply(data).trim();
+      if (!full) throw new Error('未收到完整解读，原回答已保留。');
+      const newReply = normalizeMarkdown(full);
 
       setMsgs(prev => {
-        const next = [...prev];
-        next[lastAssistantIdx] = { role: 'assistant', content: newReply };
-        return next;
+        return [...prev, { role: 'assistant', content: newReply,
+          meta: { kind: 'regenerated', messageId: data.message_id } }];
       });
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
+      regenerationLockRef.current = false;
       setSending(false);
     }
   };
@@ -704,6 +707,7 @@ export default function ChatPage() {
           onSimplify={handleSimplify}
           onSimplifyToggle={handleSimplifyToggle}
           onQuestionClick={handleQuestionClick}
+          onRegenerate={regenerate}
           loading={sending}
           emptyText={booting ? '正在读取解读记录…' : '这条记录暂无解读内容'}
           emptyTitle={historyRecordMissing ? '这条记录暂时没有可显示的解读内容' : undefined}
@@ -754,6 +758,7 @@ export default function ChatPage() {
           disabled={booting || !conversationId || historyRecordMissing}
           onSend={send}
           onRegenerate={regenerate}
+          showRegenerate={false}
         />
         <div ref={bottomAnchorRef} aria-hidden="true" />
       </div>

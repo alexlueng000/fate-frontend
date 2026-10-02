@@ -128,6 +128,10 @@ export function MessageList({
                 }`}
               >
                 {isAssistant ? (
+                  <>
+                  {(m.meta?.kind === 'regenerated' || (i > 0 && messages[i - 1].role === 'assistant' && messages[i - 1].meta?.kind !== 'intro')) && !isIntro
+                    && <p className="mb-3 text-xs text-[var(--color-text-muted)]">重新解读 · 原回答已保留</p>}
+                  {
                   m.streaming && !displayContent.trim() ? (
                     <WaitingResponse />
                   ) : isIntro ? (
@@ -139,6 +143,8 @@ export function MessageList({
                   ) : (
                     <ReadingBody content={displayContent} streaming={m.streaming} Markdown={Markdown} />
                   )
+                  }
+                  </>
                 ) : (
                   <p className="whitespace-pre-wrap break-words text-base leading-7">{content}</p>
                 )}

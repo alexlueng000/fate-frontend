@@ -171,6 +171,7 @@ export default function LiuyaoPage() {
   const [booting, setBooting] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
   const chatScrollRef = useRef<HTMLDivElement | null>(null);
+  const regenerationLockRef = useRef(false);
 
   const [liuyaoQuickButtons, setLiuyaoQuickButtons] =
     useState<Array<{ label: string; prompt: string }>>(LIUYAO_QUICK_BUTTONS);
@@ -786,7 +787,8 @@ export default function LiuyaoPage() {
   };
 
   const regenerate = async () => {
-    if (!conversationId || !result?.hexagram_id) return;
+    if (!conversationId || !result?.hexagram_id || sending || regenerationLockRef.current) return;
+    regenerationLockRef.current = true;
     setSending(true);
     setChatError(null);
     trackEvent('liuyao_followup', {
@@ -797,26 +799,23 @@ export default function LiuyaoPage() {
       }),
     });
     try {
-      const data = await liuyaoApi.regenerateChat(result.hexagram_id, conversationId);
+      const last = [...msgs].reverse().find(message => message.role === 'assistant');
+      const data = await liuyaoApi.regenerateChat(result.hexagram_id, conversationId, last?.meta?.messageId);
       const newReply = normalizeMarkdown(data.reply || '');
       if (!newReply.trim()) {
         setChatError('这次重新解卦没有成功生成内容，未扣除次数。');
         return;
       }
       setMsgs((prev) => {
-        const lastIdx = [...prev].map((m, i) => ({ m, i }))
-          .reverse()
-          .find((x) => x.m.role === 'assistant')?.i;
-        if (lastIdx == null) return prev;
-        const next = [...prev];
-        next[lastIdx] = { role: 'assistant', content: newReply };
-        return next;
+        return [...prev, { role: 'assistant', content: newReply,
+          meta: { kind: 'regenerated', messageId: data.message_id } }];
       });
       void refreshLiuyaoQuota();
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : '重新生成失败';
       setChatError(msg);
     } finally {
+      regenerationLockRef.current = false;
       setSending(false);
     }
   };

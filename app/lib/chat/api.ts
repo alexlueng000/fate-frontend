@@ -7,6 +7,18 @@ export const api = (path: string) => (API_BASE ? `${API_BASE}${path}` : `/api${p
 
 export type QuickButton = { label: string; prompt: string };
 
+export async function readApiError(response: Response): Promise<string> {
+  const text = await response.text().catch(() => '');
+  if (!text) return `请求失败（${response.status}）`;
+  try {
+    const data = JSON.parse(text) as { detail?: unknown; message?: unknown };
+    const detail = data.detail ?? data.message;
+    return typeof detail === 'string' && detail.trim() ? detail : '请求失败，请稍后重试';
+  } catch {
+    return text;
+  }
+}
+
 export async function fetchQuickButtons(): Promise<QuickButton[]> {
   try {
     const resp = await fetch(api('/config/quick_buttons'), {

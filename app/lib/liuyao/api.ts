@@ -266,7 +266,8 @@ export const liuyaoApi = {
   async regenerateChat(
     hexagramId: string,
     conversationId: string,
-  ): Promise<{ conversation_id: string; reply: string }> {
+    expectedMessageId?: number,
+  ): Promise<{ conversation_id: string; reply: string; message_id?: number }> {
     const response = await fetch(api(`/liuyao/${hexagramId}/chat/regenerate`), {
       method: 'POST',
       headers: {
@@ -274,7 +275,7 @@ export const liuyaoApi = {
         ...getAuthHeaders(),
       },
       credentials: 'include',
-      body: JSON.stringify({ conversation_id: conversationId }),
+      body: JSON.stringify({ conversation_id: conversationId, expected_message_id: expectedMessageId }),
     });
     if (!response.ok) {
       const err = await response.json().catch(() => ({ detail: 'Request failed' }));
