@@ -52,6 +52,7 @@ test('interrupted personal report never automatically generates twice', async ({
     generated++;
     return route.fulfill({ contentType: 'text/event-stream', body: 'data: {"text":"一段未完成的报告。","replace":true}\n\n' });
   });
+  await page.route('**/api/chat/report/status', route => route.fulfill({ json: { state: 'failed' } }));
   await page.goto('/report');
   await expect(page.getByRole('button', { name: '重新加载报告' })).toBeVisible();
   await expect(page.getByText('一段未完成的报告。')).toHaveCount(0);
@@ -59,6 +60,46 @@ test('interrupted personal report never automatically generates twice', async ({
   recovered = true;
   await page.getByRole('button', { name: '重新加载报告' }).click();
   await expect(page.getByRole('heading', { name: '阅读目录', exact: true })).toBeVisible();
+  expect(generated).toBe(1);
+});
+
+test('a second page waits for the existing report and recovers without another generation', async ({ page }) => {
+  let generated = 0;
+  let polls = 0;
+  let saved = false;
+  await page.route('**/api/profile/me', route => route.fulfill({ json: { ...profile, ai_report: saved ? report : null, report_conversation_id: saved ? 9001 : null } }));
+  await page.route('**/api/chat/start', route => {
+    generated++;
+    expect(route.request().postDataJSON()).toEqual({ personal_report: true });
+    return route.fulfill({ status: 409, json: { detail: '同一命盘的报告正在生成，请等待保存结果。' } });
+  });
+  await page.route('**/api/chat/report/status', route => {
+    polls++;
+    if (polls >= 2) saved = true;
+    return route.fulfill({ json: saved ? { state: 'succeeded', report, conversation_id: 'bazi_conv_9001' } : { state: 'pending' } });
+  });
+  await page.goto('/report');
+  await expect(page.getByText('这份报告已在生成中，正在等待保存结果…')).toBeVisible();
+  await expect(page.getByRole('heading', { name: '阅读目录', exact: true })).toBeVisible();
+  expect(generated).toBe(1); expect(polls).toBe(2);
+  await page.reload();
+  await expect(page.getByRole('heading', { name: '阅读目录', exact: true })).toBeVisible();
+  expect(generated).toBe(1);
+});
+
+test('connection interrupted after commit recovers the saved report through status', async ({ page }) => {
+  let generated = 0;
+  let saved = false;
+  await page.route('**/api/profile/me', route => route.fulfill({ json: { ...profile, ai_report: saved ? report : null, report_conversation_id: saved ? 9001 : null } }));
+  await page.route('**/api/chat/start', route => {
+    generated++; saved = true;
+    return route.fulfill({ contentType: 'text/event-stream', body: `data: ${JSON.stringify({ text: report, replace: true })}\n\n` });
+  });
+  await page.route('**/api/chat/report/status', route => route.fulfill({ json: { state: 'succeeded', report, conversation_id: 'bazi_conv_9001' } }));
+  await page.goto('/report');
+  await expect(page.getByRole('heading', { name: '阅读目录', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: '重新加载报告' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: '自己写问题', exact: true })).toBeEnabled();
   expect(generated).toBe(1);
 });
 

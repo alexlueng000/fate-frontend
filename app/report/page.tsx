@@ -52,6 +52,7 @@ export default function ReportPage() {
   const [paipan, setPaipan] = useState<Paipan | null>(null);
   const [aiReport, setAiReport] = useState<string>('');
   const [streaming, setStreaming] = useState(false);
+  const [waitingForSavedReport, setWaitingForSavedReport] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [retry, setRetry] = useState(0);
   const [conversationId, setConversationId] = useState<string | null>(null);
@@ -90,6 +91,7 @@ export default function ReportPage() {
     const controller = new AbortController();
     const fetchData = async () => {
       setError(null);
+      setWaitingForSavedReport(false);
       setSelectedSection(null);
       try {
         const token = getAuthToken();
@@ -133,7 +135,7 @@ export default function ReportPage() {
         try {
           await trySSE(
             api('/chat/start'),
-            { paipan: mingpan },
+            { personal_report: true },
             (text) => {
               finalText = text;
               setAiReport(text);
@@ -167,10 +169,46 @@ export default function ReportPage() {
           setStreaming(false);
         } catch (sseError) {
           if (controller.signal.aborted) return;
-          // Do not automatically generate again: the first reply may have
-          // committed before the connection ended. Reload confirms its state.
           setAiReport('');
           setConversationId(null);
+          // Query only: a duplicate tab waits for the existing generation;
+          // an interrupted connection can recover a committed report. Never
+          // send another generation request as part of automatic recovery.
+          const deadline = Date.now() + 10 * 60_000;
+          while (!controller.signal.aborted) {
+            const statusResponse = await fetch(api('/chat/report/status'), {
+              headers: { Authorization: `Bearer ${token}` }, credentials: 'include', signal: controller.signal,
+            });
+            if (!statusResponse.ok) break;
+            const status = await statusResponse.json();
+            if (status.state === 'succeeded' && status.report) {
+              const freshResponse = await fetch(api('/profile/me'), {
+                headers: { Authorization: `Bearer ${token}` }, credentials: 'include', signal: controller.signal,
+              });
+              if (!freshResponse.ok) break;
+              const saved = await freshResponse.json();
+              if (!saved.ai_report || saved.ai_report !== status.report) break;
+              if (controller.signal.aborted) return;
+              setProfile(saved);
+              const savedChart = saved.bazi_chart?.mingpan || saved.bazi_chart;
+              if (savedChart?.four_pillars) setPaipan(savedChart);
+              setAiReport(saved.ai_report);
+              const source = saved.report_conversation_id ? `bazi_conv_${saved.report_conversation_id}` : null;
+              setConversationId(source);
+              if (source) saveConversation(source, [{ role: 'assistant', content: saved.ai_report }]);
+              setWaitingForSavedReport(false);
+              setStreaming(false);
+              return;
+            }
+            if (status.state !== 'pending' || Date.now() >= deadline) break;
+            setWaitingForSavedReport(true);
+            await new Promise<void>((resolve, reject) => {
+              const onAbort = () => { clearTimeout(timer); reject(controller.signal.reason); };
+              const timer = setTimeout(() => { controller.signal.removeEventListener('abort', onAbort); resolve(); }, 2000);
+              controller.signal.addEventListener('abort', onAbort, { once: true });
+            });
+          }
+          setWaitingForSavedReport(false);
           throw new Error(sseError instanceof Error ? sseError.message : '报告未能确认完成，请重新加载查看保存状态。');
         }
       } catch (err) {
@@ -298,7 +336,7 @@ export default function ReportPage() {
                 className="inline-block w-7 h-7 border-[3px] border-[var(--color-primary)] border-t-transparent rounded-full animate-spin mb-3"
               />
               <p className="text-sm text-[var(--color-text-secondary)]">
-                AI 正在分析您的命盘…
+                {waitingForSavedReport ? '这份报告已在生成中，正在等待保存结果…' : 'AI 正在分析您的命盘…'}
               </p>
             </div>
           )}
