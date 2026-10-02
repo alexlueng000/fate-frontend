@@ -22,7 +22,7 @@ export function splitReport(source: string) {
     const years = tree.children.filter(node => node.type === 'heading' && node.depth === 4
       && node.position!.start.offset! >= bodyStart && node.position!.start.offset! < end);
     return {
-      id: `report-section-${index}`, title: text(heading), source: source.slice(start, end), body: source.slice(bodyStart, end),
+      id: `report-section-${index}`, title: text(heading).replace(/\u2060/g, '').trim(), source: source.slice(start, end), body: source.slice(bodyStart, end),
       introduction: source.slice(bodyStart, years[0]?.position?.start.offset ?? end),
       years: years.map((year, i) => ({ title: text(year), source: source.slice(year.position!.end.offset!, years[i + 1]?.position?.start.offset ?? end) })),
     };

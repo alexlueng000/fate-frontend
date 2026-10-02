@@ -24,7 +24,7 @@
 @media(prefers-reduced-motion:reduce){.consult-drawer{animation:none}.consult-evidence-trigger svg{transition:none}}
 
 /* Soft consultation surfaces: generous curves, quiet separators, readable measure. */
-.consult-page{--radius-md:16px;--radius-lg:24px}
+.consult-page{--radius-sm:8px;--radius-md:16px;--radius-lg:24px;--radius-xl:20px;--radius-2xl:24px}
 .consult-page button,.consult-page input,.consult-page textarea{border-radius:16px}
 .consult-primary,.consult-secondary{border-radius:16px;transition:background-color .18s ease,box-shadow .18s ease}
 .consult-secondary{border-color:color-mix(in srgb,var(--color-border) 65%,transparent);background:var(--color-bg-elevated)}
@@ -32,7 +32,7 @@
 .consult-evidence{border:0;border-radius:18px;background:var(--color-bg-alt);padding:0 18px}
 .consult-drawer{border-radius:28px 0 0 28px;box-shadow:-12px 0 60px rgba(74,54,38,.08)}
 .consult-icon-button{border-radius:50%}
-.reading-workspace{background:#faf7f3;--radius-md:16px;--radius-lg:24px}
+.reading-workspace{background:#faf7f3;--radius-sm:8px;--radius-md:16px;--radius-lg:24px;--radius-xl:20px;--radius-2xl:24px}
 .reading-header{flex-shrink:0;padding:24px 32px 18px;border-bottom:1px solid rgba(128,102,81,.09)}
 .reading-header-inner{max-width:1060px;margin:auto;display:flex;align-items:center;gap:24px}
 .reading-header .consult-eyebrow{font-size:11px;margin-bottom:6px}

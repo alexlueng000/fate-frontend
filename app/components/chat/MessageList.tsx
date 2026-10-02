@@ -12,6 +12,7 @@ import { WaitingResponse } from './WaitingResponse';
 import { ReadingBody } from '@/app/components/consultation/ReadingBody';
 import Link from 'next/link';
 import { consultationSections } from '@/app/lib/consultation/sections';
+import { splitReport } from '@/app/lib/report/sections';
 
 export function MessageList({
   scrollRef,
@@ -52,8 +53,13 @@ export function MessageList({
 }) {
   const baseClass = containerClassName ?? 'rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)]';
   const savedConversationId = String(conversationId ?? '').replace(/^(bazi_conv_|liuyao_conv_|conv_)/, '');
-  const reportMessageIndex = messages.findIndex(message => message.role === 'assistant' && !message.streaming
-    && message.meta?.messageId && consultationSections(parseSuggestedQuestions(message.content).cleanedContent));
+  const reportMessageIndex = messages.findIndex(message => {
+    if (message.role !== 'assistant' || message.streaming || !message.meta?.messageId) return false;
+    const content = parseSuggestedQuestions(message.content).cleanedContent;
+    const topic = consultationSections(content);
+    const report = topic ?? splitReport(content);
+    return (Boolean(topic) || report.standard) && report.sections.every(section => section.body.trim());
+  });
 
   // Last assistant message that isn't the intro and isn't streaming — the only one we offer "regenerate" on.
   let lastRegenerableIdx = -1;

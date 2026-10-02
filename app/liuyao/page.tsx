@@ -85,7 +85,7 @@ const NUMBER_MEANINGS = [
 function CastingCeremony({ question, numbers }: { question: string; numbers: string[] }) {
   return (
     <div
-      className="max-w-2xl mx-auto bg-[color:var(--color-bg-elevated)] border border-[color:var(--color-border)] rounded-[4px] px-6 py-12 md:px-12 md:py-16 shadow-[var(--shadow-md)] text-center animate-fade-in"
+      className="max-w-2xl mx-auto bg-[color:var(--color-bg-elevated)] border border-[color:var(--color-border)] rounded-[24px] px-6 py-12 md:px-12 md:py-16 shadow-[var(--shadow-md)] text-center animate-fade-in"
       role="status"
       aria-live="polite"
       aria-label="正在起卦"
@@ -873,14 +873,14 @@ export default function LiuyaoPage() {
 
   // toggle button style — uniform, with aria-pressed and focus-visible ring
   const toggleClass = (active: boolean, extra = '') =>
-    `min-h-[44px] px-4 py-2 text-sm tracking-[0.16em] border rounded-[3px] transition-colors duration-200 outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-primary)]/24 ${
+    `min-h-[44px] px-4 py-2 text-sm tracking-[0.16em] border rounded-2xl transition-colors duration-200 outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-primary)]/24 ${
       active
         ? 'border-[color:var(--color-primary)] bg-[color:var(--color-primary)] text-[color:var(--color-text-inverse)]'
         : 'border-[color:var(--color-border)] bg-[color:var(--color-bg-elevated)] text-[color:var(--color-text-secondary)] hover:border-[color:var(--color-border-strong)] hover:text-[color:var(--color-text-primary)]'
     } ${extra}`;
 
   return (
-    <div className="min-h-screen bg-[color:var(--color-bg)]">
+    <div className="reading-workspace min-h-screen bg-[color:var(--color-bg)]">
       <div className="relative max-w-3xl mx-auto px-4 py-10 md:py-14">
         {/* Quota chip */}
         {isLoggedIn && (
@@ -907,13 +907,13 @@ export default function LiuyaoPage() {
           <div
             role="alert"
             aria-live="polite"
-            className="mb-6 px-4 py-3 rounded-[3px] border border-[color:var(--color-primary)]/30 bg-[color:var(--color-primary)]/[0.06] text-[14px] text-[color:var(--color-primary)] flex items-start justify-between gap-3"
+            className="mb-6 px-4 py-3 rounded-2xl border border-[color:var(--color-primary)]/30 bg-[color:var(--color-primary)]/[0.06] text-[14px] text-[color:var(--color-primary)] flex items-start justify-between gap-3"
           >
             <span>{formError}</span>
             <button
               type="button"
               onClick={() => setFormError(null)}
-              className="shrink-0 text-[color:var(--color-primary)]/70 hover:text-[color:var(--color-primary)] outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-primary)]/24 rounded-[3px] px-1"
+              className="shrink-0 text-[color:var(--color-primary)]/70 hover:text-[color:var(--color-primary)] outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-primary)]/24 rounded-2xl px-1"
               aria-label="关闭提示"
             >
               ×
@@ -944,7 +944,7 @@ export default function LiuyaoPage() {
                   ].map((item) => (
                     <div
                       key={item.title}
-                      className="border border-[color:var(--color-border)] bg-[color:var(--color-bg-elevated)] px-4 py-4 rounded-[4px]"
+                      className="border border-[color:var(--color-border)] bg-[color:var(--color-bg-elevated)] px-4 py-4 rounded-[24px]"
                     >
                       <h3 className="font-serif text-[15px] font-medium tracking-wide text-[color:var(--color-text-primary)]">
                         {item.title}
@@ -959,7 +959,7 @@ export default function LiuyaoPage() {
 
               <form
                 onSubmit={handleSubmit}
-                className="border border-[color:var(--color-border)] bg-[color:var(--color-bg-elevated)] rounded-[4px] p-5 md:p-6 shadow-[var(--shadow-md)]"
+                className="border border-[color:var(--color-border)] bg-[color:var(--color-bg-elevated)] rounded-[24px] p-5 md:p-6 shadow-[var(--shadow-md)]"
               >
                 <div>
                   <label htmlFor="liuyao-question" className="block text-[11px] tracking-[0.24em] uppercase text-[color:var(--color-text-secondary)] font-medium mb-2">
@@ -970,7 +970,7 @@ export default function LiuyaoPage() {
                     value={question}
                     onChange={(e) => setQuestion(e.target.value)}
                     placeholder={currentPlaceholder}
-                    className="w-full h-32 p-3 bg-[color:var(--color-bg)] border border-[color:var(--color-border)] rounded-[3px] resize-none outline-none transition-[border-color,box-shadow] duration-200 focus:border-[color:var(--color-primary)] focus:shadow-[0_0_0_3px_var(--color-primary-glow)] text-[16px] leading-relaxed text-[color:var(--color-text-primary)] placeholder:text-[color:var(--color-text-hint)]"
+                    className="w-full h-32 p-3 bg-[color:var(--color-bg)] border border-[color:var(--color-border)] rounded-2xl resize-none outline-none transition-[border-color,box-shadow] duration-200 focus:border-[color:var(--color-primary)] focus:shadow-[0_0_0_3px_var(--color-primary-glow)] text-[16px] leading-relaxed text-[color:var(--color-text-primary)] placeholder:text-[color:var(--color-text-hint)]"
                   />
                 </div>
 
@@ -1024,7 +1024,7 @@ export default function LiuyaoPage() {
         ) : (
           /* === Form === */
           <div className="max-w-2xl mx-auto">
-            <div className="bg-[color:var(--color-bg-elevated)] border border-[color:var(--color-border)] rounded-[4px] p-6 md:p-9 shadow-[var(--shadow-md)]">
+            <div className="bg-[color:var(--color-bg-elevated)] border border-[color:var(--color-border)] rounded-[24px] p-6 md:p-9 shadow-[var(--shadow-md)]">
               <p className="text-[14px] text-[color:var(--color-text-secondary)] mb-7 leading-relaxed">
                 静心想一件你最想确认的事，然后开始起卦。
               </p>
@@ -1043,7 +1043,7 @@ export default function LiuyaoPage() {
                     value={question}
                     onChange={(e) => setQuestion(e.target.value)}
                     placeholder={currentPlaceholder}
-                    className="w-full h-24 p-3 bg-[color:var(--color-bg-elevated)] border border-[color:var(--color-border)] rounded-[3px] resize-none outline-none transition-[border-color,box-shadow] duration-200 focus:border-[color:var(--color-primary)] focus:shadow-[0_0_0_3px_var(--color-primary-glow)] text-[15px] leading-relaxed text-[color:var(--color-text-primary)] placeholder:text-[color:var(--color-text-hint)]"
+                    className="w-full h-24 p-3 bg-[color:var(--color-bg-elevated)] border border-[color:var(--color-border)] rounded-2xl resize-none outline-none transition-[border-color,box-shadow] duration-200 focus:border-[color:var(--color-primary)] focus:shadow-[0_0_0_3px_var(--color-primary-glow)] text-[15px] leading-relaxed text-[color:var(--color-text-primary)] placeholder:text-[color:var(--color-text-hint)]"
                   />
                 </div>
 
@@ -1088,7 +1088,7 @@ export default function LiuyaoPage() {
                           type="button"
                           aria-pressed={active}
                           onClick={() => setMethod(m.id)}
-                          className={`relative p-4 text-left border rounded-[3px] transition-colors duration-200 outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-primary)]/24 min-h-[88px] ${
+                          className={`relative p-4 text-left border rounded-2xl transition-colors duration-200 outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-primary)]/24 min-h-[88px] ${
                             active
                               ? 'border-[color:var(--color-primary)] bg-[color:var(--color-primary)] text-[color:var(--color-text-inverse)]'
                               : 'border-[color:var(--color-border)] bg-[color:var(--color-bg-elevated)] text-[color:var(--color-text-secondary)] hover:border-[color:var(--color-border-strong)] hover:text-[color:var(--color-text-primary)]'
@@ -1097,7 +1097,7 @@ export default function LiuyaoPage() {
                           <div className="flex items-center justify-between mb-1.5">
                             <span className="text-[14px] font-medium tracking-wide">{m.name}</span>
                             {m.recommended && active && (
-                              <span className="text-[10px] tracking-[0.2em] uppercase px-1.5 py-0.5 bg-[color:var(--color-text-inverse)]/15 rounded-[2px]">
+                              <span className="text-[10px] tracking-[0.2em] uppercase px-1.5 py-0.5 bg-[color:var(--color-text-inverse)]/15 rounded-lg">
                                 推荐
                               </span>
                             )}
@@ -1113,7 +1113,7 @@ export default function LiuyaoPage() {
 
                 {/* Numbers */}
                 {method === 'number' && (
-                  <div className="bg-[color:var(--color-bg-alt)] p-5 rounded-[3px] border border-[color:var(--color-border)]">
+                  <div className="bg-[color:var(--color-bg-alt)] p-5 rounded-2xl border border-[color:var(--color-border)]">
                     <div className="mb-4">
                       <p className="text-[11px] tracking-[0.24em] uppercase text-[color:var(--color-text-secondary)] font-medium">
                         凭第一感觉，写下三个正整数
@@ -1148,7 +1148,7 @@ export default function LiuyaoPage() {
                             }}
                             aria-label={`${NUMBER_MEANINGS[index].name}：${NUMBER_MEANINGS[index].hint}`}
                             placeholder="正整数"
-                            className="w-full p-2.5 min-h-[48px] bg-[color:var(--color-bg-elevated)] border border-[color:var(--color-primary)]/35 rounded-[3px] outline-none transition-[border-color,box-shadow] duration-200 focus:border-[color:var(--color-primary)] focus:shadow-[0_0_0_4px_var(--color-primary-glow)] text-center text-[18px] font-medium text-[color:var(--color-text-primary)] placeholder:text-[color:var(--color-text-hint)] placeholder:text-[12px]"
+                            className="w-full p-2.5 min-h-[48px] bg-[color:var(--color-bg-elevated)] border border-[color:var(--color-primary)]/35 rounded-2xl outline-none transition-[border-color,box-shadow] duration-200 focus:border-[color:var(--color-primary)] focus:shadow-[0_0_0_4px_var(--color-primary-glow)] text-center text-[18px] font-medium text-[color:var(--color-text-primary)] placeholder:text-[color:var(--color-text-hint)] placeholder:text-[12px]"
                             min="1"
                           />
                           <span className="mt-2 block text-[10px] leading-4 text-[color:var(--color-text-muted)]">
@@ -1185,7 +1185,7 @@ export default function LiuyaoPage() {
         )) : (
           /* === Hexagram Result === */
           <div className="relative">
-            <div className="overflow-hidden rounded-[6px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-elevated)] shadow-[var(--shadow-md)]">
+            <div className="overflow-hidden rounded-[24px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-elevated)] shadow-[var(--shadow-md)]">
               {/* Question + meta */}
               <div className="relative border-b border-[color:var(--color-border)] px-5 pb-7 pt-8 md:px-10 md:pb-9 md:pt-10">
                 <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[color:var(--color-primary)]/45" />
@@ -1208,7 +1208,7 @@ export default function LiuyaoPage() {
 
                 {/* Uniform detail rows — no rainbow, no glyphs */}
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
-                  <div className="rounded-[4px] border border-[color:var(--color-border)] bg-[color:var(--color-bg)] px-4 md:px-5">
+                  <div className="rounded-[24px] border border-[color:var(--color-border)] bg-[color:var(--color-bg)] px-4 md:px-5">
                     <DetailRow
                       label="排法"
                       value={result.method === 'time' ? '时间' : result.method === 'number' ? '数字' : '铜钱'}
@@ -1234,7 +1234,7 @@ export default function LiuyaoPage() {
                       />
                     )}
                   </div>
-                  <div className="rounded-[4px] border border-[color:var(--color-border)] bg-[color:var(--color-bg)] px-4 md:px-5">
+                  <div className="rounded-[24px] border border-[color:var(--color-border)] bg-[color:var(--color-bg)] px-4 md:px-5">
                     {result.lunar_date && <DetailRow label="农历" value={result.lunar_date} />}
                     {(result.jiqi?.current || result.jieqi?.current) && (
                       <DetailRow
@@ -1288,7 +1288,7 @@ export default function LiuyaoPage() {
 
                     {result.lines?.lines && Array.isArray(result.lines.lines) && (
                       <>
-                        <div className="rounded-[5px] border border-[color:var(--color-border)] bg-[color:var(--color-bg)] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] md:p-7">
+                        <div className="rounded-[24px] border border-[color:var(--color-border)] bg-[color:var(--color-bg)] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] md:p-7">
                           <div>
                             {[...result.lines.lines].reverse().map((line, index) =>
                               renderYaoLine(line, result.lines!.lines.length - 1 - index, false),
@@ -1347,7 +1347,7 @@ export default function LiuyaoPage() {
                         </div>
                       </div>
 
-                      <div className="rounded-[5px] border border-[color:var(--color-primary)]/20 bg-[color:var(--color-bg-alt)] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] md:p-7">
+                      <div className="rounded-[24px] border border-[color:var(--color-primary)]/20 bg-[color:var(--color-bg-alt)] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] md:p-7">
                         <div>
                           {[...result.change_lines.lines].reverse().map((changeLine, index) => {
                             const originalIndex = result.change_lines!.lines.length - 1 - index;
@@ -1399,7 +1399,7 @@ export default function LiuyaoPage() {
             {/* AI interpretation */}
             <div
               id="interpretation-result"
-              className="mt-8 bg-[color:var(--color-bg-elevated)] border border-[color:var(--color-border)] rounded-[4px] shadow-[var(--shadow-md)] overflow-hidden"
+              className="mt-8 bg-[color:var(--color-bg-elevated)] border border-[color:var(--color-border)] rounded-[24px] shadow-[var(--shadow-md)] overflow-hidden"
             >
               <div className="px-6 md:px-9 py-9">
                 <div className="mb-6 text-center">
@@ -1436,7 +1436,7 @@ export default function LiuyaoPage() {
                           (last?.role === 'assistant' && last?.streaming && !last?.content));
                       if (chatError) {
                         return (
-                          <div className="rounded-[4px] border border-[color:var(--color-primary)]/30 bg-[color:var(--color-primary)]/[0.04] px-6 py-10 text-center">
+                          <div className="rounded-[24px] border border-[color:var(--color-primary)]/30 bg-[color:var(--color-primary)]/[0.04] px-6 py-10 text-center">
                             <p className="text-[15px] font-medium text-[color:var(--color-text-primary)]">
                               这次解卦没有成功完成
                             </p>
@@ -1456,7 +1456,7 @@ export default function LiuyaoPage() {
                       }
                       if (initialLoading) {
                         return (
-                          <div className="rounded-[4px] border border-[color:var(--color-border)] bg-[color:var(--color-bg)] px-6 py-12 text-center">
+                          <div className="rounded-[24px] border border-[color:var(--color-border)] bg-[color:var(--color-bg)] px-6 py-12 text-center">
                             <div
                               className="w-8 h-8 mx-auto mb-4 rounded-full border-2 border-[color:var(--color-border-strong)] border-t-[color:var(--color-primary)] animate-spin"
                               style={{ animationDuration: '900ms' }}
@@ -1483,7 +1483,7 @@ export default function LiuyaoPage() {
                           Markdown={MarkdownView}
                           onQuestionClick={handleQuestionClick}
                           loading={sending || booting}
-                          containerClassName="rounded-[4px] border border-[color:var(--color-border)] bg-[color:var(--color-bg)] max-h-[640px]"
+                          containerClassName="rounded-[24px] border border-[color:var(--color-border)] bg-[color:var(--color-bg)] max-h-[640px]"
                         />
                       );
                     })()}
@@ -1508,7 +1508,7 @@ export default function LiuyaoPage() {
                         placeholder="基于此卦继续追问，例如：现在主动联系合适吗？"
                       />
                     ) : (
-                      <div className="rounded-[4px] border border-[color:var(--color-border)] bg-[color:var(--color-bg)] px-5 py-5 text-center">
+                      <div className="rounded-[24px] border border-[color:var(--color-border)] bg-[color:var(--color-bg)] px-5 py-5 text-center">
                         <p className="text-[14px] font-medium text-[color:var(--color-text-primary)]">
                           想继续追问这件事？
                         </p>
@@ -1547,7 +1547,7 @@ export default function LiuyaoPage() {
             ].map((item) => (
               <div
                 key={item.title}
-                className="bg-[color:var(--color-bg-elevated)] border border-[color:var(--color-border)] rounded-[4px] p-5"
+                className="bg-[color:var(--color-bg-elevated)] border border-[color:var(--color-border)] rounded-[24px] p-5"
               >
                 <h3 className="font-serif text-[15px] text-[color:var(--color-text-primary)] mb-2 tracking-wide font-medium">
                   {item.title}

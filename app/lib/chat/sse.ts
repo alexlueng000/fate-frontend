@@ -58,7 +58,7 @@ export async function trySSE(
         visible = Array.from(text).slice(0, Array.from(visible).length).join('');
         onDelta(visible);
       }
-    }, onMeta, { signal: controller.signal, requireDone: opts?.requireDone });
+    }, onMeta, { signal: controller.signal, requireDone: opts?.requireDone ?? true });
     clearTimeout(idleTimer!);
     clearTimeout(totalTimer);
     if (!target.trim()) throw new Error(CHAT_FAILURE_MESSAGE);
@@ -128,7 +128,7 @@ async function readSSE(
   let text   = '';       // 聚合后的全文
   let lastEmitted = '';
   let rafId: number | null = null;
-  let streamError: string | null = null;
+  let streamError: Error | null = null;
   let receivedDone = false;
 
   // —— FINAL & STABLE —— //
@@ -273,7 +273,10 @@ async function readSSE(
     if (t[0] === '{' || t[0] === '[') {
       try {
         const obj: Record<string, unknown> = JSON.parse(t);
-        if (typeof obj.error === 'string') { streamError = obj.error; return; }
+        if (typeof obj.error === 'string') {
+          streamError = obj.status === 429 ? new QuotaExhaustedError(obj.error) : new Error(obj.error);
+          return;
+        }
 
         const looksLikeMeta =
           typeof obj?.conversation_id === 'string' ||
@@ -350,7 +353,7 @@ async function readSSE(
         const block = rawBuf.slice(0, idx);
         rawBuf = rawBuf.slice(idx + 2);
         processBlock(block);
-        if (streamError) throw new Error(streamError);
+        if (streamError) throw streamError;
       }
     }
 
@@ -358,7 +361,7 @@ async function readSSE(
     if (rawBuf.trim()) {
       processBlock(rawBuf);
     }
-    if (streamError) throw new Error(streamError);
+    if (streamError) throw streamError;
     if (opts?.requireDone && !receivedDone) throw new Error('连接已中断，请刷新确认本次解读状态。');
 
     // 最后一发

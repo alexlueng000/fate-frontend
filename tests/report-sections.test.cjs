@@ -40,3 +40,12 @@ test('year content and link definitions stay available', async () => {
   assert.equal(section.introduction + '\n#### 2030年'.trimStart() + section.years[0].source, section.body);
   assert.ok(result.definitions.includes('[a]: https://example.com'));
 });
+
+test('legacy normalized headings retain source and recognize all seven chapters', async () => {
+  const { splitReport, REPORT_TITLES } = await loaded;
+  const text = REPORT_TITLES.map(title => `### ${title}\u2060\n完整的报告正文。`).join('\n');
+  const report = splitReport(text);
+  assert.equal(report.standard, true);
+  assert.deepEqual(Array.from(report.sections, section => section.title), Array.from(REPORT_TITLES));
+  assert.equal(report.preamble + report.sections.map(section => section.source).join(''), text);
+});

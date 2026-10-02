@@ -11,12 +11,11 @@ import { trackEvent } from '@/app/lib/analytics/track';
 import ReportReader from '@/app/components/report/ReportReader';
 import SectionQuestion from '@/app/components/report/SectionQuestion';
 import type { ReportSection } from '@/app/lib/report/sections';
-import { LOCAL_PREVIEW } from '@/app/lib/local-preview/config';
 import { getWuxing, wuxingColor, type Wuxing } from '@/app/components/WuXing';
 import { Paipan } from '@/app/lib/chat/types';
 import { parseSuggestedQuestions } from '@/app/lib/chat/parser';
 import { trySSE } from '@/app/lib/chat/sse';
-import { savePaipanLocal, saveConversation, clearActiveConversationId } from '@/app/lib/chat/storage';
+import { savePaipanLocal, saveConversation } from '@/app/lib/chat/storage';
 import { DetailedPaipanTable } from '@/app/components/chat/DetailedPaipanTable';
 
 interface ProfileBrief {
@@ -54,6 +53,7 @@ export default function ReportPage() {
   const [aiReport, setAiReport] = useState<string>('');
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [retry, setRetry] = useState(0);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [selectedSection, setSelectedSection] = useState<ReportSection | null>(null);
   const questionRef = useRef<HTMLDivElement>(null);
@@ -87,7 +87,10 @@ export default function ReportPage() {
   useEffect(() => {
     if (loading) return;
 
+    const controller = new AbortController();
     const fetchData = async () => {
+      setError(null);
+      setSelectedSection(null);
       try {
         const token = getAuthToken();
         if (!token) {
@@ -97,7 +100,7 @@ export default function ReportPage() {
 
         const profileResp = await fetch(api('/profile/me'), {
           headers: { Authorization: `Bearer ${token}` },
-          credentials: 'include',
+          credentials: 'include', signal: controller.signal,
         });
 
         if (!profileResp.ok) {
@@ -105,43 +108,20 @@ export default function ReportPage() {
         }
 
         const profileData = await profileResp.json();
+        if (controller.signal.aborted) return;
+        if (!profileData) throw new Error('请先完善出生档案，再生成个人报告。');
         setProfile(profileData);
-
-        const paipanResp = await fetch(api('/bazi/calc_paipan'), {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            gender: profileData.gender === 'male' ? '男' : '女',
-            calendar: profileData.calendar_type === 'solar' ? 'gregorian' : 'lunar',
-            birth_date: profileData.birth_date,
-            birth_time: profileData.birth_time.substring(0, 5),
-            birthplace: profileData.birth_location,
-          }),
-        });
-
-        if (!paipanResp.ok) {
-          throw new Error('计算命盘失败');
-        }
-
-        const paipanData = await paipanResp.json();
-        const mingpan = paipanData.mingpan || paipanData;
+        setConversationId(null);
+        const chart = profileData.bazi_chart;
+        const mingpan = chart?.mingpan || chart;
+        if (!mingpan?.four_pillars) throw new Error('档案尚未保存命盘，请检查出生信息。');
         setPaipan(mingpan);
         savePaipanLocal(mingpan);
 
         if (profileData.ai_report) {
           setAiReport(profileData.ai_report);
-          const cacheKey = `report_cache_${profileData.id}`;
-          const cached = (() => {
-            try { return JSON.parse(localStorage.getItem(cacheKey) || 'null'); } catch { return null; }
-          })();
-          if (LOCAL_PREVIEW) setConversationId('local-preview-chat');
-          if (cached?.conversation_id && cached.report_content === profileData.ai_report) {
-            setConversationId(cached.conversation_id);
-            saveConversation(cached.conversation_id, [{ role: 'assistant', content: profileData.ai_report }]);
+          if (profileData.report_conversation_id) {
+            setConversationId(`bazi_conv_${profileData.report_conversation_id}`);
           }
           return;
         }
@@ -149,16 +129,6 @@ export default function ReportPage() {
         setStreaming(true);
         let convId = '';
         let finalText = '';
-
-        const saveReportToDb = (text: string) => {
-          if (!text) return;
-          fetch(api('/profile/report'), {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-            credentials: 'include',
-            body: JSON.stringify({ ai_report: text }),
-          }).catch(() => {});
-        };
 
         try {
           await trySSE(
@@ -175,62 +145,54 @@ export default function ReportPage() {
                 convId = cid;
                 setConversationId(cid);
               }
-            }
+            },
+            { signal: controller.signal, requireDone: true }
           );
 
-          setStreaming(false);
-
+          if (controller.signal.aborted) return;
+          if (!convId || !finalText) throw new Error('报告未能确认完成，请重新加载查看保存状态。');
           if (convId && finalText) {
-            saveConversation(convId, [{ role: 'assistant', content: finalText }]);
-            try {
-              const cacheKey = `report_cache_${profileData.id}`;
-              localStorage.setItem(cacheKey, JSON.stringify({ conversation_id: convId, report_content: finalText }));
-            } catch {}
-            saveReportToDb(finalText);
-          }
-        } catch (sseError) {
-          console.warn('SSE failed, trying fallback:', sseError);
-          setStreaming(false);
-          const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-          if (token) headers['Authorization'] = `Bearer ${token}`;
-          const fallbackResp = await fetch(api('/chat/start'), {
-            method: 'POST',
-            headers,
-            credentials: 'include',
-            body: JSON.stringify({ paipan: mingpan }),
-          });
-
-          if (fallbackResp.ok) {
-            const fallbackData = await fallbackResp.json();
-            finalText = fallbackData.reply || '';
-            setAiReport(finalText);
-            if (fallbackData.conversation_id) {
-              convId = fallbackData.conversation_id;
-              setConversationId(convId);
-              try {
-                const cacheKey = `report_cache_${profileData.id}`;
-                localStorage.setItem(cacheKey, JSON.stringify({ conversation_id: convId, report_content: finalText }));
-              } catch {}
-              saveReportToDb(finalText);
+            const savedResponse = await fetch(api('/profile/me'), {
+              headers: { Authorization: `Bearer ${token}` }, credentials: 'include', signal: controller.signal,
+            });
+            if (!savedResponse.ok) throw new Error('暂时无法确认报告保存状态，请重新加载。');
+            const saved = await savedResponse.json();
+            if (controller.signal.aborted) return;
+            if (!saved.ai_report || saved.report_conversation_id !== Number(convId.replace(/^bazi_conv_/, ''))) {
+              throw new Error('档案或报告状态发生变化，请重新加载确认已保存的报告。');
             }
+            setAiReport(saved.ai_report);
+            saveConversation(convId, [{ role: 'assistant', content: saved.ai_report }]);
           }
+          setStreaming(false);
+        } catch (sseError) {
+          if (controller.signal.aborted) return;
+          // Do not automatically generate again: the first reply may have
+          // committed before the connection ended. Reload confirms its state.
+          setAiReport('');
+          setConversationId(null);
+          throw new Error(sseError instanceof Error ? sseError.message : '报告未能确认完成，请重新加载查看保存状态。');
         }
       } catch (err) {
+        if (controller.signal.aborted) return;
         setError(err instanceof Error ? err.message : '加载失败');
         setStreaming(false);
       }
     };
 
-    fetchData();
-  }, [loading]);
+    void fetchData();
+    return () => controller.abort();
+  }, [loading, retry]);
 
   const handleStartChat = (question?: string, source: 'primary' | 'question' = 'primary') => {
+    if (!conversationId || streaming) return;
     trackEvent('report_chat_cta_click', {
       payload: { has_ai_report: Boolean(aiReport), streaming, source },
     });
-    clearActiveConversationId();
-    const query = question ? `?q=${encodeURIComponent(question)}` : '';
-    router.push(`/panel${query}`);
+    const id = conversationId.replace(/^bazi_conv_/, '');
+    const query = new URLSearchParams({ conv_id: id });
+    if (question) query.set('question', question);
+    router.push(`/chat?${query.toString()}`);
   };
 
   if (loading) {
@@ -266,7 +228,7 @@ export default function ReportPage() {
   const questions = parsedReport.questions.slice(0, 3);
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg)]" ref={scrollRef}>
+    <div className="reading-workspace min-h-screen bg-[var(--color-bg)]" ref={scrollRef}>
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         {/* Header */}
         <header className="text-center mb-10 sm:mb-14">
@@ -361,8 +323,9 @@ export default function ReportPage() {
             </div>
           )}
           {error && !aiReport && (
-            <div className="py-12 text-center text-[var(--color-primary)]">
-              {error}
+            <div className="py-12 text-center text-[var(--color-primary)]" role="alert">
+              <p>{error}</p><p className="mt-3 text-sm text-[var(--color-text-muted)]">重新加载会先检查已保存的报告。</p>
+              <button className="reading-pill mt-4" onClick={() => setRetry(value => value + 1)}>重新加载报告</button>
             </div>
           )}
         </section>
@@ -378,8 +341,8 @@ export default function ReportPage() {
                 key={question}
                 type="button"
                 onClick={() => handleStartChat(question, 'question')}
-                disabled={streaming}
-                className="group flex w-full min-h-12 items-start gap-3 border border-[var(--color-border)] bg-[var(--color-bg-card)] px-4 py-3 text-left transition-colors hover:border-[var(--color-border-strong)] hover:bg-[var(--color-bg-hover)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/24"
+                disabled={streaming || !conversationId}
+                className="group flex w-full min-h-12 items-start gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-card)] px-4 py-3 text-left transition-colors hover:border-[var(--color-border-strong)] hover:bg-[var(--color-bg-hover)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/24"
               >
                 <span className="font-mono text-xs leading-6 text-[var(--color-primary)] tabular-nums">
                   {String(index + 1).padStart(2, '0')}
@@ -393,13 +356,13 @@ export default function ReportPage() {
           <div className="mt-6 text-center">
           <button
             onClick={() => handleStartChat()}
-            disabled={streaming}
+            disabled={streaming || !conversationId}
             className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {streaming ? '分析中…' : '自己写问题'}
           </button>
           <p className="mx-auto mt-3 max-w-md text-xs leading-5 text-[var(--color-text-muted)]">
-            你可以补充现实处境，让 AI 把报告里的判断转成更具体的行动建议。
+            {aiReport && !conversationId ? '这份历史报告缺少关联会话，暂不能直接追问。你仍可以阅读和复制原报告。' : '继续原报告的对话，补充现实处境，让建议更具体。'}
           </p>
           </div>
         </div>
@@ -418,7 +381,7 @@ export default function ReportPage() {
             </h2>
 
             <div className="space-y-3">
-              <details className="group border border-[var(--color-border)] bg-[var(--color-bg-card)]">
+              <details className="group overflow-hidden rounded-[24px] border border-[var(--color-border)] bg-[var(--color-bg-card)]">
                 <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 px-4 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/24">
                   <div>
                     <span className="font-serif text-[15px] font-medium text-[var(--color-text-primary)]">
@@ -480,7 +443,7 @@ export default function ReportPage() {
               </details>
 
               {paipan.dayun && paipan.dayun.length > 0 && (
-                <details className="group border border-[var(--color-border)] bg-[var(--color-bg-card)]">
+                <details className="group overflow-hidden rounded-[24px] border border-[var(--color-border)] bg-[var(--color-bg-card)]">
                   <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 px-4 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/24">
                     <div>
                       <span className="font-serif text-[15px] font-medium text-[var(--color-text-primary)]">

@@ -383,6 +383,9 @@ export default function ChatPage() {
             sessionStorage.setItem('conversation_id', cid);
             setConversationId(cid);
           }
+          const messageId = typeof meta === 'object' && meta !== null ? (meta as { message_id?: number }).message_id : undefined;
+          if (messageId) setMsgs(previous => previous.map((message, index) => index === assistantIndex
+            ? { ...message, meta: { ...message.meta, messageId } } : message));
         },
         { mobilePacing: true }
       );
@@ -667,7 +670,7 @@ export default function ChatPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#F7F3EE] text-neutral-800 p-6 sm:p-10">
+    <main className="reading-workspace min-h-screen bg-[#F7F3EE] text-neutral-800 px-4 py-6 sm:p-10">
       <div ref={topAnchorRef} aria-hidden="true" />
       <div className="mx-auto w-full max-w-5xl space-y-6">
         <ChatHeader
@@ -730,7 +733,7 @@ export default function ChatPage() {
         />
 
         {err && !historyRecordMissing && (
-          <div className="border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4 text-sm text-[var(--color-text-secondary)]">
+          <div className="rounded-[24px] border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4 text-sm text-[var(--color-text-secondary)]">
             <p className="font-medium text-[var(--color-primary)]">当前内容暂时无法加载</p>
             <p className="mt-2 leading-[1.7]">{err}</p>
           </div>
@@ -774,7 +777,7 @@ export default function ChatPage() {
           onClick={handleScrollJump}
           aria-label={scrollJumpDirection === 'bottom' ? '跳到对话底部' : '回到对话顶部'}
           title={scrollJumpDirection === 'bottom' ? '到底部' : '回顶部'}
-          className="fixed bottom-24 right-4 z-40 inline-flex min-h-12 min-w-12 items-center justify-center gap-2 border border-[var(--color-primary)]/25 bg-[var(--color-bg-elevated)]/95 px-3 text-sm font-medium text-[var(--color-primary)] shadow-lg backdrop-blur transition hover:-translate-y-0.5 hover:bg-[var(--color-bg-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/40 sm:bottom-8 sm:right-8 sm:px-4"
+          className="fixed bottom-24 right-4 z-40 inline-flex rounded-full min-h-12 min-w-12 items-center justify-center gap-2 border border-[var(--color-primary)]/25 bg-[var(--color-bg-elevated)]/95 px-3 text-sm font-medium text-[var(--color-primary)] shadow-lg backdrop-blur transition hover:-translate-y-0.5 hover:bg-[var(--color-bg-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/40 sm:bottom-8 sm:right-8 sm:px-4"
         >
           {scrollJumpDirection === 'bottom' ? (
             <ArrowDown className="h-5 w-5" aria-hidden="true" />

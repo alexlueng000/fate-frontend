@@ -108,3 +108,16 @@ test('paid stream requires a durable completion signal', async () => {
   const { trySSE } = setup(async () => new Response('data: {"text":"partial","replace":true}\n\n', { headers: { 'Content-Type': 'text/event-stream' } }));
   await assert.rejects(trySSE('/consultations/1/messages', {}, () => {}, undefined, { requireDone: true }), /连接已中断/);
 });
+test('ordinary streams also require completion by default', async () => {
+  const { trySSE } = setup(async () => new Response('data: {"text":"半截回复","replace":true}\n\n', { headers: { 'Content-Type': 'text/event-stream' } }));
+  await assert.rejects(trySSE('/chat', {}, () => {}), /连接已中断/);
+});
+test('quota exhausted at commit is recognizable from an SSE error', async () => {
+  let calls = 0;
+  const { trySSE, QuotaExhaustedError } = setup(async () => {
+    calls++;
+    return new Response('data: {"error":"本次未保存且未扣次","status":429}\n\n', { headers: { 'Content-Type': 'text/event-stream' } });
+  });
+  await assert.rejects(trySSE('/chat', {}, () => {}), QuotaExhaustedError);
+  assert.equal(calls, 1);
+});
