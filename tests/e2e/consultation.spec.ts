@@ -74,3 +74,23 @@ test('reading pass: IME, durable reply, evidence and exhausted history', async (
   await expect(page.getByText('先确认岗位职责。')).toBeInViewport();
   await page.screenshot({ path: `/private/tmp/fate-stage-${info.project.name}-reading.png`, fullPage: true });
 });
+
+test('main conversation has a visible career entry and a compact soft layout', async ({ page }, info) => {
+  await page.goto('/panel');
+  await expect(page.getByRole('heading', { name: '最近，有什么事放在心上？' })).toBeVisible();
+  await expect(page.getByRole('link', { name: /把事业问题想清楚/ })).toHaveAttribute('href', '/career');
+  await expect(page.getByText('排盘时间说明', { exact: true })).toHaveCount(0);
+  await expect(page.getByText('下一步可以这样问', { exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: '命盘与背景', exact: true }).click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await page.getByRole('button', { name: '关闭面板' }).click();
+  await expect(page.getByRole('textbox', { name: '对话输入框' })).toBeInViewport();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await page.screenshot({ path: `/private/tmp/fate-soft-${info.project.name}-welcome.png`, fullPage: true });
+  await page.getByRole('textbox', { name: '对话输入框' }).fill('我该怎样规划接下来的工作？');
+  await page.getByRole('button', { name: '发送', exact: true }).click();
+  await expect(page.getByText('这是一段固定回复', { exact: false }).first()).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole('heading', { name: '最近，有什么事放在心上？' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: '停止', exact: true })).toHaveCount(0, { timeout: 30_000 });
+  await page.screenshot({ path: `/private/tmp/fate-soft-${info.project.name}-conversation.png`, fullPage: true });
+});

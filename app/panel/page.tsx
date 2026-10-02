@@ -4,11 +4,11 @@ import TimeCorrectionNotice from '@/app/components/chat/TimeCorrectionNotice';
 import { ReadingLink } from '@/app/components/consultation/ReadingLink';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { MoreVertical, FileText, Edit3, Trash2, ChevronDown, ArrowUp } from 'lucide-react';
+import { MoreVertical, FileText, Edit3, Trash2, ArrowUp, Sparkles, ArrowUpRight } from 'lucide-react';
 
 import Markdown from '@/app/components/Markdown';
-import { QuickActions } from '@/app/components/chat/QuickActions';
 import { MessageList } from '@/app/components/chat/MessageList';
 import { InputArea } from '@/app/components/chat/InputArea';
 import { ContextDrawer } from '@/app/components/consultation/primitives';
@@ -116,20 +116,20 @@ export default function PanelPage() {
   const streamingLockRef = useRef(false);
   const lastFullRef = useRef('');
   const mountedRef = useRef(true);
+  const streamAbortRef = useRef<AbortController | null>(null);
+  useEffect(() => () => streamAbortRef.current?.abort(), []);
   const autoTaskStartedRef = useRef(false);
   const pendingAutoPromptRef = useRef<string | null>(null);
   const panelViewTrackedRef = useRef(false);
   const firstMessageTrackedRef = useRef(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
-  // Two refs: collapsed row + expanded row each render their own more-menu container.
-  // Both stay mounted (only CSS-hidden), so the outside-click handler checks both.
   const menuRefCollapsed = useRef<HTMLDivElement>(null);
-  const menuRefExpanded = useRef<HTMLDivElement>(null);
 
   const { user: me, setUser } = useUser();
 
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [msgs, setMsgs] = useState<Msg[]>([]);
+  const hasDiscussion = msgs.some(m => m.role === 'user' || (m.role === 'assistant' && m.meta?.kind !== 'intro'));
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [booting, setBooting] = useState(false);
@@ -139,16 +139,6 @@ export default function PanelPage() {
   const [timeCorrection, setTimeCorrection] = useState<import('@/app/lib/chat/types').TimeCorrectionInfo | null>(null);
   const [fourPillars, setFourPillars] = useState<FourPillarsData | null>(null);
   const [showMenu, setShowMenu] = useState(false);
-  // 命盘区在桌面端和移动端都可收起，默认收起以给对话留出更多高度。
-  const [headerExpanded, setHeaderExpanded] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
-    return window.localStorage.getItem('panel_header_expanded') === '1';
-  });
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    window.localStorage.setItem('panel_header_expanded', headerExpanded ? '1' : '0');
-  }, [headerExpanded]);
-
   const [qbLoading, setQbLoading] = useState(true);
   const [quickButtons, setQuickButtons] = useState<Array<{ label: string; prompt: string }>>(QUICK_BUTTONS);
   const [quotaRefreshKey, setQuotaRefreshKey] = useState(0);
@@ -206,7 +196,7 @@ export default function PanelPage() {
     updateBackToTopVisibility();
     scrollContainer.addEventListener('scroll', updateBackToTopVisibility, { passive: true });
     return () => scrollContainer.removeEventListener('scroll', updateBackToTopVisibility);
-  }, []);
+  }, [hasDiscussion]);
 
   useEffect(() => {
     if (panelViewTrackedRef.current) return;
@@ -221,8 +211,7 @@ export default function PanelPage() {
     const handler = (e: MouseEvent) => {
       const target = e.target as Node;
       const insideCollapsed = menuRefCollapsed.current?.contains(target);
-      const insideExpanded = menuRefExpanded.current?.contains(target);
-      if (!insideCollapsed && !insideExpanded) setShowMenu(false);
+      if (!insideCollapsed) setShowMenu(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
@@ -439,6 +428,7 @@ export default function PanelPage() {
     };
 
     try {
+      streamAbortRef.current = new AbortController();
       await trySSE(
         api('/chat'),
         {
@@ -461,7 +451,7 @@ export default function PanelPage() {
             });
           }
         },
-        { mobilePacing: true }
+        { mobilePacing: true, signal: streamAbortRef.current.signal }
       );
       setMsgs(prev => {
         if (myIndex < 0 || myIndex >= prev.length) return prev;
@@ -473,7 +463,8 @@ export default function PanelPage() {
       });
     } catch (e) {
       if (e instanceof QuotaExhaustedError) throw e;
-      console.error('[chat] stream failed', e);
+      const failureMessage = streamAbortRef.current?.signal.aborted ? '已停止接收。可从历史记录确认已保存的内容。' : CHAT_FAILURE_MESSAGE;
+      if (!streamAbortRef.current?.signal.aborted) console.error('[chat] stream failed', e);
       setMsgs(prev => {
         if (myIndex < 0 || myIndex >= prev.length) return prev;
         const next = [...prev];
@@ -481,7 +472,7 @@ export default function PanelPage() {
         next[myIndex] = {
           ...next[myIndex],
           streaming: false,
-          content: partial ? partial + '\n\n' + CHAT_FAILURE_MESSAGE : CHAT_FAILURE_MESSAGE,
+          content: partial ? partial + '\n\n' + failureMessage : failureMessage,
         };
         return next;
       });
@@ -702,172 +693,53 @@ export default function PanelPage() {
   const genderLabel = profile?.gender === 'male' || profile?.gender === '男' ? '男' :
     profile?.gender === 'female' || profile?.gender === '女' ? '女' : (profile?.gender ?? '');
 
-  const dayPillar = (fourPillars?.day?.[0] || '') + (fourPillars?.day?.[1] || '');
 
   return (
-    <div className="h-full flex flex-col bg-[var(--color-bg)]">
+    <div className="reading-workspace h-full min-h-0 flex flex-col">
 
-      {/* Profile status bar */}
-      {taskContext && (
-        <div className="border-b border-[var(--color-border)] px-4 py-3">
-          <p className="font-serif text-lg">{taskContext.title}</p>
-          <div className="mt-2 flex flex-wrap items-center gap-4">
-            <ReadingLink conversationId={conversationId} />
-            <ContextDrawer
-              title="这次解读的命盘与背景"
-              description="排盘信息来自已保存的出生档案；背景由你提供。"
-              trigger={<button className="consult-secondary">查看命盘与背景</button>}
-            >
+      <header className="reading-header">
+        <div className="reading-header-inner">
+          <div className="min-w-0 flex-1">
+            <p className="consult-eyebrow">{taskContext?.taskType === 'career' ? '事业咨询 · 把下一步想清楚' : '八字对话 · 慢慢聊，慢慢理清'}</p>
+            <h1 className="font-serif text-xl sm:text-2xl leading-relaxed">{taskContext?.title || '从你在意的一件事开始'}</h1>
+          </div>
+          <div className="reading-tools">
+            <ContextDrawer title="命盘与背景" description="查看本次解读使用的档案、排盘说明与现实背景。" trigger={<button className="reading-pill">命盘与背景</button>}>
+              <p className="mb-5 text-sm leading-7">{genderLabel} · {profile?.birth_date} · {profile?.birth_time?.slice(0, 5)} · {profile?.birth_location}</p>
               <MiniPillars fourPillars={fourPillars} loading={!fourPillars && !!profile} />
-              {taskContext.taskType === 'career' && <>
+              <div className="mt-5"><TimeCorrectionNotice info={timeCorrection} /></div>
+              {taskContext?.taskType === 'career' && <>
                 <p className="my-5 whitespace-pre-wrap leading-7">{taskContext.facts?.currentSituation || '尚未补充现实背景'}</p>
-                {conversationId && Number(conversationId.replace(/\D/g, '')) > 0 && (
-                  <ReviewNotes conversationId={Number(conversationId.replace(/\D/g, ''))} context={taskContext} />
-                )}
+                {conversationId && Number(conversationId.replace(/\D/g, '')) > 0 && <ReviewNotes conversationId={Number(conversationId.replace(/\D/g, ''))} context={taskContext} />}
               </>}
+              <Link className="reading-pill mt-5 inline-flex" href="/profile/edit?returnTo=/panel">编辑出生档案</Link>
+              <ReadingLink conversationId={conversationId} />
             </ContextDrawer>
-          </div>
-        </div>
-      )}
-      <header className="flex-shrink-0 border-b border-[var(--color-border)] bg-[var(--color-bg-elevated)]">
-        <h1 className="sr-only">八字对话 · 当前命盘</h1>
-
-        {/* Collapsed summary — single 44px row on all viewport sizes. */}
-        <div className={`${headerExpanded ? 'hidden' : 'flex'} items-center gap-2 px-4 h-11`}>
-          <button
-            type="button"
-            onClick={() => setHeaderExpanded(true)}
-            aria-expanded={false}
-            aria-controls="panel-header-details"
-            className="min-w-0 flex-1 flex items-center gap-2 -mx-1 px-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/24 rounded-[var(--radius-sm)]"
-          >
-            {profile ? (
-              <>
-                <span className="font-serif text-[15px] font-medium text-[var(--color-primary)] tabular-nums flex-shrink-0">
-                  {dayPillar || '—'}
-                </span>
-                <span className="text-[var(--color-text-hint)] flex-shrink-0">·</span>
-                <span className="font-sans text-[13px] text-[var(--color-text-body)] truncate">
-                  {genderLabel}
-                  <span className="mx-1 text-[var(--color-text-hint)]">·</span>
-                  <span className="tabular-nums">{profile.birth_date}</span>
-                </span>
-              </>
-            ) : (
-              <span className="font-sans text-xs text-[var(--color-text-muted)]">加载中…</span>
-            )}
-            <ChevronDown
-              className="w-4 h-4 text-[var(--color-text-muted)] flex-shrink-0 ml-auto"
-              aria-hidden
-            />
-          </button>
-
-          {/* More menu stays available in the collapsed state */}
-          <div className="relative flex-shrink-0" ref={menuRefCollapsed}>
-            <button
-              onClick={() => setShowMenu(v => !v)}
-              onKeyDown={(e) => { if (e.key === 'Escape') setShowMenu(false); }}
-              className="w-10 h-10 -mr-2 flex items-center justify-center rounded-[var(--radius-md)] hover:bg-[var(--color-bg-hover)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/24"
-              aria-label="更多操作"
-              aria-haspopup="menu"
-              aria-expanded={showMenu}
-              aria-controls="panel-header-menu-collapsed"
-            >
-              <MoreVertical className="w-4 h-4 text-[var(--color-text-secondary)]" />
-            </button>
-            {showMenu && <HeaderMenu
-              id="panel-header-menu-collapsed"
-              onReport={() => { setShowMenu(false); router.push('/report'); }}
-              onEditProfile={() => { setShowMenu(false); router.push('/profile/edit?returnTo=/panel'); }}
-              onClear={() => {
-                setShowMenu(false);
-                setClearDialogOpen(true);
-              }}
-            />}
-          </div>
-        </div>
-
-        {/* Expanded details — toggleable on all viewport sizes. */}
-        <div
-          id="panel-header-details"
-          className={headerExpanded ? 'block' : 'hidden'}
-        >
-          <div className="px-4 pt-3 pb-2 flex items-start gap-3 sm:gap-4">
-            {/* Left: eyebrow + birth meta */}
-            <div className="min-w-0 flex-1">
-              <p className="font-sans text-[10px] font-medium tracking-[0.18em] uppercase text-[var(--color-text-muted)] mb-1.5">
-                当前命盘
-              </p>
-              {profile ? (
-                <p className="font-serif text-[13px] sm:text-[14px] leading-[1.5] text-[var(--color-text-body)] truncate">
-                  <span className="text-[var(--color-text-primary)] font-medium">{genderLabel}</span>
-                  <span className="mx-1.5 text-[var(--color-text-hint)]">·</span>
-                  <span className="text-[var(--color-text-primary)] font-medium tabular-nums">{profile.birth_date}</span>
-                  <span className="mx-1 text-[var(--color-text-hint)]">·</span>
-                  <span className="text-[var(--color-text-primary)] font-medium tabular-nums">
-                    {profile.birth_time?.slice(0, 5)}
-                  </span>
-                  <span className="mx-1.5 text-[var(--color-text-hint)]">·</span>
-                  <span className="text-[var(--color-text-secondary)]">{profile.birth_location}</span>
-                </p>
-              ) : (
-                <p className="font-sans text-xs text-[var(--color-text-muted)]">加载中…</p>
-              )}
+            <QuotaBar type="chat" refreshKey={quotaRefreshKey} compact />
+            <div className="relative" ref={menuRefCollapsed}>
+              <button aria-label="更多操作" aria-haspopup="menu" aria-expanded={showMenu} className="consult-icon-button" onClick={() => setShowMenu(v => !v)} onKeyDown={e => { if (e.key === 'Escape') setShowMenu(false); }}><MoreVertical size={18} /></button>
+              {showMenu && <HeaderMenu id="panel-header-menu" onReport={() => { setShowMenu(false); router.push('/report'); }} onEditProfile={() => { setShowMenu(false); router.push('/profile/edit?returnTo=/panel'); }} onClear={() => { setShowMenu(false); setClearDialogOpen(true); }} />}
             </div>
-
-            {/* Right: collapse trigger + more menu */}
-            <div className="flex items-center flex-shrink-0 -mt-0.5 gap-0.5">
-              <button
-                type="button"
-                onClick={() => setHeaderExpanded(false)}
-                className="w-10 h-10 flex items-center justify-center rounded-[var(--radius-md)] hover:bg-[var(--color-bg-hover)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/24"
-                aria-label="收起命盘"
-                aria-expanded
-                aria-controls="panel-header-details"
-              >
-                <ChevronDown className="w-4 h-4 text-[var(--color-text-muted)] rotate-180" />
-              </button>
-
-              <div className="relative" ref={menuRefExpanded}>
-                <button
-                  onClick={() => setShowMenu(v => !v)}
-                  onKeyDown={(e) => { if (e.key === 'Escape') setShowMenu(false); }}
-                  className="w-11 h-11 flex items-center justify-center rounded-[var(--radius-md)] hover:bg-[var(--color-bg-hover)] transition-colors focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[var(--color-primary-glow)]"
-                  aria-label="更多操作"
-                  aria-haspopup="menu"
-                  aria-expanded={showMenu}
-                  aria-controls="panel-header-menu-expanded"
-                >
-                  <MoreVertical className="w-4 h-4 text-[var(--color-text-secondary)]" />
-                </button>
-                {showMenu && <HeaderMenu
-                  id="panel-header-menu-expanded"
-                  onReport={() => { setShowMenu(false); router.push('/report'); }}
-                  onEditProfile={() => { setShowMenu(false); router.push('/profile/edit?returnTo=/panel'); }}
-                  onClear={() => {
-                    setShowMenu(false);
-                    setClearDialogOpen(true);
-                  }}
-                />}
-              </div>
-            </div>
-          </div>
-
-          {/* Pillars row sits below the meta line on every screen size */}
-          <div className="px-4 pb-3 pt-1">
-            <MiniPillars fourPillars={fourPillars} loading={!fourPillars && !!profile} />
           </div>
         </div>
       </header>
 
-      {/* Quota strip — sits below profile/pillars row */}
-      <QuotaBar type="chat" refreshKey={quotaRefreshKey} />
-
       {/* Messages — flex-1, MessageList owns the scroll */}
       <div className="relative flex min-h-0 flex-1">
-        <MessageList
+        {!hasDiscussion ? <div className="reading-welcome" ref={scrollRef}>
+          <div className="reading-welcome-inner">
+            <span className="reading-mark"><Sparkles size={25} strokeWidth={1.3} /></span>
+            <p className="consult-eyebrow mt-6">给自己一点思考的空间</p>
+            <h2 className="font-serif text-3xl sm:text-4xl leading-snug">最近，有什么事放在心上？</h2>
+            <p className="reading-welcome-copy">可以从一个困惑、一段关系，或一个新的选择聊起。结合你的命盘，我们一起整理思路，找到可以尝试的下一步。</p>
+            <Link href="/career" className="reading-career-card"><span><span className="block font-serif text-xl">把事业问题想清楚</span><span className="mt-2 block text-sm text-[var(--color-text-secondary)]">职业方向、工作瓶颈，或一个正在犹豫的机会</span></span><ArrowUpRight size={22} /></Link>
+            <p className="mb-3 mt-7 text-xs text-[var(--color-text-muted)]">也可以从这里聊起</p>
+            <div className="flex flex-wrap gap-2">{quickButtons.slice(0, 4).map(button => <button className="reading-pill" key={button.label} disabled={!canUseQuick} onClick={() => sendQuick(button.label, button.prompt)}>{button.label}</button>)}</div>
+          </div>
+        </div> : <MessageList
+          containerClassName="reading-messages"
           scrollRef={scrollRef}
-          messages={msgs}
+          messages={msgs.filter(m => m.meta?.kind !== 'intro')}
           Markdown={Markdown}
           onRated={handleRated}
           onSimplify={handleSimplify}
@@ -876,7 +748,7 @@ export default function PanelPage() {
           onRegenerate={regenerate}
           regenerating={regenerating}
           loading={loading}
-        />
+        />}
         {showBackToTop && (
           <button
             type="button"
@@ -892,7 +764,6 @@ export default function PanelPage() {
       </div>
 
       {/* Inline error below messages. Loading is shown inside the pending assistant reply. */}
-      <TimeCorrectionNotice info={timeCorrection} />
       {err && (
         <div className="flex-shrink-0 px-4 pb-1">
           {err && (
@@ -906,35 +777,18 @@ export default function PanelPage() {
         </div>
       )}
 
-      {/* Bottom bar: quick actions + input */}
-      <div className="flex-shrink-0 border-t border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-2 sm:px-3 pt-2 pb-2 space-y-2">
-        <QuickActions
-          disabled={!canUseQuick}
-          buttons={quickButtons}
-          onClick={sendQuick}
-          primary
-        />
-        <InputArea
-          value={input}
-          onChange={setInput}
-          onKeyDown={onKeyDown}
-          canSend={canSend}
-          sending={loading}
-          disabled={booting || !conversationId}
-          onSend={send}
-          onRegenerate={regenerate}
-          onStop={() => {}}
-          onClear={() => setClearDialogOpen(true)}
-          confirmClear={false}
-          showRegenerate={false}
-          showClear={true}
-          actionsInline
-          placeholder="问我一个你现在最关心的问题…"
-        />
-        <p className="text-center text-[12px] leading-5 text-[var(--color-text-muted)]">
-          内容仅供娱乐参考，请理性看待。
-        </p>
-      </div>
+      <footer className="reading-footer">
+        <div className="reading-composer">
+          <InputArea value={input} onChange={setInput} onKeyDown={onKeyDown}
+            canSend={canSend} sending={loading} disabled={booting || !conversationId}
+            onSend={send} onRegenerate={regenerate}
+            onStop={() => streamAbortRef.current?.abort()}
+            showRegenerate={false} showClear={false}
+            placeholder={taskContext ? '围绕这个问题，继续聊聊你的想法…' : '说说你现在最在意的事…'} />
+          <div className="reading-composer-meta"><Link href="/career">事业咨询 <ArrowUpRight size={12} /></Link><span>Enter 发送 · Shift+Enter 换行</span></div>
+        </div>
+        <p className="mt-2 text-center text-[11px] text-[var(--color-text-muted)]">传统文化视角与现实思考参考，决定由你做出。</p>
+      </footer>
 
       <QuotaExhaustedDialog
         open={quotaDialogOpen}

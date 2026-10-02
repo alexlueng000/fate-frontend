@@ -108,7 +108,7 @@ export function MessageList({
             {/* Message Bubble */}
             <div className="flex flex-col min-w-0 flex-1">
               <div
-                className={`rounded-[4px] px-3 py-2.5 sm:px-4 sm:py-3 ${
+                className={`rounded-[20px] px-3 py-2.5 sm:px-4 sm:py-3 ${
                   isAssistant
                     ? 'bg-transparent text-[var(--color-text-primary)]'
                     : 'bg-[var(--color-bg-alt)] text-[var(--color-text-primary)] max-w-[90%] sm:max-w-[75%] ml-auto'
@@ -178,7 +178,7 @@ export function MessageList({
               )}
 
               {/* 推荐问题 */}
-              {isAssistant && !isIntro && !m.streaming && suggestedQuestions.length > 0 && onQuestionClick && (
+              {isAssistant && !isIntro && !m.streaming && i === lastRegenerableIdx && suggestedQuestions.length > 0 && onQuestionClick && (
                 <SuggestedQuestions
                   questions={suggestedQuestions}
                   onQuestionClick={onQuestionClick}

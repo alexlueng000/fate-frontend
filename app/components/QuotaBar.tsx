@@ -67,6 +67,7 @@ interface QuotaBarProps {
   /** 父组件递增此值触发重新拉取（每次发送/购买后 +1）。 */
   refreshKey?: number;
   className?: string;
+  compact?: boolean;
 }
 
 /**
@@ -74,7 +75,7 @@ interface QuotaBarProps {
  * 适合放在头部信息栏下方作为独立一行（panel 页用）。
  * 比 QuotaChip 信息密度更高：标签 + 当前/总数 + 进度条 + CTA。
  */
-export function QuotaBar({ type, refreshKey = 0, className = '' }: QuotaBarProps) {
+export function QuotaBar({ type, refreshKey = 0, className = '', compact = false }: QuotaBarProps) {
   const [data, setData] = useState<MyQuotas | null>(null);
 
   useEffect(() => {
@@ -88,6 +89,7 @@ export function QuotaBar({ type, refreshKey = 0, className = '' }: QuotaBarProps
   }, [refreshKey]);
 
   // skeleton 一行，避免布局跳动
+  if (!data && compact) return <span className="reading-pill text-xs" role="status">读取额度…</span>;
   if (!data) {
     return (
       <div className={`px-4 py-2 border-b border-[var(--color-border)] bg-[var(--color-bg-elevated)]/40 ${className}`}>
@@ -103,6 +105,8 @@ export function QuotaBar({ type, refreshKey = 0, className = '' }: QuotaBarProps
   const low = !unlimited && !empty && q.remaining <= 3;
   const state: State = unlimited ? 'unlimited' : empty ? 'empty' : low ? 'low' : 'normal';
   const t = TONE[state];
+
+  if (compact) return <Link href="/pricing" className="reading-pill text-xs" aria-label={`${label}，${unlimited ? '不限次数' : `剩余 ${q.remaining} 次`}，查看套餐`}>{unlimited ? '不限次数' : `剩余 ${q.remaining} 次`}</Link>;
 
   const pct = unlimited
     ? 100

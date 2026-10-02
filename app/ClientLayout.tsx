@@ -62,8 +62,8 @@ function LayoutBody({ children }: { children: ReactNode }) {
         {showFunctionNav && <SideNav />}
 
         {/* 主内容区 */}
-        <main className={`flex-1 overflow-auto ${showFunctionNav ? 'mb-16 sm:mb-0' : ''}`}>
-          {LOCAL_PREVIEW && <PreviewBanner />}
+        <main className={`flex-1 overflow-auto ${showFunctionNav ? 'mb-16 sm:mb-0' : ''} ${pathname === '/panel' ? 'flex flex-col' : ''}`}>
+          {LOCAL_PREVIEW && <div className="shrink-0"><PreviewBanner /></div>}
           {children}
         </main>
       </div>

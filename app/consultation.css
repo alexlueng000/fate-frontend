@@ -22,3 +22,40 @@
 @keyframes consult-panel{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
 @media(max-width:640px){.consult-page{padding:24px 20px 100px}.consult-drawer{top:auto;max-height:85dvh;padding-bottom:calc(24px + env(safe-area-inset-bottom))}.consult-prose{font-size:16px}}
 @media(prefers-reduced-motion:reduce){.consult-drawer{animation:none}.consult-evidence-trigger svg{transition:none}}
+
+/* Soft consultation surfaces: generous curves, quiet separators, readable measure. */
+.consult-page{--radius-md:16px;--radius-lg:24px}
+.consult-page button,.consult-page input,.consult-page textarea{border-radius:16px}
+.consult-primary,.consult-secondary{border-radius:16px;transition:background-color .18s ease,box-shadow .18s ease}
+.consult-secondary{border-color:color-mix(in srgb,var(--color-border) 65%,transparent);background:var(--color-bg-elevated)}
+.consult-field{border-radius:16px;border-color:color-mix(in srgb,var(--color-border) 70%,transparent)}
+.consult-evidence{border:0;border-radius:18px;background:var(--color-bg-alt);padding:0 18px}
+.consult-drawer{border-radius:28px 0 0 28px;box-shadow:-12px 0 60px rgba(74,54,38,.08)}
+.consult-icon-button{border-radius:50%}
+.reading-workspace{background:#faf7f3;--radius-md:16px;--radius-lg:24px}
+.reading-header{flex-shrink:0;padding:24px 32px 18px;border-bottom:1px solid rgba(128,102,81,.09)}
+.reading-header-inner{max-width:1060px;margin:auto;display:flex;align-items:center;gap:24px}
+.reading-header .consult-eyebrow{font-size:11px;margin-bottom:6px}
+.reading-tools{display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap}
+.reading-pill{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:42px;padding:9px 15px;border:1px solid rgba(128,102,81,.12);border-radius:999px;background:rgba(255,255,255,.58);font-size:13px;color:var(--color-text-secondary);transition:background-color .18s}
+.reading-pill:hover{background:#f1e8df;color:var(--color-primary)}
+.reading-pill:disabled{opacity:.45;cursor:not-allowed}
+.reading-workspace :focus-visible{outline:2px solid var(--color-primary);outline-offset:3px}
+.reading-welcome{width:100%;overflow-y:auto;min-height:0;flex:1}
+.reading-welcome-inner{max-width:730px;margin:auto;padding:clamp(24px,5vh,60px) 28px 36px}
+.reading-mark{display:inline-flex;width:60px;height:60px;align-items:center;justify-content:center;border-radius:22px;background:#eee2d8;color:#a66f56}
+.reading-welcome-copy{max-width:560px;margin:18px 0 28px;font-size:15px;line-height:1.95;color:var(--color-text-secondary)}
+.reading-career-card{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:24px;border:1px solid rgba(157,119,88,.12);border-radius:24px;background:#f1e9df;transition:background-color .18s;color:var(--color-text-primary)}
+.reading-career-card:hover{background:#ebe0d4}
+.reading-messages{border:0!important;background:transparent!important;padding:28px max(24px,calc((100% - 800px)/2)) 40px!important;scroll-padding-bottom:24px}
+.reading-messages .msg-md{font-size:16px;line-height:1.95}
+.reading-messages>div{margin-bottom:28px}
+.reading-footer{flex-shrink:0;padding:12px 24px 14px;background:#faf7f3}
+.reading-composer{max-width:800px;margin:auto;border:1px solid rgba(128,102,81,.15);border-radius:24px;padding:10px 12px 8px;background:#fffdfa;box-shadow:0 6px 30px rgba(73,48,30,.045)}
+.reading-composer textarea{background:transparent;border:0;border-radius:16px;min-height:54px;box-shadow:none}
+.reading-composer textarea:focus-visible{outline:0;box-shadow:none}
+.reading-composer:focus-within{border-color:rgba(181,68,52,.4);box-shadow:0 0 0 3px rgba(181,68,52,.06)}
+.reading-composer-meta{display:flex;justify-content:space-between;align-items:center;margin-top:2px;padding:0 10px;color:var(--color-text-muted);font-size:11px}
+.reading-composer-meta a{display:inline-flex;align-items:center;gap:4px;min-height:30px;color:var(--color-text-secondary)}
+@media(max-width:767px){.reading-header{padding:14px 18px 12px}.reading-header-inner{display:block}.reading-header h1{font-size:18px}.reading-tools{margin-top:10px;gap:6px}.reading-pill{font-size:12px;padding:8px 12px}.reading-welcome-inner{padding:24px 20px}.reading-welcome h2{font-size:28px}.reading-mark{width:46px;height:46px;border-radius:17px}.reading-career-card{padding:19px;border-radius:20px}.reading-messages{padding:20px 12px 28px!important}.reading-footer{padding:8px 12px 10px}.reading-composer{border-radius:22px}.reading-composer-meta>span{display:none}.consult-drawer{border-radius:28px 28px 0 0}}
+@media(prefers-reduced-motion:reduce){.reading-pill,.reading-career-card,.consult-primary,.consult-secondary{transition:none}}
