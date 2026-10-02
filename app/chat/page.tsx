@@ -20,9 +20,9 @@ import { InputArea } from '@/app/components/chat/InputArea';
 import {
   Msg, Paipan, QUICK_BUTTONS, normalizeMarkdown,
 } from '@/app/lib/chat/types';
-import { parseSuggestedQuestions, restoreStoredMessage } from '@/app/lib/chat/parser';
+import { restoreStoredMessage } from '@/app/lib/chat/parser';
 import { api, fetchQuickButtons, pickReply, readApiError } from '@/app/lib/chat/api';
-import { trySSE, QuotaExhaustedError, CHAT_FAILURE_MESSAGE } from '@/app/lib/chat/sse';
+import { trySSE, QuotaExhaustedError } from '@/app/lib/chat/sse';
 import {
   saveConversation, loadConversation, getActiveConversationId,
   savePaipanLocal, repairCorruptedConversations, clearActiveConversationId,
@@ -31,6 +31,7 @@ import { historyApi, ConversationUnavailableError, type TaskContext } from '@/ap
 import { QuotaChip } from '@/app/components/QuotaChip';
 import QuotaExhaustedDialog from '@/app/components/QuotaExhaustedDialog';
 import { useSavedBaziTurn } from '@/app/lib/chat/useSavedBaziTurn';
+import { useBaziOpening } from '@/app/lib/chat/useBaziOpening';
 import { TurnRecovery } from '@/app/components/chat/TurnRecovery';
 import { ShareImageDialog } from '@/app/components/share/ShareImageDialog';
 
@@ -63,7 +64,36 @@ export default function ChatPage() {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const topAnchorRef = useRef<HTMLDivElement>(null);
   const bottomAnchorRef = useRef<HTMLDivElement>(null);
-  const turn = useSavedBaziTurn({ owner: me?.id, cid: conversationId, input, setMessages: setMsgs, setInput, taskContext,
+  const opening = useBaziOpening({ owner: me?.id,
+    onQuotaExhausted: detail => {
+      trackEvent('quota_paywall_shown', { payload: { surface: 'chat', type: 'chat' } });
+      setQuotaDialogMessage(detail); setQuotaDialogOpen(true); setQuotaRefreshKey(key => key + 1);
+    },
+    onSource: status => {
+      if (status.paipan) setPaipan(status.paipan);
+      if ('task_context' in status) setTaskContext(status.task_context ?? null);
+      if (status.state !== 'idle') setErr(null);
+      if (status.conversation_id) {
+        const cid = status.conversation_id;
+        setConversationId(cid); sessionStorage.setItem('conversation_id', cid);
+        const url = new URL(window.location.href);
+        url.searchParams.set('conv_id', cid.replace(/^bazi_conv_/, ''));
+        window.history.replaceState(window.history.state, '', url);
+      }
+    },
+    onMessages: setMsgs,
+    onSaved: detail => {
+      setBrowserOnlyHistory(false); setErr(null); setTaskContext(detail.task_context ?? null);
+      setMsgs(detail.messages.filter((message, index) => (message.role === 'user' || message.role === 'assistant')
+        && !(index === 0 && message.role === 'user' && message.content.startsWith('我的命盘信息如下'))).map(restoreStoredMessage));
+      const chart = detail.profile?.bazi_chart;
+      const snapshot = chart && typeof chart.mingpan === 'object' ? chart.mingpan : chart;
+      if (snapshot && typeof snapshot === 'object' && 'four_pillars' in snapshot) setPaipan(snapshot as Paipan);
+      setQuotaRefreshKey(key => key + 1);
+    },
+  });
+  const loadOpening = opening.load;
+  const turn = useSavedBaziTurn({ owner: booting || opening.blocked ? undefined : me?.id, cid: conversationId, input, setMessages: setMsgs, setInput, taskContext,
     onRestored: detail => {
       setTaskContext(detail.task_context ?? null);
       setBrowserOnlyHistory(false);
@@ -72,13 +102,6 @@ export default function ChatPage() {
       if (snapshot && typeof snapshot === 'object' && 'four_pillars' in snapshot) setPaipan(snapshot as Paipan);
       setErr(null);
     } });
-
-  // 安全读取 conversation_id
-  function readConversationId(meta: unknown): string {
-    if (typeof meta !== 'object' || meta === null) return '';
-    const v = (meta as Record<string, unknown>)['conversation_id'];
-    return typeof v === 'string' ? v : '';
-  }
 
   function extractGuestMingpan(payload: unknown): Paipan | null {
     if (!payload || typeof payload !== 'object') return null;
@@ -138,7 +161,7 @@ export default function ChatPage() {
 
   // Bootstrap：从档案启动会话或恢复旧会话
   useEffect(() => {
-    if (loading) return;
+    if (loading || !me?.id) return;
     let alive = true;
 
     (async () => {
@@ -206,6 +229,7 @@ export default function ChatPage() {
             saveConversation(cid, displayMsgs);
           } else {
             setErr('这条记录没有可显示的解读内容，可能是生成过程中页面关闭或网络中断。');
+            await loadOpening({ cid }, false);
           }
           setBooting(false);
           return;
@@ -249,6 +273,7 @@ export default function ChatPage() {
             const chart = detail.profile?.bazi_chart;
             const snapshot = chart && typeof chart.mingpan === 'object' ? chart.mingpan : chart;
             if (snapshot && typeof snapshot === 'object' && 'four_pillars' in snapshot) setPaipan(snapshot as Paipan);
+            if (!detail.messages.length) await loadOpening({ cid: active }, false);
             setBooting(false);
             return;
           }
@@ -259,95 +284,18 @@ export default function ChatPage() {
         }
       }
 
-      // 没有旧会话，从档案启动新会话
+      // Read the owned first request before starting. A refresh never retries
+      // an unknown or failed generation automatically.
       try {
-        const token = getAuthToken();
-        if (!token) {
-          setErr('未登录，请重新登录');
-          setBooting(false);
-          return;
-        }
-
-        // 清理旧会话ID
         sessionStorage.removeItem('conversation_id');
-
-        // 启动新会话（后端自动从档案读取命盘）
-        let assistantIndex = -1;
-        setMsgs(() => {
-          const next: Msg[] = [{ role: 'assistant', content: '', streaming: true }];
-          assistantIndex = 0;
-          return next;
-        });
-
-        await trySSE(
-          api('/chat/start'),
-          guestAnalysisPublicId
-            ? { guest_analysis_public_id: guestAnalysisPublicId }
-            : {}, // 默认不传 paipan，后端从档案读取
-          (text) => {
-            if (!alive) return;
-            setMsgs((prev) => {
-              const next = [...prev];
-              if (assistantIndex >= 0 && assistantIndex < next.length) {
-                next[assistantIndex] = {
-                  ...next[assistantIndex],
-                  // trySSE 回调的是截至当前的完整正文，不是单个 token。
-                  // 继续相加会把每次完整快照重复拼进同一条回复。
-                  content: text,
-                };
-              }
-              return next;
-            });
-          },
-          (meta) => {
-            if (!alive) return;
-            const cid = readConversationId(meta);
-            if (cid) {
-              sessionStorage.setItem('conversation_id', cid);
-              setConversationId(cid);
-            }
-          }
-        );
-
-        // 流结束，解析推荐问题
-        if (!alive) return;
-        let finalText = '';
-        setMsgs((prev) => {
-          const next = [...prev];
-          if (assistantIndex >= 0 && assistantIndex < next.length) {
-            const { questions, cleanedContent } = parseSuggestedQuestions(next[assistantIndex].content || '');
-            const normalized = normalizeMarkdown(cleanedContent);
-            next[assistantIndex] = {
-              ...next[assistantIndex],
-              content: normalized,
-              streaming: false,
-              suggestedQuestions: questions,
-            };
-            finalText = normalized;
-          }
-          return next;
-        });
-
-        const cid = sessionStorage.getItem('conversation_id');
-        if (cid) {
-          saveConversation(cid, [{ role: 'assistant', content: finalText }]);
-        }
-      } catch (e: unknown) {
-        if (!alive) return;
-        if (e instanceof QuotaExhaustedError) {
-          handleQuotaExhausted(e);
-        } else {
-          setErr(CHAT_FAILURE_MESSAGE);
-          setMsgs(prev => prev.map(msg => msg.streaming
-            ? { ...msg, streaming: false, content: CHAT_FAILURE_MESSAGE } : msg));
-        }
+        await loadOpening({ body: guestAnalysisPublicId ? { guest_analysis_public_id: guestAnalysisPublicId } : {} }, true);
       } finally {
         if (alive) setBooting(false);
       }
     })();
 
     return () => { alive = false; };
-  }, [loading, router]);
+  }, [loading, router, me?.id, loadOpening]);
 
   // 持久化消息
   useEffect(() => {
@@ -355,11 +303,11 @@ export default function ChatPage() {
   }, [conversationId, msgs]);
 
   // ===== Helpers =====
-  const historyRecordMissing = viewingHistory && msgs.length === 0 && !!err;
+  const historyRecordMissing = viewingHistory && msgs.length === 0 && !!err && !opening.blocked;
 
   const canSend = useMemo(
-    () => !!conversationId && !!input.trim() && !sending && !booting && !historyRecordMissing && !browserOnlyHistory && !turn.blocked && !turn.busy,
-    [conversationId, input, sending, booting, historyRecordMissing, browserOnlyHistory, turn.blocked, turn.busy],
+    () => !!conversationId && !!input.trim() && !sending && !booting && !historyRecordMissing && !browserOnlyHistory && !opening.blocked && !turn.blocked && !turn.busy,
+    [conversationId, input, sending, booting, historyRecordMissing, browserOnlyHistory, opening.blocked, turn.blocked, turn.busy],
   );
 
   const canShareImage = useMemo(
@@ -373,7 +321,7 @@ export default function ChatPage() {
   );
 
   const sendStream = async (content: string, displayMessage?: string) => {
-    if (regenerationLockRef.current || browserOnlyHistory || turn.blocked || turn.busy) return;
+    if (regenerationLockRef.current || browserOnlyHistory || opening.blocked || turn.blocked || turn.busy) return;
     regenerationLockRef.current = true;
     try { await turn.run(content, displayMessage); }
     finally { regenerationLockRef.current = false; void refreshQuota(); }
@@ -402,7 +350,7 @@ export default function ChatPage() {
   };
 
   const send = async () => {
-    if (!conversationId || regenerationLockRef.current || turn.blocked || turn.busy) {
+    if (!conversationId || opening.blocked || regenerationLockRef.current || turn.blocked || turn.busy) {
       if (conversationId) return;
       setErr('缺少会话，请刷新页面重试');
       return;
@@ -435,7 +383,7 @@ export default function ChatPage() {
   };
 
   const regenerate = async () => {
-    if (!conversationId || sending || regenerationLockRef.current || browserOnlyHistory || turn.blocked || turn.busy) return;
+    if (!conversationId || sending || regenerationLockRef.current || browserOnlyHistory || opening.blocked || turn.blocked || turn.busy) return;
     const lastAssistantIdx = [...msgs].map((m, i) => ({ m, i })).reverse().find(x => x.m.role === 'assistant')?.i;
     if (lastAssistantIdx == null) return;
     regenerationLockRef.current = true;
@@ -469,7 +417,7 @@ export default function ChatPage() {
   };
 
   const sendQuick = async (label: string, fullPrompt: string) => {
-    if (!conversationId || regenerationLockRef.current || turn.blocked || turn.busy) {
+    if (!conversationId || opening.blocked || regenerationLockRef.current || turn.blocked || turn.busy) {
       if (conversationId) return;
       setErr('缺少会话，请刷新页面重试');
       return;
@@ -500,7 +448,7 @@ export default function ChatPage() {
   };
 
   const handleQuestionClick = async (question: string) => {
-    if (!conversationId || sending || regenerationLockRef.current || turn.blocked || turn.busy) return;
+    if (!conversationId || opening.blocked || sending || regenerationLockRef.current || turn.blocked || turn.busy) return;
     setErr(null);
     setSending(true);
     if (!firstMessageTrackedRef.current) {
@@ -652,7 +600,7 @@ export default function ChatPage() {
         />
 
         <TimeCorrectionNotice info={paipan} />
-        <MessageList
+        {(msgs.length > 0 || !opening.blocked) && <MessageList
           conversationId={conversationId}
           scrollRef={scrollRef}
           messages={msgs}
@@ -663,7 +611,7 @@ export default function ChatPage() {
           onSimplifyToggle={handleSimplifyToggle}
           onQuestionClick={handleQuestionClick}
           onRegenerate={regenerate}
-          loading={sending || browserOnlyHistory || turn.blocked || turn.busy}
+          loading={booting || opening.blocked || sending || browserOnlyHistory || turn.blocked || turn.busy}
           emptyText={booting ? '正在读取解读记录…' : '这条记录暂无解读内容'}
           emptyTitle={historyRecordMissing ? '这条记录暂时没有可显示的解读内容' : undefined}
           emptyDescription={
@@ -689,9 +637,9 @@ export default function ChatPage() {
               </div>
             ) : undefined
           }
-        />
+        />}
 
-        {err && !turn.error && !turn.notice && !historyRecordMissing && (
+        {err && !opening.blocked && !turn.error && !turn.notice && !historyRecordMissing && (
           <div className="rounded-[24px] border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4 text-sm text-[var(--color-text-secondary)]">
             <p className="font-medium text-[var(--color-primary)]">当前内容暂时无法加载</p>
             <p className="mt-2 leading-[1.7]">{err}</p>
@@ -701,9 +649,22 @@ export default function ChatPage() {
         {browserOnlyHistory && <p role="status" className="rounded-[24px] border border-[var(--color-border)] p-4 text-sm leading-7 text-[var(--color-text-secondary)]">
           这些旧内容仅保存在此浏览器，尚未核实服务端的完整记录。原文仍可阅读；新的问题可以<Link href="/panel" className="ml-1 text-[var(--color-primary)] underline underline-offset-4">开始新的咨询</Link>。
         </p>}
-        <TurnRecovery {...turn} />
+        {opening.blocked && <section aria-label="首次报告恢复" role="status" className="rounded-[24px] border border-[var(--color-border)] bg-[var(--color-bg-card)] p-5 text-sm leading-7 text-[var(--color-text-secondary)]">
+          <p className="font-medium text-[var(--color-primary)]">
+            {opening.phase === 'generating' ? '正在生成完整报告…' : opening.phase === 'checking' ? '正在检查报告保存状态…'
+              : opening.phase === 'pending' ? '这份报告仍在生成中' : opening.phase === 'retryable' ? '这份报告尚未完成' : '报告保存状态暂未确认'}
+          </p>
+          <p className="mt-1">{opening.error || (opening.phase === 'pending' ? '重新加载会读取已有请求的保存结果，请稍后再检查。'
+            : opening.phase === 'retryable' ? '原命盘与背景已保留，可以手动重试本次报告。' : '报告完整保存后即可继续追问。')}</p>
+          <div className="mt-3 flex flex-wrap gap-3">
+            {opening.phase === 'generating' ? <button type="button" className="btn btn-secondary" onClick={opening.stop}>停止生成报告</button>
+              : <button type="button" className="btn btn-secondary" disabled={opening.busy} onClick={() => void opening.reload()}>重新加载首次报告</button>}
+            {opening.phase === 'retryable' && <button type="button" className="btn btn-primary" onClick={() => void opening.retry()}>重试生成完整报告</button>}
+          </div>
+        </section>}
+        {!opening.blocked && <TurnRecovery {...turn} />}
         <QuickActions
-          disabled={sending || booting || !conversationId || historyRecordMissing || browserOnlyHistory || turn.blocked || turn.busy}
+          disabled={sending || booting || opening.blocked || !conversationId || historyRecordMissing || browserOnlyHistory || turn.blocked || turn.busy}
           buttons={quickButtons}
           onClick={sendQuick}
         />
@@ -714,7 +675,7 @@ export default function ChatPage() {
           onKeyDown={onKeyDown}
           canSend={canSend}
           sending={sending}
-          disabled={booting || !conversationId || historyRecordMissing || browserOnlyHistory || (turn.busy && !sending)}
+          disabled={booting || opening.blocked || !conversationId || historyRecordMissing || browserOnlyHistory || (turn.busy && !sending)}
           onSend={send}
           onRegenerate={regenerate}
           showRegenerate={false}

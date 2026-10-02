@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { LOCAL_PREVIEW, previewUser } from '@/app/lib/local-preview/config';
-import { previewChart, previewConversations, previewOverview, previewProfile, previewReply } from '@/app/lib/local-preview/fixtures';
+import { previewChart, previewConversations, previewOverview, previewProfile, previewReply, previewReport } from '@/app/lib/local-preview/fixtures';
 import { QUICK_BUTTONS } from '@/app/lib/chat/types';
 
 export const dynamic = 'force-dynamic';
@@ -14,6 +14,11 @@ async function handle(request: NextRequest, context: { params: Promise<{ path?: 
   if (!LOCAL_PREVIEW) return NextResponse.json({ detail: 'Not found' }, { status: 404 });
   const path = '/' + ((await context.params).path ?? []).join('/');
   const method = request.method;
+  // Fixed archived first report for the isolated UI preview. This is not a
+  // generated/saved result and the production guard above is mandatory.
+  const previewOpening = { state: 'succeeded', conversation_id: 'bazi_conv_9000', message_id: 2,
+    source_hash: 'd'.repeat(64), reply: previewReport, paipan: previewChart, task_context: null, demo: true };
+  if ((method === 'POST' && path === '/chat/start/status') || (method === 'GET' && path === '/chat/conversations/bazi_conv_9000/opening')) return json(previewOpening);
   if (method === 'GET') {
     const turn = path.match(/^\/chat\/conversations\/((?:bazi_conv_|liuyao_conv_|conv_)?\d+)\/request$/);
     if (turn) return json({ state: 'idle', conversation_id: turn[1], demo: true });
@@ -33,6 +38,13 @@ async function handle(request: NextRequest, context: { params: Promise<{ path?: 
       const limit = Math.max(1, Number(q.get('limit')) || 20);
       return json({ items: matching.slice(offset, offset + limit), total: matching.length, has_more: offset + limit < matching.length });
     }
+    if (path === '/conversations/9000') return json({ id: 9000, type: 'bazi', title: '个人报告（固定演示）', profile: previewProfile,
+      messages: [{ id: 1, role: 'user', content: '我的命盘信息如下：固定演示', created_at: '2026-09-17T02:30:00Z' },
+        { id: 2, role: 'assistant', content: previewReport, created_at: '2026-09-17T02:30:00Z' }] });
+    if (path === '/conversations/9000/report') return json({ conversation_id: 9000, source_message_id: 2, type: 'bazi', kind: 'personal',
+      title: '个人报告（固定演示）', question: null, facts: {}, generated_at: '2026-09-17T02:30:00Z', content: previewReport,
+      sections: previewReport.split(/^### /m).filter(Boolean).map(section => { const [title, ...body] = section.split('\n'); return { title: title.trim(), body: body.join('\n').trim() }; }),
+      profile: previewProfile, profile_changed: false, task_context: null, demo: true });
     const match = path.match(/^\/conversations\/(\d+)(\/digest)?$/);
     if (match) {
       const item = previewConversations.find(row => row.id === Number(match[1]));
