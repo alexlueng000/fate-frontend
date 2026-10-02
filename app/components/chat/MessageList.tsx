@@ -10,6 +10,8 @@ import { SuggestedQuestions } from './SuggestedQuestions';
 import { parseSuggestedQuestions } from '@/app/lib/chat/parser';
 import { WaitingResponse } from './WaitingResponse';
 import { ReadingBody } from '@/app/components/consultation/ReadingBody';
+import Link from 'next/link';
+import { consultationSections } from '@/app/lib/consultation/sections';
 
 export function MessageList({
   scrollRef,
@@ -28,6 +30,7 @@ export function MessageList({
   emptyDescription,
   emptyAction,
   containerClassName,
+  conversationId,
 }: {
   scrollRef?: React.MutableRefObject<HTMLDivElement | null> | React.RefObject<HTMLDivElement | null>;
   messages: Msg[];
@@ -45,8 +48,12 @@ export function MessageList({
   emptyDescription?: string;
   emptyAction?: ReactNode;
   containerClassName?: string;
+  conversationId?: string | number | null;
 }) {
   const baseClass = containerClassName ?? 'rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)]';
+  const savedConversationId = String(conversationId ?? '').replace(/^(bazi_conv_|liuyao_conv_|conv_)/, '');
+  const reportMessageIndex = messages.findIndex(message => message.role === 'assistant' && !message.streaming
+    && message.meta?.messageId && consultationSections(parseSuggestedQuestions(message.content).cleanedContent));
 
   // Last assistant message that isn't the intro and isn't streaming — the only one we offer "regenerate" on.
   let lastRegenerableIdx = -1;
@@ -134,6 +141,7 @@ export function MessageList({
               {/* 操作按钮行 - 仅在AI消息且非流式状态且非开场白时显示 */}
               {isAssistant && !m.streaming && !isIntro && (
                 <div className="flex justify-end items-center gap-1 mt-1 flex-wrap">
+                  {i === reportMessageIndex && /^\d+$/.test(savedConversationId) && <Link href={`/reports/${savedConversationId}`} className="reading-pill mr-auto">查看完整报告</Link>}
                   {onRegenerate && i === lastRegenerableIdx && (
                     <button
                       type="button"

@@ -300,6 +300,8 @@ export default function LiuyaoPage() {
         if (!detail.hexagram) throw new Error('卦象数据缺失');
 
         setResult(detail.hexagram as HexagramDetail);
+        setTaskContext(detail.task_context ?? null);
+        setInput((new URLSearchParams(window.location.search).get('question') || '').slice(0, 4000));
 
         const cid = `liuyao_conv_${detail.id}`;
         const filtered = detail.messages.filter((m, idx) => {
@@ -1475,6 +1477,7 @@ export default function LiuyaoPage() {
                       }
                       return (
                         <MessageList
+                          conversationId={conversationId}
                           scrollRef={chatScrollRef}
                           messages={msgs}
                           Markdown={MarkdownView}

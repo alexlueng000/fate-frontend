@@ -27,7 +27,7 @@ import {
   saveConversation, loadConversation, getActiveConversationId,
   savePaipanLocal, loadPaipanLocal, repairCorruptedConversations,
 } from '@/app/lib/chat/storage';
-import { historyApi } from '@/app/lib/history/api';
+import { historyApi, type TaskContext } from '@/app/lib/history/api';
 import { QuotaChip } from '@/app/components/QuotaChip';
 import QuotaExhaustedDialog from '@/app/components/QuotaExhaustedDialog';
 import { ShareImageDialog } from '@/app/components/share/ShareImageDialog';
@@ -38,6 +38,7 @@ export default function ChatPage() {
 
   // ===== State =====
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [taskContext, setTaskContext] = useState<TaskContext | null>(null);
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
@@ -155,6 +156,8 @@ export default function ChatPage() {
           }
 
           const cid = `bazi_conv_${detail.id}`;
+          setTaskContext(detail.task_context ?? null);
+          setInput((searchParams.get('question') || '').slice(0, 4000));
           // 命盘快照（恢复历史时优先用会话当时的快照）
           if (detail.profile?.bazi_chart) {
             const chart = detail.profile.bazi_chart as Record<string, unknown>;
@@ -371,7 +374,7 @@ export default function ChatPage() {
     try {
       await trySSE(
         api('/chat'),
-        { conversation_id: conversationId, message: content, display_message: displayMessage },
+        { conversation_id: conversationId, message: content, display_message: displayMessage, task_context: taskContext },
         replaceStreamingText,
         (meta) => {
           if (!mountedRef.current) return;
@@ -689,6 +692,7 @@ export default function ChatPage() {
 
         <TimeCorrectionNotice info={paipan} />
         <MessageList
+          conversationId={conversationId}
           scrollRef={scrollRef}
           messages={msgs}
           Markdown={Markdown}

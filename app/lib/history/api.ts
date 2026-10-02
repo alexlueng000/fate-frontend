@@ -38,6 +38,7 @@ export type ConversationListItem = {
   hexagram?: HexagramSummary | null;
   task_context?: TaskContext | null;
   digest?: ConversationDigest | null;
+  report_source_message_id?: number | null;
 };
 
 export type ConversationListResp = {
@@ -66,12 +67,33 @@ export type ConversationDetailResp = {
   task_context?: TaskContext | null;
 };
 
+export type ConversationReport = {
+  conversation_id: number; source_message_id: number; type: HistoryType;
+  kind: 'personal' | 'topic'; title: string; question: string | null;
+  facts: Record<string, string>; generated_at: string; content: string;
+  sections: { title: string; body: string }[];
+  profile?: ConversationDetailResp['profile']; profile_changed: boolean;
+  hexagram?: HexagramDetail | null; task_context?: TaskContext | null;
+};
+
 function getAuthHeaders(): Record<string, string> {
   const token = localStorage.getItem('auth_token');
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
 export const historyApi = {
+  async report(id: number, signal?: AbortSignal): Promise<ConversationReport> {
+    const response = await fetch(api(`/conversations/${id}/report`), {
+      headers: getAuthHeaders(), credentials: 'include', signal,
+    });
+    if (!response.ok) {
+      if (response.status === 401) throw new Error('登录已过期，请重新登录后查看报告。');
+      if (response.status === 404) throw new Error('找不到这份记录，可能已被删除。');
+      if (response.status === 409) throw new Error('这段对话还没有完整报告，可以继续原对话补充信息。');
+      throw new Error('报告暂时无法加载，请重试。');
+    }
+    return response.json();
+  },
   async list(
     type: HistoryType,
     offset = 0,

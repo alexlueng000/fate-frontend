@@ -737,6 +737,7 @@ export default function PanelPage() {
             <div className="flex flex-wrap gap-2">{quickButtons.slice(0, 4).map(button => <button className="reading-pill" key={button.label} disabled={!canUseQuick} onClick={() => sendQuick(button.label, button.prompt)}>{button.label}</button>)}</div>
           </div>
         </div> : <MessageList
+          conversationId={conversationId}
           containerClassName="reading-messages"
           scrollRef={scrollRef}
           messages={msgs.filter(m => m.meta?.kind !== 'intro')}

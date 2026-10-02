@@ -6,6 +6,7 @@ import { digestRequest, type ConversationListItem } from '@/app/lib/history/api'
 import { trackEvent } from '@/app/lib/analytics/track';
 import styles from './history.module.css';
 import { ReadingLink } from '@/app/components/consultation/ReadingLink';
+import Link from 'next/link';
 
 const TOPICS: Record<string, string> = { CAREER: '事业', WEALTH: '财富', RELATIONSHIP: '关系', SELF: '自我', FAMILY: '家庭', STUDY: '学业', HEALTH: '健康', OTHER: '其他' };
 
@@ -101,6 +102,7 @@ export default function HistoryRecord({ item, type, onContinue, onChange, onDele
       ) : <h2>{item.title}</h2>}
       <p className={styles.preview}>{digest?.question || item.hexagram?.question || '展开查看当时的问题与解读，或直接接着聊。'}</p>
       <div className={styles.actions}>
+        {item.report_source_message_id && <Link className={styles.continue} href={`/reports/${item.id}`}>查看报告<ArrowRight size={16} aria-hidden="true" /></Link>}
         <ReadingLink conversationId={item.id} />
         <button className={styles.textButton} aria-expanded={expanded} aria-controls={`digest-${item.id}`} onClick={() => {
           const opening = !expanded; setExpanded(opening); setError('');

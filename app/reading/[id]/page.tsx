@@ -167,7 +167,7 @@ export default function ReadingPage() {
           <Link href={`${kind === 'liuyao' ? '/liuyao' : '/chat'}?conv_id=${id}`} className="mt-6 inline-block min-h-11 text-sm underline">返回普通对话，使用原有次数</Link>
         </ContextDrawer>
       </div>
-      <MessageList messages={messages} Markdown={Markdown} loading={sending} onQuestionClick={setInput} containerClassName="bg-transparent" emptyTitle="原问题已准备好" emptyDescription="选择权益后，可以围绕同一问题继续深入。" />
+      <MessageList conversationId={id} messages={messages} Markdown={Markdown} loading={sending} onQuestionClick={setInput} containerClassName="bg-transparent" emptyTitle="原问题已准备好" emptyDescription="选择权益后，可以围绕同一问题继续深入。" />
       <div ref={endRef} style={{ scrollMarginBottom: 260 }} />
       {taskContext && <ReviewNotes conversationId={id} context={taskContext} />}
       <div className="sticky bottom-0 border-t border-[var(--color-border)] bg-[var(--color-bg)] py-4">
