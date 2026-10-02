@@ -112,6 +112,12 @@ test('ordinary streams also require completion by default', async () => {
   const { trySSE } = setup(async () => new Response('data: {"text":"半截回复","replace":true}\n\n', { headers: { 'Content-Type': 'text/event-stream' } }));
   await assert.rejects(trySSE('/chat', {}, () => {}), /连接已中断/);
 });
+test('explicit server failure is distinguishable from an unknown interrupted connection', async () => {
+  const confirmed = setup(async () => new Response('data: {"error":"未保存","status":500}\n\n', { headers: { 'Content-Type': 'text/event-stream' } }));
+  await assert.rejects(confirmed.trySSE('/chat', {}, () => {}), confirmed.ReplyNotSavedError);
+  const unknown = setup(async () => new Response('data: {"text":"已开始回复","replace":true}\n\n', { headers: { 'Content-Type': 'text/event-stream' } }));
+  await assert.rejects(unknown.trySSE('/chat', {}, () => {}), error => !(error instanceof unknown.ReplyNotSavedError));
+});
 test('quota exhausted at commit is recognizable from an SSE error', async () => {
   let calls = 0;
   const { trySSE, QuotaExhaustedError } = setup(async () => {

@@ -133,12 +133,14 @@ export const liuyaoApi = {
     data: PaipanRequest & { guest_session_id: string },
     onChunk: (text: string) => void,
     onMeta?: (meta: unknown) => void,
+    signal?: AbortSignal,
   ): Promise<void> {
     return trySSE(
       api('/guest/liuyao/start'),
       data,
       onChunk,
       onMeta,
+      { signal },
     );
   },
 
@@ -214,12 +216,14 @@ export const liuyaoApi = {
     onChunk: (text: string) => void,
     onMeta?: (meta: unknown) => void,
     taskContext?: LiuyaoTaskContext | null,
+    signal?: AbortSignal,
   ): Promise<void> {
     return trySSE(
       api(`/liuyao/${hexagramId}/chat/start`),
       { task_context: taskContext ?? undefined },
       onChunk,
       onMeta,
+      { signal },
     );
   },
 
@@ -232,12 +236,14 @@ export const liuyaoApi = {
     message: string,
     onChunk: (text: string) => void,
     onMeta?: (meta: unknown) => void,
+    signal?: AbortSignal,
   ): Promise<void> {
     return trySSE(
       api(`/liuyao/${hexagramId}/chat`),
       { conversation_id: conversationId, message },
       onChunk,
       onMeta,
+      { signal },
     );
   },
 
@@ -251,12 +257,14 @@ export const liuyaoApi = {
     prompt: string,
     onChunk: (text: string) => void,
     onMeta?: (meta: unknown) => void,
+    signal?: AbortSignal,
   ): Promise<void> {
     return trySSE(
       api(`/liuyao/${hexagramId}/chat/quick`),
       { conversation_id: conversationId, label, prompt },
       onChunk,
       onMeta,
+      { signal },
     );
   },
 
@@ -267,6 +275,7 @@ export const liuyaoApi = {
     hexagramId: string,
     conversationId: string,
     expectedMessageId?: number,
+    signal?: AbortSignal,
   ): Promise<{ conversation_id: string; reply: string; message_id?: number }> {
     const response = await fetch(api(`/liuyao/${hexagramId}/chat/regenerate`), {
       method: 'POST',
@@ -275,6 +284,7 @@ export const liuyaoApi = {
         ...getAuthHeaders(),
       },
       credentials: 'include',
+      signal,
       body: JSON.stringify({ conversation_id: conversationId, expected_message_id: expectedMessageId }),
     });
     if (!response.ok) {

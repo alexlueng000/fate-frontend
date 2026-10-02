@@ -24,3 +24,115 @@ test('saved Liuyao report restores its own question, hexagram and follow-up draf
   await page.getByText('先确认岗位职责和承诺的条件。').scrollIntoViewIfNeeded();
   await page.screenshot({ path: `/private/tmp/fate-liuyao-report-${info.project.name}.png`, fullPage: true });
 });
+
+test('failed Liuyao follow-up keeps report and draft across refresh, then retries the attempted question', async ({ page }) => {
+  let sends = 0;
+  let regenerations = 0;
+  const messages = [{ id: 1, role: 'user', content: question }, { id: 2, role: 'assistant', content }];
+  await page.route('**/api/conversations/9003', route => route.fulfill({ json: { id: 9003, type: 'liuyao', title: question, hexagram, messages } }));
+  await page.route('**/api/liuyao/fixture-hexagram/chat/regenerate', route => {
+    regenerations++;
+    return route.fulfill({ status: 500 });
+  });
+  await page.route('**/api/liuyao/fixture-hexagram/chat', route => {
+    sends++;
+    expect(route.request().postDataJSON().message).toBe(followUp);
+    if (sends === 1) return route.fulfill({ contentType: 'text/event-stream', body: 'data: {"error":"未能保存，请重试","status":500}\n\n' });
+    const reply = '请核对试用期、职责和书面待遇。';
+    messages.push({ id: 3, role: 'user', content: followUp }, { id: 4, role: 'assistant', content: reply });
+    return route.fulfill({ contentType: 'text/event-stream', body: `data: ${JSON.stringify({ text: reply, replace: true })}\n\ndata: {"meta":{"message_id":4}}\n\ndata: [DONE]\n\n` });
+  });
+  await page.goto('/liuyao?conv_id=9003');
+  const input = page.getByRole('textbox', { name: '对话输入框' });
+  await input.fill(followUp);
+  await page.getByRole('button', { name: '发送', exact: true }).click();
+  await expect(page.getByRole('button', { name: '重新加载对话' })).toBeVisible();
+  await expect(page.getByText('先确认岗位职责和承诺的条件。')).toBeVisible();
+  await expect(input).toHaveValue(followUp);
+  await page.reload();
+  await expect(input).toHaveValue(followUp);
+  await expect(page.getByRole('button', { name: '发送', exact: true })).toBeDisabled();
+  await page.getByRole('button', { name: '重新加载对话' }).click();
+  await expect(page.getByRole('button', { name: '发送', exact: true })).toBeEnabled();
+  await page.getByRole('button', { name: '发送', exact: true }).click();
+  await expect(page.getByText('请核对试用期、职责和书面待遇。')).toBeVisible();
+  expect(sends).toBe(2); expect(regenerations).toBe(0);
+});
+
+test('Liuyao reconnect recovers an already saved follow-up without generating again', async ({ page }) => {
+  let sends = 0;
+  const reply = '这是断流前已保存的追问回答。';
+  const messages = [{ id: 1, role: 'user', content: question }, { id: 2, role: 'assistant', content }];
+  await page.route('**/api/conversations/9003', route => route.fulfill({ json: { id: 9003, type: 'liuyao', title: question, hexagram, messages } }));
+  await page.route('**/api/liuyao/fixture-hexagram/chat', route => {
+    sends++;
+    messages.push({ id: 3, role: 'user', content: followUp }, { id: 4, role: 'assistant', content: reply });
+    return route.fulfill({ contentType: 'text/event-stream', body: `data: ${JSON.stringify({ text: reply, replace: true })}\n\n` });
+  });
+  await page.goto('/liuyao?conv_id=9003');
+  await page.getByRole('textbox', { name: '对话输入框' }).fill(followUp);
+  await page.getByRole('button', { name: '发送', exact: true }).click();
+  await page.getByRole('button', { name: '重新加载对话' }).click();
+  await expect(page.getByText(reply)).toBeVisible();
+  await expect(page.getByText('已读取到这次问题的保存结果，无需重复发送。')).toBeVisible();
+  await expect(page.getByRole('textbox', { name: '对话输入框' })).toHaveValue('');
+  await expect(page.getByText('先确认岗位职责和承诺的条件。')).toBeVisible();
+  expect(sends).toBe(1);
+});
+
+test('stopping Liuyao generation cancels the request while preserving the original and attempted question', async ({ page }) => {
+  let release: () => void = () => {};
+  const held = new Promise<void>(resolve => { release = resolve; });
+  await page.route('**/api/conversations/9003', route => route.fulfill({ json: { id: 9003, type: 'liuyao', title: question, hexagram,
+    messages: [{ id: 1, role: 'user', content: question }, { id: 2, role: 'assistant', content }] } }));
+  await page.route('**/api/liuyao/fixture-hexagram/chat', async route => {
+    await held;
+    await route.abort().catch(() => {});
+  });
+  await page.goto('/liuyao?conv_id=9003');
+  await page.getByRole('textbox', { name: '对话输入框' }).fill(followUp);
+  await page.getByRole('button', { name: '发送', exact: true }).click();
+  await expect(page.getByRole('button', { name: '重新起卦', exact: true })).toBeDisabled();
+  await page.getByRole('button', { name: '停止', exact: true }).click();
+  release();
+  await expect(page.getByRole('button', { name: '重新加载对话' })).toBeVisible();
+  await expect(page.getByRole('textbox', { name: '对话输入框' })).toHaveValue(followUp);
+  await expect(page.getByText('先确认岗位职责和承诺的条件。')).toBeVisible();
+});
+
+test('failed quick action keeps its full prompt as the editable recovery draft', async ({ page }) => {
+  const prompt = '请列出入职前需要向招聘方核实的职责、试用期和待遇条件。';
+  await page.route('**/api/admin/config?key=liuyao_quick_buttons', route => route.fulfill({ json: { value_json: { items: [{ label: '核对条件', prompt }] } } }));
+  await page.route('**/api/conversations/9003', route => route.fulfill({ json: { id: 9003, type: 'liuyao', title: question, hexagram,
+    messages: [{ id: 1, role: 'user', content: question }, { id: 2, role: 'assistant', content }] } }));
+  await page.route('**/api/liuyao/fixture-hexagram/chat/quick', route => {
+    expect(route.request().postDataJSON()).toEqual({ conversation_id: 'liuyao_conv_9003', label: '核对条件', prompt });
+    return route.fulfill({ contentType: 'text/event-stream', body: 'data: {"error":"未保存","status":500}\n\n' });
+  });
+  await page.goto('/liuyao?conv_id=9003');
+  const action = page.getByRole('button', { name: '核对条件', exact: true });
+  if (!await action.isVisible()) await page.getByRole('button', { name: '下一步可以这样问' }).click();
+  await action.click();
+  await expect(page.getByRole('textbox', { name: '对话输入框' })).toHaveValue(prompt);
+  await page.getByRole('button', { name: '重新加载对话' }).click();
+  await expect(page.getByRole('textbox', { name: '对话输入框' })).toHaveValue(prompt);
+  await expect(page.getByRole('button', { name: '发送', exact: true })).toBeEnabled();
+});
+
+test('recovering a saved reply preserves edits made to the next question', async ({ page }) => {
+  const messages = [{ id: 1, role: 'user', content: question }, { id: 2, role: 'assistant', content }];
+  await page.route('**/api/conversations/9003', route => route.fulfill({ json: { id: 9003, type: 'liuyao', title: question, hexagram, messages } }));
+  await page.route('**/api/liuyao/fixture-hexagram/chat', route => {
+    messages.push({ id: 3, role: 'user', content: followUp }, { id: 4, role: 'assistant', content: '已保存的回答。' });
+    return route.fulfill({ contentType: 'text/event-stream', body: 'data: {"text":"断流","replace":true}\n\n' });
+  });
+  await page.goto('/liuyao?conv_id=9003');
+  const input = page.getByRole('textbox', { name: '对话输入框' });
+  await input.fill(followUp);
+  await page.getByRole('button', { name: '发送', exact: true }).click();
+  await expect(page.getByRole('button', { name: '重新加载对话' })).toBeVisible();
+  await input.fill('我还想核对岗位的工作时间。');
+  await page.getByRole('button', { name: '重新加载对话' }).click();
+  await expect(page.getByText('已保存的回答。')).toBeVisible();
+  await expect(input).toHaveValue('我还想核对岗位的工作时间。');
+});

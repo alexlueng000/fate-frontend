@@ -11,6 +11,11 @@ export class QuotaExhaustedError extends Error {
   }
 }
 
+/** The server explicitly reported that this reply did not complete/save. */
+export class ReplyNotSavedError extends Error {
+  constructor(message: string) { super(message); this.name = 'ReplyNotSavedError'; }
+}
+
 export const CHAT_FAILURE_MESSAGE = '抱歉，本次解读生成失败。你可以刷新页面后重新提问，或稍后再试。';
 
 type StreamOptions = { signal?: AbortSignal; mobilePacing?: boolean; requireDone?: boolean };
@@ -274,7 +279,7 @@ async function readSSE(
       try {
         const obj: Record<string, unknown> = JSON.parse(t);
         if (typeof obj.error === 'string') {
-          streamError = obj.status === 429 ? new QuotaExhaustedError(obj.error) : new Error(obj.error);
+          streamError = obj.status === 429 ? new QuotaExhaustedError(obj.error) : new ReplyNotSavedError(obj.error);
           return;
         }
 

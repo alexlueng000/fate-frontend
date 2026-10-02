@@ -20,7 +20,8 @@ import { ReadingLink } from '@/app/components/consultation/ReadingLink';
 import { Msg, normalizeMarkdown } from '@/app/lib/chat/types';
 import { parseSuggestedQuestions, restoreStoredMessage } from '@/app/lib/chat/parser';
 import { saveConversation, loadConversation } from '@/app/lib/chat/storage';
-import { QuotaExhaustedError } from '@/app/lib/chat/sse';
+import { QuotaExhaustedError, ReplyNotSavedError } from '@/app/lib/chat/sse';
+import { readPendingQuestion, savePendingQuestion, hasSavedReply, type PendingQuestion } from '@/app/lib/liuyao/recovery';
 import { QuotaChip } from '@/app/components/QuotaChip';
 import QuotaExhaustedDialog from '@/app/components/QuotaExhaustedDialog';
 import {
@@ -170,8 +171,14 @@ export default function LiuyaoPage() {
   const [sending, setSending] = useState(false);
   const [booting, setBooting] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
+  const [recoveryNotice, setRecoveryNotice] = useState<string | null>(null);
+  const [pendingQuestion, setPendingQuestion] = useState<PendingQuestion | null>(null);
+  const [reloadingChat, setReloadingChat] = useState(false);
   const chatScrollRef = useRef<HTMLDivElement | null>(null);
   const regenerationLockRef = useRef(false);
+  const actionAbortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => () => actionAbortRef.current?.abort(), []);
 
   const [liuyaoQuickButtons, setLiuyaoQuickButtons] =
     useState<Array<{ label: string; prompt: string }>>(LIUYAO_QUICK_BUTTONS);
@@ -360,9 +367,64 @@ export default function LiuyaoPage() {
     if (conversationId) saveConversation(conversationId, msgs, { setActive: false });
   }, [conversationId, msgs]);
 
+  useEffect(() => {
+    if (!conversationId || booting || sending) return;
+    const draft = readPendingQuestion(user?.id, conversationId);
+    if (!draft) return;
+    if (hasSavedReply(msgs, draft)) {
+      savePendingQuestion(user?.id, conversationId, null);
+      setPendingQuestion(null);
+      setInput(draft.prompt === (draft.submittedPrompt ?? draft.prompt) ? '' : draft.prompt);
+      setChatError(null);
+      setRecoveryNotice('已读取到这次问题的保存结果，无需重复发送。');
+    } else {
+      setPendingQuestion(draft);
+      setInput(draft.prompt);
+      setChatError('上次回复的保存状态尚未确认，问题草稿已保留。');
+    }
+  }, [conversationId, user?.id, booting, sending, msgs]);
+
+  const reloadSavedConversation = async () => {
+    if (!conversationId || !result || reloadingChat || regenerationLockRef.current) return;
+    const id = Number(conversationId.replace(/^(liuyao_conv_|conv_)/, ''));
+    if (!Number.isSafeInteger(id) || id <= 0) return;
+    setReloadingChat(true);
+    try {
+      const detail = await historyApi.detail(id);
+      if (detail.type !== 'liuyao' || detail.hexagram?.hexagram_id !== result.hexagram_id) throw new Error('记录与当前卦象不一致，请返回解读记录重新打开。');
+      const restored = detail.messages.filter((message, index) => !(index === 0 && message.role === 'user'
+        && message.content.startsWith('请基于以下卦象做第一次解读'))).map(restoreStoredMessage);
+      setMsgs(restored);
+      setTaskContext(detail.task_context ?? null);
+      saveConversation(conversationId, restored, { setActive: false });
+      if (!restored.some(message => message.role === 'assistant' && message.content.trim())) {
+        setChatError('还未读取到已保存的完整解读，请稍后再次重新加载。');
+        return;
+      }
+      const draft = pendingQuestion || readPendingQuestion(user?.id, conversationId);
+      if (draft && hasSavedReply(restored, draft)) {
+        savePendingQuestion(user?.id, conversationId, null);
+        setPendingQuestion(null);
+        setInput(draft.prompt === (draft.submittedPrompt ?? draft.prompt) ? '' : draft.prompt);
+        setRecoveryNotice('已读取到这次问题的保存结果，无需重复发送。');
+      } else {
+        // This read confirms the current archive, not that an unknown worker
+        // has stopped. Keep the attempted question editable for the user.
+        savePendingQuestion(user?.id, conversationId, null);
+        setPendingQuestion(null);
+        if (draft) setInput(draft.prompt);
+        setRecoveryNotice(draft ? '已更新保存记录，问题草稿已保留，请核对后继续。' : '已更新保存记录。');
+      }
+      setChatError(null);
+      void refreshLiuyaoQuota();
+    } catch (error) {
+      setChatError(error instanceof Error ? error.message : '暂时无法重新加载，原解读与草稿已保留。');
+    } finally { setReloadingChat(false); }
+  };
+
   const canSend = useMemo(
-    () => !!conversationId && !!input.trim() && !sending && !booting,
-    [conversationId, input, sending, booting],
+    () => !!conversationId && !!input.trim() && !sending && !booting && !reloadingChat && !chatError,
+    [conversationId, input, sending, booting, reloadingChat, chatError],
   );
 
   const shareSource = useMemo(
@@ -551,9 +613,14 @@ export default function LiuyaoPage() {
   });
 
   const handleStartChat = async (targetHexagram: HexagramDetail | null = result) => {
-    if (!targetHexagram?.hexagram_id) return;
+    if (!targetHexagram?.hexagram_id || regenerationLockRef.current) return;
+    regenerationLockRef.current = true;
+    const controller = new AbortController();
+    actionAbortRef.current = controller;
+    let startedConversationId = '';
     setBooting(true);
     setChatError(null);
+    setRecoveryNotice(null);
     setFormError(null);
     trackEvent('liuyao_ai_start', {
       payload: liuyaoEventPayload({
@@ -588,6 +655,7 @@ export default function LiuyaoPage() {
               setResult(hexagram);
             }
           },
+          controller.signal,
         );
         const completedGuestHexagram = guestHexagram || targetHexagram;
         const finalText = finalizeAssistant(assistantIdx, streamedText);
@@ -620,13 +688,18 @@ export default function LiuyaoPage() {
         (meta) => {
           const cid = readConvId(meta);
           if (cid && targetHexagram.hexagram_id) {
+            startedConversationId = cid;
             setConversationId(cid);
             try {
               localStorage.setItem(LIUYAO_ACTIVE_CONV_KEY(targetHexagram.hexagram_id), cid);
             } catch {}
           }
+          const messageId = typeof meta === 'object' && meta !== null ? (meta as { message_id?: number }).message_id : undefined;
+          if (messageId) setMsgs(previous => previous.map((message, index) => index === assistantIdx
+            ? { ...message, meta: { ...message.meta, messageId } } : message));
         },
         taskContext,
+        controller.signal,
       );
       const finalText = finalizeAssistant(assistantIdx, streamedText);
       if (!finalText) {
@@ -651,9 +724,17 @@ export default function LiuyaoPage() {
         console.error('开启对话失败:', error);
         setChatError(msg);
         setMsgs([]);
-        setConversationId(null);
+        // An explicit server error confirms no saved reply. A dropped stream
+        // may have committed; retain its ID so recovery only reads the archive.
+        const confirmedFailure = error instanceof ReplyNotSavedError;
+        setConversationId(confirmedFailure ? null : startedConversationId || null);
+        if (confirmedFailure && startedConversationId) {
+          try { localStorage.removeItem(LIUYAO_ACTIVE_CONV_KEY(targetHexagram.hexagram_id)); } catch {}
+        }
       }
     } finally {
+      regenerationLockRef.current = false;
+      actionAbortRef.current = null;
       setBooting(false);
     }
   };
@@ -661,10 +742,12 @@ export default function LiuyaoPage() {
   const sendStream = async (
     runner: (onDelta: (text: string) => void, onMeta: (meta: unknown) => void) => Promise<void>,
     userContent?: string,
+    attemptedPrompt = userContent,
   ) => {
     const assistantIdx = msgs.length + (userContent ? 1 : 0);
     let streamedText = '';
     setChatError(null);
+    setRecoveryNotice(null);
     setMsgs((prev) => {
       const next: Msg[] = [...prev];
       if (userContent) {
@@ -685,32 +768,53 @@ export default function LiuyaoPage() {
             return next;
           });
         },
-        () => {},
+        (meta) => {
+          const messageId = typeof meta === 'object' && meta !== null ? (meta as { message_id?: number }).message_id : undefined;
+          if (messageId) setMsgs(previous => previous.map((message, index) => index === assistantIdx
+            ? { ...message, meta: { ...message.meta, messageId } } : message));
+        },
       );
       const finalText = finalizeAssistant(assistantIdx, streamedText);
       if (!finalText) {
         setChatError('这次回复没有成功生成内容，未扣除次数。');
       }
+      if (conversationId) savePendingQuestion(user?.id, conversationId, null);
+      setPendingQuestion(null);
     } catch (error: unknown) {
       if (error instanceof QuotaExhaustedError) {
-        handleLiuyaoQuotaExhausted(error, assistantIdx);
+        handleLiuyaoQuotaExhausted(error, -1);
+        setMsgs(previous => {
+          const next = [...previous];
+          next.splice(userContent ? assistantIdx - 1 : assistantIdx, userContent ? 2 : 1);
+          return next;
+        });
+        if (attemptedPrompt) setInput(attemptedPrompt);
         return;
       }
       console.error('对话失败:', error);
       setMsgs((prev) => {
         if (assistantIdx < 0 || assistantIdx >= prev.length) return prev;
         const next = [...prev];
-        next.splice(assistantIdx, 1);
+        next.splice(userContent ? assistantIdx - 1 : assistantIdx, userContent ? 2 : 1);
         return next;
       });
-      setChatError('抱歉，AI 服务暂时不可用，请稍后再试。');
+      if (attemptedPrompt && conversationId) {
+        const draft = { prompt: attemptedPrompt, submittedPrompt: attemptedPrompt, display: userContent || attemptedPrompt,
+          baselineMessageId: Math.max(0, ...msgs.map(message => message.meta?.messageId ?? 0)) };
+        setPendingQuestion(draft);
+        savePendingQuestion(user?.id, conversationId, draft);
+        setInput(attemptedPrompt);
+      }
+      setChatError('这次回复未能确认完成。请先重新加载保存记录，问题草稿已保留。');
     }
   };
 
   const send = async () => {
-    if (!conversationId || !result?.hexagram_id) return;
+    if (!conversationId || !result?.hexagram_id || regenerationLockRef.current || chatError) return;
     const content = input.trim();
     if (!content) return;
+    regenerationLockRef.current = true;
+    actionAbortRef.current = new AbortController();
     setInput('');
     setSending(true);
     trackEvent('liuyao_followup', {
@@ -724,17 +828,21 @@ export default function LiuyaoPage() {
     try {
       await sendStream(
         (onDelta, onMeta) =>
-          liuyaoApi.sendChat(result.hexagram_id, conversationId, content, onDelta, onMeta),
+          liuyaoApi.sendChat(result.hexagram_id, conversationId, content, onDelta, onMeta, actionAbortRef.current?.signal),
         content,
       );
       void refreshLiuyaoQuota();
     } finally {
+      regenerationLockRef.current = false;
+      actionAbortRef.current = null;
       setSending(false);
     }
   };
 
   const sendQuick = async (label: string, prompt: string) => {
-    if (!conversationId || !result?.hexagram_id) return;
+    if (!conversationId || !result?.hexagram_id || regenerationLockRef.current || chatError) return;
+    regenerationLockRef.current = true;
+    actionAbortRef.current = new AbortController();
     setSending(true);
     trackEvent('liuyao_followup', {
       payload: liuyaoEventPayload({
@@ -747,17 +855,22 @@ export default function LiuyaoPage() {
     try {
       await sendStream(
         (onDelta, onMeta) =>
-          liuyaoApi.quickChat(result.hexagram_id, conversationId, label, prompt, onDelta, onMeta),
+          liuyaoApi.quickChat(result.hexagram_id, conversationId, label, prompt, onDelta, onMeta, actionAbortRef.current?.signal),
         label,
+        prompt,
       );
       void refreshLiuyaoQuota();
     } finally {
+      regenerationLockRef.current = false;
+      actionAbortRef.current = null;
       setSending(false);
     }
   };
 
   const handleQuestionClick = async (q: string) => {
-    if (!conversationId || sending || !result?.hexagram_id) return;
+    if (!conversationId || sending || !result?.hexagram_id || regenerationLockRef.current || chatError) return;
+    regenerationLockRef.current = true;
+    actionAbortRef.current = new AbortController();
     setSending(true);
     trackEvent('liuyao_followup', {
       payload: liuyaoEventPayload({
@@ -770,11 +883,13 @@ export default function LiuyaoPage() {
     try {
       await sendStream(
         (onDelta, onMeta) =>
-          liuyaoApi.sendChat(result.hexagram_id, conversationId, q, onDelta, onMeta),
+          liuyaoApi.sendChat(result.hexagram_id, conversationId, q, onDelta, onMeta, actionAbortRef.current?.signal),
         q,
       );
       void refreshLiuyaoQuota();
     } finally {
+      regenerationLockRef.current = false;
+      actionAbortRef.current = null;
       setSending(false);
     }
   };
@@ -789,6 +904,7 @@ export default function LiuyaoPage() {
   const regenerate = async () => {
     if (!conversationId || !result?.hexagram_id || sending || regenerationLockRef.current) return;
     regenerationLockRef.current = true;
+    actionAbortRef.current = new AbortController();
     setSending(true);
     setChatError(null);
     trackEvent('liuyao_followup', {
@@ -800,7 +916,7 @@ export default function LiuyaoPage() {
     });
     try {
       const last = [...msgs].reverse().find(message => message.role === 'assistant');
-      const data = await liuyaoApi.regenerateChat(result.hexagram_id, conversationId, last?.meta?.messageId);
+      const data = await liuyaoApi.regenerateChat(result.hexagram_id, conversationId, last?.meta?.messageId, actionAbortRef.current.signal);
       const newReply = normalizeMarkdown(data.reply || '');
       if (!newReply.trim()) {
         setChatError('这次重新解卦没有成功生成内容，未扣除次数。');
@@ -816,6 +932,7 @@ export default function LiuyaoPage() {
       setChatError(msg);
     } finally {
       regenerationLockRef.current = false;
+      actionAbortRef.current = null;
       setSending(false);
     }
   };
@@ -1386,8 +1503,11 @@ export default function LiuyaoPage() {
                     setConversationId(null);
                     setMsgs([]);
                     setChatError(null);
+                    setRecoveryNotice(null);
+                    setPendingQuestion(null);
                     setInput('');
                   }}
+                  disabled={booting || sending || reloadingChat}
                   className="btn btn-secondary"
                 >
                   重新起卦
@@ -1408,6 +1528,15 @@ export default function LiuyaoPage() {
                   <div className="mt-2 mx-auto h-px w-10 bg-[color:var(--color-primary)]/40" />
                 </div>
 
+                {chatError && <div role="alert" className="mb-5 rounded-[24px] border border-[color:var(--color-primary)]/30 bg-[color:var(--color-primary)]/[0.04] px-6 py-6 text-center">
+                  <p className="text-[15px] font-medium text-[color:var(--color-text-primary)]">这次回复未能确认完成</p>
+                  <p className="mx-auto mt-2 max-w-md text-[13px] leading-6 text-[color:var(--color-text-secondary)]">{chatError}</p>
+                  <p className="mt-2 text-xs text-[color:var(--color-text-muted)]">成功保存的回复才计次。网络中断时，先检查保存结果再继续。</p>
+                  {conversationId && <button type="button" onClick={() => void reloadSavedConversation()} disabled={booting || sending || reloadingChat}
+                    className="btn btn-secondary mt-4">{reloadingChat ? '正在重新加载…' : '重新加载对话'}</button>}
+                </div>}
+                {recoveryNotice && <p role="status" className="mb-4 text-sm text-[color:var(--color-text-secondary)]">{recoveryNotice}</p>}
+                {booting && <button type="button" className="reading-pill mb-4" onClick={() => actionAbortRef.current?.abort()}>停止生成</button>}
                 {!conversationId && msgs.length === 0 ? (
                   <div className="text-center py-10">
                     <p className="text-[14px] text-[color:var(--color-text-secondary)] mb-1">
@@ -1433,26 +1562,6 @@ export default function LiuyaoPage() {
                         booting &&
                         (msgs.length === 0 ||
                           (last?.role === 'assistant' && last?.streaming && !last?.content));
-                      if (chatError) {
-                        return (
-                          <div className="rounded-[24px] border border-[color:var(--color-primary)]/30 bg-[color:var(--color-primary)]/[0.04] px-6 py-10 text-center">
-                            <p className="text-[15px] font-medium text-[color:var(--color-text-primary)]">
-                              这次解卦没有成功完成
-                            </p>
-                            <p className="mx-auto mt-2 max-w-md text-[13px] leading-6 text-[color:var(--color-text-secondary)]">
-                              {chatError} 如果页面长时间没有内容，通常是 AI 服务临时不可用或网络中断。未成功生成时不会扣除次数。
-                            </p>
-                            <button
-                              type="button"
-                              onClick={() => conversationId ? void regenerate() : void handleStartChat()}
-                              disabled={booting || sending}
-                              className="btn btn-primary mt-6"
-                            >
-                              {booting || sending ? '重新解卦中…' : '重新解卦'}
-                            </button>
-                          </div>
-                        );
-                      }
                       if (initialLoading) {
                         return (
                           <div className="rounded-[24px] border border-[color:var(--color-border)] bg-[color:var(--color-bg)] px-6 py-12 text-center">
@@ -1466,7 +1575,7 @@ export default function LiuyaoPage() {
                               AI 正在解读卦象…
                             </p>
                             <p className="text-[12px] text-[color:var(--color-text-muted)]">
-                              通常需要约 1 分钟，请先不要关闭页面。
+                              完成后会保存到解读记录。
                             </p>
                             <p className="mt-1 text-[12px] text-[color:var(--color-text-muted)]">
                               正在分析卦象结构、动爻变化与问题关联。
@@ -1481,7 +1590,8 @@ export default function LiuyaoPage() {
                           messages={msgs}
                           Markdown={MarkdownView}
                           onQuestionClick={handleQuestionClick}
-                          loading={sending || booting}
+                          onRegenerate={regenerate}
+                          loading={sending || booting || reloadingChat || !!chatError}
                           containerClassName="rounded-[24px] border border-[color:var(--color-border)] bg-[color:var(--color-bg)] max-h-[640px]"
                         />
                       );
@@ -1497,13 +1607,22 @@ export default function LiuyaoPage() {
                     {isLoggedIn ? (
                       <InputArea
                         value={input}
-                        onChange={setInput}
+                        onChange={value => {
+                          setInput(value);
+                          if (pendingQuestion && conversationId) {
+                            const edited = { ...pendingQuestion, submittedPrompt: pendingQuestion.submittedPrompt ?? pendingQuestion.prompt, prompt: value };
+                            setPendingQuestion(edited);
+                            savePendingQuestion(user?.id, conversationId, edited);
+                          }
+                        }}
                         onKeyDown={onInputKeyDown}
                         canSend={canSend}
                         sending={sending}
-                        disabled={booting || !conversationId || !!chatError}
+                        disabled={booting || !conversationId || reloadingChat}
                         onSend={send}
                         onRegenerate={regenerate}
+                        showRegenerate={false}
+                        onStop={() => actionAbortRef.current?.abort()}
                         placeholder="基于此卦继续追问，例如：现在主动联系合适吗？"
                       />
                     ) : (
