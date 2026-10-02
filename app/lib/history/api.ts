@@ -67,6 +67,10 @@ export type ConversationDetailResp = {
   task_context?: TaskContext | null;
 };
 
+export class ConversationUnavailableError extends Error {
+  constructor(message: string, public status: number) { super(message); this.name = 'ConversationUnavailableError'; }
+}
+
 export type ConversationReport = {
   conversation_id: number; source_message_id: number; type: HistoryType;
   kind: 'personal' | 'topic'; title: string; question: string | null;
@@ -122,7 +126,7 @@ export const historyApi = {
     });
     if (!response.ok) {
       const error = await response.json().catch(() => ({ detail: 'Request failed' }));
-      throw new Error(error.detail || 'Failed to fetch conversation');
+      throw new ConversationUnavailableError(error.detail || 'Failed to fetch conversation', response.status);
     }
     return response.json();
   },

@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowDown, ArrowUp, History, ImageDown, Mail } from 'lucide-react';
 import { useRouteGuard } from '@/app/lib/useRouteGuard';
-import { getAuthToken } from '@/app/lib/auth';
+import { getAuthToken, useUser } from '@/app/lib/auth';
 import { trackEvent } from '@/app/lib/analytics/track';
 import { getGuestAnalysis } from '@/app/lib/api';
 
@@ -25,15 +25,18 @@ import { api, fetchQuickButtons, pickReply, readApiError } from '@/app/lib/chat/
 import { trySSE, QuotaExhaustedError, CHAT_FAILURE_MESSAGE } from '@/app/lib/chat/sse';
 import {
   saveConversation, loadConversation, getActiveConversationId,
-  savePaipanLocal, loadPaipanLocal, repairCorruptedConversations,
+  savePaipanLocal, repairCorruptedConversations, clearActiveConversationId,
 } from '@/app/lib/chat/storage';
-import { historyApi, type TaskContext } from '@/app/lib/history/api';
+import { historyApi, ConversationUnavailableError, type TaskContext } from '@/app/lib/history/api';
 import { QuotaChip } from '@/app/components/QuotaChip';
 import QuotaExhaustedDialog from '@/app/components/QuotaExhaustedDialog';
+import { useSavedBaziTurn } from '@/app/lib/chat/useSavedBaziTurn';
+import { TurnRecovery } from '@/app/components/chat/TurnRecovery';
 import { ShareImageDialog } from '@/app/components/share/ShareImageDialog';
 
 export default function ChatPage() {
   const router = useRouter();
+  const { user: me } = useUser();
   const loading = useRouteGuard(true, true); // 需要登录和档案
 
   // ===== State =====
@@ -55,10 +58,20 @@ export default function ChatPage() {
   const [quotaDialogOpen, setQuotaDialogOpen] = useState(false);
   const [quotaDialogMessage, setQuotaDialogMessage] = useState('');
   const [viewingHistory, setViewingHistory] = useState(false);
+  const [browserOnlyHistory, setBrowserOnlyHistory] = useState(false);
   const [scrollJumpDirection, setScrollJumpDirection] = useState<'top' | 'bottom'>('bottom');
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const topAnchorRef = useRef<HTMLDivElement>(null);
   const bottomAnchorRef = useRef<HTMLDivElement>(null);
+  const turn = useSavedBaziTurn({ owner: me?.id, cid: conversationId, setMessages: setMsgs, setInput, taskContext,
+    onRestored: detail => {
+      setTaskContext(detail.task_context ?? null);
+      setBrowserOnlyHistory(false);
+      const chart = detail.profile?.bazi_chart;
+      const snapshot = chart && typeof chart.mingpan === 'object' ? chart.mingpan : chart;
+      if (snapshot && typeof snapshot === 'object' && 'four_pillars' in snapshot) setPaipan(snapshot as Paipan);
+      setErr(null);
+    } });
 
   // 安全读取 conversation_id
   function readConversationId(meta: unknown): string {
@@ -183,7 +196,8 @@ export default function ChatPage() {
           const cachedMsgs = loadConversation(cid);
           const displayMsgs = restoredMsgs.length > 0
             ? restoredMsgs
-            : (cachedMsgs?.length ? cachedMsgs.map(restoreStoredMessage) : []);
+            : (cachedMsgs?.length ? cachedMsgs.filter(message => !message.streaming && !message.meta?.kind?.startsWith('turn:')).map(restoreStoredMessage) : []);
+          setBrowserOnlyHistory(restoredMsgs.length === 0 && displayMsgs.length > 0);
 
           setConversationId(cid);
           setMsgs(displayMsgs);
@@ -223,20 +237,25 @@ export default function ChatPage() {
       // 尝试恢复旧会话。游客分析入口必须创建同一命盘的新会话，不能复用旧活跃会话。
       const active = guestAnalysisPublicId ? null : getActiveConversationId() || sessionStorage.getItem('conversation_id');
       if (active) {
-        const cached = loadConversation(active);
-        if (cached?.length) {
+        try {
+          const detail = await historyApi.detail(Number(active.replace(/^(bazi_conv_|conv_)/, '')));
           if (!alive) return;
-          setConversationId(active);
-          setMsgs(cached.map(m =>
-            m.simplify?.status === 'loading'
-              ? { ...m, simplify: { ...m.simplify, status: 'error' as const, error: '已中断，请重试' } }
-              : m
-          ));
-          const cachedPaipan = loadPaipanLocal();
-          if (cachedPaipan) setPaipan(cachedPaipan);
-
-          setBooting(false);
-          return;
+          if (detail.type !== 'bazi') { clearActiveConversationId(); }
+          else {
+            setConversationId(active);
+            setTaskContext(detail.task_context ?? null);
+            setMsgs(detail.messages.filter((message, index) => (message.role === 'user' || message.role === 'assistant')
+              && !(index === 0 && message.role === 'user' && message.content.startsWith('我的命盘信息如下'))).map(restoreStoredMessage));
+            const chart = detail.profile?.bazi_chart;
+            const snapshot = chart && typeof chart.mingpan === 'object' ? chart.mingpan : chart;
+            if (snapshot && typeof snapshot === 'object' && 'four_pillars' in snapshot) setPaipan(snapshot as Paipan);
+            setBooting(false);
+            return;
+          }
+        } catch (failure) {
+          if (!alive) return;
+          if (failure instanceof ConversationUnavailableError && failure.status === 404) clearActiveConversationId();
+          else { setErr('暂时无法读取已保存的会话，请重新加载。'); setBooting(false); return; }
         }
       }
 
@@ -339,8 +358,8 @@ export default function ChatPage() {
   const historyRecordMissing = viewingHistory && msgs.length === 0 && !!err;
 
   const canSend = useMemo(
-    () => !!conversationId && !!input.trim() && !sending && !booting && !historyRecordMissing,
-    [conversationId, input, sending, booting, historyRecordMissing],
+    () => !!conversationId && !!input.trim() && !sending && !booting && !historyRecordMissing && !browserOnlyHistory && !turn.blocked && !turn.busy,
+    [conversationId, input, sending, booting, historyRecordMissing, browserOnlyHistory, turn.blocked, turn.busy],
   );
 
   const canShareImage = useMemo(
@@ -354,73 +373,10 @@ export default function ChatPage() {
   );
 
   const sendStream = async (content: string, displayMessage?: string) => {
-    if (!conversationId) throw new Error('缺少会话，请刷新页面重试');
-
-    let assistantIndex = -1;
-    setMsgs((prev) => {
-      const next: Msg[] = [...prev, { role: 'assistant', content: '', streaming: true }];
-      assistantIndex = next.length - 1;
-      return next;
-    });
-
-    const replaceStreamingText = (text: string) => {
-      setMsgs((prev) => {
-        if (assistantIndex < 0 || assistantIndex >= prev.length) return prev;
-        const next = [...prev];
-        next[assistantIndex] = { ...next[assistantIndex], content: text };
-        return next;
-      });
-    };
-
-    try {
-      await trySSE(
-        api('/chat'),
-        { conversation_id: conversationId, message: content, display_message: displayMessage, task_context: taskContext },
-        replaceStreamingText,
-        (meta) => {
-          if (!mountedRef.current) return;
-          const cid = readConversationId(meta);
-          if (cid) {
-            sessionStorage.setItem('conversation_id', cid);
-            setConversationId(cid);
-          }
-          const messageId = typeof meta === 'object' && meta !== null ? (meta as { message_id?: number }).message_id : undefined;
-          if (messageId) setMsgs(previous => previous.map((message, index) => index === assistantIndex
-            ? { ...message, meta: { ...message.meta, messageId } } : message));
-        },
-        { mobilePacing: true }
-      );
-
-      setMsgs((prev) => {
-        if (assistantIndex < 0 || assistantIndex >= prev.length) return prev;
-        const next = [...prev];
-        const { questions, cleanedContent } = parseSuggestedQuestions(next[assistantIndex].content);
-        const normalized = normalizeMarkdown(cleanedContent);
-        next[assistantIndex] = {
-          ...next[assistantIndex],
-          content: normalized,
-          streaming: false,
-          suggestedQuestions: questions,
-        };
-        return next;
-      });
-    } catch (e) {
-      if (e instanceof QuotaExhaustedError) throw e;
-      console.error('[chat] stream failed', e);
-      setMsgs(prev => {
-        if (assistantIndex < 0 || assistantIndex >= prev.length) return prev;
-        const next = [...prev];
-        const partial = next[assistantIndex].content.trim();
-        next[assistantIndex] = {
-          ...next[assistantIndex],
-          streaming: false,
-          content: partial ? partial + '\n\n' + CHAT_FAILURE_MESSAGE : CHAT_FAILURE_MESSAGE,
-        };
-        return next;
-      });
-    } finally {
-      void refreshQuota();
-    }
+    if (regenerationLockRef.current || browserOnlyHistory || turn.blocked || turn.busy) return;
+    regenerationLockRef.current = true;
+    try { await turn.run(content, displayMessage); }
+    finally { regenerationLockRef.current = false; void refreshQuota(); }
   };
 
   const handleQuotaExhausted = (e: QuotaExhaustedError) => {
@@ -446,7 +402,8 @@ export default function ChatPage() {
   };
 
   const send = async () => {
-    if (!conversationId) {
+    if (!conversationId || regenerationLockRef.current || turn.blocked || turn.busy) {
+      if (conversationId) return;
       setErr('缺少会话，请刷新页面重试');
       return;
     }
@@ -454,7 +411,6 @@ export default function ChatPage() {
     if (!content) return;
 
     setErr(null);
-    setMsgs((m) => [...m, { role: 'user', content }]);
     setInput('');
     setSending(true);
     if (!firstMessageTrackedRef.current) {
@@ -479,7 +435,7 @@ export default function ChatPage() {
   };
 
   const regenerate = async () => {
-    if (!conversationId || sending || regenerationLockRef.current) return;
+    if (!conversationId || sending || regenerationLockRef.current || browserOnlyHistory || turn.blocked || turn.busy) return;
     const lastAssistantIdx = [...msgs].map((m, i) => ({ m, i })).reverse().find(x => x.m.role === 'assistant')?.i;
     if (lastAssistantIdx == null) return;
     regenerationLockRef.current = true;
@@ -513,12 +469,12 @@ export default function ChatPage() {
   };
 
   const sendQuick = async (label: string, fullPrompt: string) => {
-    if (!conversationId) {
+    if (!conversationId || regenerationLockRef.current || turn.blocked || turn.busy) {
+      if (conversationId) return;
       setErr('缺少会话，请刷新页面重试');
       return;
     }
     setErr(null);
-    setMsgs((m) => [...m, { role: 'user', content: label }]);
     setSending(true);
     if (!firstMessageTrackedRef.current) {
       firstMessageTrackedRef.current = true;
@@ -530,7 +486,7 @@ export default function ChatPage() {
       payload: { surface: 'chat', entry: 'quick_action', label },
     });
     try {
-      await sendStream(fullPrompt, `${label}分析`);
+      await sendStream(fullPrompt, label);
       void refreshQuota();
     } catch (e: unknown) {
       if (e instanceof QuotaExhaustedError) {
@@ -544,9 +500,8 @@ export default function ChatPage() {
   };
 
   const handleQuestionClick = async (question: string) => {
-    if (!conversationId || sending) return;
+    if (!conversationId || sending || regenerationLockRef.current || turn.blocked || turn.busy) return;
     setErr(null);
-    setMsgs((m) => [...m, { role: 'user', content: question }]);
     setSending(true);
     if (!firstMessageTrackedRef.current) {
       firstMessageTrackedRef.current = true;
@@ -708,7 +663,7 @@ export default function ChatPage() {
           onSimplifyToggle={handleSimplifyToggle}
           onQuestionClick={handleQuestionClick}
           onRegenerate={regenerate}
-          loading={sending}
+          loading={sending || browserOnlyHistory || turn.blocked || turn.busy}
           emptyText={booting ? '正在读取解读记录…' : '这条记录暂无解读内容'}
           emptyTitle={historyRecordMissing ? '这条记录暂时没有可显示的解读内容' : undefined}
           emptyDescription={
@@ -736,29 +691,34 @@ export default function ChatPage() {
           }
         />
 
-        {err && !historyRecordMissing && (
+        {err && !turn.error && !turn.notice && !historyRecordMissing && (
           <div className="rounded-[24px] border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4 text-sm text-[var(--color-text-secondary)]">
             <p className="font-medium text-[var(--color-primary)]">当前内容暂时无法加载</p>
             <p className="mt-2 leading-[1.7]">{err}</p>
           </div>
         )}
 
+        {browserOnlyHistory && <p role="status" className="rounded-[24px] border border-[var(--color-border)] p-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+          这些旧内容仅保存在此浏览器，尚未核实服务端的完整记录。原文仍可阅读；新的问题可以<Link href="/panel" className="ml-1 text-[var(--color-primary)] underline underline-offset-4">开始新的咨询</Link>。
+        </p>}
+        <TurnRecovery {...turn} />
         <QuickActions
-          disabled={sending || booting || !conversationId || historyRecordMissing}
+          disabled={sending || booting || !conversationId || historyRecordMissing || browserOnlyHistory || turn.blocked || turn.busy}
           buttons={quickButtons}
           onClick={sendQuick}
         />
 
         <InputArea
           value={input}
-          onChange={setInput}
+          onChange={turn.onInputChange}
           onKeyDown={onKeyDown}
           canSend={canSend}
           sending={sending}
-          disabled={booting || !conversationId || historyRecordMissing}
+          disabled={booting || !conversationId || historyRecordMissing || browserOnlyHistory || (turn.busy && !sending)}
           onSend={send}
           onRegenerate={regenerate}
           showRegenerate={false}
+          onStop={turn.stop}
         />
         <div ref={bottomAnchorRef} aria-hidden="true" />
       </div>

@@ -16,15 +16,18 @@ import { ReviewNotes } from '@/app/components/consultation/ReviewNotes';
 import { MiniPillars } from '@/app/components/chat/MiniPillars';
 
 import { Msg, QUICK_BUTTONS, normalizeMarkdown } from '@/app/lib/chat/types';
-import { parseSuggestedQuestions } from '@/app/lib/chat/parser';
+import { parseSuggestedQuestions, restoreStoredMessage } from '@/app/lib/chat/parser';
 import { api, fetchBaziIntro, fetchQuickButtons, pickReply, readApiError } from '@/app/lib/chat/api';
-import { trySSE, QuotaExhaustedError, CHAT_FAILURE_MESSAGE } from '@/app/lib/chat/sse';
+import { trySSE, QuotaExhaustedError } from '@/app/lib/chat/sse';
+import { useSavedBaziTurn } from '@/app/lib/chat/useSavedBaziTurn';
+import { TurnRecovery } from '@/app/components/chat/TurnRecovery';
+import { historyApi, ConversationUnavailableError, type ConversationDetailResp } from '@/app/lib/history/api';
 import { QuotaBar } from '@/app/components/QuotaBar';
 import QuotaExhaustedDialog from '@/app/components/QuotaExhaustedDialog';
 import ConfirmDialog from '@/app/components/ConfirmDialog';
 import {
-  saveConversation, loadConversation, getActiveConversationId,
-  repairCorruptedConversations,
+  saveConversation, getActiveConversationId,
+  repairCorruptedConversations, clearActiveConversationId,
 } from '@/app/lib/chat/storage';
 import { trackEvent } from '@/app/lib/analytics/track';
 import {
@@ -100,12 +103,8 @@ function HeaderMenu({
 export default function PanelPage() {
   const router = useRouter();
 
-  const aiIndexRef = useRef<number | null>(null);
   const streamingLockRef = useRef(false);
-  const lastFullRef = useRef('');
   const mountedRef = useRef(true);
-  const streamAbortRef = useRef<AbortController | null>(null);
-  useEffect(() => () => streamAbortRef.current?.abort(), []);
   const autoTaskStartedRef = useRef(false);
   const pendingAutoPromptRef = useRef<string | null>(null);
   const panelViewTrackedRef = useRef(false);
@@ -135,6 +134,22 @@ export default function PanelPage() {
   const [regenerating, setRegenerating] = useState(false);
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
   const [taskContext, setTaskContext] = useState<PanelTaskContext | null>(null);
+  const savedChartRef = useRef<Record<string, unknown> | null>(null);
+  const [savedChart, setSavedChart] = useState<Record<string, unknown> | null>(null);
+  const [profileChanged, setProfileChanged] = useState(false);
+
+  const applySavedContext = (detail: ConversationDetailResp) => {
+    setTaskContext(detail.task_context ?? null);
+    const chart = detail.profile?.bazi_chart;
+    const snapshot = chart && typeof chart.mingpan === 'object' ? chart.mingpan as Record<string, unknown> : chart ?? null;
+    savedChartRef.current = snapshot; setSavedChart(snapshot); setProfileChanged(!!detail.profile_changed);
+    if (snapshot?.four_pillars) {
+      setFourPillars(snapshot.four_pillars as FourPillarsData);
+      setTimeCorrection(snapshot);
+    }
+  };
+  const turn = useSavedBaziTurn({ owner: me?.id, cid: conversationId, setMessages: setMsgs, setInput,
+    taskContext, onRestored: applySavedContext });
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -163,12 +178,7 @@ export default function PanelPage() {
   }, []);
 
   // ===== Helpers =====
-  const isRecord = (v: unknown): v is Record<string, unknown> =>
-    typeof v === 'object' && v !== null;
 
-  function hasConversationId(x: unknown): x is { conversation_id: string } {
-    return isRecord(x) && 'conversation_id' in x && typeof (x as { conversation_id: string }).conversation_id === 'string';
-  }
 
   useEffect(() => {
     mountedRef.current = true;
@@ -292,22 +302,27 @@ export default function PanelPage() {
       const active = getActiveConversationId() || sessionStorage.getItem('conversation_id');
       const startingTask = new URLSearchParams(window.location.search).get('auto') === '1';
       if (active && !startingTask) {
-        const cached = loadConversation(active);
-        if (cached?.length && alive) {
-          const introContent = await fetchBaziIntro();
-          const restored = cached.map(m => {
-            const nextMsg = m.simplify?.status === 'loading'
-              ? { ...m, simplify: { ...m.simplify, status: 'error' as const, error: '已中断，请重试' } }
-              : m;
-
-            return nextMsg.meta?.kind === 'intro'
-              ? { ...nextMsg, content: introContent }
-              : nextMsg;
-          });
-          setConversationId(active);
-          setMsgs(restored);
-          saveConversation(active, restored);
-          return;
+        try {
+          const detail = await historyApi.detail(Number(active.replace(/^(bazi_conv_|conv_)/, '')));
+          if (!alive) return;
+          if (detail.type !== 'bazi') { clearActiveConversationId(); }
+          else {
+            applySavedContext(detail);
+            const introContent = await fetchBaziIntro();
+            if (!alive) return;
+            const rows = detail.messages.filter((message, index) => (message.role === 'user' || message.role === 'assistant')
+              && !(index === 0 && message.role === 'user' && message.content.startsWith('我的命盘信息如下')));
+            const restored: Msg[] = rows.length ? rows.map(restoreStoredMessage)
+              : [{ role: 'assistant', content: introContent, meta: { kind: 'intro' } }];
+            setConversationId(active);
+            setMsgs(restored);
+            saveConversation(active, restored);
+            return;
+          }
+        } catch (failure) {
+          if (!alive) return;
+          if (failure instanceof ConversationUnavailableError && failure.status === 404) clearActiveConversationId();
+          else { setErr('暂时无法读取已保存的会话，请重新加载。'); return; }
         }
       }
 
@@ -353,7 +368,7 @@ export default function PanelPage() {
 
   // Fetch four pillars after profile loads
   useEffect(() => {
-    if (!profile) return;
+    if (!profile || savedChartRef.current) return;
     let alive = true;
     (async () => {
       try {
@@ -376,18 +391,18 @@ export default function PanelPage() {
         if (!res.ok) return;
         const data = await res.json();
         const fp = data?.mingpan?.four_pillars;
-        if (alive && fp) {
+        if (alive && fp && !savedChartRef.current) {
           setFourPillars(fp);
           setTimeCorrection(data.mingpan);
         }
       } catch { /* ignore – header will keep showing skeleton */ }
     })();
     return () => { alive = false; };
-  }, [profile]);
+  }, [profile, conversationId]);
 
   const canSend = useMemo(
-    () => !!conversationId && !!input.trim() && !loading && !booting,
-    [conversationId, input, loading, booting],
+    () => !!conversationId && !!input.trim() && !loading && !booting && !turn.blocked && !turn.busy,
+    [conversationId, input, loading, booting, turn.blocked, turn.busy],
   );
 
   // ===== Send / Stream =====
@@ -396,87 +411,15 @@ export default function PanelPage() {
     if (streamingLockRef.current) return;
     streamingLockRef.current = true;
 
-    let myIndex = -1;
-    setMsgs(prev => {
-      const next: Msg[] = [...prev, { role: 'assistant', content: '', streaming: true }];
-      myIndex = next.length - 1;
-      aiIndexRef.current = myIndex;
-      return next;
-    });
-
-    const replace = (fullText: string) => {
-      if (fullText === lastFullRef.current) return;
-      lastFullRef.current = fullText;
-      setMsgs(prev => {
-        if (myIndex < 0 || myIndex >= prev.length) return prev;
-        const next = [...prev];
-        next[myIndex] = { ...next[myIndex], content: fullText };
-        return next;
-      });
-    };
-
-    try {
-      streamAbortRef.current = new AbortController();
-      await trySSE(
-        api('/chat'),
-        {
-          conversation_id: conversationId,
-          message: content,
-          display_message: displayMessage,
-          task_context: taskContext,
-        },
-        replace,
-        (meta) => {
-          const cid = hasConversationId(meta) ? meta.conversation_id : '';
-          if (cid) { sessionStorage.setItem('conversation_id', cid); setConversationId(cid); }
-          const msgId = isRecord(meta) ? meta.message_id : undefined;
-          if (msgId) {
-            setMsgs(prev => {
-              if (myIndex < 0 || myIndex >= prev.length) return prev;
-              const next = [...prev];
-              next[myIndex] = { ...next[myIndex], meta: { ...next[myIndex].meta, messageId: msgId as number } };
-              return next;
-            });
-          }
-        },
-        { mobilePacing: true, signal: streamAbortRef.current.signal }
-      );
-      setMsgs(prev => {
-        if (myIndex < 0 || myIndex >= prev.length) return prev;
-        const next = [...prev];
-        const { questions, cleanedContent } = parseSuggestedQuestions(next[myIndex].content || '');
-        const normalized = normalizeMarkdown(cleanedContent);
-        next[myIndex] = { ...next[myIndex], streaming: false, content: normalized, suggestedQuestions: questions };
-        return next;
-      });
-    } catch (e) {
-      if (e instanceof QuotaExhaustedError) throw e;
-      const failureMessage = streamAbortRef.current?.signal.aborted ? '已停止接收。可从历史记录确认已保存的内容。' : CHAT_FAILURE_MESSAGE;
-      if (!streamAbortRef.current?.signal.aborted) console.error('[chat] stream failed', e);
-      setMsgs(prev => {
-        if (myIndex < 0 || myIndex >= prev.length) return prev;
-        const next = [...prev];
-        const partial = next[myIndex].content.trim();
-        next[myIndex] = {
-          ...next[myIndex],
-          streaming: false,
-          content: partial ? partial + '\n\n' + failureMessage : failureMessage,
-        };
-        return next;
-      });
-    } finally {
-      void refreshQuota();
-      streamingLockRef.current = false;
-      lastFullRef.current = '';
-    }
+    try { await turn.run(content, displayMessage); }
+    finally { void refreshQuota(); streamingLockRef.current = false; }
   };
 
   const send = async () => {
-    if (!conversationId || streamingLockRef.current) return;
+    if (!conversationId || streamingLockRef.current || turn.blocked || turn.busy) return;
     const content = input.trim();
     if (!content) return;
     setErr(null);
-    setMsgs(m => [...m, { role: 'user', content }]);
     setInput('');
     setLoading(true);
     if (!firstMessageTrackedRef.current) {
@@ -494,9 +437,8 @@ export default function PanelPage() {
   };
 
   const sendHiddenTaskPrompt = async (content: string, displayMessage: string) => {
-    if (!conversationId || streamingLockRef.current) return;
+    if (!conversationId || streamingLockRef.current || turn.blocked || turn.busy) return;
     setErr(null);
-    setMsgs(m => [...m, { role: 'user', content: displayMessage }]);
     setLoading(true);
     try {
       await sendStream(content, displayMessage);
@@ -510,7 +452,7 @@ export default function PanelPage() {
   };
 
   useEffect(() => {
-    if (autoTaskStartedRef.current || !conversationId || booting || loading) return;
+    if (autoTaskStartedRef.current || !me?.id || !conversationId || booting || loading || turn.blocked || turn.busy) return;
     const prompt = pendingAutoPromptRef.current;
     if (!prompt || !taskContext || taskContext.mode !== 'bazi') return;
 
@@ -523,14 +465,14 @@ export default function PanelPage() {
     const visibleMessage = taskContext.title || '任务分析';
     void sendHiddenTaskPrompt(prompt, visibleMessage);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [booting, conversationId, loading, taskContext]);
+  }, [booting, conversationId, loading, taskContext, me?.id, turn.blocked, turn.busy]);
 
   const onKeyDown = (ev: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); if (canSend) void send(); }
   };
 
   const regenerate = async () => {
-    if (!conversationId || regenerating || streamingLockRef.current) return;
+    if (!conversationId || regenerating || streamingLockRef.current || turn.blocked || turn.busy) return;
     const lastIdx = [...msgs].map((m, i) => ({ m, i })).reverse().find(x => x.m.role === 'assistant')?.i;
     if (lastIdx == null) return;
     streamingLockRef.current = true;
@@ -565,7 +507,7 @@ export default function PanelPage() {
   };
 
   const clearChat = async () => {
-    if (!conversationId || streamingLockRef.current) return;
+    if (!conversationId || streamingLockRef.current || turn.blocked || turn.busy) return;
     streamingLockRef.current = true;
     setErr(null);
     setLoading(true);
@@ -591,6 +533,7 @@ export default function PanelPage() {
       // Publish the new ID and its empty context together. While the intro is
       // loading, the persistence effect must not copy old messages to this ID.
       setConversationId(cid);
+      savedChartRef.current = null; setSavedChart(null); setProfileChanged(false);
       setTaskContext(null);
       pendingAutoPromptRef.current = '';
       setInput('');
@@ -603,9 +546,8 @@ export default function PanelPage() {
   };
 
   const sendQuick = async (label: string, fullPrompt: string) => {
-    if (!conversationId || streamingLockRef.current) return;
+    if (!conversationId || streamingLockRef.current || turn.blocked || turn.busy) return;
     setErr(null);
-    setMsgs(m => [...m, { role: 'user', content: label }]);
     setLoading(true);
     if (!firstMessageTrackedRef.current) {
       firstMessageTrackedRef.current = true;
@@ -616,7 +558,7 @@ export default function PanelPage() {
     trackEvent('chat_suggested_question_click', {
       payload: { surface: 'panel', entry: 'quick_action', label },
     });
-    try { await sendStream(fullPrompt); void refreshQuota(); }
+    try { await sendStream(fullPrompt, label); void refreshQuota(); }
     catch (e: unknown) {
       if (e instanceof QuotaExhaustedError) handleQuotaExhausted(e);
       else setErr(e instanceof Error ? e.message : String(e));
@@ -625,9 +567,8 @@ export default function PanelPage() {
   };
 
   const handleQuestionClick = async (question: string) => {
-    if (!conversationId || streamingLockRef.current) return;
+    if (!conversationId || streamingLockRef.current || turn.blocked || turn.busy) return;
     setErr(null);
-    setMsgs(m => [...m, { role: 'user', content: question }]);
     setLoading(true);
     if (!firstMessageTrackedRef.current) {
       firstMessageTrackedRef.current = true;
@@ -689,7 +630,7 @@ export default function PanelPage() {
     });
   };
 
-  const canUseQuick = !qbLoading && !loading && !booting && !!conversationId;
+  const canUseQuick = !qbLoading && !loading && !booting && !!conversationId && !turn.blocked && !turn.busy;
 
   // ===== Profile summary =====
   const genderLabel = profile?.gender === 'male' || profile?.gender === '男' ? '男' :
@@ -707,7 +648,10 @@ export default function PanelPage() {
           </div>
           <div className="reading-tools">
             <ContextDrawer title="命盘与背景" description="查看本次解读使用的档案、排盘说明与现实背景。" trigger={<button className="reading-pill">命盘与背景</button>}>
-              <p className="mb-5 text-sm leading-7">{genderLabel} · {profile?.birth_date} · {profile?.birth_time?.slice(0, 5)} · {profile?.birth_location}</p>
+              <p className="mb-5 text-sm leading-7">{savedChart
+                ? `本次会话保存的命盘${typeof savedChart.solar_date === 'string' ? ` · 排盘时间 ${savedChart.solar_date}` : ''}`
+                : `${genderLabel} · ${profile?.birth_date || ''} · ${profile?.birth_time?.slice(0, 5) || ''} · ${profile?.birth_location || ''}`}</p>
+              {profileChanged && <p className="mb-4 text-sm leading-6 text-[var(--color-text-secondary)]">档案后来有过修改，本次对话继续使用保存时的命盘。</p>}
               <MiniPillars fourPillars={fourPillars} loading={!fourPillars && !!profile} />
               <div className="mt-5"><TimeCorrectionNotice info={timeCorrection} /></div>
               {taskContext?.taskType === 'career' && <>
@@ -750,7 +694,7 @@ export default function PanelPage() {
           onQuestionClick={handleQuestionClick}
           onRegenerate={regenerate}
           regenerating={regenerating}
-          loading={loading}
+          loading={loading || turn.blocked || turn.busy}
         />}
         {showBackToTop && (
           <button
@@ -767,25 +711,14 @@ export default function PanelPage() {
       </div>
 
       {/* Inline error below messages. Loading is shown inside the pending assistant reply. */}
-      {err && (
-        <div className="flex-shrink-0 px-4 pb-1">
-          {err && (
-            <div
-              role="alert"
-              className="rounded-[var(--radius-sm)] border border-[var(--color-primary)]/25 bg-[var(--color-primary)]/5 px-3 py-2 text-xs text-[var(--color-primary-deeper)]"
-            >
-              {err}
-            </div>
-          )}
-        </div>
-      )}
-
+      {err && !turn.error && !turn.notice && <div role="alert" className="flex-shrink-0 px-4 pb-2 text-sm text-[var(--color-primary-deeper)]">{err}</div>}
+      <div className="px-4 pb-2"><TurnRecovery {...turn} /></div>
       <footer className="reading-footer">
         <div className="reading-composer">
-          <InputArea value={input} onChange={setInput} onKeyDown={onKeyDown}
-            canSend={canSend} sending={loading} disabled={booting || !conversationId}
+          <InputArea value={input} onChange={turn.onInputChange} onKeyDown={onKeyDown}
+            canSend={canSend} sending={loading} disabled={booting || !conversationId || (turn.busy && !loading)}
             onSend={send} onRegenerate={regenerate}
-            onStop={() => streamAbortRef.current?.abort()}
+            onStop={turn.stop}
             showRegenerate={false} showClear={false}
             placeholder={taskContext ? '围绕这个问题，继续聊聊你的想法…' : '说说你现在最在意的事…'} />
           <div className="reading-composer-meta"><Link href="/career">事业咨询 <ArrowUpRight size={12} /></Link><span>Enter 发送 · Shift+Enter 换行</span></div>

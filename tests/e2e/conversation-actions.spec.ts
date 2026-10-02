@@ -48,6 +48,9 @@ test('failed regeneration leaves the original readable and can retry', async ({ 
 });
 
 test('clear switches to an empty conversation without caching old answers under its new ID', async ({ page }) => {
+  await page.route('**/api/conversations/9001', route => route.fulfill({ json: { id: 9001, type: 'bazi', title: '事业问题',
+    messages: [{ id: 1, role: 'user', content: '旧会话的问题' }, { id: 2, role: 'assistant', content: original }] } }));
+  await page.route('**/api/conversations/9002', route => route.fulfill({ json: { id: 9002, type: 'bazi', title: '新的对话', messages: [] } }));
   await page.addInitScript(({ original }) => {
     if (!localStorage.getItem('actions-fixture-seeded')) {
       localStorage.setItem('actions-fixture-seeded', '1');

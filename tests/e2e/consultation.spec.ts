@@ -32,6 +32,8 @@ test('new career context reaches its own chat and streams a reply', async ({ pag
   await expect(page.getByRole('textbox', { name: '对话输入框' })).toBeVisible();
   await expect(page.getByText('这是一段固定回复', { exact: false }).first()).toBeVisible({ timeout: 30_000 });
   await expect(page.getByRole('button', { name: '停止', exact: true })).toHaveCount(0, { timeout: 30_000 });
+  await expect(page.getByText('这是一段固定回复', { exact: false }).first()).toBeVisible();
+  await expect(page.getByText('回复保存状态需要确认')).toHaveCount(0);
 });
 
 test('reading pass: IME, durable reply, evidence and exhausted history', async ({ page }, info) => {
