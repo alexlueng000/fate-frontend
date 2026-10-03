@@ -40,15 +40,19 @@ test('reading pass: IME, durable reply, evidence and exhausted history', async (
   const messages = [{ id: 1, role: 'user', content: '是否接受 offer？', created_at: '2026-10-02T00:00:00Z' }];
   let used = 0;
   let sends = 0;
+  let savedRequest: Record<string, unknown> | null = null;
   await page.route('**/api/consultations/9001', route => route.fulfill({ json: { passes: [{ id: 1, order_id: 7, conversation_id: 9001, status: 'ACTIVE', available: used === 0, remaining: 1 - used, reply_limit: 1, duration_hours: 24, expires_at: '2099-10-03T00:00:00Z' }] } }));
   await page.route('**/api/consultations/catalog/products', route => route.fulfill({ json: [{ code: 'TEST_ONLY', name: '单问题解读（测试）', price_cents: 990, duration_hours: 24, reply_limit: 3 }] }));
   await page.route('**/api/conversations/9001', route => route.fulfill({ json: { id: 9001, type: 'bazi', title: '是否接受 offer？', messages } }));
+  await page.route('**/api/consultations/9001/request', route => route.fulfill({ json: { status: 'IDLE', conversation_id: 9001 } }));
+  await page.route('**/api/consultations/9001/requests/*', route => route.fulfill({ json: savedRequest }));
   await page.route('**/api/consultations/9001/messages', async route => {
     sends += 1;
     const question = route.request().postDataJSON().message;
     const reply = '### 核心观察\n\n先确认岗位职责。\n\n### 分析依据\n\n这里是可折叠的测试依据。\n\n### 现实建议\n\n向招聘方索取书面说明。';
     messages.push({ id: 2, role: 'user', content: question, created_at: '2026-10-02T00:00:00Z' }, { id: 3, role: 'assistant', content: reply, created_at: '2026-10-02T00:00:00Z' });
     used = 1;
+    savedRequest = { status: 'SUCCEEDED', conversation_id: 9001, request_key: route.request().postDataJSON().request_key, pass_id: 1, message: question, reply, message_id: 3, baseline_message_id: 1 };
     await route.fulfill({ contentType: 'text/event-stream', body: `data: ${JSON.stringify({ text: reply, replace: true })}\n\ndata: [DONE]\n\n` });
   });
   await page.goto('/reading/9001');
