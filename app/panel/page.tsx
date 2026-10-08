@@ -643,7 +643,7 @@ export default function PanelPage() {
       <header className="reading-header">
         <div className="reading-header-inner">
           <div className="min-w-0 flex-1">
-            <p className="consult-eyebrow">{taskContext?.taskType === 'career' ? '事业咨询 · 把下一步想清楚' : '八字对话 · 慢慢聊，慢慢理清'}</p>
+            <p className="consult-eyebrow">{taskContext?.taskType === 'career' ? '八字对话 · 起始话题：事业' : '八字对话 · 事业、感情、财运都可以聊'}</p>
             <h1 className="font-serif text-xl sm:text-2xl leading-relaxed">{taskContext?.title || '从你在意的一件事开始'}</h1>
           </div>
           <div className="reading-tools">
@@ -662,6 +662,11 @@ export default function PanelPage() {
               <ReadingLink conversationId={conversationId} />
             </ContextDrawer>
             <QuotaBar type="chat" refreshKey={quotaRefreshKey} compact />
+            <button type="button" className="reading-pill inline-flex items-center gap-1.5"
+              disabled={booting || !conversationId || loading || turn.busy || turn.blocked}
+              onClick={() => { setShowMenu(false); setClearDialogOpen(true); }}>
+              <Trash2 size={14} aria-hidden />清空对话
+            </button>
             <div className="relative" ref={menuRefCollapsed}>
               <button aria-label="更多操作" aria-haspopup="menu" aria-expanded={showMenu} className="consult-icon-button" onClick={() => setShowMenu(v => !v)} onKeyDown={e => { if (e.key === 'Escape') setShowMenu(false); }}><MoreVertical size={18} /></button>
               {showMenu && <HeaderMenu id="panel-header-menu" onReport={() => { setShowMenu(false); router.push('/report'); }} onEditProfile={() => { setShowMenu(false); router.push('/profile/edit?returnTo=/panel'); }} onClear={() => { setShowMenu(false); setClearDialogOpen(true); }} />}
@@ -720,8 +725,8 @@ export default function PanelPage() {
             onSend={send} onRegenerate={regenerate}
             onStop={turn.stop}
             showRegenerate={false} showClear={false}
-            placeholder={taskContext ? '围绕这个问题，继续聊聊你的想法…' : '说说你现在最在意的事…'} />
-          <div className="reading-composer-meta"><Link href="/career">事业咨询 <ArrowUpRight size={12} /></Link><span>Enter 发送 · Shift+Enter 换行</span></div>
+            placeholder='继续聊当前问题，或换个话题：感情、财运、人际…' />
+          <div className="reading-composer-meta"><span>八字对话 · 可自由切换话题</span><span>Enter 发送 · Shift+Enter 换行</span></div>
         </div>
         <p className="mt-2 text-center text-[11px] text-[var(--color-text-muted)]">传统文化视角与现实思考参考，决定由你做出。</p>
       </footer>

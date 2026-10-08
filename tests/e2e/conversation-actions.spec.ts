@@ -77,8 +77,7 @@ test('clear switches to an empty conversation without caching old answers under 
   await page.goto('/panel');
   await expect(page.getByText('原报告的观察。')).toBeVisible();
   delayedIntro = true;
-  await page.getByRole('button', { name: '更多操作' }).click();
-  await page.getByRole('menuitem', { name: '清空对话' }).click();
+  await page.getByRole('button', { name: '清空对话', exact: true }).click();
   await expect(page.getByText(/原对话与报告保留/)).toBeVisible();
   await page.getByRole('button', { name: '确认清空' }).click();
   await expect(page.getByRole('heading', { name: '最近，有什么事放在心上？' })).toBeVisible();
