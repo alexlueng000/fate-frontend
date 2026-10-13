@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton, Card as UiCard, Input as UiInput } from '@/app/components/ui';
+
 
 import { useState, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -77,7 +79,7 @@ function ResetPasswordContent() {
   if (success) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[var(--color-bg)] px-4 py-16">
-        <div className="relative w-full max-w-[26rem] card px-6 py-8 text-center">
+        <UiCard className="relative w-full max-w-[26rem] card px-6 py-8 text-center">
           <div className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-full border border-[color-mix(in_oklch,var(--color-wuxing-wood)_28%,var(--color-border))] bg-[color-mix(in_oklch,var(--color-wuxing-wood)_8%,var(--color-bg-elevated))]">
             <Check className="h-6 w-6 text-[var(--color-wuxing-wood)]" />
           </div>
@@ -96,7 +98,7 @@ function ResetPasswordContent() {
           >
             立即登录
           </Link>
-        </div>
+        </UiCard>
       </div>
     );
   }
@@ -104,7 +106,7 @@ function ResetPasswordContent() {
   return (
     <div className="min-h-screen bg-[var(--color-bg)] px-4 py-16 sm:py-20">
       <div className="mx-auto flex min-h-[calc(100vh-8rem)] w-full max-w-[28rem] items-center">
-        <div className="relative w-full card px-6 py-7 animate-scale-in sm:px-7 sm:py-8">
+        <UiCard className="relative w-full card px-6 py-7 animate-scale-in sm:px-7 sm:py-8">
           {/* Header */}
           <div className="mb-6 text-center">
             <p className="mb-2 text-[0.8125rem] font-medium tracking-[0.04em] text-[var(--color-text-muted)]">
@@ -137,7 +139,7 @@ function ResetPasswordContent() {
             </label>
             <div className="relative">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
-              <input
+              <UiInput
                 className="input !pl-12"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -155,7 +157,7 @@ function ResetPasswordContent() {
             </label>
             <div className="relative">
               <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
-              <input
+              <UiInput
                 className="input !pl-12 text-center font-mono tracking-[0.5em]"
                 value={code}
                 onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
@@ -178,7 +180,7 @@ function ResetPasswordContent() {
             </label>
             <div className="relative">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
-              <input
+              <UiInput
                 className="input !pl-12 pr-12"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -186,14 +188,14 @@ function ResetPasswordContent() {
                 placeholder="至少8位"
                 autoComplete="new-password"
               />
-              <button
+              <UiButton variant="icon"
                 type="button"
                 aria-label={showPw ? '隐藏密码' : '显示密码'}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--color-text-hint)] hover:text-[var(--color-text-secondary)] transition-colors"
                 onClick={() => setShowPw((v) => !v)}
               >
                 {showPw ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
+              </UiButton>
             </div>
             {password.length > 0 && !pwOk && (
               <p className="mt-1 text-xs text-[var(--color-primary)]">密码至少8位</p>
@@ -207,7 +209,7 @@ function ResetPasswordContent() {
             </label>
             <div className="relative">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
-              <input
+              <UiInput
                 className="input !pl-12"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
@@ -222,7 +224,7 @@ function ResetPasswordContent() {
           </div>
 
           {/* Submit */}
-          <button
+          <UiButton variant="primary"
             type="submit"
             disabled={!canSubmit}
             className="w-full btn btn-primary py-3 text-base font-medium disabled:cursor-not-allowed disabled:opacity-50"
@@ -235,7 +237,7 @@ function ResetPasswordContent() {
             ) : (
               '重置密码'
             )}
-          </button>
+          </UiButton>
 
           {/* Back to forgot password */}
           <Link
@@ -246,7 +248,7 @@ function ResetPasswordContent() {
             重新获取验证码
           </Link>
           </form>
-        </div>
+        </UiCard>
       </div>
     </div>
   );

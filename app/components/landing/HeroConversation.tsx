@@ -1,4 +1,6 @@
 "use client";
+import { Button as UiButton } from '@/app/components/ui';
+
 
 import { useState } from "react";
 import { RotateCcw } from "lucide-react";
@@ -13,10 +15,10 @@ export default function HeroConversation() {
     <section aria-label="对话示例" className={styles.conversation}>
       <div className="mb-3 flex items-center justify-between gap-3">
         <p className="text-[0.6875rem] tracking-[0.1em] text-[var(--color-text-muted)]">对话示例 · 非实时解读</p>
-        <button type="button" className={styles.replay} onClick={() => setPlayback((value) => value + 1)} aria-label="重播对话示例">
+        <UiButton variant="plain" type="button" className={styles.replay} onClick={() => setPlayback((value) => value + 1)} aria-label="重播对话示例">
           <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
           重播
-        </button>
+        </UiButton>
       </div>
       <MotionScene key={playback}>
         <p data-reveal className={styles.question} style={motionDelay(100)}>

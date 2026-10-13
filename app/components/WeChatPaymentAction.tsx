@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton } from '@/app/components/ui';
+
 
 import { useState } from 'react';
 import { invokeWeChatPay, type WeChatPayParams } from '@/app/lib/wechat-payment';
@@ -20,10 +22,10 @@ export default function WeChatPaymentAction({ params }: { params: WeChatPayParam
   }
   return (
     <div className="mt-4 text-center">
-      <button type="button" disabled={busy} onClick={() => void pay()}
+      <UiButton variant="plain" type="button" disabled={busy} onClick={() => void pay()}
         className="min-h-12 w-full rounded-xl bg-[#238653] transition-colors hover:bg-[#1b7044] px-5 text-[15px] font-medium text-white disabled:opacity-50">
         {busy ? '正在支付…' : '微信支付'}
-      </button>
+      </UiButton>
       <p role="status" className="mt-3 text-xs leading-6 text-[var(--color-text-secondary)]">{message}</p>
     </div>
   );

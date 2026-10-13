@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton, Card as UiCard, Textarea as UiTextarea } from '@/app/components/ui';
+
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
@@ -230,7 +232,7 @@ export default function FeedbackDetailPage() {
         </div>
 
         {/* User Info */}
-        <div className="card p-6 mb-6">
+        <UiCard className="card p-6 mb-6">
           <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
             用户信息
           </h2>
@@ -274,10 +276,10 @@ export default function FeedbackDetailPage() {
               </div>
             )}
           </div>
-        </div>
+        </UiCard>
 
         {/* Feedback Content */}
-        <div className="card p-6 mb-6">
+        <UiCard className="card p-6 mb-6">
           <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4 flex items-center gap-2">
             <MessageSquare className="w-5 h-5" />
             反馈内容
@@ -285,14 +287,14 @@ export default function FeedbackDetailPage() {
           <div className="bg-[var(--color-bg-elevated)] rounded-lg p-4 whitespace-pre-wrap text-[var(--color-text-primary)]">
             {feedback.content}
           </div>
-        </div>
+        </UiCard>
 
         {/* Admin Reply */}
-        <div className="card p-6 mb-6">
+        <UiCard className="card p-6 mb-6">
           <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
             管理员回复
           </h2>
-          <textarea
+          <UiTextarea
             value={reply}
             onChange={(e) => setReply(e.target.value)}
             placeholder="输入回复内容..."
@@ -305,25 +307,25 @@ export default function FeedbackDetailPage() {
                 <span>上次回复: {feedback.replied_by_username}</span>
               )}
             </div>
-            <button
+            <UiButton variant="primary"
               onClick={handleReply}
               disabled={submitting || !reply.trim()}
               className="px-6 py-2 rounded-lg bg-[var(--color-primary)] text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
             >
               <Send className="w-4 h-4" />
               {submitting ? '提交中...' : '提交回复'}
-            </button>
+            </UiButton>
           </div>
-        </div>
+        </UiCard>
 
         {/* Status Management */}
-        <div className="card p-6">
+        <UiCard className="card p-6">
           <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
             状态管理
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {Object.entries(STATUS_MAP).map(([key, { label, color, icon: Icon }]) => (
-              <button
+              <UiButton variant="plain"
                 key={key}
                 onClick={() => handleStatusChange(key)}
                 disabled={submitting || feedback.status === key}
@@ -339,10 +341,10 @@ export default function FeedbackDetailPage() {
               >
                 <Icon className="w-6 h-6 mx-auto mb-2" />
                 <div className="text-sm font-medium text-center">{label}</div>
-              </button>
+              </UiButton>
             ))}
           </div>
-        </div>
+        </UiCard>
       </div>
     </main>
   );

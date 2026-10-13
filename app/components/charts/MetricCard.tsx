@@ -1,4 +1,6 @@
 'use client';
+import { Card as UiCard } from '@/app/components/ui';
+
 
 import { ReactNode } from 'react';
 
@@ -26,7 +28,7 @@ export default function MetricCard({ title, value, subtitle, icon, trend, color 
   const accentColor = colorMap[color];
 
   return (
-    <div className="card p-4 flex flex-col gap-2">
+    <UiCard className="card p-4 flex flex-col gap-2">
       <div className="flex items-center justify-between">
         <span className="text-sm text-[var(--color-text-muted)]">{title}</span>
         {icon && <span style={{ color: accentColor }}>{icon}</span>}
@@ -46,6 +48,6 @@ export default function MetricCard({ title, value, subtitle, icon, trend, color 
       {subtitle && (
         <span className="text-xs text-[var(--color-text-hint)]">{subtitle}</span>
       )}
-    </div>
+    </UiCard>
   );
 }

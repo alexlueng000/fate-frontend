@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton } from '@/app/components/ui';
+
 
 import { useState } from 'react';
 import Link from 'next/link';
@@ -92,7 +94,7 @@ export default function DemoPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-[#FFF8F0] to-white">
+    <main className="min-h-screen bg-gradient-to-b from-[var(--color-bg)] to-white">
       {/* 顶部导航 */}
       <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-[var(--color-border)]">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
@@ -211,7 +213,7 @@ export default function DemoPage() {
                 key={section.id}
                 className={index > 0 ? 'border-t border-[var(--color-border)]' : ''}
               >
-                <button
+                <UiButton variant="plain"
                   onClick={() => toggleSection(section.id)}
                   className="w-full px-6 py-4 flex items-center justify-between hover:bg-[var(--color-bg-deep)] transition-colors"
                 >
@@ -226,7 +228,7 @@ export default function DemoPage() {
                   ) : (
                     <ChevronDown className="w-5 h-5 text-[var(--color-text-muted)]" />
                   )}
-                </button>
+                </UiButton>
                 {isExpanded && (
                   <div className="px-6 pb-6">
                     <div className="prose prose-sm max-w-none text-[var(--color-text-secondary)] leading-relaxed">

@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton, Card as UiCard, ChoiceInput as UiChoiceInput, Input as UiInput, Modal as UiModal, Select as UiSelect } from '@/app/components/ui';
+
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -273,16 +275,16 @@ export default function SensitiveWordsPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={clearCache} className="btn btn-secondary p-2" title="清除缓存">
+            <UiButton variant="secondary" onClick={clearCache} className="btn btn-secondary p-2" title="清除缓存">
               <Eraser className="w-5 h-5" />
-            </button>
-            <button onClick={() => loadWords()} className="btn btn-secondary p-2" title="刷新">
+            </UiButton>
+            <UiButton variant="secondary" onClick={() => loadWords()} className="btn btn-secondary p-2" title="刷新">
               <RefreshCw className="w-5 h-5" />
-            </button>
-            <button onClick={openCreateForm} className="btn btn-primary">
+            </UiButton>
+            <UiButton variant="primary" onClick={openCreateForm} className="btn btn-primary">
               <Plus className="w-5 h-5" />
               添加敏感词
-            </button>
+            </UiButton>
           </div>
         </div>
 
@@ -295,21 +297,21 @@ export default function SensitiveWordsPage() {
 
         {/* Form Modal */}
         {showForm && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="card p-6 w-full max-w-md animate-scale-in">
+          <UiModal open bare onClose={() => setShowForm(false)} title="编辑敏感词" size="md">
+            <UiCard className="card p-6 w-full max-w-md animate-scale-in">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
                   {editingWord ? '编辑敏感词' : '添加敏感词'}
                 </h2>
-                <button onClick={() => setShowForm(false)} className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]">
+                <UiButton variant="plain" onClick={() => setShowForm(false)} className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]">
                   <X className="w-5 h-5" />
-                </button>
+                </UiButton>
               </div>
 
               <div className="space-y-4">
                 <div>
                   <label className="block text-xs text-[var(--color-text-secondary)] mb-1.5">敏感词 *</label>
-                  <input
+                  <UiInput
                     className="input"
                     value={formData.word}
                     onChange={(e) => setFormData({ ...formData, word: e.target.value })}
@@ -319,7 +321,7 @@ export default function SensitiveWordsPage() {
 
                 <div>
                   <label className="block text-xs text-[var(--color-text-secondary)] mb-1.5">替换词 *</label>
-                  <input
+                  <UiInput
                     className="input"
                     value={formData.replacement}
                     onChange={(e) => setFormData({ ...formData, replacement: e.target.value })}
@@ -329,7 +331,7 @@ export default function SensitiveWordsPage() {
 
                 <div>
                   <label className="block text-xs text-[var(--color-text-secondary)] mb-1.5">分类</label>
-                  <select
+                  <UiSelect
                     className="input"
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
@@ -337,12 +339,12 @@ export default function SensitiveWordsPage() {
                     {CATEGORIES.map((cat) => (
                       <option key={cat.value} value={cat.value}>{cat.label}</option>
                     ))}
-                  </select>
+                  </UiSelect>
                 </div>
 
                 <div>
                   <label className="block text-xs text-[var(--color-text-secondary)] mb-1.5">优先级</label>
-                  <input
+                  <UiInput
                     type="number"
                     className="input"
                     value={formData.priority}
@@ -353,7 +355,7 @@ export default function SensitiveWordsPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <input
+                  <UiChoiceInput
                     type="checkbox"
                     id="is_regex"
                     checked={formData.is_regex}
@@ -365,7 +367,7 @@ export default function SensitiveWordsPage() {
 
                 <div>
                   <label className="block text-xs text-[var(--color-text-secondary)] mb-1.5">备注</label>
-                  <input
+                  <UiInput
                     className="input"
                     value={formData.note}
                     onChange={(e) => setFormData({ ...formData, note: e.target.value })}
@@ -375,43 +377,43 @@ export default function SensitiveWordsPage() {
               </div>
 
               <div className="flex gap-3 mt-6">
-                <button onClick={() => setShowForm(false)} className="flex-1 btn btn-secondary">
+                <UiButton variant="secondary" onClick={() => setShowForm(false)} className="flex-1 btn btn-secondary">
                   取消
-                </button>
-                <button onClick={handleSave} disabled={saving} className="flex-1 btn btn-primary">
+                </UiButton>
+                <UiButton variant="primary" onClick={handleSave} disabled={saving} className="flex-1 btn btn-primary">
                   {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : '保存'}
-                </button>
+                </UiButton>
               </div>
-            </div>
-          </div>
+            </UiCard>
+          </UiModal>
         )}
 
         {/* Filters */}
         <div className="flex flex-wrap gap-2 mb-4">
           {/* Status Filter */}
           <div className="flex gap-1">
-            <button
+            <UiButton variant="plain"
               onClick={() => setStatusFilter(null)}
               className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${statusFilter === null ? 'bg-[var(--color-gold)] text-white' : 'bg-[var(--color-bg-elevated)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-elevated)]/80'}`}
             >
               全部
-            </button>
-            <button
+            </UiButton>
+            <UiButton variant="plain"
               onClick={() => setStatusFilter(1)}
               className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${statusFilter === 1 ? 'bg-green-500 text-white' : 'bg-[var(--color-bg-elevated)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-elevated)]/80'}`}
             >
               启用
-            </button>
-            <button
+            </UiButton>
+            <UiButton variant="plain"
               onClick={() => setStatusFilter(0)}
               className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${statusFilter === 0 ? 'bg-yellow-500 text-white' : 'bg-[var(--color-bg-elevated)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-elevated)]/80'}`}
             >
               禁用
-            </button>
+            </UiButton>
           </div>
 
           {/* Category Filter */}
-          <select
+          <UiSelect
             value={categoryFilter || ''}
             onChange={(e) => setCategoryFilter(e.target.value || null)}
             className="px-3 py-1.5 rounded-lg text-sm bg-[var(--color-bg-elevated)] text-[var(--color-text-secondary)] border-none"
@@ -420,12 +422,12 @@ export default function SensitiveWordsPage() {
             {CATEGORIES.map((cat) => (
               <option key={cat.value} value={cat.value}>{cat.label}</option>
             ))}
-          </select>
+          </UiSelect>
 
           {/* Search */}
           <div className="flex-1 min-w-[200px] relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-hint)]" />
-            <input
+            <UiInput
               type="text"
               placeholder="搜索敏感词或替换词..."
               value={searchQuery}
@@ -436,7 +438,7 @@ export default function SensitiveWordsPage() {
         </div>
 
         {/* Words List */}
-        <div className="card overflow-hidden">
+        <UiCard className="card overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -487,27 +489,27 @@ export default function SensitiveWordsPage() {
                             <Loader2 className="w-4 h-4 animate-spin text-[var(--color-text-hint)]" />
                           ) : (
                             <>
-                              <button
+                              <UiButton variant="plain"
                                 onClick={() => openEditForm(word)}
                                 className="p-1.5 rounded-lg text-[var(--color-text-hint)] hover:text-[var(--color-gold)] hover:bg-[var(--color-bg-elevated)] transition-colors"
                                 title="编辑"
                               >
                                 <Edit3 className="w-4 h-4" />
-                              </button>
-                              <button
+                              </UiButton>
+                              <UiButton variant="plain"
                                 onClick={() => toggleStatus(word.id, word.status)}
                                 className="p-1.5 rounded-lg text-[var(--color-text-hint)] hover:text-[var(--color-gold)] hover:bg-[var(--color-bg-elevated)] transition-colors"
                                 title={word.status === 1 ? '禁用' : '启用'}
                               >
                                 {word.status === 1 ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
-                              </button>
-                              <button
+                              </UiButton>
+                              <UiButton variant="plain"
                                 onClick={() => deleteWord(word.id)}
                                 className="p-1.5 rounded-lg text-[var(--color-text-hint)] hover:text-[var(--color-primary)] hover:bg-[var(--color-bg-elevated)] transition-colors"
                                 title="删除"
                               >
                                 <Trash2 className="w-4 h-4" />
-                              </button>
+                              </UiButton>
                             </>
                           )}
                         </div>
@@ -518,7 +520,7 @@ export default function SensitiveWordsPage() {
               </tbody>
             </table>
           </div>
-        </div>
+        </UiCard>
       </div>
     </main>
   );

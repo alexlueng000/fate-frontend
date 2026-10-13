@@ -1,4 +1,6 @@
 "use client";
+import { Button as UiButton } from '@/app/components/ui';
+
 
 import { useState } from "react";
 import MotionScene, { motionDelay } from "@/app/components/landing/MotionScene";
@@ -126,14 +128,14 @@ export default function HexagramPreview() {
         </ul>
       </MotionScene>
       <div className="text-center">
-        <button
+        <UiButton variant="ghost"
           type="button"
           onClick={() => setPhase((p) => (p === "ben" ? "bian" : "ben"))}
           className="btn btn-ghost text-[0.8125rem]"
           aria-label={phase === "ben" ? "查看变卦" : "回到本卦"}
         >
           {phase === "ben" ? "查看变卦 →" : "← 回到本卦"}
-        </button>
+        </UiButton>
       </div>
     </div>
   );

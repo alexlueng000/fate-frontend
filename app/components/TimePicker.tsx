@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton } from '@/app/components/ui';
+
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { DateTimeTheme, dateTimeThemes } from './form/dateTimeThemes';
@@ -133,8 +135,8 @@ export function IOSWheelTime({
           已选 <span className={`ml-1 ${themeConfig.selectedText}`}>{pad(h)}:{pad(m)}</span>
         </div>
         <div className="flex gap-2">
-          <button onClick={clear} className={`rounded-lg border px-2.5 py-1.5 text-xs ${themeConfig.popupButtonSecondary}`}>清空</button>
-          <button onClick={() => confirm()} className={`rounded-lg px-3 py-1.5 text-xs font-medium ${themeConfig.popupButton}`}>完成</button>
+          <UiButton variant="plain" onClick={clear} className={`rounded-lg border px-2.5 py-1.5 text-xs ${themeConfig.popupButtonSecondary}`}>清空</UiButton>
+          <UiButton variant="plain" onClick={() => confirm()} className={`rounded-lg px-3 py-1.5 text-xs font-medium ${themeConfig.popupButton}`}>完成</UiButton>
         </div>
       </div>
 
@@ -206,7 +208,7 @@ export function IOSWheelTime({
   return (
     <div className="relative">
       {/* 触发器：与日期输入同款样式 */}
-      <button
+      <UiButton variant="plain"
         ref={triggerRef}
         type="button"
         disabled={disabled}
@@ -217,7 +219,7 @@ export function IOSWheelTime({
         aria-label="选择时间"
       >
         {value || placeholder}
-      </button>
+      </UiButton>
 
       {/* 弹层：默认 portal 到 body，避免撑开布局/被裁切 */}
       {open && (attachToBody ? createPortal(popup, document.body) : <div className="absolute left-0 right-0 mt-2">{popup}</div>)}

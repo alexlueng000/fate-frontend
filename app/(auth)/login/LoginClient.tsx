@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton, Input as UiInput } from '@/app/components/ui';
+
 
 import { useMemo, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -90,7 +92,7 @@ export default function LoginClient() {
             </label>
             <div className="relative">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
-              <input
+              <UiInput
                 id="email" className={`${styles.input} !pl-12`} required disabled={submitting}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -120,7 +122,7 @@ export default function LoginClient() {
             </div>
             <div className="relative">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
-              <input
+              <UiInput
                 id="password" className={`${styles.input} !pl-12 !pr-12`} required disabled={submitting}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -128,19 +130,19 @@ export default function LoginClient() {
                 placeholder="输入密码"
                 autoComplete="current-password"
               />
-              <button
+              <UiButton variant="plain"
                 type="button"
                 aria-label={showPw ? '隐藏密码' : '显示密码'}
                 className={styles.eye}
                 onClick={() => setShowPw((v) => !v)}
               >
                 {showPw ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
+              </UiButton>
             </div>
           </div>
 
           {/* Submit */}
-          <button
+          <UiButton variant="plain"
             type="submit"
             disabled={!canSubmit}
             className={styles.primary}
@@ -155,7 +157,7 @@ export default function LoginClient() {
                 登录
               </>
             )}
-          </button>
+          </UiButton>
 
         </form>
         )}

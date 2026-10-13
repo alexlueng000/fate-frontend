@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton, Card as UiCard, Input as UiInput, Select as UiSelect } from '@/app/components/ui';
+
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -149,12 +151,12 @@ export default function MessageRatingsPage() {
         </div>
 
         {/* Filters */}
-        <div className="card p-4 mb-6">
+        <UiCard className="card p-4 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* 搜索 */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-muted)]" />
-              <input
+              <UiInput
                 type="text"
                 placeholder="搜索消息内容、理由、用户..."
                 value={searchTerm}
@@ -164,7 +166,7 @@ export default function MessageRatingsPage() {
             </div>
 
             {/* 评价类型筛选 */}
-            <select
+            <UiSelect
               value={ratingTypeFilter}
               onChange={(e) => {
                 setRatingTypeFilter(e.target.value);
@@ -175,13 +177,13 @@ export default function MessageRatingsPage() {
               <option value="">全部评价</option>
               <option value="down">仅点踩</option>
               <option value="up">仅点赞</option>
-            </select>
+            </UiSelect>
           </div>
-        </div>
+        </UiCard>
 
         {/* Statistics */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="card p-4">
+          <UiCard className="card p-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center">
                 <ThumbsDown className="w-5 h-5 text-red-600" />
@@ -193,8 +195,8 @@ export default function MessageRatingsPage() {
                 </div>
               </div>
             </div>
-          </div>
-          <div className="card p-4">
+          </UiCard>
+          <UiCard className="card p-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
                 <ThumbsUp className="w-5 h-5 text-green-600" />
@@ -206,8 +208,8 @@ export default function MessageRatingsPage() {
                 </div>
               </div>
             </div>
-          </div>
-          <div className="card p-4">
+          </UiCard>
+          <UiCard className="card p-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
                 <MessageSquare className="w-5 h-5 text-blue-600" />
@@ -219,19 +221,19 @@ export default function MessageRatingsPage() {
                 </div>
               </div>
             </div>
-          </div>
+          </UiCard>
         </div>
 
         {/* Rating List */}
         <div className="space-y-4">
           {filteredRatings.length === 0 ? (
-            <div className="card p-12 text-center">
+            <UiCard className="card p-12 text-center">
               <MessageSquare className="w-12 h-12 text-[var(--color-text-hint)] mx-auto mb-4" />
               <p className="text-[var(--color-text-muted)]">暂无评价</p>
-            </div>
+            </UiCard>
           ) : (
             filteredRatings.map((rating) => (
-              <div key={rating.id} className="card p-6">
+              <UiCard key={rating.id} className="card p-6">
                 {/* Header */}
                 <div className="flex items-center gap-3 mb-4">
                   <div
@@ -395,7 +397,7 @@ export default function MessageRatingsPage() {
                     </div>
                   </details>
                 )}
-              </div>
+              </UiCard>
             ))
           )}
         </div>
@@ -403,23 +405,23 @@ export default function MessageRatingsPage() {
         {/* Pagination */}
         {total > pageSize && (
           <div className="mt-8 flex items-center justify-center gap-2">
-            <button
+            <UiButton variant="plain"
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page === 1}
               className="px-4 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-elevated)] text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               上一页
-            </button>
+            </UiButton>
             <span className="text-[var(--color-text-muted)]">
               第 {page} / {Math.ceil(total / pageSize)} 页
             </span>
-            <button
+            <UiButton variant="plain"
               onClick={() => setPage(p => Math.min(Math.ceil(total / pageSize), p + 1))}
               disabled={page >= Math.ceil(total / pageSize)}
               className="px-4 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-elevated)] text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               下一页
-            </button>
+            </UiButton>
           </div>
         )}
       </div>

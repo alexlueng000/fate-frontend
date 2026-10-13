@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton } from '@/app/components/ui';
+
 
 import { useState } from 'react';
 import { getWuxing, wuxingColor } from '@/app/components/WuXing';
@@ -9,8 +11,8 @@ export default function ChartPreview() {
   return <section className={styles.preview} aria-label="命盘与卦象展示示例">
     <div className={styles.previewTop}><span>解读，从看见依据开始</span><span className={styles.example}>展示示例</span></div>
     <div className={styles.switcher} aria-label="选择展示示例">
-      <button type="button" aria-pressed={mode === 'bazi'} onClick={() => setMode('bazi')}>八字命盘</button>
-      <button type="button" aria-pressed={mode === 'liuyao'} onClick={() => setMode('liuyao')}>六爻卦象</button>
+      <UiButton variant="plain" type="button" aria-pressed={mode === 'bazi'} onClick={() => setMode('bazi')}>八字命盘</UiButton>
+      <UiButton variant="plain" type="button" aria-pressed={mode === 'liuyao'} onClick={() => setMode('liuyao')}>六爻卦象</UiButton>
     </div>
     <div className={styles.previewBody} key={mode}>
       {mode === 'bazi' ? <>

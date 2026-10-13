@@ -558,3 +558,105 @@ body {
   .prompt-config-page > header > div:first-child > span:nth-of-type(2) { margin-left: 0; }
   .prompt-config-page aside { inset: auto 0.75rem 0.75rem; width: auto; max-height: 70vh; }
 }
+
+/* Shared controls: retain each page's layout while using the design tokens. */
+.ui-button:focus-visible, .ui-choice:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+}
+.ui-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+.ui-button:not(.ui-button-plain) { border-radius: var(--radius-md); }
+.ui-button-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  color: var(--color-text-secondary);
+  background: transparent;
+}
+.ui-button-icon:hover { background: var(--color-bg-hover); color: var(--color-text-primary); }
+.ui-button-primary, .ui-button-danger { background: var(--color-primary); color: var(--color-text-inverse); }
+.ui-button-primary:hover:not(:disabled), .ui-button-danger:hover:not(:disabled) { background: var(--color-primary-hover); }
+.ui-button-secondary { background: transparent; border: 1px solid var(--color-border-strong); color: var(--color-primary); }
+.ui-button-ghost { background: transparent; color: var(--color-text-secondary); }
+.ui-button-sm { padding: 0.5rem 0.75rem; font-size: 0.875rem; }
+.ui-button-md { padding: 0.75rem 1rem; }
+.ui-button-lg { padding: 0.875rem 1.5rem; font-size: 1.125rem; }
+.ui-input {
+  border-radius: var(--radius-md);
+  background-color: var(--color-bg-elevated);
+  border-color: var(--color-border);
+  color: var(--color-text-primary);
+}
+.ui-input:disabled { opacity: 0.6; cursor: not-allowed; }
+.ui-input[aria-invalid="true"] { border-color: var(--color-primary); }
+.ui-field-error { margin-top: 0.25rem; color: var(--color-primary); font-size: 0.875rem; }
+.ui-textarea { min-height: 6rem; }
+.ui-choice { accent-color: var(--color-primary); }
+
+/* Native top-layer dialogs share focus containment, scroll locking and theme. */
+.ui-dialog.ui-dialog {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: calc(100% - 2rem);
+  max-height: calc(100dvh - 2rem);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-card);
+  color: var(--color-text-primary);
+  box-shadow: var(--shadow-lg);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.ui-dialog::backdrop {
+  background: rgba(42, 37, 34, 0.55);
+  backdrop-filter: blur(3px);
+}
+.ui-modal { padding: 1.5rem; }
+.ui-modal-bare { padding: 0; }
+.ui-modal-sm { max-width: 24rem; }
+.ui-modal-md { max-width: 28rem; }
+.ui-modal-lg { max-width: 32rem; }
+.ui-modal-xl { max-width: 48rem; }
+.ui-modal-wide { max-width: 64rem; }
+.ui-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--color-border);
+}
+.ui-modal-header h2 { font-family: var(--font-display); font-size: 1.25rem; font-weight: 500; }
+.ui-modal-bare > div:first-of-type {
+  width: 100%;
+  margin: 0;
+  border-radius: var(--radius-lg);
+  background-color: var(--color-bg-card);
+  box-shadow: none;
+}
+@media (max-width: 640px) {
+  .ui-modal { padding: 1rem; }
+  .ui-modal-bare { padding: 0; }
+}
+
+@layer components {
+  .ui-button:not(.ui-button-plain):not(.ui-button-icon) {
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+    min-height: 44px; padding: 0.75rem 1.5rem; font-weight: 500;
+  }
+  .ui-input { width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--color-border); }
+  .ui-input:focus { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+}
+.ui-button-square { width: 44px; height: 44px; padding: 0 !important; }
+.ui-button-primary.w-11, .ui-button-primary.w-12 { padding: 0; }

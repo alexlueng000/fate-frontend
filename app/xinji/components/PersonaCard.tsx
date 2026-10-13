@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton, Textarea as UiTextarea } from '@/app/components/ui';
+
 
 import { useEffect, useState } from 'react';
 import { Pencil, Check, X } from 'lucide-react';
@@ -126,27 +128,27 @@ export default function PersonaCard() {
   }
 
   return (
-    <div className="relative bg-white/70 backdrop-blur-sm border border-slate-200/60 px-8 py-7">
+    <div className="relative bg-white/70 backdrop-blur-sm border border-[var(--color-border)]/60 px-8 py-7">
       {/* 顶部 label + 版本切换 */}
       <div className="flex items-center justify-between mb-4">
-        <span className="text-[10px] tracking-[0.4em] text-slate-400 uppercase">
+        <span className="text-[10px] tracking-[0.4em] text-[var(--color-text-muted)] uppercase">
           天性小像
         </span>
-        <div className="inline-flex rounded-full bg-slate-100/70 p-0.5 text-[11px]">
+        <div className="inline-flex rounded-full bg-[var(--color-bg-hover)]/70 p-0.5 text-[11px]">
           {(['mingli', 'plain'] as const).map((v) => {
             const active = version === v;
             return (
-              <button
+              <UiButton variant="plain"
                 key={v}
                 onClick={() => handleVersionChange(v)}
                 className={`px-3 py-1 rounded-full transition-colors ${
                   active
-                    ? 'bg-white text-slate-800 shadow-sm'
-                    : 'text-slate-500 hover:text-slate-700'
+                    ? 'bg-white text-[var(--color-text-primary)] shadow-sm'
+                    : 'text-[var(--color-text-muted)]0 hover:text-[var(--color-text-primary)]'
                 }`}
               >
                 {v === 'mingli' ? '命理' : '节气'}
-              </button>
+              </UiButton>
             );
           })}
         </div>
@@ -155,60 +157,60 @@ export default function PersonaCard() {
       {/* 主句 */}
       {editing ? (
         <div className="space-y-3">
-          <p className="text-sm text-slate-500">我觉得我更像：</p>
-          <textarea
+          <p className="text-sm text-[var(--color-text-muted)]0">我觉得我更像：</p>
+          <UiTextarea
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             placeholder="写下一句你觉得更贴近自己的话"
             maxLength={80}
             rows={2}
-            className="w-full px-3 py-2 border border-slate-200 bg-white/80 text-slate-800 text-base font-light leading-relaxed focus:outline-none focus:border-slate-400 resize-none"
+            className="w-full px-3 py-2 border border-[var(--color-border)] bg-white/80 text-[var(--color-text-primary)] text-base font-light leading-relaxed focus:outline-none focus:border-[var(--color-border)] resize-none"
             autoFocus
           />
           <div className="flex items-center justify-end gap-2">
             {override && (
-              <button
+              <UiButton variant="plain"
                 onClick={handleClearOverride}
-                className="text-xs text-slate-400 hover:text-slate-600 px-3 py-1.5"
+                className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] px-3 py-1.5"
               >
                 还原默认
-              </button>
+              </UiButton>
             )}
-            <button
+            <UiButton variant="plain"
               onClick={() => setEditing(false)}
-              className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 px-3 py-1.5"
+              className="inline-flex items-center gap-1 text-xs text-[var(--color-text-muted)]0 hover:text-[var(--color-text-primary)] px-3 py-1.5"
             >
               <X className="w-3 h-3" /> 取消
-            </button>
-            <button
+            </UiButton>
+            <UiButton variant="primary"
               onClick={handleSaveOverride}
               disabled={!draft.trim()}
-              className="inline-flex items-center gap-1 text-xs text-white bg-slate-800 hover:bg-slate-900 disabled:opacity-40 disabled:cursor-not-allowed px-3 py-1.5"
+              className="inline-flex items-center gap-1 text-xs text-white bg-[var(--color-primary)] hover:bg-[var(--color-primary)] disabled:opacity-40 disabled:cursor-not-allowed px-3 py-1.5"
             >
               <Check className="w-3 h-3" /> 保存
-            </button>
+            </UiButton>
           </div>
         </div>
       ) : (
-        <button
+        <UiButton variant="plain"
           type="button"
           onClick={handleStartEdit}
           className="group/edit w-full text-left"
           aria-label="点击修改"
         >
-          <p className="text-xl sm:text-2xl font-serif text-slate-800 leading-relaxed">
+          <p className="text-xl sm:text-2xl font-serif text-[var(--color-text-primary)] leading-relaxed">
             {mainSentence}
           </p>
-          <div className="mt-2 flex items-center gap-2 text-[11px] text-slate-400 opacity-0 group-hover/edit:opacity-100 transition-opacity">
+          <div className="mt-2 flex items-center gap-2 text-[11px] text-[var(--color-text-muted)] opacity-0 group-hover/edit:opacity-100 transition-opacity">
             <Pencil className="w-3 h-3" />
             <span>点击修改 · 我觉得我更像</span>
           </div>
-        </button>
+        </UiButton>
       )}
 
       {/* 错误提示（仅命理版且失败时） */}
       {version === 'mingli' && profileError && !dominance && (
-        <p className="mt-3 text-[11px] text-slate-400">
+        <p className="mt-3 text-[11px] text-[var(--color-text-muted)]">
           暂时无法读取命理数据，已用节气句子代替。
         </p>
       )}

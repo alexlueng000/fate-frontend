@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton, ChoiceInput as UiChoiceInput, Input as UiInput } from '@/app/components/ui';
+
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -241,7 +243,7 @@ export default function ProfileSetupFlow({ user, returnTo = '/report' }: { user:
 
           <div className={styles.draftNotice}>
             <p role="status">{draft.canSave ? '草稿仅保存在此浏览器，7 天内可继续填写。' : '浏览器暂不支持保存草稿，请在本次填写完成。'}</p>
-            {(birthDate || birthTime || birthLocation) && <button type="button" disabled={submitting} onClick={() => { draft.clearFields(); setError(null); setFieldErrors({}); startedFieldsRef.current.clear(); }}>清除已填内容</button>}
+            {(birthDate || birthTime || birthLocation) && <UiButton variant="plain" type="button" disabled={submitting} onClick={() => { draft.clearFields(); setError(null); setFieldErrors({}); startedFieldsRef.current.clear(); }}>清除已填内容</UiButton>}
           </div>
           <div className="space-y-7 px-5 py-6 sm:px-8 sm:py-8">
 
@@ -252,7 +254,7 @@ export default function ProfileSetupFlow({ user, returnTo = '/report' }: { user:
             </label>
             <div className="grid grid-cols-2 gap-3" role="group" aria-label="性别选择">
               {(['男', '女'] as const).map((val) => (
-                <button
+                <UiButton variant="plain"
                   key={val}
                   type="button"
                   onClick={() => draft.update('gender', val)}
@@ -264,7 +266,7 @@ export default function ProfileSetupFlow({ user, returnTo = '/report' }: { user:
                   }`}
                 >
                   {val}
-                </button>
+                </UiButton>
               ))}
             </div>
           </div>
@@ -277,7 +279,7 @@ export default function ProfileSetupFlow({ user, returnTo = '/report' }: { user:
             <div className="flex gap-6" role="radiogroup" aria-label="历法类型选择">
               {(['公历', '农历'] as const).map((type) => (
                 <label key={type} className="flex items-center gap-2 cursor-pointer group min-h-[44px]">
-                  <input
+                  <UiChoiceInput
                     type="radio"
                     name="calendarType"
                     value={type}
@@ -357,7 +359,7 @@ export default function ProfileSetupFlow({ user, returnTo = '/report' }: { user:
             </label>
             <div className="relative">
               <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-hint)]" />
-              <input
+              <UiInput
                 id="birth-location"
                 type="text"
                 value={birthLocation}
@@ -392,7 +394,7 @@ export default function ProfileSetupFlow({ user, returnTo = '/report' }: { user:
           )}
 
           {/* Submit */}
-          <button
+          <UiButton variant="primary"
             type="submit"
             disabled={submitting}
             className="group flex w-full min-h-[52px] items-center justify-center gap-2 rounded-[var(--radius-md)] bg-[var(--color-primary)] px-6 py-4 text-base font-semibold text-[var(--color-text-inverse)] transition-colors duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] hover:bg-[var(--color-primary-hover)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/24"
@@ -401,7 +403,7 @@ export default function ProfileSetupFlow({ user, returnTo = '/report' }: { user:
             {!submitting && (
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden />
             )}
-          </button>
+          </UiButton>
 
           <p className="text-center text-xs leading-5 text-[var(--color-text-muted)]">
             专业术语会尽量翻译成白话，报告生成后可以继续进入对话追问。

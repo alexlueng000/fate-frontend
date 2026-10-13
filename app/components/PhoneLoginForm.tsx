@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton, Input as UiInput } from '@/app/components/ui';
+
 
 import { useState, useEffect, useRef } from 'react';
 import Script from 'next/script';
@@ -157,7 +159,7 @@ export default function PhoneLoginForm() {
           <label htmlFor="phone" className={styles.label}>手机号</label>
           <div className={styles.phoneField}>
             <span className={styles.prefix} aria-hidden="true">+86</span>
-            <input
+            <UiInput
               id="phone" name="phone" type="tel" inputMode="tel" autoComplete="tel-national"
               className={`${styles.input} ${styles.phoneInput}`}
               value={phone} placeholder="请输入11位手机号" required
@@ -175,18 +177,18 @@ export default function PhoneLoginForm() {
         <div>
           <label htmlFor="code" className={styles.label}>短信验证码</label>
           <div className={styles.codeRow}>
-            <input
+            <UiInput
               ref={codeRef} id="code" name="code" type="text" inputMode="numeric"
               autoComplete="one-time-code" pattern="[0-9]{6}" required
               className={styles.input} placeholder="6位验证码" value={code}
               onChange={(e) => { setCode(sanitizePhone(e.target.value).slice(0, 6)); setError(''); }}
               disabled={busy}
             />
-            <button type="button" onClick={handleSendCode}
+            <UiButton variant="plain" type="button" onClick={handleSendCode}
               disabled={!validateChinaPhone(phone) || countdown > 0 || busy}
               className={styles.sendButton}>
               {sending ? '发送中…' : countdown > 0 ? `${countdown}秒后重发` : '获取验证码'}
-            </button>
+            </UiButton>
           </div>
           <div aria-live="polite">
             {status && <p className={styles.hint}>{status}</p>}
@@ -195,10 +197,10 @@ export default function PhoneLoginForm() {
         {error && <p role="alert" className={styles.error}>{error}</p>}
         <div>
           <p className={`${styles.note} mb-4`}>未注册的手机号验证后将自动创建账号</p>
-          <button type="submit" disabled={!validateChinaPhone(phone) || code.length !== 6 || busy} className={styles.primary}>
+          <UiButton variant="plain" type="submit" disabled={!validateChinaPhone(phone) || code.length !== 6 || busy} className={styles.primary}>
             {loggingIn && <Loader2 size={18} className="animate-spin" aria-hidden="true" />}
             {loggingIn ? '登录中…' : '登录 / 注册'}
-          </button>
+          </UiButton>
           <p className={`${styles.hint} !mt-4`}>
             点击登录 / 注册，即表示同意
             <Link href="/terms" target="_blank" rel="noopener noreferrer" className="inline-block underline underline-offset-4">《服务条款》</Link>

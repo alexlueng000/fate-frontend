@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton, ChoiceInput as UiChoiceInput, Modal as UiModal } from '@/app/components/ui';
+
 
 import { useEffect, useState } from 'react';
 import { Download, EyeOff, ImageDown, Loader2, X } from 'lucide-react';
@@ -83,7 +85,7 @@ export function ShareImageDialog({ open, source, onClose }: ShareImageDialogProp
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/45 px-4 py-6">
+    <UiModal open bare onClose={onClose} title="保存分享图" size="wide">
       <div className="max-h-[92vh] w-full max-w-5xl overflow-hidden rounded-[4px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-elevated)] shadow-[var(--shadow-lg)]">
         <div className="flex items-center justify-between gap-3 border-b border-[color:var(--color-border)] px-5 py-4">
           <div>
@@ -92,14 +94,14 @@ export function ShareImageDialog({ open, source, onClose }: ShareImageDialogProp
               图片底部带 fateinsight.site 二维码，可保存后自行转发。
             </p>
           </div>
-          <button
+          <UiButton variant="icon"
             type="button"
             onClick={onClose}
             aria-label="关闭"
             className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-[3px] text-[color:var(--color-text-secondary)] transition hover:bg-[color:var(--color-bg-hover)] hover:text-[color:var(--color-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-primary)]/30"
           >
             <X className="h-5 w-5" aria-hidden="true" />
-          </button>
+          </UiButton>
         </div>
 
         <div className="grid max-h-[calc(92vh-78px)] grid-cols-1 overflow-y-auto md:grid-cols-[280px_1fr]">
@@ -117,7 +119,7 @@ export function ShareImageDialog({ open, source, onClose }: ShareImageDialogProp
                     className="flex min-h-11 cursor-pointer items-center justify-between gap-3 border border-[color:var(--color-border)] bg-[color:var(--color-bg)] px-3 py-2 text-sm text-[color:var(--color-text-body)]"
                   >
                     <span>{item.label}</span>
-                    <input
+                    <UiChoiceInput
                       type="checkbox"
                       checked={privacy[item.key]}
                       onChange={(event) =>
@@ -140,7 +142,7 @@ export function ShareImageDialog({ open, source, onClose }: ShareImageDialogProp
                 图片生成后，请在下方图片上长按，选择“保存图片”或“发送给朋友”。
               </div>
             ) : (
-              <button
+              <UiButton variant="primary"
                 type="button"
                 onClick={handleDownload}
                 disabled={!pngDataUrl || generating || downloading}
@@ -152,7 +154,7 @@ export function ShareImageDialog({ open, source, onClose }: ShareImageDialogProp
                   <Download className="h-4 w-4" aria-hidden="true" />
                 )}
                 下载 PNG
-              </button>
+              </UiButton>
             )}
           </aside>
 
@@ -181,6 +183,6 @@ export function ShareImageDialog({ open, source, onClose }: ShareImageDialogProp
           </div>
         </div>
       </div>
-    </div>
+    </UiModal>
   );
 }

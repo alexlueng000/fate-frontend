@@ -12,6 +12,8 @@ import {
   MessageSquare,
 } from 'lucide-react';
 
+import styles from './Dashboard.module.css';
+
 import { api } from '@/app/lib/api';
 import { getAuthToken } from '@/app/lib/auth';
 import { useRouteGuard } from '@/app/lib/useRouteGuard';
@@ -183,19 +185,19 @@ export default function DashboardPage() {
   if (routeLoading) return <LoadingView />;
 
   return (
-    <main className="min-h-full bg-[var(--color-bg)] px-4 pb-24 pt-5 sm:px-8 sm:pb-10 sm:pt-7">
-      <div className="mx-auto w-full max-w-6xl">
-        <header className="mb-6 border-b border-[var(--color-border)] pb-5 sm:mb-8 sm:flex sm:items-end sm:justify-between sm:gap-8">
-          <div className="max-w-2xl">
-            <p className="mb-2 text-[13px] font-medium tracking-[0.04em] text-[var(--color-text-muted)]">今日命理概览</p>
-            <h1 className="font-serif text-[1.45rem] font-medium leading-tight text-[var(--color-text-primary)] sm:text-[1.9rem]">
-              回到你的问题，而不是重新开始。
+    <main className={styles.dashboard}>
+      <div className={styles.content}>
+        <header className={styles.heading}>
+          <div className={styles.intro}>
+            <p className={styles.eyebrow}>今日命理概览</p>
+            <h1 className="font-serif">
+              回到你的问题，而不是重新开始<span>。</span>
             </h1>
-            <p className="mt-3 text-[16px] leading-7 text-[var(--color-text-secondary)]">
+            <p className={styles.description}>
               八字看长期趋势，六爻看具体事项。这里先帮你接上当前最重要的一步。
             </p>
           </div>
-          <div className="mt-4 text-sm leading-6 text-[var(--color-text-muted)] sm:mt-0 sm:text-right">
+          <div className={styles.profile}>
             {data.profile?.display_info || data.profile?.birth_location ? (
               <>
                 <div>{data.profile.display_info || data.profile.birth_location}</div>
@@ -217,22 +219,22 @@ export default function DashboardPage() {
           </div>
         )}
 
-        <div className="mb-5">
+        <div className={`mb-5 ${styles.reminder}`}>
           <TodayReminderCard reminder={todayReminder} />
         </div>
 
         <section className="grid gap-4">
-          <ContinueLastCard latest={latest} loading={historyLoading} />
+          <div className={styles.continue}><ContinueLastCard latest={latest} loading={historyLoading} /></div>
 
-          <div className="grid gap-4 lg:grid-cols-2">
-            {NEW_ANALYSIS_ENTRIES.map(({ title, description, cta, href, icon: Icon }) => {
+          <div className={styles.entries}>
+            {NEW_ANALYSIS_ENTRIES.slice(1).map(({ title, description, cta, href, icon: Icon }) => {
               const targetHref = href === '/panel' && !data.profile ? '/profile/create' : href;
               const targetCta = href === '/panel' && !data.profile ? '生成命盘并查看报告' : cta;
               return (
               <Link
                 key={title}
                 href={targetHref}
-                className="group grid min-h-[164px] border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-5 transition-colors hover:border-[var(--color-border-strong)] hover:bg-[var(--color-bg-hover)] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)] sm:p-6"
+                className={`group ${styles.entry} focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)]`}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
@@ -253,6 +255,11 @@ export default function DashboardPage() {
             })}
           </div>
         </section>
+
+        <div className={`mt-5 ${styles.career}`}>
+          <p>关注事业与选择？从一个具体问题，梳理职业方向与下一步行动。</p>
+          <Link href="/career">把事业问题想清楚 <ArrowRight size={16} /></Link>
+        </div>
 
         <RecentRecords items={recentItems} loading={historyLoading} />
 

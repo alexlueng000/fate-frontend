@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton, Card as UiCard } from '@/app/components/ui';
+
 
 import { useState } from 'react';
 
@@ -25,7 +27,7 @@ export default function KnowledgePanel({ items = defaultItems }: KnowledgePanelP
   const categories = [...new Set(items.map((i) => i.category || '其他'))];
 
   return (
-    <div className="card p-4">
+    <UiCard className="card p-4">
       <h3 className="text-sm font-medium text-[var(--color-gold)] mb-3">术语解释</h3>
 
       <div className="space-y-3">
@@ -40,7 +42,7 @@ export default function KnowledgePanel({ items = defaultItems }: KnowledgePanelP
                     key={item.term}
                     className="bg-[var(--color-bg-elevated)] rounded-lg overflow-hidden"
                   >
-                    <button
+                    <UiButton variant="plain"
                       onClick={() => setExpanded(expanded === item.term ? null : item.term)}
                       className="w-full px-3 py-2 flex items-center justify-between text-left hover:bg-[var(--color-bg-hover)] transition-colors"
                     >
@@ -55,7 +57,7 @@ export default function KnowledgePanel({ items = defaultItems }: KnowledgePanelP
                       >
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
-                    </button>
+                    </UiButton>
                     {expanded === item.term && (
                       <div className="px-3 pb-3 text-sm text-[var(--color-text-secondary)] animate-fade-in">
                         {item.explanation}
@@ -67,6 +69,6 @@ export default function KnowledgePanel({ items = defaultItems }: KnowledgePanelP
           </div>
         ))}
       </div>
-    </div>
+    </UiCard>
   );
 }

@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton, Input as UiInput } from '@/app/components/ui';
+
 
 import { useEffect, useRef, useState } from 'react';
 import { ArrowRight, ChevronDown, Pencil, Trash2, RefreshCw } from 'lucide-react';
@@ -95,28 +97,28 @@ export default function HistoryRecord({ item, type, onContinue, onChange, onDele
       {editing ? (
         <form onSubmit={saveTitle} className={styles.rename}>
           <label className="sr-only" htmlFor={`title-${item.id}`}>记录标题</label>
-          <input id={`title-${item.id}`} value={title} onChange={(event) => setTitle(event.target.value)} maxLength={80} autoFocus disabled={busy} />
-          <button className={styles.textButton} disabled={busy || !title.trim()}>保存</button>
-          <button type="button" className={styles.textButton} onClick={() => setEditing(false)} disabled={busy}>取消</button>
+          <UiInput id={`title-${item.id}`} value={title} onChange={(event) => setTitle(event.target.value)} maxLength={80} autoFocus disabled={busy} />
+          <UiButton variant="plain" type="submit" className={styles.textButton} disabled={busy || !title.trim()}>保存</UiButton>
+          <UiButton variant="plain" type="button" className={styles.textButton} onClick={() => setEditing(false)} disabled={busy}>取消</UiButton>
         </form>
       ) : <h2>{item.title}</h2>}
       <p className={styles.preview}>{digest?.question || item.hexagram?.question || '展开查看当时的问题与解读，或直接接着聊。'}</p>
       <div className={styles.actions}>
         {item.report_source_message_id && <Link className={styles.continue} href={`/reports/${item.id}`}>查看报告<ArrowRight size={16} aria-hidden="true" /></Link>}
         <ReadingLink conversationId={item.id} />
-        <button className={styles.textButton} aria-expanded={expanded} aria-controls={`digest-${item.id}`} onClick={() => {
+        <UiButton variant="plain" className={styles.textButton} aria-expanded={expanded} aria-controls={`digest-${item.id}`} onClick={() => {
           const opening = !expanded; setExpanded(opening); setError('');
           if (opening) {
             trackEvent('history_summary_expand', { payload: { conversation_id: item.id, type } });
             if (!digest || digest.status === 'empty') void generate();
           }
-        }}><ChevronDown size={16} className={expanded ? styles.rotated : ''} aria-hidden="true" />{expanded ? '收起摘要' : '展开摘要'}</button>
-        <button className={styles.continue} onClick={onContinue} disabled={disabled}>继续对话<ArrowRight size={16} aria-hidden="true" /></button>
+        }}><ChevronDown size={16} className={expanded ? styles.rotated : ''} aria-hidden="true" />{expanded ? '收起摘要' : '展开摘要'}</UiButton>
+        <UiButton variant="plain" className={styles.continue} onClick={onContinue} disabled={disabled}>继续对话<ArrowRight size={16} aria-hidden="true" /></UiButton>
         <details className={styles.recordMenu}>
           <summary>管理</summary>
           <div>
-            <button onClick={() => { setTitle(item.title); setEditing(true); }} disabled={busy || disabled}><Pencil size={15} aria-hidden="true" />修改标题</button>
-            <button onClick={onDelete} disabled={busy || disabled}><Trash2 size={15} aria-hidden="true" />删除记录</button>
+            <UiButton variant="plain" onClick={() => { setTitle(item.title); setEditing(true); }} disabled={busy || disabled}><Pencil size={15} aria-hidden="true" />修改标题</UiButton>
+            <UiButton variant="plain" onClick={onDelete} disabled={busy || disabled}><Trash2 size={15} aria-hidden="true" />删除记录</UiButton>
           </div>
         </details>
       </div>
@@ -125,10 +127,10 @@ export default function HistoryRecord({ item, type, onContinue, onChange, onDele
           <h3>当时的问题</h3><p>{digest.question}</p>
           <h3>解读要点</h3><p>{digest.summary}</p>
           <p className={styles.note}>AI 根据部分历史对话整理，仅供回顾。完整内容请查看原对话。</p>
-          {digest.stale && <div className={styles.stale}><span>这之后有新的解读，可以更新摘要。</span><button onClick={() => generate(true)} disabled={pending} className={styles.textButton}><RefreshCw size={14} aria-hidden="true" />更新摘要</button></div>}
+          {digest.stale && <div className={styles.stale}><span>这之后有新的解读，可以更新摘要。</span><UiButton variant="plain" onClick={() => generate(true)} disabled={pending} className={styles.textButton}><RefreshCw size={14} aria-hidden="true" />更新摘要</UiButton></div>}
         </> : <p className={styles.note}>{pending ? '正在整理当时的问题与解读要点，你可以先继续原对话。' : '摘要暂未生成，原对话仍可正常查看。'}</p>}
-        {digest?.status === 'failed' && <button className={styles.textButton} disabled={busy} onClick={() => generate(true)}>重新整理摘要</button>}
-        {error && !digest?.summary && <button className={styles.textButton} disabled={busy} onClick={() => generate()}>重试</button>}
+        {digest?.status === 'failed' && <UiButton variant="plain" className={styles.textButton} disabled={busy} onClick={() => generate(true)}>重新整理摘要</UiButton>}
+        {error && !digest?.summary && <UiButton variant="plain" className={styles.textButton} disabled={busy} onClick={() => generate()}>重试</UiButton>}
       </section>}
       {error && <p className={styles.error} role="alert">{error}</p>}
     </article>

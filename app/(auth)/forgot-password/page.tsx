@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton, Card as UiCard, Input as UiInput } from '@/app/components/ui';
+
 
 import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -83,7 +85,7 @@ export default function ForgotPasswordPage() {
       </div>
 
       {/* Card */}
-      <div className="relative w-full max-w-md card p-6 animate-scale-in">
+      <UiCard className="relative w-full max-w-md card p-6 animate-scale-in">
         {/* Header */}
         <div className="text-center mb-4">
           <h1
@@ -113,7 +115,7 @@ export default function ForgotPasswordPage() {
             </label>
             <div className="relative">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-hint)]" />
-              <input
+              <UiInput
                 className="input !pl-12"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -129,7 +131,7 @@ export default function ForgotPasswordPage() {
           </div>
 
           {/* Submit */}
-          <button
+          <UiButton variant="primary"
             type="submit"
             disabled={!canSubmit}
             className="w-full btn btn-primary py-3 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
@@ -147,7 +149,7 @@ export default function ForgotPasswordPage() {
                 发送验证码
               </>
             )}
-          </button>
+          </UiButton>
 
           {/* Back to login */}
           <Link
@@ -158,7 +160,7 @@ export default function ForgotPasswordPage() {
             返回登录
           </Link>
         </form>
-      </div>
+      </UiCard>
     </div>
   );
 }

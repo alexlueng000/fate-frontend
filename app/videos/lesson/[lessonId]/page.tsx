@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton } from '@/app/components/ui';
+
 
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -212,14 +214,14 @@ export default function VideoLessonPage() {
               <p className="mt-3 max-w-[48ch] text-[14px] leading-6 text-[var(--color-text-secondary)]">
                 购买包含课程权益的套餐后，即可在有效期内观看。价格和具体权益请查看“套餐与额度”页面。
               </p>
-              <button
+              <UiButton variant="primary"
                 type="button"
                 onClick={() => router.push('/membership')}
                 className="mt-5 inline-flex min-h-11 items-center justify-center bg-[var(--color-primary)] px-5 text-[14px] font-medium text-[var(--color-text-inverse)]"
                 style={{ borderRadius: 'var(--radius-md)' }}
               >
                 查看套餐
-              </button>
+              </UiButton>
             </div>
           )}
 
@@ -228,14 +230,14 @@ export default function VideoLessonPage() {
               <PlayCircle className="mb-4 text-[var(--color-text-muted)]" size={30} />
               <p className="max-w-[48ch] text-[14px] leading-6 text-[var(--color-text-secondary)]">{error}</p>
               {error.includes('登录') && (
-                <button
+                <UiButton variant="primary"
                   type="button"
                   onClick={() => router.push(`/login?redirect=${encodeURIComponent(`/videos/lesson/${lessonId}`)}`)}
                   className="mt-5 inline-flex min-h-11 items-center justify-center bg-[var(--color-primary)] px-5 text-[14px] font-medium text-[var(--color-text-inverse)]"
                   style={{ borderRadius: 'var(--radius-md)' }}
                 >
                   登录
-                </button>
+                </UiButton>
               )}
             </div>
           )}

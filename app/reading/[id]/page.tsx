@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton } from '@/app/components/ui';
+
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
@@ -144,12 +146,12 @@ export default function ReadingPage() {
     {loading ? <p role="status">正在读取原问题与解读权益…</p> : <>
       <div className="flex flex-wrap items-center justify-between gap-3 border-y border-[var(--color-border)] py-4">
         <p className="text-sm">{active ? `剩余 ${active.remaining} 次成功回复 · 有效至 ${new Date(active.expires_at!).toLocaleString('zh-CN', { hour12: false })}` : '选择一份权益用于这个问题'}</p>
-        <ContextDrawer title="当前问题的解读权益" description="单问题权益与原有次数独立，不会同时扣除。" trigger={<button className="consult-secondary">查看权益与购买</button>}>
+        <ContextDrawer title="当前问题的解读权益" description="单问题权益与原有次数独立，不会同时扣除。" trigger={<UiButton variant="plain" className="consult-secondary">查看权益与购买</UiButton>}>
           <div className="space-y-5">{passes.map(pass => <section key={pass.id} className="border-b border-[var(--color-border)] pb-5">
             <p>订单 #{pass.order_id} · {pass.conversation_id ? '当前问题' : '尚未选择问题'}</p><p className="my-2 text-sm">剩余 {pass.remaining} 次 · {pass.available ? '可用' : pass.status === 'REVOKED' ? '已撤销' : '已到期或用完'}</p>
-            {pass.available && <button disabled={busy || turn.busy || turn.blocked} className="consult-secondary" onClick={() => pass.conversation_id ? setSelected(pass.id) : void bind(pass)}>{pass.conversation_id ? '选择这份权益' : '确认用于当前问题'}</button>}
+            {pass.available && <UiButton variant="plain" disabled={busy || turn.busy || turn.blocked} className="consult-secondary" onClick={() => pass.conversation_id ? setSelected(pass.id) : void bind(pass)}>{pass.conversation_id ? '选择这份权益' : '确认用于当前问题'}</UiButton>}
           </section>)}</div>
-          <div className="mt-7 space-y-6">{products.map(product => <section key={product.code}><h3 className="font-serif text-lg">{product.name}</h3><p className="my-3 text-2xl">¥{price(product.price_cents)}</p><p className="text-sm leading-7">一个问题，支付成功起 {product.duration_hours} 小时内，包含 {product.reply_limit} 次成功回复。失败不扣次数，到期保留记录。购买后需要确认用于当前问题。</p><button disabled={busy} className="consult-primary mt-4" onClick={() => void buy(product)}>{busy ? '正在处理…' : '购买这份解读'}</button></section>)}{!products.length && <p className="text-sm">目前没有上架的单问题解读商品。</p>}</div>
+          <div className="mt-7 space-y-6">{products.map(product => <section key={product.code}><h3 className="font-serif text-lg">{product.name}</h3><p className="my-3 text-2xl">¥{price(product.price_cents)}</p><p className="text-sm leading-7">一个问题，支付成功起 {product.duration_hours} 小时内，包含 {product.reply_limit} 次成功回复。失败不扣次数，到期保留记录。购买后需要确认用于当前问题。</p><UiButton variant="plain" disabled={busy} className="consult-primary mt-4" onClick={() => void buy(product)}>{busy ? '正在处理…' : '购买这份解读'}</UiButton></section>)}{!products.length && <p className="text-sm">目前没有上架的单问题解读商品。</p>}</div>
           <Link href={`${kind === 'liuyao' ? '/liuyao' : '/chat'}?conv_id=${id}`} className="mt-6 inline-block min-h-11 text-sm underline">返回普通对话，使用原有次数</Link>
         </ContextDrawer>
       </div>
@@ -157,11 +159,11 @@ export default function ReadingPage() {
       <div ref={endRef} style={{ scrollMarginBottom: 260 }} />
       {taskContext && <ReviewNotes conversationId={id} context={taskContext} />}
       <div className="sticky bottom-0 border-t border-[var(--color-border)] bg-[var(--color-bg)] py-4">
-        {awayFromBottom && <button className="mb-2 min-h-11 text-sm underline" onClick={() => { followRef.current = true; endRef.current?.scrollIntoView({ block: 'end' }); }}>回到最新回复</button>}
+        {awayFromBottom && <UiButton variant="plain" className="mb-2 min-h-11 text-sm underline" onClick={() => { followRef.current = true; endRef.current?.scrollIntoView({ block: 'end' }); }}>回到最新回复</UiButton>}
         {error && <p role="alert" className="mb-3 text-sm leading-6 text-[var(--color-primary)]">{error}</p>}
         <TurnRecovery {...turn} />
         <InputArea value={input} onChange={turn.onInputChange} canSend={Boolean(active && input.trim() && !turn.busy && !turn.blocked)} sending={sending} disabled={(!active && !sending) || (turn.busy && !sending)} onSend={() => void send()} onRegenerate={() => {}} onStop={turn.stop} showRegenerate={false} showClear={false} maxLength={4000} placeholder={active ? '继续聊聊这个问题…' : '请先选择当前问题的解读权益'} />
-        <button className="mt-2 min-h-11 text-sm underline" disabled={turn.busy} onClick={() => { setError(''); void turn.recover(); }}>刷新记录与权益</button>
+        <UiButton variant="plain" className="mt-2 min-h-11 text-sm underline" disabled={turn.busy} onClick={() => { setError(''); void turn.recover(); }}>刷新记录与权益</UiButton>
       </div>
     </>}
     {loading && error && <p role="alert">{error}</p>}

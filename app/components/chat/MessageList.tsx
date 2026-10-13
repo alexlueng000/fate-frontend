@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton } from '@/app/components/ui';
+
 import { Msg, Paipan } from '@/app/lib/chat/types';
 import { ComponentType, ReactNode } from 'react';
 import Image from 'next/image';
@@ -155,7 +157,7 @@ export function MessageList({
                 <div className="flex justify-end items-center gap-1 mt-1 flex-wrap">
                   {i === reportMessageIndex && /^\d+$/.test(savedConversationId) && <Link href={`/reports/${savedConversationId}`} className="reading-pill mr-auto">查看完整报告</Link>}
                   {onRegenerate && i === lastRegenerableIdx && (
-                    <button
+                    <UiButton variant="icon"
                       type="button"
                       onClick={onRegenerate}
                       disabled={loading || regenerating}
@@ -167,7 +169,7 @@ export function MessageList({
                         ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
                         : <RotateCcw className="w-3.5 h-3.5" />}
                       <span>{regenerating ? '重新解读中…' : '重新解读'}</span>
-                    </button>
+                    </UiButton>
                   )}
                   {onSimplify && <SimplifyButton
                     status={m.simplify?.status ?? 'idle'}

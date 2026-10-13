@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton, Input as UiInput, Modal as UiModal, Textarea as UiTextarea } from '@/app/components/ui';
+
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -232,59 +234,59 @@ export default function LiuyaoSystemPromptPage() {
   function closeDetail() { setDetailOpen(false); setDetailRev(null); }
 
   if (loading) {
-    return <main className="min-h-screen flex items-center justify-center bg-[#fff7e8] text-[#4a2c2a]">加载中…</main>;
+    return <main className="min-h-screen flex items-center justify-center bg-[var(--color-bg)] text-[var(--color-text-primary)]">加载中…</main>;
   }
 
   return (
-    <main className="prompt-config-page min-h-screen bg-[#fff7e8] text-neutral-800">
-      <header className="sticky top-20 z-10 backdrop-blur bg-[#fff7e8]/80 border-b border-[#f0d9a6]">
+    <main className="prompt-config-page min-h-screen bg-[var(--color-bg)] text-neutral-800">
+      <header className="sticky top-20 z-10 backdrop-blur bg-[var(--color-bg)]/80 border-b border-[var(--color-border)]">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
-          <h1 className="text-xl md:text-2xl font-bold text-[#a83232]">六爻提示词</h1>
-          <span className="text-sm text-[#4a2c2a]">Key: {CONFIG_KEY} · v{version}</span>
-          <span className="ml-auto text-sm text-[#4a2c2a]">管理员：{me?.username ?? me?.id}</span>
-          <button
+          <h1 className="text-xl md:text-2xl font-bold text-[var(--color-primary)]">六爻提示词</h1>
+          <span className="text-sm text-[var(--color-text-primary)]">Key: {CONFIG_KEY} · v{version}</span>
+          <span className="ml-auto text-sm text-[var(--color-text-primary)]">管理员：{me?.username ?? me?.id}</span>
+          <UiButton variant="plain"
             onClick={() => setShowHistory(s => !s)}
-            className="ml-2 px-3 py-1.5 rounded-lg border border-[#f0d9a6] bg-white hover:bg-[#fff2d9]"
+            className="ml-2 px-3 py-1.5 rounded-lg border border-[var(--color-border)] bg-white hover:bg-[var(--color-bg-hover)]"
           >
             历史版本
-          </button>
+          </UiButton>
         </div>
-        {msg && <div className="max-w-6xl mx-auto px-4 pb-3 text-sm text-[#4a2c2a]">{msg}</div>}
+        {msg && <div className="max-w-6xl mx-auto px-4 pb-3 text-sm text-[var(--color-text-primary)]">{msg}</div>}
       </header>
 
       <section className="max-w-6xl mx-auto px-4 py-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="rounded-2xl border border-[#f0d9a6] bg-white/90 p-3 flex flex-col">
+        <div className="rounded-2xl border border-[var(--color-border)] bg-white/90 p-3 flex flex-col">
           <div className="flex items-center justify-between mb-2 gap-2">
-            <div className="text-[#4a2c2a] text-sm">编辑 · 字数 {charCount}</div>
-            <input
+            <div className="text-[var(--color-text-primary)] text-sm">编辑 · 字数 {charCount}</div>
+            <UiInput
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="ml-2 w-full md:max-w-[50%] rounded-lg border border-[#f0d9a6] p-2"
+              className="ml-2 w-full md:max-w-[50%] rounded-lg border border-[var(--color-border)] p-2"
               placeholder="备注（可选）"
             />
           </div>
-          <textarea
+          <UiTextarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            className="flex-1 min-h-[60vh] md:min-h-[70vh] max-h-[75vh] leading-relaxed font-mono text-[14px] rounded-xl border border-[#f0d9a6] p-4 focus:outline-none focus:ring-2 focus:ring-[#a83232]"
+            className="flex-1 min-h-[60vh] md:min-h-[70vh] max-h-[75vh] leading-relaxed font-mono text-[14px] rounded-xl border border-[var(--color-border)] p-4 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
             placeholder={`# 角色\n你是一位精通《易经》六爻的分析师...\n\n# 风格\n- 理性、克制\n- 略带锋芒\n- 不神叨、不空话\n\n注意：『本次卦象』『知识库摘录』『输出规范』 三块由后端自动追加，不需要写在这里。`}
             spellCheck={false}
           />
           <div className="mt-3 flex justify-end">
-            <button
+            <UiButton variant="plain"
               onClick={onSave}
               disabled={busy}
-              className="px-5 py-2 rounded-xl bg-[#a83232] text-white font-semibold hover:bg-[#822727] disabled:opacity-60"
+              className="px-5 py-2 rounded-xl bg-[var(--color-primary)] text-white font-semibold hover:bg-[var(--color-primary-hover)] disabled:opacity-60"
             >
               {busy ? '保存中…' : '保存为新版本'}
-            </button>
+            </UiButton>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-[#f0d9a6] bg-white/90 p-3 flex flex-col">
-          <div className="mb-2 text-[#4a2c2a] text-sm">预览</div>
+        <div className="rounded-2xl border border-[var(--color-border)] bg-white/90 p-3 flex flex-col">
+          <div className="mb-2 text-[var(--color-text-primary)] text-sm">预览</div>
           <div className="relative flex-1 min-h-[60vh] md:min-h-[70vh] max-h-[75vh]">
-            <div className="absolute inset-0 overflow-y-auto overflow-x-hidden rounded-xl bg-[#fff9f0] border border-[#f7e4c6] p-4">
+            <div className="absolute inset-0 overflow-y-auto overflow-x-hidden rounded-xl bg-[var(--color-bg-card)] border border-[var(--color-border)] p-4">
               <pre className="whitespace-pre-wrap break-words break-all font-mono text-[14px]">
 {content}
               </pre>
@@ -294,34 +296,34 @@ export default function LiuyaoSystemPromptPage() {
       </section>
 
       {showHistory && (
-        <aside className="fixed right-4 bottom-4 top-20 z-20 w-[320px] rounded-2xl border border-[#f0d9a6] bg-white/95 shadow-lg">
-          <div className="px-4 py-3 border-b border-[#f0d9a6] flex items-center justify-between">
-            <span className="font-semibold text-[#4a2c2a]">历史版本</span>
-            <button onClick={() => setShowHistory(false)} className="text-sm px-2 py-1 rounded border">关闭</button>
+        <aside className="fixed right-4 bottom-4 top-20 z-20 w-[320px] rounded-2xl border border-[var(--color-border)] bg-white/95 shadow-lg">
+          <div className="px-4 py-3 border-b border-[var(--color-border)] flex items-center justify-between">
+            <span className="font-semibold text-[var(--color-text-primary)]">历史版本</span>
+            <UiButton variant="plain" onClick={() => setShowHistory(false)} className="text-sm px-2 py-1 rounded border">关闭</UiButton>
           </div>
-          <div className="max-h-[75vh] overflow-y-auto divide-y divide-[#f7e4c6]">
+          <div className="max-h-[75vh] overflow-y-auto divide-y divide-[var(--color-border)]">
             {revs.map(r => (
               <div key={r.version} className="px-4 py-3 text-sm">
                 <div className="flex items-center justify-between mb-1">
                   <div>
-                    <div className="font-medium text-[#4a2c2a]">v{r.version}</div>
+                    <div className="font-medium text-[var(--color-text-primary)]">v{r.version}</div>
                     <div className="text-xs text-neutral-500">{new Date(r.created_at).toLocaleString()}</div>
                     {r.comment && <div className="text-xs text-neutral-600 mt-1">备注：{r.comment}</div>}
                   </div>
                 </div>
                 <div className="flex gap-2 mt-2">
-                  <button
+                  <UiButton variant="plain"
                     onClick={() => onViewDetail(r.version)}
-                    className="px-3 py-1.5 rounded-lg bg-[#a83232] text-white border border-[#a83232] hover:bg-[#822727]"
+                    className="px-3 py-1.5 rounded-lg bg-[var(--color-primary)] text-white border border-[var(--color-primary)] hover:bg-[var(--color-primary-hover)]"
                   >
                     查看
-                  </button>
-                  <button
+                  </UiButton>
+                  <UiButton variant="plain"
                     onClick={() => onRollback(r.version)}
-                    className="px-3 py-1.5 rounded-lg bg-white border border-[#f0d9a6] hover:bg-[#fff2d9]"
+                    className="px-3 py-1.5 rounded-lg bg-white border border-[var(--color-border)] hover:bg-[var(--color-bg-hover)]"
                   >
                     回滚
-                  </button>
+                  </UiButton>
                 </div>
               </div>
             ))}
@@ -331,46 +333,46 @@ export default function LiuyaoSystemPromptPage() {
       )}
 
       {detailOpen && (
-        <div className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-4xl max-h-[85vh] rounded-2xl bg-white shadow-xl border border-[#f0d9a6] flex flex-col">
-            <div className="px-5 py-4 border-b border-[#f0d9a6] flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-[#4a2c2a]">
+        <UiModal open bare onClose={closeDetail} title="历史版本详情" size="wide">
+          <div className="w-full max-w-4xl max-h-[85vh] rounded-2xl bg-white shadow-xl border border-[var(--color-border)] flex flex-col">
+            <div className="px-5 py-4 border-b border-[var(--color-border)] flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
                 历史版本详情
                 {detailRev && <span className="ml-2 text-sm font-normal text-neutral-500">v{detailRev.version}</span>}
               </h3>
-              <button onClick={closeDetail} className="text-sm px-3 py-1.5 rounded-lg border border-[#f0d9a6] hover:bg-[#fff2d9]">关闭</button>
+              <UiButton variant="plain" onClick={closeDetail} className="text-sm px-3 py-1.5 rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-bg-hover)]">关闭</UiButton>
             </div>
             <div className="flex-1 overflow-y-auto px-5 py-4">
               {detailLoading ? (
-                <div className="flex items-center justify-center py-12 text-[#4a2c2a]">加载中…</div>
+                <div className="flex items-center justify-center py-12 text-[var(--color-text-primary)]">加载中…</div>
               ) : detailRev ? (
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div className="rounded-xl bg-[#fff9f0] p-3 border border-[#f7e4c6]">
+                    <div className="rounded-xl bg-[var(--color-bg-card)] p-3 border border-[var(--color-border)]">
                       <div className="text-neutral-500 text-xs mb-1">版本号</div>
-                      <div className="font-medium text-[#4a2c2a]">v{detailRev.version}</div>
+                      <div className="font-medium text-[var(--color-text-primary)]">v{detailRev.version}</div>
                     </div>
-                    <div className="rounded-xl bg-[#fff9f0] p-3 border border-[#f7e4c6]">
+                    <div className="rounded-xl bg-[var(--color-bg-card)] p-3 border border-[var(--color-border)]">
                       <div className="text-neutral-500 text-xs mb-1">创建时间</div>
-                      <div className="font-medium text-[#4a2c2a]">{new Date(detailRev.created_at).toLocaleString()}</div>
+                      <div className="font-medium text-[var(--color-text-primary)]">{new Date(detailRev.created_at).toLocaleString()}</div>
                     </div>
                   </div>
                   {detailRev.comment && (
-                    <div className="rounded-xl bg-[#fff9f0] p-3 border border-[#f7e4c6]">
+                    <div className="rounded-xl bg-[var(--color-bg-card)] p-3 border border-[var(--color-border)]">
                       <div className="text-neutral-500 text-xs mb-1">操作备注</div>
-                      <div className="text-sm text-[#4a2c2a]">{detailRev.comment}</div>
+                      <div className="text-sm text-[var(--color-text-primary)]">{detailRev.comment}</div>
                     </div>
                   )}
                   {detailRev.value_json.notes && (
-                    <div className="rounded-xl bg-[#fff9f0] p-3 border border-[#f7e4c6]">
+                    <div className="rounded-xl bg-[var(--color-bg-card)] p-3 border border-[var(--color-border)]">
                       <div className="text-neutral-500 text-xs mb-1">内容备注</div>
-                      <div className="text-sm text-[#4a2c2a]">{detailRev.value_json.notes}</div>
+                      <div className="text-sm text-[var(--color-text-primary)]">{detailRev.value_json.notes}</div>
                     </div>
                   )}
-                  <div className="rounded-xl border border-[#f0d9a6] bg-[#fff9f0] p-4">
-                    <div className="text-[#4a2c2a] text-sm font-medium mb-2">提示词内容</div>
-                    <div className="max-h-[50vh] overflow-y-auto rounded-xl bg-white border border-[#f7e4c6] p-4">
-                      <pre className="whitespace-pre-wrap break-words font-mono text-[13px] text-[#4a2c2a]">
+                  <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
+                    <div className="text-[var(--color-text-primary)] text-sm font-medium mb-2">提示词内容</div>
+                    <div className="max-h-[50vh] overflow-y-auto rounded-xl bg-white border border-[var(--color-border)] p-4">
+                      <pre className="whitespace-pre-wrap break-words font-mono text-[13px] text-[var(--color-text-primary)]">
                         {detailRev.value_json.content || '(空)'}
                       </pre>
                     </div>
@@ -381,44 +383,44 @@ export default function LiuyaoSystemPromptPage() {
                 </div>
               ) : null}
             </div>
-            <div className="px-5 py-3 border-t border-[#f0d9a6] flex justify-between">
-              <button
+            <div className="px-5 py-3 border-t border-[var(--color-border)] flex justify-between">
+              <UiButton variant="plain"
                 onClick={closeDetail}
-                className="px-4 py-2 rounded-xl border border-[#f0d9a6] hover:bg-[#fff2d9] text-[#4a2c2a]"
+                className="px-4 py-2 rounded-xl border border-[var(--color-border)] hover:bg-[var(--color-bg-hover)] text-[var(--color-text-primary)]"
               >
                 关闭
-              </button>
+              </UiButton>
               {detailRev && (
-                <button
+                <UiButton variant="plain"
                   onClick={() => { closeDetail(); onRollback(detailRev.version); }}
-                  className="px-4 py-2 rounded-xl bg-[#a83232] text-white hover:bg-[#822727]"
+                  className="px-4 py-2 rounded-xl bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)]"
                 >
                   回滚到此版本
-                </button>
+                </UiButton>
               )}
             </div>
           </div>
-        </div>
+        </UiModal>
       )}
 
       {okOpen && okInfo && (
-        <div className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white shadow-xl border border-[#f0d9a6]">
-            <div className="px-5 py-4 border-b border-[#f0d9a6] flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-[#4a2c2a]">保存成功</h3>
-              <button onClick={() => setOkOpen(false)} className="px-2 py-1 rounded hover:bg-neutral-100">✕</button>
+        <UiModal open bare onClose={() => setOkOpen(false)} title="保存成功" size="md">
+          <div className="w-full max-w-md rounded-2xl bg-white shadow-xl border border-[var(--color-border)]">
+            <div className="px-5 py-4 border-b border-[var(--color-border)] flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">保存成功</h3>
+              <UiButton variant="plain" onClick={() => setOkOpen(false)} className="px-2 py-1 rounded hover:bg-neutral-100">✕</UiButton>
             </div>
-            <div className="px-5 py-4 text-sm text-[#4a2c2a] space-y-2">
+            <div className="px-5 py-4 text-sm text-[var(--color-text-primary)] space-y-2">
               <p>配置已更新（key: <span className="font-mono">{okInfo.key}</span>，version: <span className="font-mono">v{okInfo.version}</span>）。</p>
               <p>已触发缓存失效，配置将在数秒内生效。</p>
             </div>
-            <div className="px-5 py-3 border-t border-[#f0d9a6] flex justify-end">
-              <button onClick={() => setOkOpen(false)} className="px-4 py-2 rounded-xl bg-[#a83232] text-white hover:bg-[#822727]">
+            <div className="px-5 py-3 border-t border-[var(--color-border)] flex justify-end">
+              <UiButton variant="plain" onClick={() => setOkOpen(false)} className="px-4 py-2 rounded-xl bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)]">
                 我知道了
-              </button>
+              </UiButton>
             </div>
           </div>
-        </div>
+        </UiModal>
       )}
     </main>
   );

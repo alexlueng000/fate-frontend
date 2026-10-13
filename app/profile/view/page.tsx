@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton } from '@/app/components/ui';
+
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -82,12 +84,12 @@ export default function ViewProfilePage() {
       <div className="min-h-screen bg-[#F7F3EE] flex items-center justify-center p-6">
         <div className="text-center">
           <div className="text-red-600 mb-4">{error || '档案不存在'}</div>
-          <button
+          <UiButton variant="plain"
             onClick={() => router.push('/chat')}
-            className="px-6 py-2 rounded-xl bg-[#a83232] text-white hover:bg-[#8c2b2b] transition-colors"
+            className="px-6 py-2 rounded-xl bg-[var(--color-primary)] text-white hover:bg-[#8c2b2b] transition-colors"
           >
             返回
-          </button>
+          </UiButton>
         </div>
       </div>
     );
@@ -100,18 +102,18 @@ export default function ViewProfilePage() {
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-3xl font-bold text-neutral-900">我的命盘</h1>
           <div className="flex gap-3">
-            <button
+            <UiButton variant="plain"
               onClick={() => router.push('/profile/edit?returnTo=/profile/view')}
-              className="px-5 py-2.5 rounded-xl border-2 border-[#a83232] text-[#a83232] hover:bg-[#a83232]/5 transition-colors font-medium"
+              className="px-5 py-2.5 rounded-xl border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)]/5 transition-colors font-medium"
             >
               修改资料
-            </button>
-            <button
+            </UiButton>
+            <UiButton variant="plain"
               onClick={() => router.push('/chat')}
-              className="px-5 py-2.5 rounded-xl bg-[#a83232] text-white hover:bg-[#8c2b2b] transition-colors font-medium"
+              className="px-5 py-2.5 rounded-xl bg-[var(--color-primary)] text-white hover:bg-[#8c2b2b] transition-colors font-medium"
             >
               开始咨询
-            </button>
+            </UiButton>
           </div>
         </div>
 
@@ -178,9 +180,9 @@ function BaziPillar({ label, chars }: { label: string; chars: string[] }) {
   return (
     <div className="text-center">
       <div className="text-sm text-neutral-500 mb-3">{label}</div>
-      <div className="bg-gradient-to-b from-[#a83232]/10 to-[#a83232]/5 rounded-2xl border-2 border-[#a83232]/20 p-4">
-        <div className="text-2xl font-bold text-[#a83232] mb-1">{heavenly ?? '—'}</div>
-        <div className="text-2xl font-bold text-[#a83232]">{earthly ?? '—'}</div>
+      <div className="bg-gradient-to-b from-[var(--color-primary)]/10 to-[var(--color-primary)]/5 rounded-2xl border-2 border-[var(--color-primary)]/20 p-4">
+        <div className="text-2xl font-bold text-[var(--color-primary)] mb-1">{heavenly ?? '—'}</div>
+        <div className="text-2xl font-bold text-[var(--color-primary)]">{earthly ?? '—'}</div>
       </div>
     </div>
   );

@@ -66,3 +66,39 @@
 @keyframes reveal { from { opacity: .5; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 @media(max-width: 767px) { .hero { padding: 28px 20px 32px; } .heroInner { grid-template-columns: 1fr; gap: 28px; } .eyebrow { margin-bottom: 14px; } .lead { margin: 16px 0 20px; font-size: 15px; } .detailLink { margin-top: 18px; } .title { font-size: 36px; } .section { padding: 36px 20px; } .choices,.steps { grid-template-columns: 1fr; gap: 16px; } .choice { padding: 22px; } .steps > div { border-bottom: 1px solid var(--color-border); padding-bottom: 20px; } }
 @media(prefers-reduced-motion: reduce) { .previewBody { animation: none; } }
+
+/* Supplied ink paintings frame the content without rasterizing any text. */
+.home { background: #faf7f2 url('/images/ink/paper.webp') repeat; background-size: 900px; }
+.hero { padding: 56px 24px 68px; border: 0; background: linear-gradient(90deg, #faf7f28f, #faf7f2bd 48%, #faf7f280), url('/images/ink/hero-landscape.webp') center bottom / cover no-repeat; }
+.heroInner { max-width: 1040px; gap: 70px; }
+.title { font-size: clamp(36px, 4.2vw, 56px); line-height: 1.42; letter-spacing: .025em; }
+.lead { line-height: 1.95; }
+.preview { border-radius: 6px; overflow: hidden; background: #fcfaf6ed; border-color: #dfd5c8; box-shadow: 0 10px 30px #59483012; }
+.previewTop { background: #354139; padding: 13px 20px; }
+.previewBody { min-height: 292px; padding-top: 12px; }
+.pillars > div { border-radius: 3px; background: #f3eee680; }
+.section { max-width: 1040px; padding: 44px 24px; }
+.sectionHead { margin-bottom: 20px; }
+.sectionHead h2 { font-size: clamp(27px, 3vw, 36px); }
+.choice { position: relative; overflow: hidden; border-radius: 4px; padding: 26px; background: linear-gradient(#fcfaf6ef, #fcfaf6e8), url('/images/ink/mountain-mist.webp') center bottom / cover; box-shadow: 0 5px 20px #59483006; }
+.choiceNumber { display: inline-flex; align-items: center; gap: 14px; }
+.choiceNumber::before { content: '☯'; display: grid; place-items: center; width: 38px; height: 38px; border: 1px solid #b5443450; border-radius: 50%; font-size: 26px; line-height: 1; }
+.choice:nth-child(2) .choiceNumber::before { color: #455d50; border-color: #455d5050; }
+.choice h3 { margin-top: 10px; }
+.stepsWrap { border: 0; background: linear-gradient(#f2eee6ce,#f2eee6c4), url('/images/ink/bamboo.webp') left center / auto 100% no-repeat, url('/images/ink/cloud-landscape.webp') right bottom / cover no-repeat; }
+.steps > div + div { border-left: 1px solid #d9cfc1; padding-left: 28px; }
+.steps h3 { font-family: var(--font-display); }
+.faq { padding: 10px 0; }
+.faq summary { min-height: 28px; font-size: 14px; }
+.final { padding: 44px 24px 50px; background: linear-gradient(#faf7f2bd,#faf7f269), url('/images/ink/lake-sun.webp') center 60% / cover no-repeat; }
+@media (min-width: 1100px) { .home > .section { position: relative; } }
+@media (max-width: 767px) {
+  .hero { padding: 32px 20px 40px; background-position: 32% bottom; }
+  .heroInner { gap: 30px; }
+  .title { font-size: 38px; }
+  .section { padding: 34px 20px; }
+  .choice { padding: 22px; }
+  .steps > div + div { border-left: 0; padding-left: 0; }
+  .stepsWrap { background-size: auto 100%, auto 100%, cover; }
+  .final h2 { font-size: 25px; }
+}

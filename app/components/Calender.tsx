@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton } from '@/app/components/ui';
+
 import { useMemo } from 'react';
 import { IOSWheelDate } from './DatePicker';
 import { DateTimeTheme } from './form/dateTimeThemes';
@@ -46,13 +48,13 @@ export function PrettyDateField({
 
 function PresetBtn({ text, onClick }: { text: string; onClick: () => void }) {
   return (
-    <button
+    <UiButton variant="plain"
       type="button"
       onClick={onClick}
-      className="rounded-xl border border-[#f0d9a6] bg-white/80 px-3 py-1 text-xs text-neutral-700 hover:bg-[#fff3e0] transition"
+      className="rounded-xl border border-[var(--color-border)] bg-white/80 px-3 py-1 text-xs text-neutral-700 hover:bg-[#fff3e0] transition"
     >
       {text}
-    </button>
+    </UiButton>
   );
 }
 

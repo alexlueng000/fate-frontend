@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton, Card as UiCard } from '@/app/components/ui';
+
 
 import { useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
@@ -147,9 +149,9 @@ export default function Header() {
           {/* ── Right: Actions ── */}
           <div className="flex items-center gap-2">
             {!me ? (
-              <button onClick={goLogin} className={`${outlineBtnClass} !h-11 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]`}>
+              <UiButton variant="plain" onClick={goLogin} className={`${outlineBtnClass} !h-11 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]`}>
                 登录 / 注册
-              </button>
+              </UiButton>
             ) : (
               <>
                 {/* 个人中心 — icon only on md, text on lg+ */}
@@ -168,7 +170,7 @@ export default function Header() {
 
                 {/* User Dropdown */}
                 <div className="relative hidden lg:block" ref={menuRef}>
-                  <button
+                  <UiButton variant="plain"
                     onClick={() => setMenuOpen((v) => !v)}
                     aria-haspopup="menu"
                     aria-expanded={menuOpen}
@@ -183,10 +185,10 @@ export default function Header() {
                     <ChevronDown
                       className={`w-3.5 h-3.5 text-[var(--color-text-muted)] transition-transform shrink-0 ${menuOpen ? 'rotate-180' : ''}`}
                     />
-                  </button>
+                  </UiButton>
 
                   {menuOpen && (
-                    <div
+                    <UiCard
                       role="menu"
                       aria-label="用户菜单"
                       className="absolute right-0 mt-2 w-48 overflow-hidden rounded-[var(--radius-lg)] card animate-scale-in shadow-lg"
@@ -247,22 +249,22 @@ export default function Header() {
                         我的账户
                       </Link>
                       <div className="h-px bg-[var(--color-border)]" />
-                      <button
+                      <UiButton variant="plain"
                         role="menuitem"
                         onClick={doLogout}
                         className="flex items-center gap-3 w-full px-4 py-3 text-left text-sm text-[var(--color-primary)] hover:bg-[var(--color-bg-hover)] transition-colors"
                       >
                         <LogOut className="w-4 h-4 shrink-0" />
                         退出登录
-                      </button>
-                    </div>
+                      </UiButton>
+                    </UiCard>
                   )}
                 </div>
               </>
             )}
 
             {/* 汉堡菜单 — only visible below lg */}
-            <button
+            <UiButton variant="icon"
               className={`lg:hidden flex h-11 w-11 items-center justify-center rounded-[3px] border transition-colors ml-1 ${
                 mobileNavOpen
                   ? 'border-[var(--color-primary)] bg-[var(--color-bg-elevated)] text-[var(--color-primary)]'
@@ -276,7 +278,7 @@ export default function Header() {
               aria-expanded={mobileNavOpen}
             >
               {mobileNavOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
+            </UiButton>
           </div>
         </div>
 
@@ -323,14 +325,14 @@ export default function Header() {
                   </div>
                 </div>
               )}
-              <button
+              <UiButton variant="icon"
                 type="button"
                 aria-label="关闭导航菜单"
                 onClick={() => setMobileNavOpen(false)}
                 className="flex h-11 w-11 items-center justify-center rounded-[3px] border border-[var(--color-border)] text-[var(--color-text-secondary)] transition-colors hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)]"
               >
                 <X className="h-4.5 w-4.5" strokeWidth={1.6} />
-              </button>
+              </UiButton>
             </div>
 
             <div className="grid grid-cols-1 gap-px bg-[var(--color-border)] sm:grid-cols-2">
@@ -398,14 +400,14 @@ export default function Header() {
                     );
                   })}
 
-                  <button
+                  <UiButton variant="plain"
                     type="button"
                     className="flex min-h-12 w-full items-center gap-3 bg-[var(--color-bg-elevated)] px-3 text-left text-sm font-medium text-[var(--color-primary)] transition-colors hover:bg-[var(--color-bg-hover)] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)]"
                     onClick={doLogout}
                   >
                     <LogOut className="h-4.5 w-4.5 shrink-0" strokeWidth={1.6} />
                     退出登录
-                  </button>
+                  </UiButton>
                 </div>
               </div>
             )}

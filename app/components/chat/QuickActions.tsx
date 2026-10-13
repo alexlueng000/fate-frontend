@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton } from '@/app/components/ui';
+
 
 import { useState } from 'react';
 import { Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
@@ -19,7 +21,7 @@ export function QuickActions({
   return (
     <div className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-bg-card)]">
       {/* 标题栏 - 移动端可点击折叠 */}
-      <button
+      <UiButton variant="plain"
         type="button"
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full flex items-center justify-between gap-2 px-4 py-3 sm:cursor-default"
@@ -36,7 +38,7 @@ export function QuickActions({
             <ChevronDown className="w-4 h-4 text-[var(--color-text-muted)]" />
           )}
         </div>
-      </button>
+      </UiButton>
 
       {/* 按钮区域 - 移动端可折叠，桌面端始终显示 */}
       <div
@@ -46,7 +48,7 @@ export function QuickActions({
       >
         <div className="flex flex-wrap gap-2">
           {buttons.map((b) => (
-            <button
+            <UiButton variant="plain"
               key={b.label}
               type="button"
               disabled={disabled}
@@ -59,7 +61,7 @@ export function QuickActions({
               title={b.label}
             >
               {b.label}
-            </button>
+            </UiButton>
           ))}
         </div>
       </div>

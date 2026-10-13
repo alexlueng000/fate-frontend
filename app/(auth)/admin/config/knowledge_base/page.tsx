@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton, ChoiceInput as UiChoiceInput, Input as UiInput, Select as UiSelect, Textarea as UiTextarea } from '@/app/components/ui';
+
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -252,7 +254,7 @@ export default function KBAdminPage() {
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">文件列表</h2>
           <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-sm shadow-sm hover:bg-gray-50">
-            <input type="file" className="hidden" onChange={onUpload} accept=".txt,.doc,.docx" />
+            <UiChoiceInput type="file" className="hidden" onChange={onUpload} accept=".txt,.doc,.docx" />
             {uploading ? '上传中…' : '上传文件'}
           </label>
         </div>
@@ -282,12 +284,12 @@ export default function KBAdminPage() {
                     <td className="px-3 py-2 font-mono text-xs break-all">{f.md5 || '-'}</td>
                     <td className="px-3 py-2">
                       <div className="flex justify-end">
-                        <button
+                        <UiButton variant="plain"
                           className="rounded-lg border px-3 py-1 text-red-600 hover:bg-red-50"
                           onClick={() => onDelete(f.filename)}
                         >
                           删除
-                        </button>
+                        </UiButton>
                       </div>
                     </td>
                   </tr>
@@ -306,11 +308,11 @@ export default function KBAdminPage() {
             <label className="block text-sm font-medium">重建模式</label>
             <div className="flex gap-3">
               <label className="inline-flex items-center gap-2">
-                <input type="radio" name="mode" checked={mode === 'auto'} onChange={() => setMode('auto')} />
+                <UiChoiceInput type="radio" name="mode" checked={mode === 'auto'} onChange={() => setMode('auto')} />
                 <span>auto（增量）</span>
               </label>
               <label className="inline-flex items-center gap-2">
-                <input type="radio" name="mode" checked={mode === 'full'} onChange={() => setMode('full')} />
+                <UiChoiceInput type="radio" name="mode" checked={mode === 'full'} onChange={() => setMode('full')} />
                 <span>full（全量）</span>
               </label>
             </div>
@@ -318,7 +320,7 @@ export default function KBAdminPage() {
 
           <div className="space-y-2">
             <label className="block text-sm font-medium">向量后端</label>
-            <select
+            <UiSelect
               className="w-full rounded-lg border px-3 py-2"
               value={backend}
               onChange={(e) => setBackend(e.target.value as any)}
@@ -326,12 +328,12 @@ export default function KBAdminPage() {
               <option value="">自动（沿用/优先 ST）</option>
               <option value="st">Sentence-Transformers</option>
               <option value="tfidf">TF-IDF</option>
-            </select>
+            </UiSelect>
           </div>
 
           <div className="space-y-2">
             <label className="block text-sm font-medium">chunk_size</label>
-            <input
+            <UiInput
               type="number"
               className="w-full rounded-lg border px-3 py-2"
               value={chunkSize}
@@ -342,7 +344,7 @@ export default function KBAdminPage() {
 
           <div className="space-y-2">
             <label className="block text-sm font-medium">overlap</label>
-            <input
+            <UiInput
               type="number"
               className="w-full rounded-lg border px-3 py-2"
               value={overlap}
@@ -352,20 +354,20 @@ export default function KBAdminPage() {
           </div>
 
           <div className="md:col-span-2 flex items-center gap-3">
-            <button
+            <UiButton variant="plain"
               className="rounded-xl border px-4 py-2 shadow-sm hover:bg-gray-50"
               onClick={onReindex}
               disabled={reindexing}
             >
               {reindexing ? '重建中…' : '重建索引'}
-            </button>
-            <button
+            </UiButton>
+            <UiButton variant="plain"
               className="rounded-xl border px-4 py-2 shadow-sm hover:bg-gray-50"
               onClick={loadMeta}
               disabled={loadingMeta}
             >
               {loadingMeta ? '刷新中…' : '刷新 Meta'}
-            </button>
+            </UiButton>
           </div>
         </div>
 
@@ -392,7 +394,7 @@ export default function KBAdminPage() {
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">检索测试</h2>
         <div className="rounded-xl border p-4 space-y-3">
-          <textarea
+          <UiTextarea
             className="w-full rounded-lg border px-3 py-2"
             rows={3}
             placeholder="输入问题…"
@@ -401,20 +403,20 @@ export default function KBAdminPage() {
           />
           <div className="flex items-center gap-3">
             <label className="text-sm text-gray-600">Top-k</label>
-            <input
+            <UiInput
               type="number"
               className="w-24 rounded-lg border px-3 py-2"
               value={k}
               min={1}
               onChange={(e) => setK(Number(e.target.value))}
             />
-            <button
+            <UiButton variant="plain"
               className="rounded-xl border px-4 py-2 shadow-sm hover:bg-gray-50"
               onClick={onQuery}
               disabled={querying}
             >
               {querying ? '检索中…' : '检索'}
-            </button>
+            </UiButton>
           </div>
 
           <div className="space-y-2">

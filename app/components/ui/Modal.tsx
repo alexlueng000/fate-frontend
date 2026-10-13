@@ -1,55 +1,88 @@
 'use client';
 
-import { useEffect, useCallback, ReactNode } from 'react';
+import { forwardRef, useCallback, useEffect, useId, useRef, type DialogHTMLAttributes, type ReactNode } from 'react';
+import { X } from 'lucide-react';
+import { Button } from './Button';
+
+// All dialogs share the same lock, including nested payment/error dialogs.
+let locks = 0;
+let originalOverflow = '';
+function lockScroll() {
+  if (locks++ === 0) {
+    originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+  }
+  let released = false;
+  return () => {
+    if (released) return;
+    released = true;
+    if (--locks === 0) document.body.style.overflow = originalOverflow;
+  };
+}
+
+/** Native dialog surface for callers that already manage showModal/close. */
+export const DialogSurface = forwardRef<HTMLDialogElement, DialogHTMLAttributes<HTMLDialogElement>>(
+  ({ className = '', children, ...props }, ref) => {
+    const localRef = useRef<HTMLDialogElement | null>(null);
+    const assignRef = useCallback((element: HTMLDialogElement | null) => {
+      localRef.current = element;
+      if (typeof ref === 'function') ref(element);
+      else if (ref) ref.current = element;
+    }, [ref]);
+    useEffect(() => {
+      const element = localRef.current;
+      if (!element) return;
+      let release: (() => void) | undefined;
+      const sync = () => {
+        if (element.open && !release) release = lockScroll();
+        else if (!element.open && release) { release(); release = undefined; }
+      };
+      const observer = new MutationObserver(sync);
+      observer.observe(element, { attributes: true, attributeFilter: ['open'] });
+      sync();
+      return () => { observer.disconnect(); release?.(); };
+    }, []);
+    return <dialog ref={assignRef} className={`ui-dialog ${className}`} {...props}>{children}</dialog>;
+  }
+);
+DialogSurface.displayName = 'DialogSurface';
 
 interface ModalProps {
   open: boolean;
   onClose: () => void;
   title?: string;
   children: ReactNode;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | 'wide';
+  dismissible?: boolean;
+  bare?: boolean;
+  className?: string;
+  'aria-labelledby'?: string;
 }
 
-const sizeStyles = {
-  sm: 'max-w-sm',
-  md: 'max-w-md',
-  lg: 'max-w-lg',
-};
-
-export function Modal({ open, onClose, title, children, size = 'md' }: ModalProps) {
-  const handleEscape = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Escape') onClose();
-  }, [onClose]);
-
+export function Modal({ open, onClose, title, children, size = 'md', dismissible = true, bare = false, className = '', 'aria-labelledby': labelledBy }: ModalProps) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
   useEffect(() => {
-    if (open) {
-      document.addEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'hidden';
-    }
-    return () => {
-      document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = '';
-    };
-  }, [open, handleEscape]);
+    const element = dialog.current;
+    if (!element) return;
+    if (open && !element.open) element.showModal();
+    if (!open && element.open) element.close();
+    return () => { if (element.open) element.close(); };
+  }, [open]);
 
-  if (!open) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className={`card relative w-full ${sizeStyles[size]} animate-scale-in`}>
-        {title && (
-          <div className="flex items-center justify-between mb-4 pb-3 border-b border-[var(--color-border)]">
-            <h3 className="text-lg font-semibold text-[var(--color-gold)]">{title}</h3>
-            <button onClick={onClose} className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        )}
-        {children}
-      </div>
-    </div>
-  );
+  return <DialogSurface ref={dialog} className={`ui-modal ui-modal-${size} ${bare ? 'ui-modal-bare' : ''} ${className}`}
+    aria-labelledby={labelledBy || (title ? titleId : undefined)} aria-label={!labelledBy && !title ? '操作弹窗' : undefined}
+    onCancel={(event) => { event.preventDefault(); if (dismissible) onClose(); }}
+    onClick={(event) => {
+      if (!dismissible || event.target !== event.currentTarget) return;
+      const rect = event.currentTarget.getBoundingClientRect();
+      if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) onClose();
+    }}>
+    {title && !bare && <div className="ui-modal-header">
+      <h2 id={titleId}>{title}</h2>
+      {dismissible && <Button variant="icon" onClick={onClose} aria-label="关闭弹窗"><X size={20} aria-hidden /></Button>}
+    </div>}
+    {title && bare && !labelledBy && <h2 id={titleId} className="sr-only">{title}</h2>}
+    {children}
+  </DialogSurface>;
 }

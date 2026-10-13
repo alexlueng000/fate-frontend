@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton } from '@/app/components/ui';
+
 
 import type { ReactNode } from 'react';
 
@@ -26,13 +28,13 @@ export function ChatHeader({
         ) : (
           <span className="hidden sm:inline text-neutral-500">正在建立会话…</span>
         )}
-        <button
+        <UiButton variant="plain"
           type="button"
           onClick={onBack}
           className="shrink-0 rounded-full border border-red-200 bg-white/90 px-3 py-1 text-red-800 hover:bg-red-50 transition"
         >
           {backLabel}
-        </button>
+        </UiButton>
       </div>
     </div>
   );

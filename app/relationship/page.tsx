@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton, Input as UiInput, Textarea as UiTextarea } from '@/app/components/ui';
+
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -121,7 +123,7 @@ export default function RelationshipTaskPage() {
             const Icon = item.icon;
             const active = mode === item.mode;
             return (
-              <button
+              <UiButton variant="plain"
                 key={item.mode}
                 type="button"
                 aria-pressed={active}
@@ -161,7 +163,7 @@ export default function RelationshipTaskPage() {
                     </div>
                   ))}
                 </div>
-              </button>
+              </UiButton>
             );
           })}
         </section>
@@ -175,7 +177,7 @@ export default function RelationshipTaskPage() {
           <div className="grid gap-4">
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-[var(--color-text-primary)]">你现在最想看清什么？</span>
-              <input
+              <UiInput
                 value={topic}
                 onChange={(event) => setTopic(event.target.value)}
                 placeholder={mode === 'bazi' ? '例如：我为什么总是在关系里很累' : '例如：这段关系还要不要继续推进'}
@@ -185,7 +187,7 @@ export default function RelationshipTaskPage() {
 
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-[var(--color-text-primary)]">当前情况</span>
-              <textarea
+              <UiTextarea
                 value={currentSituation}
                 onChange={(event) => setCurrentSituation(event.target.value)}
                 placeholder="例如：我们最近联系变少了，我不知道是该主动沟通，还是先观察一段时间。"
@@ -199,7 +201,7 @@ export default function RelationshipTaskPage() {
                 <span className="mb-2 block text-sm font-medium text-[var(--color-text-primary)]">
                   具体对象或选择
                 </span>
-                <input
+                <UiInput
                   value={options}
                   onChange={(event) => setOptions(event.target.value)}
                   placeholder={mode === 'bazi' ? '例如：单身 / 暧昧对象 / 当前伴侣' : '例如：主动联系对方 / 暂时不推进'}
@@ -208,7 +210,7 @@ export default function RelationshipTaskPage() {
               </label>
               <label className="block">
                 <span className="mb-2 block text-sm font-medium text-[var(--color-text-primary)]">希望重点看多久</span>
-                <input
+                <UiInput
                   value={timeframe}
                   onChange={(event) => setTimeframe(event.target.value)}
                   placeholder="例如：未来 30 天 / 这两周 / 今年下半年"
@@ -224,7 +226,7 @@ export default function RelationshipTaskPage() {
                 ? '下一步会进入八字对话，并要求 AI 给出关系模式、当前节奏、未来 30 天行动和复盘点。'
                 : '下一步会进入六爻问事，先完成排盘，再看对方态度、风险点、行动建议和观察时间。'}
             </p>
-            <button
+            <UiButton variant="primary"
               type="button"
               onClick={startTask}
               className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[3px] bg-[var(--color-primary)] px-5 text-sm font-medium text-[var(--color-text-inverse)] transition-colors hover:bg-[var(--color-primary-hover)] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)] disabled:cursor-not-allowed disabled:opacity-60"
@@ -232,7 +234,7 @@ export default function RelationshipTaskPage() {
             >
               进入分析
               <ArrowRight className="h-4 w-4" strokeWidth={1.6} />
-            </button>
+            </UiButton>
           </div>
         </section>
 

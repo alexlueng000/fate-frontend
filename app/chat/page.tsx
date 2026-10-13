@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton } from '@/app/components/ui';
+
 
 import TimeCorrectionNotice from '@/app/components/chat/TimeCorrectionNotice';
 
@@ -585,7 +587,7 @@ export default function ChatPage() {
           backLabel={viewingHistory ? '返回解读记录' : '返回首页'}
           rightExtra={(
             <>
-              <button
+              <UiButton variant="plain"
                 type="button"
                 onClick={() => setShareDialogOpen(true)}
                 disabled={!canShareImage}
@@ -593,7 +595,7 @@ export default function ChatPage() {
               >
                 <ImageDown className="h-3.5 w-3.5" aria-hidden="true" />
                 保存分享图
-              </button>
+              </UiButton>
               <QuotaChip type="chat" refreshKey={quotaRefreshKey} />
             </>
           )}
@@ -622,14 +624,14 @@ export default function ChatPage() {
           emptyAction={
             historyRecordMissing ? (
               <div className="flex flex-wrap justify-center gap-3">
-                <button
+                <UiButton variant="primary"
                   type="button"
                   onClick={() => router.push('/history')}
                   className="btn btn-primary group"
                 >
                   <History className="h-4 w-4" aria-hidden="true" />
                   返回解读记录
-                </button>
+                </UiButton>
                 <Link href="/contact" className="btn btn-secondary group">
                   <Mail className="h-4 w-4" aria-hidden="true" />
                   联系客服
@@ -657,9 +659,9 @@ export default function ChatPage() {
           <p className="mt-1">{opening.error || (opening.phase === 'pending' ? '重新加载会读取已有请求的保存结果，请稍后再检查。'
             : opening.phase === 'retryable' ? '原命盘与背景已保留，可以手动重试本次报告。' : '报告完整保存后即可继续追问。')}</p>
           <div className="mt-3 flex flex-wrap gap-3">
-            {opening.phase === 'generating' ? <button type="button" className="btn btn-secondary" onClick={opening.stop}>停止生成报告</button>
-              : <button type="button" className="btn btn-secondary" disabled={opening.busy} onClick={() => void opening.reload()}>重新加载首次报告</button>}
-            {opening.phase === 'retryable' && <button type="button" className="btn btn-primary" onClick={() => void opening.retry()}>重试生成完整报告</button>}
+            {opening.phase === 'generating' ? <UiButton variant="secondary" type="button" className="btn btn-secondary" onClick={opening.stop}>停止生成报告</UiButton>
+              : <UiButton variant="secondary" type="button" className="btn btn-secondary" disabled={opening.busy} onClick={() => void opening.reload()}>重新加载首次报告</UiButton>}
+            {opening.phase === 'retryable' && <UiButton variant="primary" type="button" className="btn btn-primary" onClick={() => void opening.retry()}>重试生成完整报告</UiButton>}
           </div>
         </section>}
         {!opening.blocked && <TurnRecovery {...turn} />}
@@ -698,7 +700,7 @@ export default function ChatPage() {
       />
 
       {viewingHistory && msgs.length > 0 && (
-        <button
+        <UiButton variant="icon"
           type="button"
           onClick={handleScrollJump}
           aria-label={scrollJumpDirection === 'bottom' ? '跳到对话底部' : '回到对话顶部'}
@@ -713,7 +715,7 @@ export default function ChatPage() {
           <span className="hidden sm:inline">
             {scrollJumpDirection === 'bottom' ? '到底部' : '回顶部'}
           </span>
-        </button>
+        </UiButton>
       )}
     </main>
   );

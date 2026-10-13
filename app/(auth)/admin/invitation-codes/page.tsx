@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton, Card as UiCard, Input as UiInput, Modal as UiModal, Select as UiSelect } from '@/app/components/ui';
+
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -240,20 +242,20 @@ export default function InvitationCodesPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button
+            <UiButton variant="secondary"
               onClick={() => loadCodes()}
               className="btn btn-secondary p-2"
               title="刷新"
             >
               <RefreshCw className="w-5 h-5" />
-            </button>
-            <button
+            </UiButton>
+            <UiButton variant="primary"
               onClick={() => setShowCreateForm(true)}
               className="btn btn-primary"
             >
               <Plus className="w-5 h-5" />
               创建邀请码
-            </button>
+            </UiButton>
           </div>
         </div>
 
@@ -266,36 +268,36 @@ export default function InvitationCodesPage() {
 
         {/* Create Form Modal */}
         {showCreateForm && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="card p-6 w-full max-w-md animate-scale-in">
+          <UiModal open bare onClose={() => setShowCreateForm(false)} title="创建邀请码" size="md">
+            <UiCard className="card p-6 w-full max-w-md animate-scale-in">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">创建邀请码</h2>
-                <button onClick={() => setShowCreateForm(false)} className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]">
+                <UiButton variant="plain" onClick={() => setShowCreateForm(false)} className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]">
                   <X className="w-5 h-5" />
-                </button>
+                </UiButton>
               </div>
 
               {/* Mode Toggle */}
               <div className="flex gap-2 mb-4">
-                <button
+                <UiButton variant="plain"
                   onClick={() => setCreateMode('single')}
                   className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${createMode === 'single' ? 'bg-[var(--color-gold)] text-white' : 'bg-[var(--color-bg-elevated)] text-[var(--color-text-secondary)]'}`}
                 >
                   单个创建
-                </button>
-                <button
+                </UiButton>
+                <UiButton variant="plain"
                   onClick={() => setCreateMode('batch')}
                   className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${createMode === 'batch' ? 'bg-[var(--color-gold)] text-white' : 'bg-[var(--color-bg-elevated)] text-[var(--color-text-secondary)]'}`}
                 >
                   批量创建
-                </button>
+                </UiButton>
               </div>
 
               <div className="space-y-4">
                 {createMode === 'single' ? (
                   <div>
                     <label className="block text-xs text-[var(--color-text-secondary)] mb-1.5">自定义邀请码（可选）</label>
-                    <input
+                    <UiInput
                       className="input"
                       value={customCode}
                       onChange={(e) => setCustomCode(e.target.value.toUpperCase())}
@@ -305,7 +307,7 @@ export default function InvitationCodesPage() {
                 ) : (
                   <div>
                     <label className="block text-xs text-[var(--color-text-secondary)] mb-1.5">生成数量</label>
-                    <input
+                    <UiInput
                       type="number"
                       className="input"
                       value={batchCount}
@@ -318,7 +320,7 @@ export default function InvitationCodesPage() {
 
                 <div>
                   <label className="block text-xs text-[var(--color-text-secondary)] mb-1.5">类型</label>
-                  <select
+                  <UiSelect
                     className="input"
                     value={codeType}
                     onChange={(e) => setCodeType(e.target.value)}
@@ -326,13 +328,13 @@ export default function InvitationCodesPage() {
                     <option value="single_use">单次使用</option>
                     <option value="multi_use">多次使用</option>
                     <option value="unlimited">无限使用</option>
-                  </select>
+                  </UiSelect>
                 </div>
 
                 {codeType !== 'unlimited' && (
                   <div>
                     <label className="block text-xs text-[var(--color-text-secondary)] mb-1.5">最大使用次数</label>
-                    <input
+                    <UiInput
                       type="number"
                       className="input"
                       value={maxUses}
@@ -344,7 +346,7 @@ export default function InvitationCodesPage() {
 
                 <div>
                   <label className="block text-xs text-[var(--color-text-secondary)] mb-1.5">备注（可选）</label>
-                  <input
+                  <UiInput
                     className="input"
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
@@ -354,41 +356,41 @@ export default function InvitationCodesPage() {
               </div>
 
               <div className="flex gap-3 mt-6">
-                <button onClick={() => setShowCreateForm(false)} className="flex-1 btn btn-secondary">
+                <UiButton variant="secondary" onClick={() => setShowCreateForm(false)} className="flex-1 btn btn-secondary">
                   取消
-                </button>
-                <button onClick={handleCreate} disabled={creating} className="flex-1 btn btn-primary">
+                </UiButton>
+                <UiButton variant="primary" onClick={handleCreate} disabled={creating} className="flex-1 btn btn-primary">
                   {creating ? <Loader2 className="w-5 h-5 animate-spin" /> : '创建'}
-                </button>
+                </UiButton>
               </div>
-            </div>
-          </div>
+            </UiCard>
+          </UiModal>
         )}
 
         {/* Status Filter */}
         <div className="flex gap-2 mb-4">
-          <button
+          <UiButton variant="plain"
             onClick={() => setStatusFilter(null)}
             className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${statusFilter === null ? 'bg-[var(--color-gold)] text-white' : 'bg-[var(--color-bg-elevated)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-elevated)]/80'}`}
           >
             全部
-          </button>
-          <button
+          </UiButton>
+          <UiButton variant="plain"
             onClick={() => setStatusFilter(1)}
             className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${statusFilter === 1 ? 'bg-green-500 text-white' : 'bg-[var(--color-bg-elevated)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-elevated)]/80'}`}
           >
             有效
-          </button>
-          <button
+          </UiButton>
+          <UiButton variant="plain"
             onClick={() => setStatusFilter(0)}
             className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${statusFilter === 0 ? 'bg-yellow-500 text-white' : 'bg-[var(--color-bg-elevated)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-elevated)]/80'}`}
           >
             禁用
-          </button>
+          </UiButton>
         </div>
 
         {/* Codes List */}
-        <div className="card overflow-hidden">
+        <UiCard className="card overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -415,13 +417,13 @@ export default function InvitationCodesPage() {
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2">
                           <code className="font-mono text-sm text-[var(--color-text-primary)]">{code.code}</code>
-                          <button
+                          <UiButton variant="plain"
                             onClick={() => copyCode(code.code, code.id)}
                             className="text-[var(--color-text-hint)] hover:text-[var(--color-gold)] transition-colors"
                             title="复制"
                           >
                             {copiedId === code.id ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
-                          </button>
+                          </UiButton>
                         </div>
                       </td>
                       <td className="py-3 px-4">
@@ -454,20 +456,20 @@ export default function InvitationCodesPage() {
                             <Loader2 className="w-4 h-4 animate-spin text-[var(--color-text-hint)]" />
                           ) : (
                             <>
-                              <button
+                              <UiButton variant="plain"
                                 onClick={() => toggleStatus(code.id, code.status)}
                                 className="p-1.5 rounded-lg text-[var(--color-text-hint)] hover:text-[var(--color-gold)] hover:bg-[var(--color-bg-elevated)] transition-colors"
                                 title={code.status === 1 ? '禁用' : '启用'}
                               >
                                 {code.status === 1 ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
-                              </button>
-                              <button
+                              </UiButton>
+                              <UiButton variant="plain"
                                 onClick={() => deleteCode(code.id)}
                                 className="p-1.5 rounded-lg text-[var(--color-text-hint)] hover:text-[var(--color-primary)] hover:bg-[var(--color-bg-elevated)] transition-colors"
                                 title="删除"
                               >
                                 <Trash2 className="w-4 h-4" />
-                              </button>
+                              </UiButton>
                             </>
                           )}
                         </div>
@@ -478,7 +480,7 @@ export default function InvitationCodesPage() {
               </tbody>
             </table>
           </div>
-        </div>
+        </UiCard>
       </div>
     </main>
   );

@@ -1,4 +1,6 @@
 'use client';
+import { Card as UiCard } from '@/app/components/ui';
+
 
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
@@ -32,7 +34,7 @@ export default function TermsPage() {
         </div>
 
         {/* 内容 */}
-        <div className="card p-8 space-y-6 text-[var(--color-text-secondary)] leading-relaxed">
+        <UiCard className="card p-8 space-y-6 text-[var(--color-text-secondary)] leading-relaxed">
           <section>
             <h2 className="text-2xl font-bold text-[var(--color-text-primary)] mb-4">
               1. 服务说明
@@ -113,7 +115,7 @@ export default function TermsPage() {
               如果您对本服务条款有任何疑问，请通过<Link href="/contact" className="text-[var(--color-primary)] hover:underline">联系我们</Link>页面与我们取得联系。
             </p>
           </section>
-        </div>
+        </UiCard>
         </div>
       </div>
       <Footer />

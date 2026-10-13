@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton } from '@/app/components/ui';
+
 
 import PaymentDialog from '@/app/components/PaymentDialog';
 import PaymentErrorDialog from '@/app/components/PaymentErrorDialog';
@@ -238,7 +240,7 @@ export default function PricingPage() {
                 </p>
               </div>
 
-              <button
+              <UiButton variant="plain"
                 type="button"
                 onClick={() => void buy(product)}
                 disabled={payingCode === product.code}
@@ -250,7 +252,7 @@ export default function PricingPage() {
                 style={{ borderRadius: 'var(--radius-md)' }}
               >
                 {payingCode === product.code ? '创建订单中…' : '立即购买'}
-              </button>
+              </UiButton>
 
               <ul className="space-y-3">
                 {features.map((feature) => (

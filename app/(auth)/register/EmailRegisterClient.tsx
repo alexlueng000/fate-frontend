@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton, ChoiceInput as UiChoiceInput, Input as UiInput } from '@/app/components/ui';
+
 
 import { Suspense, useMemo, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -199,7 +201,7 @@ function RegisterPageContent() {
             </label>
             <div className="relative">
               <Ticket className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-hint)]" />
-              <input
+              <UiInput
                 className={`${styles.input} !pl-10 !pr-12`}
                 id="register-invitationCode" disabled={submitting}
                 value={invitationCode}
@@ -231,7 +233,7 @@ function RegisterPageContent() {
             <label htmlFor="register-email" className={styles.label}>邮箱</label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-hint)]" />
-              <input
+              <UiInput
                 className={`${styles.input} !pl-10 !pr-12`}
                 id="register-email" disabled={submitting}
                 value={email}
@@ -251,7 +253,7 @@ function RegisterPageContent() {
             <label htmlFor="register-username" className={styles.label}>用户名</label>
             <div className="relative">
               <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-hint)]" />
-              <input
+              <UiInput
                 className={`${styles.input} !pl-10 !pr-12`}
                 id="register-username" disabled={submitting}
                 value={username}
@@ -269,7 +271,7 @@ function RegisterPageContent() {
             </label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-hint)]" />
-              <input
+              <UiInput
                 className={`${styles.input} !pl-10 !pr-12`}
                 id="register-password" disabled={submitting}
                 value={password}
@@ -278,13 +280,13 @@ function RegisterPageContent() {
                 placeholder="至少8位"
                 autoComplete="new-password"
               />
-              <button
+              <UiButton variant="plain"
                 type="button"
                 aria-label={showPw ? '隐藏密码' : '显示密码'} className={styles.eye}
                 onClick={() => setShowPw((v) => !v)}
               >
                 {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
+              </UiButton>
             </div>
             <div className="mt-2">
               <div className="h-1 w-full rounded-full bg-[var(--color-bg-elevated)] overflow-hidden">
@@ -302,7 +304,7 @@ function RegisterPageContent() {
 
           {/* Agreement */}
           <label className="flex items-start gap-2.5 text-sm cursor-pointer">
-            <input
+            <UiChoiceInput
               type="checkbox"
               className="mt-0.5 w-4 h-4 rounded border-[var(--color-border)] bg-[var(--color-bg-elevated)] accent-[var(--color-primary)] cursor-pointer"
               checked={agree}
@@ -317,7 +319,7 @@ function RegisterPageContent() {
           </label>
 
           {/* Submit */}
-          <button
+          <UiButton variant="plain"
             type="submit"
             disabled={!canSubmit}
             className={styles.primary}
@@ -332,7 +334,7 @@ function RegisterPageContent() {
                 注册邮箱账户
               </>
             )}
-          </button>
+          </UiButton>
 
         </form>
         <div className={styles.footer}>

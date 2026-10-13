@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton, ChoiceInput as UiChoiceInput, Modal as UiModal, Textarea as UiTextarea } from '@/app/components/ui';
+
 
 import { useState } from 'react';
 import { emotionApi, CreateEmotionRecordRequest } from '@/app/lib/emotion/api';
@@ -61,10 +63,10 @@ export default function DialogFlow({ onComplete, onCancel }: DialogFlowProps) {
         return (
           <div className="space-y-8 animate-fadeIn">
             <div className="text-center space-y-3">
-              <h2 className="text-3xl font-serif text-slate-800 tracking-wide">
+              <h2 className="text-3xl font-serif text-[var(--color-text-primary)] tracking-wide">
                 此刻，你的感受如何？
               </h2>
-              <p className="text-slate-600 font-light text-lg">
+              <p className="text-[var(--color-text-secondary)] font-light text-lg">
                 用数字来表达你现在的情绪状态
               </p>
             </div>
@@ -72,9 +74,9 @@ export default function DialogFlow({ onComplete, onCancel }: DialogFlowProps) {
             <div className="flex flex-col items-center gap-8 py-8">
               {/* Score display with ink circle effect */}
               <div className="relative">
-                <div className="absolute inset-0 bg-slate-200 rounded-full blur-2xl opacity-30 scale-110" />
-                <div className="relative w-32 h-32 rounded-full border-2 border-slate-300 flex items-center justify-center bg-white/80 backdrop-blur-sm">
-                  <span className="text-5xl font-serif text-slate-800">{emotionScore}</span>
+                <div className="absolute inset-0 bg-[var(--color-bg-hover)] rounded-full blur-2xl opacity-30 scale-110" />
+                <div className="relative w-32 h-32 rounded-full border-2 border-[var(--color-border)] flex items-center justify-center bg-white/80 backdrop-blur-sm">
+                  <span className="text-5xl font-serif text-[var(--color-text-primary)]">{emotionScore}</span>
                 </div>
               </div>
 
@@ -82,10 +84,10 @@ export default function DialogFlow({ onComplete, onCancel }: DialogFlowProps) {
               <div className="w-full max-w-md space-y-4">
                 <div className="relative h-2 bg-gradient-to-r from-slate-300 via-slate-400 to-slate-600 rounded-full overflow-hidden">
                   <div
-                    className="absolute top-0 left-0 h-full bg-slate-800 transition-all duration-300 ease-out"
+                    className="absolute top-0 left-0 h-full bg-[var(--color-primary)] transition-all duration-300 ease-out"
                     style={{ width: `${(emotionScore / 10) * 100}%` }}
                   />
-                  <input
+                  <UiChoiceInput
                     type="range"
                     min="1"
                     max="10"
@@ -95,7 +97,7 @@ export default function DialogFlow({ onComplete, onCancel }: DialogFlowProps) {
                   />
                 </div>
 
-                <div className="flex justify-between text-sm text-slate-500 font-light">
+                <div className="flex justify-between text-sm text-[var(--color-text-muted)]0 font-light">
                   <span>低落</span>
                   <span>平稳</span>
                   <span>良好</span>
@@ -104,7 +106,7 @@ export default function DialogFlow({ onComplete, onCancel }: DialogFlowProps) {
 
               {/* Emotion state description */}
               <div className="text-center min-h-[2rem]">
-                <p className="text-slate-600 font-light italic">
+                <p className="text-[var(--color-text-secondary)] font-light italic">
                   {emotionScore <= 3 && '情绪较低，需要关注自己'}
                   {emotionScore > 3 && emotionScore <= 6 && '情绪平稳，保持觉察'}
                   {emotionScore > 6 && '情绪良好，值得记录'}
@@ -113,18 +115,18 @@ export default function DialogFlow({ onComplete, onCancel }: DialogFlowProps) {
             </div>
 
             <div className="flex justify-center gap-4 pt-4">
-              <button
+              <UiButton variant="plain"
                 onClick={onCancel}
-                className="px-8 py-3 text-slate-600 font-light tracking-wide hover:text-slate-800 transition-colors"
+                className="px-8 py-3 text-[var(--color-text-secondary)] font-light tracking-wide hover:text-[var(--color-text-primary)] transition-colors"
               >
                 取消
-              </button>
-              <button
+              </UiButton>
+              <UiButton variant="primary"
                 onClick={() => setStep(2)}
-                className="px-8 py-3 bg-slate-800 text-white font-light tracking-wide hover:bg-slate-900 transition-all hover:tracking-wider"
+                className="px-8 py-3 bg-[var(--color-primary)] text-white font-light tracking-wide hover:bg-[var(--color-primary)] transition-all hover:tracking-wider"
               >
                 继续
-              </button>
+              </UiButton>
             </div>
           </div>
         );
@@ -133,10 +135,10 @@ export default function DialogFlow({ onComplete, onCancel }: DialogFlowProps) {
         return (
           <div className="space-y-8 animate-fadeIn">
             <div className="text-center space-y-3">
-              <h2 className="text-3xl font-serif text-slate-800 tracking-wide">
+              <h2 className="text-3xl font-serif text-[var(--color-text-primary)] tracking-wide">
                 选择你的情绪
               </h2>
-              <p className="text-slate-600 font-light text-lg">
+              <p className="text-[var(--color-text-secondary)] font-light text-lg">
                 可以选择多个，也可以跳过
               </p>
             </div>
@@ -144,14 +146,14 @@ export default function DialogFlow({ onComplete, onCancel }: DialogFlowProps) {
             {/* Organic tag layout */}
             <div className="flex flex-wrap gap-3 justify-center max-w-2xl mx-auto py-8">
               {EMOTION_TAGS.map((tag, index) => (
-                <button
+                <UiButton variant="plain"
                   key={tag}
                   onClick={() => handleTagToggle(tag)}
                   className={`
                     relative px-6 py-3 font-light tracking-wide transition-all duration-300
                     ${selectedTags.includes(tag)
-                      ? 'bg-slate-800 text-white shadow-lg scale-105'
-                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200 hover:scale-105'
+                      ? 'bg-[var(--color-primary)] text-white shadow-lg scale-105'
+                      : 'bg-[var(--color-bg-hover)] text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] hover:scale-105'
                     }
                   `}
                   style={{
@@ -160,29 +162,29 @@ export default function DialogFlow({ onComplete, onCancel }: DialogFlowProps) {
                   }}
                 >
                   {tag}
-                </button>
+                </UiButton>
               ))}
             </div>
 
             {selectedTags.length > 0 && (
-              <div className="text-center text-sm text-slate-600 font-light animate-fadeIn">
+              <div className="text-center text-sm text-[var(--color-text-secondary)] font-light animate-fadeIn">
                 已选择 {selectedTags.length} 个情绪
               </div>
             )}
 
             <div className="flex justify-center gap-4 pt-4">
-              <button
+              <UiButton variant="plain"
                 onClick={() => setStep(1)}
-                className="px-8 py-3 text-slate-600 font-light tracking-wide hover:text-slate-800 transition-colors"
+                className="px-8 py-3 text-[var(--color-text-secondary)] font-light tracking-wide hover:text-[var(--color-text-primary)] transition-colors"
               >
                 上一步
-              </button>
-              <button
+              </UiButton>
+              <UiButton variant="primary"
                 onClick={() => setStep(3)}
-                className="px-8 py-3 bg-slate-800 text-white font-light tracking-wide hover:bg-slate-900 transition-all hover:tracking-wider"
+                className="px-8 py-3 bg-[var(--color-primary)] text-white font-light tracking-wide hover:bg-[var(--color-primary)] transition-all hover:tracking-wider"
               >
                 继续
-              </button>
+              </UiButton>
             </div>
           </div>
         );
@@ -191,53 +193,53 @@ export default function DialogFlow({ onComplete, onCancel }: DialogFlowProps) {
         return (
           <div className="space-y-8 animate-fadeIn">
             <div className="text-center space-y-3">
-              <h2 className="text-3xl font-serif text-slate-800 tracking-wide">
+              <h2 className="text-3xl font-serif text-[var(--color-text-primary)] tracking-wide">
                 写下你的感受
               </h2>
-              <p className="text-slate-600 font-light text-lg">
+              <p className="text-[var(--color-text-secondary)] font-light text-lg">
                 不需要完美的文字，只需要真实的表达
               </p>
             </div>
 
             <div className="relative">
               {/* Decorative corners */}
-              <div className="absolute -top-2 -left-2 w-16 h-16 border-l border-t border-slate-300" />
-              <div className="absolute -bottom-2 -right-2 w-16 h-16 border-r border-b border-slate-300" />
+              <div className="absolute -top-2 -left-2 w-16 h-16 border-l border-t border-[var(--color-border)]" />
+              <div className="absolute -bottom-2 -right-2 w-16 h-16 border-r border-b border-[var(--color-border)]" />
 
-              <textarea
+              <UiTextarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="此刻，我感到..."
-                className="w-full h-64 p-6 bg-white/80 backdrop-blur-sm border border-slate-200 resize-none focus:outline-none focus:border-slate-400 transition-colors font-light text-slate-800 leading-relaxed text-lg"
+                className="w-full h-64 p-6 bg-white/80 backdrop-blur-sm border border-[var(--color-border)] resize-none focus:outline-none focus:border-[var(--color-border)] transition-colors font-light text-[var(--color-text-primary)] leading-relaxed text-lg"
                 autoFocus
                 style={{ fontFamily: 'inherit' }}
               />
             </div>
 
             <div className="flex justify-between items-center">
-              <span className="text-sm text-slate-500 font-light">
+              <span className="text-sm text-[var(--color-text-muted)]0 font-light">
                 {content.length} 字
               </span>
               {content.length > 0 && (
-                <span className="text-sm text-slate-600 font-light italic animate-fadeIn">
+                <span className="text-sm text-[var(--color-text-secondary)] font-light italic animate-fadeIn">
                   很好，继续写下去
                 </span>
               )}
             </div>
 
             <div className="flex justify-center gap-4 pt-4">
-              <button
+              <UiButton variant="plain"
                 onClick={() => setStep(2)}
-                className="px-8 py-3 text-slate-600 font-light tracking-wide hover:text-slate-800 transition-colors"
+                className="px-8 py-3 text-[var(--color-text-secondary)] font-light tracking-wide hover:text-[var(--color-text-primary)] transition-colors"
               >
                 上一步
-              </button>
-              <button
+              </UiButton>
+              <UiButton variant="primary"
                 onClick={() => setStep(4)}
-                className="px-8 py-3 bg-slate-800 text-white font-light tracking-wide hover:bg-slate-900 transition-all hover:tracking-wider"
+                className="px-8 py-3 bg-[var(--color-primary)] text-white font-light tracking-wide hover:bg-[var(--color-primary)] transition-all hover:tracking-wider"
               >
                 继续
-              </button>
+              </UiButton>
             </div>
           </div>
         );
@@ -246,23 +248,23 @@ export default function DialogFlow({ onComplete, onCancel }: DialogFlowProps) {
         return (
           <div className="space-y-8 animate-fadeIn">
             <div className="text-center space-y-3">
-              <h2 className="text-3xl font-serif text-slate-800 tracking-wide">
+              <h2 className="text-3xl font-serif text-[var(--color-text-primary)] tracking-wide">
                 确认你的记录
               </h2>
-              <p className="text-slate-600 font-light text-lg">
+              <p className="text-[var(--color-text-secondary)] font-light text-lg">
                 这些将被妥善保存
               </p>
             </div>
 
             <div className="space-y-6 py-4">
               {/* Score summary */}
-              <div className="flex items-center gap-4 pb-6 border-b border-slate-200">
-                <div className="w-16 h-16 rounded-full border border-slate-300 flex items-center justify-center bg-slate-50">
-                  <span className="text-2xl font-serif text-slate-800">{emotionScore}</span>
+              <div className="flex items-center gap-4 pb-6 border-b border-[var(--color-border)]">
+                <div className="w-16 h-16 rounded-full border border-[var(--color-border)] flex items-center justify-center bg-[var(--color-bg-card)]">
+                  <span className="text-2xl font-serif text-[var(--color-text-primary)]">{emotionScore}</span>
                 </div>
                 <div>
-                  <span className="text-sm text-slate-500 font-light block">情绪评分</span>
-                  <span className="text-slate-700 font-light">
+                  <span className="text-sm text-[var(--color-text-muted)]0 font-light block">情绪评分</span>
+                  <span className="text-[var(--color-text-primary)] font-light">
                     {emotionScore <= 3 && '较低状态'}
                     {emotionScore > 3 && emotionScore <= 6 && '平稳状态'}
                     {emotionScore > 6 && '良好状态'}
@@ -272,13 +274,13 @@ export default function DialogFlow({ onComplete, onCancel }: DialogFlowProps) {
 
               {/* Tags summary */}
               {selectedTags.length > 0 && (
-                <div className="pb-6 border-b border-slate-200">
-                  <span className="text-sm text-slate-500 font-light block mb-3">情绪标签</span>
+                <div className="pb-6 border-b border-[var(--color-border)]">
+                  <span className="text-sm text-[var(--color-text-muted)]0 font-light block mb-3">情绪标签</span>
                   <div className="flex flex-wrap gap-2">
                     {selectedTags.map(tag => (
                       <span
                         key={tag}
-                        className="px-4 py-2 bg-slate-100 text-slate-700 text-sm font-light"
+                        className="px-4 py-2 bg-[var(--color-bg-hover)] text-[var(--color-text-primary)] text-sm font-light"
                         style={{ borderRadius: '20px 25px 22px 18px' }}
                       >
                         {tag}
@@ -290,10 +292,10 @@ export default function DialogFlow({ onComplete, onCancel }: DialogFlowProps) {
 
               {/* Content summary */}
               <div>
-                <span className="text-sm text-slate-500 font-light block mb-3">记录内容</span>
+                <span className="text-sm text-[var(--color-text-muted)]0 font-light block mb-3">记录内容</span>
                 <div className="relative">
                   <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-slate-300 to-transparent" />
-                  <div className="pl-6 text-slate-700 font-light leading-relaxed whitespace-pre-wrap">
+                  <div className="pl-6 text-[var(--color-text-primary)] font-light leading-relaxed whitespace-pre-wrap">
                     {content}
                   </div>
                 </div>
@@ -301,19 +303,19 @@ export default function DialogFlow({ onComplete, onCancel }: DialogFlowProps) {
             </div>
 
             <div className="flex justify-center gap-4 pt-4">
-              <button
+              <UiButton variant="plain"
                 onClick={() => setStep(3)}
-                className="px-8 py-3 text-slate-600 font-light tracking-wide hover:text-slate-800 transition-colors"
+                className="px-8 py-3 text-[var(--color-text-secondary)] font-light tracking-wide hover:text-[var(--color-text-primary)] transition-colors"
               >
                 修改
-              </button>
-              <button
+              </UiButton>
+              <UiButton variant="primary"
                 onClick={handleSubmit}
                 disabled={loading}
-                className="px-8 py-3 bg-slate-800 text-white font-light tracking-wide hover:bg-slate-900 transition-all hover:tracking-wider disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-8 py-3 bg-[var(--color-primary)] text-white font-light tracking-wide hover:bg-[var(--color-primary)] transition-all hover:tracking-wider disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? '保存中...' : '完成记录'}
-              </button>
+              </UiButton>
             </div>
 
             {/* Error message */}
@@ -331,8 +333,8 @@ export default function DialogFlow({ onComplete, onCancel }: DialogFlowProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
-      <div className="bg-[#f8f6f1] max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+    <UiModal open bare onClose={onCancel} title="记录此刻的感受" size="xl" dismissible={!loading}>
+      <div className="bg-[var(--color-bg)] max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
         {/* Decorative header */}
         <div className="relative h-2 bg-gradient-to-r from-transparent via-slate-400 to-transparent" />
 
@@ -348,10 +350,10 @@ export default function DialogFlow({ onComplete, onCancel }: DialogFlowProps) {
                   className={`
                     w-3 h-3 rounded-full transition-all duration-500
                     ${s === step
-                      ? 'bg-slate-800 scale-125'
+                      ? 'bg-[var(--color-primary)] scale-125'
                       : s < step
-                        ? 'bg-slate-600'
-                        : 'bg-slate-300'
+                        ? 'bg-[var(--color-bg-hover)]'
+                        : 'bg-[var(--color-bg-hover)]'
                     }
                   `}
                 />
@@ -359,7 +361,7 @@ export default function DialogFlow({ onComplete, onCancel }: DialogFlowProps) {
                   <div
                     className={`
                       absolute top-1/2 left-full w-8 h-[1px] transition-colors duration-500
-                      ${s < step ? 'bg-slate-600' : 'bg-slate-300'}
+                      ${s < step ? 'bg-[var(--color-bg-hover)]' : 'bg-[var(--color-bg-hover)]'}
                     `}
                   />
                 )}
@@ -390,6 +392,6 @@ export default function DialogFlow({ onComplete, onCancel }: DialogFlowProps) {
           animation: fadeIn 0.4s ease-out;
         }
       `}</style>
-    </div>
+    </UiModal>
   );
 }

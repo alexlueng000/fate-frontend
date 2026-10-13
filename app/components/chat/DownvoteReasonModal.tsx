@@ -1,8 +1,10 @@
 'use client';
+import { Button as UiButton, ChoiceInput as UiChoiceInput, Modal as UiModal, Textarea as UiTextarea } from '@/app/components/ui';
+
 
 import { useState } from 'react';
 import { X } from 'lucide-react';
-import { DOWNVOTE_REASONS, type RatingReason, type Paipan } from '@/app/lib/chat/rating';
+import { DOWNVOTE_REASONS, type RatingReason } from '@/app/lib/chat/rating';
 
 interface Props {
   isOpen: boolean;
@@ -46,6 +48,7 @@ export function DownvoteReasonModal({ isOpen, onClose, onSubmit }: Props) {
   };
 
   const handleClose = () => {
+    if (isSubmitting) return;
     setSelectedReason(null);
     setCustomReason('');
     setError('');
@@ -53,20 +56,21 @@ export function DownvoteReasonModal({ isOpen, onClose, onSubmit }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <UiModal open bare onClose={handleClose} title="告诉我们原因" size="md" dismissible={!isSubmitting}>
       <div className="bg-[var(--color-bg-elevated)] rounded-2xl shadow-xl w-full max-w-md mx-4 overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--color-border)]">
           <h3 className="text-lg font-medium text-[var(--color-text-primary)]">
             告诉我们原因
           </h3>
-          <button
+          <UiButton variant="icon"
             onClick={handleClose}
+            disabled={isSubmitting}
             className="p-1 rounded-lg hover:bg-[var(--color-bg-hover)] transition-colors"
             aria-label="关闭"
           >
             <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
-          </button>
+          </UiButton>
         </div>
 
         {/* Content */}
@@ -85,7 +89,7 @@ export function DownvoteReasonModal({ isOpen, onClose, onSubmit }: Props) {
                     : 'border-[var(--color-border)] hover:border-[var(--color-primary)]/50 hover:bg-[var(--color-bg-hover)]'
                 }`}
               >
-                <input
+                <UiChoiceInput
                   type="radio"
                   name="downvote-reason"
                   value={reason.value}
@@ -113,7 +117,7 @@ export function DownvoteReasonModal({ isOpen, onClose, onSubmit }: Props) {
           {/* 自定义理由输入框（选择"其他"时显示） */}
           {selectedReason === 'other' && (
             <div className="mt-4">
-              <textarea
+              <UiTextarea
                 value={customReason}
                 onChange={(e) => {
                   setCustomReason(e.target.value);
@@ -150,26 +154,22 @@ export function DownvoteReasonModal({ isOpen, onClose, onSubmit }: Props) {
 
         {/* Footer */}
         <div className="flex justify-end gap-3 px-6 py-4 border-t border-[var(--color-border)] bg-[var(--color-bg-card)]">
-          <button
+          <UiButton variant="ghost"
             onClick={handleClose}
             disabled={isSubmitting}
             className="px-4 py-2 rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] transition-colors disabled:opacity-50"
           >
             取消
-          </button>
-          <button
+          </UiButton>
+          <UiButton variant="primary"
             onClick={handleSubmit}
             disabled={!selectedReason || isSubmitting || (selectedReason === 'other' && customReason.trim().length < 15)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              !selectedReason || isSubmitting || (selectedReason === 'other' && customReason.trim().length < 15)
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-[var(--color-primary)] text-white hover:opacity-90 cursor-pointer'
-            }`}
+            className="text-sm"
           >
             {isSubmitting ? '提交中...' : '提交'}
-          </button>
+          </UiButton>
         </div>
       </div>
-    </div>
+    </UiModal>
   );
 }

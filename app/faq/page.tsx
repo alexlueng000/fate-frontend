@@ -1,4 +1,6 @@
 "use client";
+import { Button as UiButton } from '@/app/components/ui';
+
 
 import { useState } from "react";
 import Link from "next/link";
@@ -171,7 +173,7 @@ export default function FaqPage() {
 
                   return (
                     <div key={faq.question} className="border-t border-[var(--color-border)] first:border-t-0">
-                      <button
+                      <UiButton variant="plain"
                         type="button"
                         onClick={() => setOpenFaq(isOpen ? null : key)}
                         className="grid w-full grid-cols-[auto_1fr_auto] items-center gap-4 px-5 py-5 text-left transition-colors hover:bg-[var(--color-bg-hover)] focus-visible:bg-[var(--color-bg-hover)] focus-visible:outline-none md:px-6"
@@ -187,7 +189,7 @@ export default function FaqPage() {
                           className={`h-5 w-5 text-[var(--color-text-muted)] transition-transform ${isOpen ? "rotate-180 text-[var(--color-primary)]" : ""}`}
                           aria-hidden="true"
                         />
-                      </button>
+                      </UiButton>
                       {isOpen && (
                         <div className="grid grid-cols-[auto_1fr_auto] gap-4 px-5 pb-6 text-[0.9375rem] leading-[1.8] text-[var(--color-text-secondary)] animate-fade-in md:px-6">
                           <span className="w-[1.75rem]" aria-hidden="true" />

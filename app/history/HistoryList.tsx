@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton, DialogSurface as UiDialogSurface, Input as UiInput } from '@/app/components/ui';
+
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -73,30 +75,30 @@ export default function HistoryList() {
         </header>
         <div className={styles.toolbar}>
           <nav aria-label="记录类型" className={styles.tabs}>
-            {(['bazi', 'liuyao'] as const).map((value) => <button key={value} aria-pressed={type === value} disabled={mutating} onClick={() => { setType(value); setOffset(0); setItems([]); }}>{value === 'bazi' ? '八字解读' : '六爻问事'}</button>)}
+            {(['bazi', 'liuyao'] as const).map((value) => <UiButton variant="plain" key={value} aria-pressed={type === value} disabled={mutating} onClick={() => { setType(value); setOffset(0); setItems([]); }}>{value === 'bazi' ? '八字解读' : '六爻问事'}</UiButton>)}
           </nav>
           <form className={styles.search} onSubmit={(event) => { event.preventDefault(); setSearch(query.trim()); setOffset(0); }}>
             <label htmlFor="history-search" className="sr-only">搜索解读记录</label>
-            <Search size={17} aria-hidden="true" /><input id="history-search" value={query} maxLength={80} onChange={(event) => setQuery(event.target.value)} placeholder="搜索问题、标题或解读内容" /><button type="submit">搜索</button>
+            <Search size={17} aria-hidden="true" /><UiInput id="history-search" value={query} maxLength={80} onChange={(event) => setQuery(event.target.value)} placeholder="搜索问题、标题或解读内容" /><UiButton variant="plain" type="submit">搜索</UiButton>
           </form>
         </div>
         <div className={styles.listInfo}>
-          <p>{fetching || loading ? '正在读取记录…' : error ? '暂时无法读取记录' : `${search ? '找到' : '共'} ${total} 条记录`}{search && <button className={styles.textButton} onClick={() => { setQuery(''); setSearch(''); setOffset(0); }}>清除搜索</button>}</p>
+          <p>{fetching || loading ? '正在读取记录…' : error ? '暂时无法读取记录' : `${search ? '找到' : '共'} ${total} 条记录`}{search && <UiButton variant="plain" className={styles.textButton} onClick={() => { setQuery(''); setSearch(''); setOffset(0); }}>清除搜索</UiButton>}</p>
           <details className={styles.bulkMenu}><summary>管理记录</summary><div>
-            <button disabled={mutating || loading} onClick={() => setConfirmation({ type, title: `清空全部${type === 'bazi' ? '八字' : '六爻'}记录？` })}>清空{type === 'bazi' ? '八字' : '六爻'}记录</button>
-            <button disabled={mutating || loading} onClick={() => setConfirmation({ type: 'all', title: '清空全部八字和六爻记录？' })}>清空全部记录</button>
+            <UiButton variant="plain" disabled={mutating || loading} onClick={() => setConfirmation({ type, title: `清空全部${type === 'bazi' ? '八字' : '六爻'}记录？` })}>清空{type === 'bazi' ? '八字' : '六爻'}记录</UiButton>
+            <UiButton variant="plain" disabled={mutating || loading} onClick={() => setConfirmation({ type: 'all', title: '清空全部八字和六爻记录？' })}>清空全部记录</UiButton>
           </div></details>
         </div>
-        {error && <div className={styles.error} role="alert">{error}<button className={styles.textButton} onClick={() => setRevision((value) => value + 1)}>重新加载</button></div>}
+        {error && <div className={styles.error} role="alert">{error}<UiButton variant="plain" className={styles.textButton} onClick={() => setRevision((value) => value + 1)}>重新加载</UiButton></div>}
         {loading || fetching ? <div className={styles.skeletons} role="status" aria-label="正在加载记录">{[0, 1, 2].map((n) => <div key={n}><span /><span /><span /></div>)}</div>
           : items.length ? <div className={styles.records}>{items.map((item) => <HistoryRecord key={`${type}-${item.id}`} item={item} type={type} disabled={mutating} onContinue={() => continueConversation(item)} onChange={(next) => setItems((rows) => rows.map((row) => row.id === next.id ? next : row))} onDelete={() => setConfirmation({ id: item.id, title: '删除这条解读记录？' })} />)}</div>
           : !error && <section className={styles.empty}><BookOpen size={32} strokeWidth={1.3} aria-hidden="true" /><h2>{search ? '没有找到相关记录' : '这里会留下你的每一次解读'}</h2><p>{search ? '换一个关键词试试，或清除搜索查看全部记录。' : '完成一次解读后，你可以在这里回顾内容，继续追问。'}</p>{!search && <Link className={styles.newLink} href={type === 'bazi' ? '/panel' : '/liuyao'}>开始{type === 'bazi' ? '八字解读' : '六爻问事'}<ArrowRight size={16} aria-hidden="true" /></Link>}</section>}
-        {total > PAGE_SIZE && !fetching && !error && <nav className={styles.pagination} aria-label="记录分页"><button disabled={offset === 0} onClick={() => setOffset((value) => Math.max(0, value - PAGE_SIZE))}><ChevronLeft size={16} aria-hidden="true" />上一页</button><span>{Math.floor(offset / PAGE_SIZE) + 1} / {Math.ceil(total / PAGE_SIZE)}</span><button disabled={offset + PAGE_SIZE >= total} onClick={() => setOffset((value) => value + PAGE_SIZE)}>下一页<ChevronRight size={16} aria-hidden="true" /></button></nav>}
+        {total > PAGE_SIZE && !fetching && !error && <nav className={styles.pagination} aria-label="记录分页"><UiButton variant="plain" disabled={offset === 0} onClick={() => setOffset((value) => Math.max(0, value - PAGE_SIZE))}><ChevronLeft size={16} aria-hidden="true" />上一页</UiButton><span>{Math.floor(offset / PAGE_SIZE) + 1} / {Math.ceil(total / PAGE_SIZE)}</span><UiButton variant="plain" disabled={offset + PAGE_SIZE >= total} onClick={() => setOffset((value) => value + PAGE_SIZE)}>下一页<ChevronRight size={16} aria-hidden="true" /></UiButton></nav>}
         <p className={styles.footnote}>记录仅自己可见。摘要用于回顾，完整解读保留在原对话中。</p>
       </div>
-      <dialog ref={dialogRef} className={styles.dialog} aria-labelledby="delete-title" onCancel={(event) => { event.preventDefault(); if (!mutating) setConfirmation(null); }}>
-        <h2 id="delete-title">{confirmation?.title}</h2><p>对应的聊天内容与摘要将一并删除，无法恢复。{confirmation?.type && '此操作包含搜索结果以外的记录。'}</p><div><button ref={cancelRef} onClick={() => setConfirmation(null)} disabled={mutating}>保留记录</button><button className={styles.danger} onClick={remove} disabled={mutating}>{mutating ? '正在删除…' : '确认删除'}</button></div>
-      </dialog>
+      <UiDialogSurface ref={dialogRef} className={styles.dialog} aria-labelledby="delete-title" onCancel={(event) => { event.preventDefault(); if (!mutating) setConfirmation(null); }}>
+        <h2 id="delete-title">{confirmation?.title}</h2><p>对应的聊天内容与摘要将一并删除，无法恢复。{confirmation?.type && '此操作包含搜索结果以外的记录。'}</p><div><UiButton variant="plain" ref={cancelRef} onClick={() => setConfirmation(null)} disabled={mutating}>保留记录</UiButton><UiButton variant="danger" className={styles.danger} onClick={remove} disabled={mutating}>{mutating ? '正在删除…' : '确认删除'}</UiButton></div>
+      </UiDialogSurface>
     </div>
   );
 }

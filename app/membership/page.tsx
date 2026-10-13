@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton } from '@/app/components/ui';
+
 
 import PaymentDialog from '@/app/components/PaymentDialog';
 import PaymentErrorDialog from '@/app/components/PaymentErrorDialog';
@@ -209,7 +211,7 @@ export default function MembershipPage() {
               新用户注册即享 10 次八字文化 AI 对话和 10 次六爻文化卦象解析；基础套餐各提供 30 次，高级套餐各提供 100 次，额度不足时可购买叠加包。
             </p>
           </div>
-          <button
+          <UiButton variant="plain"
             type="button"
             onClick={() => void refresh()}
             className="inline-flex min-h-11 items-center justify-center gap-2 border border-[var(--color-border-strong)] px-4 text-[14px] font-medium text-[var(--color-text-primary)] transition-colors hover:bg-[var(--color-bg-hover)]"
@@ -217,7 +219,7 @@ export default function MembershipPage() {
           >
             <RefreshCw size={16} />
             刷新
-          </button>
+          </UiButton>
         </header>
 
         {error && (
@@ -291,7 +293,7 @@ export default function MembershipPage() {
                     <li className="flex gap-2"><Check size={16} className="mt-0.5 text-[var(--color-primary)]" />{grant.liuyao} 次传统文化卦象解析（六爻文化）</li>
                     <li className="flex gap-2"><Check size={16} className="mt-0.5 text-[var(--color-primary)]" />有效期 30 天，续费顺延</li>
                   </ul>
-                  <button
+                  <UiButton variant="primary"
                     type="button"
                     onClick={() => void buy(plan.code)}
                     disabled={payingCode === plan.code}
@@ -305,7 +307,7 @@ export default function MembershipPage() {
                         : membership?.active
                           ? `切换为${plan.name}`
                           : `购买${plan.name}`}
-                  </button>
+                  </UiButton>
                 </article>
               );
             })}
@@ -333,7 +335,7 @@ export default function MembershipPage() {
                     <li className="flex gap-2"><Check size={16} className="mt-0.5 text-[var(--color-primary)]" />八字文化 AI 对话 +{grant.bazi} 次</li>
                     <li className="flex gap-2"><Check size={16} className="mt-0.5 text-[var(--color-primary)]" />六爻文化卦象解析 +{grant.liuyao} 次</li>
                   </ul>
-                  <button
+                  <UiButton variant="plain"
                     type="button"
                     onClick={() => void buy(product.code)}
                     disabled={payingCode === product.code}
@@ -341,7 +343,7 @@ export default function MembershipPage() {
                     style={{ borderRadius: 'var(--radius-md)' }}
                   >
                     {payingCode === product.code ? '创建订单中' : '购买叠加包'}
-                  </button>
+                  </UiButton>
                 </article>
               );
             })}

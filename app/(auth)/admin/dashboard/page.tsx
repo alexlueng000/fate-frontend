@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton, Card as UiCard } from '@/app/components/ui';
+
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -267,7 +269,7 @@ export default function DashboardPage() {
               </p>
             </div>
           </div>
-          <button
+          <UiButton variant="secondary"
             onClick={() => fetchData(true)}
             disabled={refreshing}
             className="btn-secondary flex items-center gap-2 rounded-xl px-4 py-2"
@@ -275,11 +277,11 @@ export default function DashboardPage() {
           >
             <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
             {refreshing ? '刷新中' : '刷新'}
-          </button>
+          </UiButton>
         </div>
 
         {error && (
-          <div
+          <UiCard
             className="card p-4 mb-6 border border-[var(--color-primary)] bg-[var(--color-bg-elevated)]"
             role="alert"
             aria-live="assertive"
@@ -291,7 +293,7 @@ export default function DashboardPage() {
                 <p className="text-sm text-[var(--color-text-secondary)]">{error}</p>
               </div>
             </div>
-          </div>
+          </UiCard>
         )}
 
         {overview && (
@@ -315,7 +317,7 @@ export default function DashboardPage() {
             <p className="mb-4 text-sm text-[var(--color-text-secondary)]">当前包含全部历史账号，尚未排除测试账号和历史来源。以下比例统计范围不同，不构成同一漏斗；解读完成率暂未采集。</p>
 
             {/* Secondary Metrics - Compact list in card */}
-            <div className="card rounded-2xl p-6 mb-6 border border-[var(--color-border)] shadow-sm">
+            <UiCard className="card rounded-2xl p-6 mb-6 border border-[var(--color-border)] shadow-sm">
               <h3
                 className="text-base font-medium text-[var(--color-text-primary)] mb-4"
                 style={{ fontFamily: 'var(--font-display)' }}
@@ -370,12 +372,12 @@ export default function DashboardPage() {
                   value={overview.messages.total}
                 />
               </div>
-            </div>
+            </UiCard>
 
             {/* Charts Row 1 */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
               {/* User Registration Trend */}
-              <div className="card rounded-2xl p-6 border border-[var(--color-border)] shadow-sm">
+              <UiCard className="card rounded-2xl p-6 border border-[var(--color-border)] shadow-sm">
                 <h3
                   className="text-base font-medium text-[var(--color-text-primary)] mb-4"
                   style={{ fontFamily: 'var(--font-display)' }}
@@ -442,10 +444,10 @@ export default function DashboardPage() {
                     </div>
                   )}
                 </div>
-              </div>
+              </UiCard>
 
               {/* User Source Distribution */}
-              <div className="card rounded-2xl p-6 border border-[var(--color-border)] shadow-sm">
+              <UiCard className="card rounded-2xl p-6 border border-[var(--color-border)] shadow-sm">
                 <h3
                   className="text-base font-medium text-[var(--color-text-primary)] mb-4"
                   style={{ fontFamily: 'var(--font-display)' }}
@@ -509,11 +511,11 @@ export default function DashboardPage() {
                     })}
                   </div>
                 )}
-              </div>
+              </UiCard>
             </div>
 
             {/* Charts Row 2 */}
-            <div className="card rounded-2xl p-6 border border-[var(--color-border)] shadow-sm">
+            <UiCard className="card rounded-2xl p-6 border border-[var(--color-border)] shadow-sm">
               <h3
                 className="text-base font-medium text-[var(--color-text-primary)] mb-4"
                 style={{ fontFamily: 'var(--font-display)' }}
@@ -573,7 +575,7 @@ export default function DashboardPage() {
                   </div>
                 )}
               </div>
-            </div>
+            </UiCard>
           </>
         )}
       </div>

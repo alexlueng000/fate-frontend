@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton } from '@/app/components/ui';
+
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
@@ -23,12 +25,12 @@ export default function ProfileWelcome({ onStart, leaving }: { onStart: () => vo
         <p className={styles.description}>接下来，我们会根据你的出生信息，整理一份关于性格、关系与人生节奏的解读。</p>
         <p className={styles.note}>这些信息只需填写一次，以后可以修改。</p>
         <div className={styles.actions}>
-          <button type="button" className="btn btn-primary group" onClick={onStart} disabled={leaving}>
+          <UiButton variant="primary" type="button" className="btn btn-primary group" onClick={onStart} disabled={leaving}>
             开始填写出生信息 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden />
-          </button>
-          <button type="button" className="btn btn-ghost" onClick={() => setExpanded((value) => !value)} aria-controls="reading-example" aria-expanded={expanded} disabled={leaving}>
+          </UiButton>
+          <UiButton variant="ghost" type="button" className="btn btn-ghost" onClick={() => setExpanded((value) => !value)} aria-controls="reading-example" aria-expanded={expanded} disabled={leaving}>
             {expanded ? '收起解读示例' : '先看看解读示例'}
-          </button>
+          </UiButton>
         </div>
         <p className={styles.alternative}>心里正放着一件具体的事？<Link href="/liuyao">也可以先问六爻 <ArrowUpRight size={14} aria-hidden /></Link></p>
       </section>

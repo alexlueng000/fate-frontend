@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton, ChoiceInput as UiChoiceInput, Input as UiInput, Textarea as UiTextarea } from '@/app/components/ui';
+
 
 import { useRef, useState } from 'react';
 import Link from 'next/link';
@@ -64,9 +66,9 @@ export default function FeedbackPage() {
             </div>
             <div className={styles.successActions}>
               <Link href="/dashboard" className={styles.primary}>返回命理首页<ArrowRight size={17} aria-hidden="true" /></Link>
-              <button type="button" className={styles.secondary} onClick={() => {
+              <UiButton variant="plain" type="button" className={styles.secondary} onClick={() => {
                 setFeedbackId(null); setContent(''); setContact(''); setError(null);
-              }}>再写一条反馈</button>
+              }}>再写一条反馈</UiButton>
             </div>
           </section>
         ) : (
@@ -87,7 +89,7 @@ export default function FeedbackPage() {
                 <div className={styles.typeGrid}>
                   {FEEDBACK_TYPES.map(({ value, label, Icon }) => (
                     <label className={styles.typeOption} key={value}>
-                      <input type="radio" name="feedback-type" value={value} checked={feedbackType === value} onChange={() => setFeedbackType(value)} />
+                      <UiChoiceInput type="radio" name="feedback-type" value={value} checked={feedbackType === value} onChange={() => setFeedbackType(value)} />
                       <span className={styles.typeLabel}><Icon size={18} strokeWidth={1.5} aria-hidden="true" /><span>{label}</span><Check size={14} className={styles.selectedCheck} aria-hidden="true" /></span>
                     </label>
                   ))}
@@ -96,7 +98,7 @@ export default function FeedbackPage() {
               <div className={styles.field}>
                 <label htmlFor="feedback-content">具体说说<span className={styles.required}>必填</span></label>
                 <p id="feedback-guidance" className={styles.hint}>{selectedType.hint}</p>
-                <textarea id="feedback-content" name="content" value={content} disabled={submitting} required maxLength={1000} rows={7}
+                <UiTextarea id="feedback-content" name="content" value={content} disabled={submitting} required maxLength={1000} rows={7}
                   aria-describedby="feedback-guidance feedback-count" placeholder="从你遇到的情况开始说起…"
                   onChange={(event) => setContent(event.target.value)} />
                 <div id="feedback-count" className={styles.counter}>
@@ -106,17 +108,17 @@ export default function FeedbackPage() {
               </div>
               <div className={styles.field}>
                 <label htmlFor="feedback-contact">联系方式<span className={styles.optional}>选填</span></label>
-                <input id="feedback-contact" name="contact" type="text" value={contact} disabled={submitting}
+                <UiInput id="feedback-contact" name="contact" type="text" value={contact} disabled={submitting}
                   aria-describedby="contact-help" placeholder="邮箱或手机号" onChange={(event) => setContact(event.target.value)} />
                 <p id="contact-help" className={styles.hint}>如果希望收到回复，请留下方便联系的方式。</p>
               </div>
               {error && <p className={styles.error} role="alert">{error}</p>}
               <div className={styles.submitRow}>
                 <p>谢谢你，帮助我们把体验做得更好。</p>
-                <button type="submit" className={styles.primary} disabled={!canSubmit}>
+                <UiButton variant="plain" type="submit" className={styles.primary} disabled={!canSubmit}>
                   {submitting ? <Loader2 size={17} className={styles.spinner} aria-hidden="true" /> : <Send size={17} aria-hidden="true" />}
                   {submitting ? '正在提交…' : '提交反馈'}
-                </button>
+                </UiButton>
               </div>
             </form>
           </div>

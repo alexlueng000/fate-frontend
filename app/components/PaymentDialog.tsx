@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton, DialogSurface as UiDialogSurface } from '@/app/components/ui';
+
 
 import { useEffect, useId, useRef } from 'react';
 import { Check, LoaderCircle, MessageCircle, ScanLine, ShieldCheck, X } from 'lucide-react';
@@ -24,12 +26,9 @@ export default function PaymentDialog({ checkout, productName, qrDataUrl, error,
   useEffect(() => {
     const element = dialog.current;
     const previousFocus = document.activeElement as HTMLElement | null;
-    const previousOverflow = document.body.style.overflow;
     element?.showModal();
-    document.body.style.overflow = 'hidden';
     return () => {
       element?.close();
-      document.body.style.overflow = previousOverflow;
       previousFocus?.focus();
     };
   }, []);
@@ -39,20 +38,20 @@ export default function PaymentDialog({ checkout, productName, qrDataUrl, error,
   });
 
   return (
-    <dialog ref={dialog} aria-labelledby={titleId}
+    <UiDialogSurface ref={dialog} aria-labelledby={titleId}
       onCancel={(event) => { event.preventDefault(); closeRef.current(); }}
       onClick={(event) => {
         if (event.target !== event.currentTarget) return;
         const rect = event.currentTarget.getBoundingClientRect();
         if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) onClose();
       }}
-      className="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-[400px] overflow-y-auto rounded-3xl border border-[var(--color-border)] bg-[#fdfbf8] p-0 text-[var(--color-text-primary)] shadow-2xl backdrop:bg-[#211d19]/50 backdrop:backdrop-blur-sm">
+      className="max-w-[400px] p-0">
       <div className="flex items-center justify-between border-b border-[var(--color-border)] px-6 py-3">
         <span className="text-xs tracking-[0.12em] text-[var(--color-text-secondary)]">易凡文化 · 订单支付</span>
-        <button type="button" onClick={onClose} aria-label="关闭支付弹窗"
+        <UiButton variant="icon" type="button" onClick={onClose} aria-label="关闭支付弹窗"
           className="-mr-2 flex h-11 w-11 items-center justify-center rounded-full text-[var(--color-text-muted)] transition hover:bg-black/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]">
           <X size={20} strokeWidth={1.5} />
-        </button>
+        </UiButton>
       </div>
 
       <div className="px-6 pb-7 pt-6 text-center sm:px-8">
@@ -62,7 +61,7 @@ export default function PaymentDialog({ checkout, productName, qrDataUrl, error,
             <h2 id={titleId} className="text-xl font-medium">{success.title}</h2>
             <p className="mt-3 text-sm leading-6 text-[var(--color-text-secondary)]">{success.description}</p>
             <p className="mt-5 text-2xl font-semibold tabular-nums">¥{amount}</p>
-            <button type="button" onClick={onComplete} className="mt-6 min-h-12 w-full rounded-xl bg-[var(--color-primary)] px-4 text-sm font-medium text-white">{success.actionLabel}</button>
+            <UiButton variant="primary" type="button" onClick={onComplete} className="mt-6 min-h-12 w-full rounded-xl bg-[var(--color-primary)] px-4 text-sm font-medium text-white">{success.actionLabel}</UiButton>
           </>
         ) : (
           <>
@@ -96,6 +95,6 @@ export default function PaymentDialog({ checkout, productName, qrDataUrl, error,
           </>
         )}
       </div>
-    </dialog>
+    </UiDialogSurface>
   );
 }

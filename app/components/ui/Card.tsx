@@ -13,7 +13,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
     const hoverClass = hover ? 'card-hover' : '';
 
     return (
-      <div ref={ref} className={`${baseClass} ${hoverClass} p-4 ${className}`} {...props}>
+      <div ref={ref} className={`${baseClass} ${hoverClass} ${className}`} {...props}>
         {children}
       </div>
     );

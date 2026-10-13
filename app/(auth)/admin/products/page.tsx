@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton, Input as UiInput } from '@/app/components/ui';
+
 
 import Link from 'next/link';
 import { withPackageDisplay } from '@/app/lib/product-display';
@@ -96,9 +98,9 @@ export default function AdminProductsPage() {
               <p className="mt-1 text-sm text-[var(--color-text-muted)]">金额单位为人民币元；修改仅影响之后创建的新订单。</p>
             </div>
           </div>
-          <button type="button" onClick={() => void loadProducts()} disabled={loading} className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-black/10 px-4 text-sm disabled:opacity-50">
+          <UiButton variant="plain" type="button" onClick={() => void loadProducts()} disabled={loading} className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-black/10 px-4 text-sm disabled:opacity-50">
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />刷新
-          </button>
+          </UiButton>
         </div>
 
         {error && <div role="alert" className="mb-5 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>}
@@ -129,7 +131,7 @@ export default function AdminProductsPage() {
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-2">
                         <span>¥</span>
-                        <input
+                        <UiInput
                           value={prices[product.id] ?? ''}
                           onChange={(event) => setPrices((current) => ({ ...current, [product.id]: event.target.value }))}
                           inputMode="decimal"
@@ -139,9 +141,9 @@ export default function AdminProductsPage() {
                       </div>
                     </td>
                     <td className="px-5 py-4">
-                      <button type="button" onClick={() => void savePrice(product)} disabled={!changed || savingId !== null} className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-[var(--color-primary)] px-4 font-medium text-white disabled:cursor-not-allowed disabled:opacity-40">
+                      <UiButton variant="primary" type="button" onClick={() => void savePrice(product)} disabled={!changed || savingId !== null} className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-[var(--color-primary)] px-4 font-medium text-white disabled:cursor-not-allowed disabled:opacity-40">
                         <Save className="h-4 w-4" />{savingId === product.id ? '保存中' : '保存'}
-                      </button>
+                      </UiButton>
                     </td>
                   </tr>
                 );

@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton } from '@/app/components/ui';
+
 
 import { useState } from 'react';
 import { ThumbsUp, ThumbsDown } from 'lucide-react';
@@ -58,7 +60,7 @@ export function MessageRating({ messageId, userRating, paipanData, onRated }: Pr
     <>
       <div className="flex items-center gap-1">
         {/* 点赞按钮 */}
-        <button
+        <UiButton variant="icon"
           onClick={handleUpvote}
           disabled={isSubmitting || currentRating === 'down'}
           className={`p-1.5 rounded-lg transition-all ${
@@ -70,10 +72,10 @@ export function MessageRating({ messageId, userRating, paipanData, onRated }: Pr
           title={currentRating === 'up' ? '已点赞' : '点赞'}
         >
           <ThumbsUp className={`w-4 h-4 ${currentRating === 'up' ? 'fill-current' : ''}`} />
-        </button>
+        </UiButton>
 
         {/* 点踩按钮 */}
-        <button
+        <UiButton variant="plain"
           onClick={handleDownvoteClick}
           disabled={isSubmitting || currentRating === 'up' || currentRating === 'down'}
           className={`p-1.5 rounded-lg transition-all ${
@@ -85,7 +87,7 @@ export function MessageRating({ messageId, userRating, paipanData, onRated }: Pr
           title={currentRating === 'down' ? '已点踩' : '点踩'}
         >
           <ThumbsDown className={`w-4 h-4 ${currentRating === 'down' ? 'fill-current' : ''}`} />
-        </button>
+        </UiButton>
       </div>
 
       {/* 点踩原因弹窗 */}

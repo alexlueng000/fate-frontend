@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton, ChoiceInput as UiChoiceInput, DialogSurface as UiDialogSurface, Input as UiInput } from '@/app/components/ui';
+
 
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -203,7 +205,7 @@ function EditProfileContent() {
           <p className={styles.eyebrow}>Profile unavailable</p>
           <h1>暂时无法打开档案</h1>
           <p>{error}</p>
-          <button type="button" onClick={() => router.push('/account')} className={styles.primaryButton}>返回账户中心</button>
+          <UiButton variant="primary" type="button" onClick={() => router.push('/account')} className={styles.primaryButton}>返回账户中心</UiButton>
         </div>
       </main>
     );
@@ -213,9 +215,9 @@ function EditProfileContent() {
     <main className={styles.page}>
       <div className={styles.layout}>
         <aside className={styles.intro}>
-          <button type="button" onClick={() => router.push(returnTo)} className={styles.backButton}>
+          <UiButton variant="plain" type="button" onClick={() => router.push(returnTo)} className={styles.backButton}>
             <ArrowLeft aria-hidden />返回
-          </button>
+          </UiButton>
           <div className={styles.introCopy}>
             <p className={styles.eyebrow}>Birth profile</p>
             <h1>修改个人档案</h1>
@@ -235,9 +237,9 @@ function EditProfileContent() {
                 <span className={styles.fieldLabel} id="gender-label">性别</span>
                 <div className={styles.segmentedControl} role="group" aria-labelledby="gender-label">
                   {(['男', '女'] as const).map((value) => (
-                    <button key={value} type="button" aria-pressed={gender === value} onClick={() => setGender(value)} className={`${styles.segmentButton} ${gender === value ? styles.segmentSelected : ''}`}>
+                    <UiButton variant="plain" key={value} type="button" aria-pressed={gender === value} onClick={() => setGender(value)} className={`${styles.segmentButton} ${gender === value ? styles.segmentSelected : ''}`}>
                       {value}
-                    </button>
+                    </UiButton>
                   ))}
                 </div>
               </div>
@@ -246,7 +248,7 @@ function EditProfileContent() {
                 <div className={styles.radioGroup}>
                   {(['公历', '农历'] as const).map((value) => (
                     <label key={value} className={styles.radioLabel}>
-                      <input type="radio" name="calendarType" value={value} checked={calendarType === value} onChange={() => setCalendarType(value)} />
+                      <UiChoiceInput type="radio" name="calendarType" value={value} checked={calendarType === value} onChange={() => setCalendarType(value)} />
                       <span className={styles.radioMark} aria-hidden /><span>{value}</span>
                     </label>
                   ))}
@@ -272,7 +274,7 @@ function EditProfileContent() {
                 <label htmlFor="birth-location" className={styles.fieldLabel}>出生地点</label>
                 <div className={styles.locationField}>
                   <MapPin aria-hidden />
-                  <input id="birth-location" type="text" value={birthLocation} onChange={(event) => { setBirthLocation(event.target.value); if (event.target.value.trim()) setFieldErrors((current) => ({ ...current, birthLocation: undefined })); }} placeholder="例如：北京市朝阳区" aria-invalid={Boolean(fieldErrors.birthLocation)} aria-describedby={fieldErrors.birthLocation ? 'birth-location-error' : 'birth-location-help'} />
+                  <UiInput id="birth-location" type="text" value={birthLocation} onChange={(event) => { setBirthLocation(event.target.value); if (event.target.value.trim()) setFieldErrors((current) => ({ ...current, birthLocation: undefined })); }} placeholder="例如：北京市朝阳区" aria-invalid={Boolean(fieldErrors.birthLocation)} aria-describedby={fieldErrors.birthLocation ? 'birth-location-error' : 'birth-location-help'} />
                 </div>
                 <p id="birth-location-help" className={styles.fieldHelp}>出生地用于经度时差修正，目前不含均时差。</p>
                 {fieldErrors.birthLocation && <p id="birth-location-error" className={styles.fieldError} role="alert">{fieldErrors.birthLocation}</p>}
@@ -281,29 +283,29 @@ function EditProfileContent() {
 
             {error && <div className={styles.formError} role="alert" aria-live="assertive"><ShieldAlert aria-hidden /><span>{error}</span></div>}
             <div className={styles.submitArea}>
-              <button type="submit" disabled={submitting} className={styles.primaryButton}>{submitting ? '正在保存…' : '保存修改'}</button>
+              <UiButton variant="primary" type="submit" disabled={submitting} className={styles.primaryButton}>{submitting ? '正在保存…' : '保存修改'}</UiButton>
               <p>保存后将重新生成命盘与报告</p>
             </div>
           </form>
 
           <section className={styles.dangerZone} aria-labelledby="delete-profile-title">
             <div><h2 id="delete-profile-title">删除个人档案</h2><p>出生资料、命盘和已有报告将被永久删除，且无法恢复。</p></div>
-            <button ref={deleteButtonRef} type="button" onClick={() => setShowDeleteConfirm(true)} className={styles.deleteButton}>删除档案</button>
+            <UiButton variant="plain" ref={deleteButtonRef} type="button" onClick={() => setShowDeleteConfirm(true)} className={styles.deleteButton}>删除档案</UiButton>
           </section>
         </div>
       </div>
 
-      <dialog ref={dialogRef} className={styles.dialog} aria-labelledby="delete-dialog-title" aria-describedby="delete-dialog-description" onCancel={(event) => { event.preventDefault(); closeDialog(); }} onClose={() => setShowDeleteConfirm(false)} onClick={(event) => { if (event.target === event.currentTarget) closeDialog(); }}>
+      <UiDialogSurface ref={dialogRef} className={styles.dialog} aria-labelledby="delete-dialog-title" aria-describedby="delete-dialog-description" onCancel={(event) => { event.preventDefault(); closeDialog(); }} onClose={() => setShowDeleteConfirm(false)} onClick={(event) => { if (event.target === event.currentTarget) closeDialog(); }}>
         <div className={styles.dialogPanel}>
           <p className={styles.eyebrow}>Permanent action</p>
           <h2 id="delete-dialog-title">确认删除个人档案？</h2>
           <p id="delete-dialog-description">出生资料、命盘与已有报告都会被永久删除。此操作无法撤销。</p>
           <div className={styles.dialogActions}>
-            <button ref={cancelButtonRef} type="button" onClick={closeDialog} disabled={deleting} className={styles.secondaryButton}>保留档案</button>
-            <button type="button" onClick={handleDelete} disabled={deleting} className={styles.confirmDeleteButton}>{deleting ? '正在删除…' : '永久删除档案'}</button>
+            <UiButton variant="secondary" ref={cancelButtonRef} type="button" onClick={closeDialog} disabled={deleting} className={styles.secondaryButton}>保留档案</UiButton>
+            <UiButton variant="danger" type="button" onClick={handleDelete} disabled={deleting} className={styles.confirmDeleteButton}>{deleting ? '正在删除…' : '永久删除档案'}</UiButton>
           </div>
         </div>
-      </dialog>
+      </UiDialogSurface>
     </main>
   );
 }

@@ -1,4 +1,6 @@
 'use client';
+import { Card as UiCard } from '@/app/components/ui';
+
 
 import Link from 'next/link';
 import { ArrowLeft, Shield, Lock, Eye, Database } from 'lucide-react';
@@ -37,7 +39,7 @@ export default function PrivacyPage() {
         {/* 内容 */}
         <div className="space-y-6">
           {/* 数据收集 */}
-          <div className="card p-8">
+          <UiCard className="card p-8">
             <div className="flex items-center gap-3 mb-4">
               <Database className="w-6 h-6 text-[var(--color-primary)]" />
               <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">
@@ -50,10 +52,10 @@ export default function PrivacyPage() {
               <p><strong>使用数据：</strong>访问日志、交互记录、设备信息（用于改进服务）</p>
               <p><strong>通信记录：</strong>您与AI的对话内容（用于提供服务和改进模型）</p>
             </div>
-          </div>
+          </UiCard>
 
           {/* 数据使用 */}
-          <div className="card p-8">
+          <UiCard className="card p-8">
             <div className="flex items-center gap-3 mb-4">
               <Eye className="w-6 h-6 text-[var(--color-gold)]" />
               <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">
@@ -68,10 +70,10 @@ export default function PrivacyPage() {
               <li>遵守法律法规要求</li>
               <li>进行数据分析以改进AI模型（匿名化处理）</li>
             </ul>
-          </div>
+          </UiCard>
 
           {/* 数据保护 */}
-          <div className="card p-8">
+          <UiCard className="card p-8">
             <div className="flex items-center gap-3 mb-4">
               <Lock className="w-6 h-6 text-[var(--color-primary)]" />
               <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">
@@ -86,10 +88,10 @@ export default function PrivacyPage() {
               <p><strong>数据备份：</strong>定期备份数据以防止数据丢失</p>
               <p><strong>数据删除：</strong>您可随时要求删除个人数据</p>
             </div>
-          </div>
+          </UiCard>
 
           {/* 第三方共享 */}
-          <div className="card p-8">
+          <UiCard className="card p-8">
             <h2 className="text-2xl font-bold text-[var(--color-text-primary)] mb-4">
               第三方共享
             </h2>
@@ -103,10 +105,10 @@ export default function PrivacyPage() {
               <li>保护我们的合法权益、用户或公众的安全</li>
               <li>与服务提供商共享（如云服务提供商），但他们仅能按照我们的指示处理数据</li>
             </ul>
-          </div>
+          </UiCard>
 
           {/* Cookies 和追踪技术 */}
-          <div className="card p-8">
+          <UiCard className="card p-8">
             <h2 className="text-2xl font-bold text-[var(--color-text-primary)] mb-4">
               Cookies 和追踪技术
             </h2>
@@ -121,10 +123,10 @@ export default function PrivacyPage() {
             <p className="text-[var(--color-text-secondary)] mt-3">
               您可以通过浏览器设置管理 Cookies，但这可能影响某些功能的使用。
             </p>
-          </div>
+          </UiCard>
 
           {/* 用户权利 */}
-          <div className="card p-8">
+          <UiCard className="card p-8">
             <h2 className="text-2xl font-bold text-[var(--color-text-primary)] mb-4">
               您的权利
             </h2>
@@ -142,10 +144,10 @@ export default function PrivacyPage() {
             <p className="text-[var(--color-text-secondary)] mt-3">
               如需行使这些权利，请通过<Link href="/contact" className="text-[var(--color-primary)] hover:underline">联系我们</Link>页面与我们联系。
             </p>
-          </div>
+          </UiCard>
 
           {/* 未成年人保护 */}
-          <div className="card p-8">
+          <UiCard className="card p-8">
             <h2 className="text-2xl font-bold text-[var(--color-text-primary)] mb-4">
               未成年人保护
             </h2>
@@ -154,10 +156,10 @@ export default function PrivacyPage() {
               我们不会故意收集未成年人的个人信息。如果我们发现无意中收集了未成年人的信息，
               将立即删除。
             </p>
-          </div>
+          </UiCard>
 
           {/* 政策更新 */}
-          <div className="card p-8">
+          <UiCard className="card p-8">
             <h2 className="text-2xl font-bold text-[var(--color-text-primary)] mb-4">
               政策更新
             </h2>
@@ -165,10 +167,10 @@ export default function PrivacyPage() {
               我们可能会不时更新本隐私政策。更新后的政策将在网站上公布，并注明"最后更新"日期。
               重大变更时，我们会通过显著方式通知您。继续使用服务即表示您接受更新后的政策。
             </p>
-          </div>
+          </UiCard>
 
           {/* 联系方式 */}
-          <div className="card p-8 bg-gradient-to-br from-[var(--color-bg-elevated)] to-[var(--color-bg-hover)]">
+          <UiCard className="card p-8 bg-gradient-to-br from-[var(--color-bg-elevated)] to-[var(--color-bg-hover)]">
             <h2 className="text-2xl font-bold text-[var(--color-text-primary)] mb-4">
               联系我们
             </h2>
@@ -179,7 +181,7 @@ export default function PrivacyPage() {
             <p className="text-[var(--color-text-secondary)] mt-3">
               我们将在收到您的请求后15个工作日内予以回复。
             </p>
-          </div>
+          </UiCard>
           </div>
         </div>
       </div>

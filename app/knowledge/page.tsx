@@ -1,3 +1,5 @@
+
+import { Card as UiCard } from '@/app/components/ui';
 import Link from 'next/link';
 import { ArrowLeft, Clock, BookOpen, ChevronRight } from 'lucide-react';
 import Footer from '@/app/components/Footer';
@@ -60,7 +62,7 @@ export default function KnowledgePage() {
 
           {/* 精选文章（大卡片） */}
           <Link href={`/knowledge/${featured.slug}`} className="block mb-8 group">
-            <div className="card p-8 hover:shadow-xl transition-shadow">
+            <UiCard className="card p-8 hover:shadow-xl transition-shadow">
               <div className="flex flex-col md:flex-row md:items-start gap-6">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-4">
@@ -86,14 +88,14 @@ export default function KnowledgePage() {
                   <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
-            </div>
+            </UiCard>
           </Link>
 
           {/* 文章列表 */}
           <div className="grid md:grid-cols-2 gap-6">
             {rest.map((article) => (
               <Link key={article.slug} href={`/knowledge/${article.slug}`} className="block group">
-                <div className="card p-6 h-full hover:shadow-lg transition-shadow flex flex-col">
+                <UiCard className="card p-6 h-full hover:shadow-lg transition-shadow flex flex-col">
                   <div className="flex items-center gap-2 mb-3">
                     <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${categoryColors[article.category]}`}>
                       {article.category}
@@ -114,13 +116,13 @@ export default function KnowledgePage() {
                     阅读
                     <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </div>
-                </div>
+                </UiCard>
               </Link>
             ))}
           </div>
 
           {/* 底部引导 */}
-          <div className="mt-16 text-center p-8 card bg-gradient-to-br from-[var(--color-bg-deep)] to-white">
+          <UiCard className="mt-16 text-center p-8 card bg-gradient-to-br from-[var(--color-bg-deep)] to-white">
             <p className="text-[var(--color-text-secondary)] mb-4">
               学完基础知识，试试分析你自己的八字
             </p>
@@ -131,7 +133,7 @@ export default function KnowledgePage() {
               免费生成我的命盘
               <ChevronRight className="w-4 h-4" />
             </Link>
-          </div>
+          </UiCard>
         </div>
       </div>
       <Footer />

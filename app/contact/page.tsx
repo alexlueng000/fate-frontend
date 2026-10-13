@@ -1,4 +1,6 @@
 'use client';
+import { Card as UiCard } from '@/app/components/ui';
+
 
 import Link from 'next/link';
 import { ArrowLeft, Mail, MessageCircle } from 'lucide-react';
@@ -30,7 +32,7 @@ export default function ContactPage() {
         </div>
 
         <div className="space-y-4">
-          <div className="card p-6 flex items-center gap-4 hover:border-[var(--color-primary)]/30 transition-colors">
+          <UiCard className="card p-6 flex items-center gap-4 hover:border-[var(--color-primary)]/30 transition-colors">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-gold)] flex items-center justify-center flex-shrink-0">
               <Mail className="w-6 h-6 text-white" />
             </div>
@@ -45,9 +47,9 @@ export default function ContactPage() {
                 windy46825@163.com
               </a>
             </div>
-          </div>
+          </UiCard>
 
-          <div className="card p-6 flex items-center gap-4 hover:border-[var(--color-gold)]/30 transition-colors">
+          <UiCard className="card p-6 flex items-center gap-4 hover:border-[var(--color-gold)]/30 transition-colors">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[var(--color-gold)] to-[var(--color-gold-light)] flex items-center justify-center flex-shrink-0">
               <MessageCircle className="w-6 h-6 text-white" />
             </div>
@@ -59,9 +61,9 @@ export default function ContactPage() {
                 工作日 9:00 - 18:00
               </p>
             </div>
-          </div>
+          </UiCard>
 
-          <div className="card p-6 bg-gradient-to-br from-[var(--color-bg-elevated)] to-[var(--color-bg-hover)]">
+          <UiCard className="card p-6 bg-gradient-to-br from-[var(--color-bg-elevated)] to-[var(--color-bg-hover)]">
             <h3 className="font-semibold text-[var(--color-text-primary)] mb-3">
               常见问题
             </h3>
@@ -74,13 +76,13 @@ export default function ContactPage() {
               <li>• 数据安全吗？请查看我们的<Link href="/privacy" className="text-[var(--color-primary)] hover:underline">隐私政策</Link></li>
               <li>• 服务条款？请查看<Link href="/terms" className="text-[var(--color-primary)] hover:underline">服务条款</Link></li>
             </ul>
-          </div>
+          </UiCard>
 
-          <div className="card p-6 text-center">
+          <UiCard className="card p-6 text-center">
             <p className="text-[var(--color-text-secondary)] text-sm">
               我们通常会在 <strong>1-2 个工作日</strong> 内回复您的邮件
             </p>
-          </div>
+          </UiCard>
           </div>
         </div>
       </div>

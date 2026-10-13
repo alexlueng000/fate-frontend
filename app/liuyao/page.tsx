@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton, Input as UiInput, Textarea as UiTextarea } from '@/app/components/ui';
+
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -1129,14 +1131,14 @@ export default function LiuyaoPage() {
             className="mb-6 px-4 py-3 rounded-2xl border border-[color:var(--color-primary)]/30 bg-[color:var(--color-primary)]/[0.06] text-[14px] text-[color:var(--color-primary)] flex items-start justify-between gap-3"
           >
             <span>{formError}</span>
-            <button
+            <UiButton variant="plain"
               type="button"
               onClick={() => setFormError(null)}
               className="shrink-0 text-[color:var(--color-primary)]/70 hover:text-[color:var(--color-primary)] outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-primary)]/24 rounded-2xl px-1"
               aria-label="关闭提示"
             >
               ×
-            </button>
+            </UiButton>
           </div>
         )}
 
@@ -1184,7 +1186,7 @@ export default function LiuyaoPage() {
                   <label htmlFor="liuyao-question" className="block text-[11px] tracking-[0.24em] uppercase text-[color:var(--color-text-secondary)] font-medium mb-2">
                     所问之事
                   </label>
-                  <textarea
+                  <UiTextarea
                     id="liuyao-question"
                     value={question}
                     onChange={(e) => setQuestion(e.target.value)}
@@ -1199,7 +1201,7 @@ export default function LiuyaoPage() {
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {QUESTION_SCENARIOS.slice(0, 4).map((scenario) => (
-                      <button
+                      <UiButton variant="plain"
                         key={scenario.id}
                         type="button"
                         aria-pressed={selectedScenario === scenario.id}
@@ -1207,19 +1209,19 @@ export default function LiuyaoPage() {
                         className={toggleClass(selectedScenario === scenario.id, '!tracking-wider')}
                       >
                         {scenario.label}
-                      </button>
+                      </UiButton>
                     ))}
                   </div>
                 </div>
 
-                <button
+                <UiButton variant="primary"
                   type="submit"
                   disabled={loading || booting}
                   className="btn btn-primary mt-6 w-full tracking-[0.18em]"
                 >
                   <Send className="h-4 w-4" aria-hidden="true" />
                   {loading || booting ? '起卦中…' : '免费起卦一次'}
-                </button>
+                </UiButton>
 
                 <a
                   href={`/login?redirect=${encodeURIComponent('/liuyao')}`}
@@ -1257,7 +1259,7 @@ export default function LiuyaoPage() {
                   <p className="text-[12px] text-[color:var(--color-text-muted)] mb-3">
                     请只问一件具体的事，问题越明确，解读越准确。
                   </p>
-                  <textarea
+                  <UiTextarea
                     id="liuyao-question"
                     value={question}
                     onChange={(e) => setQuestion(e.target.value)}
@@ -1276,7 +1278,7 @@ export default function LiuyaoPage() {
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {QUESTION_SCENARIOS.map((scenario) => (
-                      <button
+                      <UiButton variant="plain"
                         key={scenario.id}
                         type="button"
                         aria-pressed={selectedScenario === scenario.id}
@@ -1284,7 +1286,7 @@ export default function LiuyaoPage() {
                         className={toggleClass(selectedScenario === scenario.id, '!tracking-wider')}
                       >
                         {scenario.label}
-                      </button>
+                      </UiButton>
                     ))}
                   </div>
                 </fieldset>
@@ -1302,7 +1304,7 @@ export default function LiuyaoPage() {
                     ].map((m) => {
                       const active = method === m.id;
                       return (
-                        <button
+                        <UiButton variant="plain"
                           key={m.id}
                           type="button"
                           aria-pressed={active}
@@ -1324,7 +1326,7 @@ export default function LiuyaoPage() {
                           <p className={`text-[12px] leading-relaxed ${active ? 'text-[color:var(--color-text-inverse)]/75' : 'text-[color:var(--color-text-muted)]'}`}>
                             {m.hint}
                           </p>
-                        </button>
+                        </UiButton>
                       );
                     })}
                   </div>
@@ -1347,7 +1349,7 @@ export default function LiuyaoPage() {
                           <span className="mb-2 block font-serif text-[15px] text-[color:var(--color-primary)]">
                             {NUMBER_MEANINGS[index].name}
                           </span>
-                          <input
+                          <UiInput
                             type="number"
                             value={num}
                             onChange={(e) => {
@@ -1381,7 +1383,7 @@ export default function LiuyaoPage() {
 
                 {/* Submit */}
                 <div className="flex justify-center pt-2">
-                  <button
+                  <UiButton variant="primary"
                     type="submit"
                     disabled={loading || booting}
                     className="btn btn-primary tracking-[0.24em]"
@@ -1391,7 +1393,7 @@ export default function LiuyaoPage() {
                       : isLoggedIn
                         ? '立即解卦'
                         : '免费起卦一次'}
-                  </button>
+                  </UiButton>
                 </div>
                 <p className="-mt-3 text-center text-[12px] leading-5 text-[color:var(--color-text-muted)]">
                   {isLoggedIn
@@ -1591,15 +1593,15 @@ export default function LiuyaoPage() {
 
               {/* Footer actions */}
               <div className="px-6 md:px-9 py-6 border-t border-[color:var(--color-border)] flex flex-wrap justify-center gap-3">
-                <button
+                <UiButton variant="primary"
                   type="button"
                   onClick={() => setShareDialogOpen(true)}
                   className="btn btn-primary"
                 >
                   <ImageDown className="h-4 w-4" aria-hidden="true" />
                   保存分享图
-                </button>
-                <button
+                </UiButton>
+                <UiButton variant="secondary"
                   type="button"
                   onClick={() => {
                     setResult(null);
@@ -1618,7 +1620,7 @@ export default function LiuyaoPage() {
                   className="btn btn-secondary"
                 >
                   重新起卦
-                </button>
+                </UiButton>
               </div>
             </div>
 
@@ -1639,14 +1641,14 @@ export default function LiuyaoPage() {
                   <p className="text-[15px] font-medium text-[color:var(--color-text-primary)]">这次回复未能确认完成</p>
                   <p className="mx-auto mt-2 max-w-md text-[13px] leading-6 text-[color:var(--color-text-secondary)]">{visibleChatError}</p>
                   <p className="mt-2 text-xs text-[color:var(--color-text-muted)]">成功保存的回复才计次。网络中断时，先检查保存结果再继续。</p>
-                  {conversationId && <button type="button" onClick={() => void reloadSavedConversation()} disabled={booting || sending || reloadingChat}
-                    className="btn btn-secondary mt-4">{reloadingChat ? '正在重新加载…' : '重新加载对话'}</button>}
-                  {!conversationId && isLoggedIn && openingRecovery && <button type="button" onClick={() => void loadOpening(result)}
+                  {conversationId && <UiButton variant="secondary" type="button" onClick={() => void reloadSavedConversation()} disabled={booting || sending || reloadingChat}
+                    className="btn btn-secondary mt-4">{reloadingChat ? '正在重新加载…' : '重新加载对话'}</UiButton>}
+                  {!conversationId && isLoggedIn && openingRecovery && <UiButton variant="secondary" type="button" onClick={() => void loadOpening(result)}
                     disabled={booting || openingRecovery === 'checking'} className="btn btn-secondary mt-4">
-                    {openingRecovery === 'checking' ? '正在检查保存结果…' : '重新加载首次解读'}</button>}
+                    {openingRecovery === 'checking' ? '正在检查保存结果…' : '重新加载首次解读'}</UiButton>}
                 </div>}
                 {recoveryNotice && <p role="status" className="mb-4 text-sm text-[color:var(--color-text-secondary)]">{recoveryNotice}</p>}
-                {booting && <button type="button" className="reading-pill mb-4" onClick={() => actionAbortRef.current?.abort()}>停止生成</button>}
+                {booting && <UiButton variant="plain" type="button" className="reading-pill mb-4" onClick={() => actionAbortRef.current?.abort()}>停止生成</UiButton>}
                 {!conversationId && msgs.length === 0 ? (
                   <div className="text-center py-10">
                     <p className="text-[14px] text-[color:var(--color-text-secondary)] mb-1">
@@ -1655,7 +1657,7 @@ export default function LiuyaoPage() {
                     <p className="text-[12px] text-[color:var(--color-text-muted)] mb-7">
                       AI 将结合卦象、动爻与问题深度分析，并支持追问。
                     </p>
-                    <button
+                    <UiButton variant="primary"
                       type="button"
                       onClick={() => void handleStartChat()}
                       disabled={booting || (isLoggedIn && !!openingRecovery && openingRecovery !== 'retryable')}
@@ -1663,7 +1665,7 @@ export default function LiuyaoPage() {
                     >
                       {booting ? '启动中…' : openingRecovery === 'checking' ? '检查保存结果…' : openingRecovery === 'pending'
                         ? '解读正在生成…' : openingRecovery === 'unknown' ? '先检查保存结果' : openingRecovery === 'retryable' ? '重试 AI 解卦' : '开始 AI 解卦'}
-                    </button>
+                    </UiButton>
                   </div>
                 ) : (
                   <div className="space-y-4">

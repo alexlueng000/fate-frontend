@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton, Input as UiInput, Modal as UiModal, Select as UiSelect, Textarea as UiTextarea } from '@/app/components/ui';
+
 
 import Link from 'next/link';
 import { packageText } from '@/app/lib/product-display';
@@ -155,7 +157,7 @@ export default function AdminOrdersPage() {
             <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">订单与退款</h1>
             <p className="mt-1 text-sm text-[var(--color-text-muted)]">共 {total} 笔订单</p>
           </div>
-          <button
+          <UiButton variant="plain"
             type="button"
             onClick={() => void loadOrders()}
             disabled={loading}
@@ -163,7 +165,7 @@ export default function AdminOrdersPage() {
           >
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             刷新
-          </button>
+          </UiButton>
         </div>
 
         {(error || message) && (
@@ -183,36 +185,36 @@ export default function AdminOrdersPage() {
               }}
             >
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-text-muted)]" />
-              <input
+              <UiInput
                 value={searchInput}
                 onChange={(event) => setSearchInput(event.target.value)}
                 placeholder="订单号、用户、商品"
                 className="min-h-11 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-elevated)] pl-10 pr-3 text-sm outline-none focus:border-[var(--color-primary)]"
               />
             </form>
-            <select
+            <UiSelect
               value={orderStatus}
               onChange={(event) => { setOrderStatus(event.target.value); setPage(1); }}
               className="min-h-11 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-3 text-sm"
             >
               <option value="">全部订单状态</option>
               {Object.entries(ORDER_STATUS).map(([value, item]) => <option key={value} value={value}>{item.label}</option>)}
-            </select>
-            <select
+            </UiSelect>
+            <UiSelect
               value={refundStatus}
               onChange={(event) => { setRefundStatus(event.target.value); setPage(1); }}
               className="min-h-11 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-3 text-sm"
             >
               <option value="">全部退款状态</option>
               {Object.entries(REFUND_STATUS).map(([value, item]) => <option key={value} value={value}>{item.label}</option>)}
-            </select>
-            <button
+            </UiSelect>
+            <UiButton variant="plain"
               type="button"
               onClick={() => { setSearchInput(''); setSearch(''); setOrderStatus(''); setRefundStatus(''); setPage(1); }}
               className="min-h-11 rounded-lg border border-[var(--color-border)] px-4 text-sm"
             >
               重置
-            </button>
+            </UiButton>
           </div>
         </section>
 
@@ -273,24 +275,24 @@ export default function AdminOrdersPage() {
                       <td className="px-4 py-4 text-right">
                         <div className="flex justify-end gap-2">
                           {order.status === 'PAID' && !order.refund && (
-                            <button
+                            <UiButton variant="plain"
                               type="button"
                               onClick={() => { setRefundOrder(order); setReason('用户申请退款'); }}
                               disabled={actionId === order.id}
                               className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-red-200 px-3 text-xs text-red-700 disabled:opacity-50"
                             >
                               <RotateCcw className="h-3.5 w-3.5" />申请退款
-                            </button>
+                            </UiButton>
                           )}
                           {order.refund && !['SUCCESS', 'CLOSED'].includes(order.refund.status) && (
-                            <button
+                            <UiButton variant="plain"
                               type="button"
                               onClick={() => void syncRefund(order)}
                               disabled={actionId === order.id}
                               className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-[var(--color-border)] px-3 text-xs disabled:opacity-50"
                             >
                               <RefreshCw className={`h-3.5 w-3.5 ${actionId === order.id ? 'animate-spin' : ''}`} />同步
-                            </button>
+                            </UiButton>
                           )}
                         </div>
                       </td>
@@ -311,21 +313,21 @@ export default function AdminOrdersPage() {
         <div className="mt-5 flex items-center justify-between text-sm">
           <span className="text-[var(--color-text-muted)]">第 {page} / {totalPages} 页</span>
           <div className="flex gap-2">
-            <button type="button" disabled={page <= 1 || loading} onClick={() => setPage((value) => value - 1)} className="rounded-lg border border-[var(--color-border)] px-4 py-2 disabled:opacity-40">上一页</button>
-            <button type="button" disabled={page >= totalPages || loading} onClick={() => setPage((value) => value + 1)} className="rounded-lg border border-[var(--color-border)] px-4 py-2 disabled:opacity-40">下一页</button>
+            <UiButton variant="plain" type="button" disabled={page <= 1 || loading} onClick={() => setPage((value) => value - 1)} className="rounded-lg border border-[var(--color-border)] px-4 py-2 disabled:opacity-40">上一页</UiButton>
+            <UiButton variant="plain" type="button" disabled={page >= totalPages || loading} onClick={() => setPage((value) => value + 1)} className="rounded-lg border border-[var(--color-border)] px-4 py-2 disabled:opacity-40">下一页</UiButton>
           </div>
         </div>
       </div>
 
       {refundOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4" role="dialog" aria-modal="true" aria-labelledby="refund-title">
+        <UiModal open bare onClose={() => setRefundOrder(null)} title="确认整单退款" size="lg" dismissible={actionId !== refundOrder.id} aria-labelledby="refund-title">
           <div className="w-full max-w-lg rounded-xl bg-[var(--color-bg-card)] p-6 shadow-xl">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 id="refund-title" className="text-xl font-bold">确认整单退款</h2>
                 <p className="mt-2 text-sm text-[var(--color-text-muted)]">订单 #{refundOrder.id}，退款金额 {formatMoney(refundOrder.amount_cents)}</p>
               </div>
-              <button type="button" onClick={() => setRefundOrder(null)} className="rounded-lg p-2 hover:bg-[var(--color-bg-hover)]" aria-label="关闭"><X className="h-5 w-5" /></button>
+              <UiButton variant="icon" type="button" onClick={() => setRefundOrder(null)} className="rounded-lg p-2 hover:bg-[var(--color-bg-hover)]" aria-label="关闭"><X className="h-5 w-5" /></UiButton>
             </div>
             <div className="mt-5 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
               款项将原路退回微信。退款成功后，系统会撤销该订单尚未使用的额度和对应套餐期限。
@@ -334,15 +336,15 @@ export default function AdminOrdersPage() {
               <div className="mt-3 flex gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />该历史订单缺少权益流水，退款后可能需要人工处理权益。</div>
             )}
             <label className="mt-5 block text-sm font-medium" htmlFor="refund-reason">退款原因</label>
-            <textarea id="refund-reason" value={reason} maxLength={256} onChange={(event) => setReason(event.target.value)} rows={3} className="mt-2 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-3 text-sm outline-none focus:border-[var(--color-primary)]" />
+            <UiTextarea id="refund-reason" value={reason} maxLength={256} onChange={(event) => setReason(event.target.value)} rows={3} className="mt-2 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-3 text-sm outline-none focus:border-[var(--color-primary)]" />
             <div className="mt-6 flex justify-end gap-3">
-              <button type="button" onClick={() => setRefundOrder(null)} className="min-h-10 rounded-lg border border-[var(--color-border)] px-4 text-sm">取消</button>
-              <button type="button" onClick={() => void submitRefund()} disabled={!reason.trim() || actionId === refundOrder.id} className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-red-600 px-4 text-sm font-medium text-white disabled:opacity-50">
+              <UiButton variant="plain" type="button" onClick={() => setRefundOrder(null)} className="min-h-10 rounded-lg border border-[var(--color-border)] px-4 text-sm">取消</UiButton>
+              <UiButton variant="primary" type="button" onClick={() => void submitRefund()} disabled={!reason.trim() || actionId === refundOrder.id} className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-red-600 px-4 text-sm font-medium text-white disabled:opacity-50">
                 {actionId === refundOrder.id ? <Clock3 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}确认退款
-              </button>
+              </UiButton>
             </div>
           </div>
-        </div>
+        </UiModal>
       )}
     </main>
   );

@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton, Input as UiInput, Select as UiSelect } from '@/app/components/ui';
+
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -134,7 +136,7 @@ export default function GuestAnalysisStartPage() {
               <label htmlFor="display-name" className="mb-2 block text-sm text-[var(--color-text-secondary)]">
                 称呼
               </label>
-              <input
+              <UiInput
                 id="display-name"
                 value={displayName}
                 onChange={(event) => setDisplayName(event.target.value)}
@@ -153,7 +155,7 @@ export default function GuestAnalysisStartPage() {
                 ].map(([value, label]) => {
                   const selected = gender === value;
                   return (
-                    <button
+                    <UiButton variant="plain"
                       key={value}
                       type="button"
                       role="radio"
@@ -166,7 +168,7 @@ export default function GuestAnalysisStartPage() {
                       }`}
                     >
                       {label}
-                    </button>
+                    </UiButton>
                   );
                 })}
               </div>
@@ -176,7 +178,7 @@ export default function GuestAnalysisStartPage() {
               <label htmlFor="calendar-type" className="mb-2 block text-sm text-[var(--color-text-secondary)]">
                 历法
               </label>
-              <select
+              <UiSelect
                 id="calendar-type"
                 value={calendarType}
                 onChange={(event) => setCalendarType(event.target.value as CalendarType)}
@@ -184,7 +186,7 @@ export default function GuestAnalysisStartPage() {
               >
                 <option value="solar">公历</option>
                 <option value="lunar">农历</option>
-              </select>
+              </UiSelect>
             </div>
 
             <div className="grid gap-5 sm:grid-cols-2">
@@ -192,7 +194,7 @@ export default function GuestAnalysisStartPage() {
                 <label htmlFor="birth-date" className="mb-2 block text-sm text-[var(--color-text-secondary)]">
                   出生日期
                 </label>
-                <input
+                <UiInput
                   id="birth-date"
                   type="date"
                   value={birthDate}
@@ -214,7 +216,7 @@ export default function GuestAnalysisStartPage() {
                 <label htmlFor="birth-time" className="mb-2 block text-sm text-[var(--color-text-secondary)]">
                   出生时间
                 </label>
-                <input
+                <UiInput
                   id="birth-time"
                   type="time"
                   value={birthTime}
@@ -239,7 +241,7 @@ export default function GuestAnalysisStartPage() {
               </label>
               <div className="relative">
                 <MapPin className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-text-hint)]" aria-hidden />
-                <input
+                <UiInput
                   id="birth-location"
                   value={birthLocation}
                   onChange={(event) => {
@@ -268,7 +270,7 @@ export default function GuestAnalysisStartPage() {
               </div>
             )}
 
-            <button
+            <UiButton variant="primary"
               type="submit"
               disabled={!canSubmit}
               className="btn btn-primary w-full text-base disabled:cursor-not-allowed disabled:opacity-50"
@@ -284,7 +286,7 @@ export default function GuestAnalysisStartPage() {
                   <ArrowRight className="h-4 w-4" aria-hidden />
                 </>
               )}
-            </button>
+            </UiButton>
 
             <p className="text-center text-xs leading-5 text-[var(--color-text-muted)]">
               继续追问、保存报告和跨设备查看，需要在结果页登录。

@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton, Card as UiCard, Input as UiInput, Modal as UiModal, Textarea as UiTextarea } from '@/app/components/ui';
+
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -232,21 +234,21 @@ export default function QuickButtonsPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={() => loadConfig()} className="btn btn-secondary p-2" title="刷新">
+            <UiButton variant="secondary" onClick={() => loadConfig()} className="btn btn-secondary p-2" title="刷新">
               <RefreshCw className="w-5 h-5" />
-            </button>
-            <button onClick={openAddForm} className="btn btn-secondary">
+            </UiButton>
+            <UiButton variant="secondary" onClick={openAddForm} className="btn btn-secondary">
               <Plus className="w-5 h-5" />
               添加按钮
-            </button>
-            <button
+            </UiButton>
+            <UiButton variant="primary"
               onClick={saveConfig}
               disabled={saving || !hasChanges}
               className="btn btn-primary"
             >
               {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
               保存
-            </button>
+            </UiButton>
           </div>
         </div>
 
@@ -266,21 +268,21 @@ export default function QuickButtonsPage() {
 
         {/* Form Modal */}
         {showForm && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="card p-6 w-full max-w-md animate-scale-in">
+          <UiModal open bare onClose={() => setShowForm(false)} title="编辑快捷问题" size="md">
+            <UiCard className="card p-6 w-full max-w-md animate-scale-in">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
                   {editingIndex !== null ? '编辑按钮' : '添加按钮'}
                 </h2>
-                <button onClick={() => setShowForm(false)} className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]">
+                <UiButton variant="plain" onClick={() => setShowForm(false)} className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]">
                   <X className="w-5 h-5" />
-                </button>
+                </UiButton>
               </div>
 
               <div className="space-y-4">
                 <div>
                   <label className="block text-xs text-[var(--color-text-secondary)] mb-1.5">按钮标签 *</label>
-                  <input
+                  <UiInput
                     className="input"
                     value={formData.label}
                     onChange={(e) => setFormData({ ...formData, label: e.target.value })}
@@ -290,7 +292,7 @@ export default function QuickButtonsPage() {
 
                 <div>
                   <label className="block text-xs text-[var(--color-text-secondary)] mb-1.5">提示词 *</label>
-                  <textarea
+                  <UiTextarea
                     className="input min-h-[120px]"
                     value={formData.prompt}
                     onChange={(e) => setFormData({ ...formData, prompt: e.target.value })}
@@ -300,19 +302,19 @@ export default function QuickButtonsPage() {
               </div>
 
               <div className="flex gap-3 mt-6">
-                <button onClick={() => setShowForm(false)} className="flex-1 btn btn-secondary">
+                <UiButton variant="secondary" onClick={() => setShowForm(false)} className="flex-1 btn btn-secondary">
                   取消
-                </button>
-                <button onClick={handleSaveButton} className="flex-1 btn btn-primary">
+                </UiButton>
+                <UiButton variant="primary" onClick={handleSaveButton} className="flex-1 btn btn-primary">
                   确定
-                </button>
+                </UiButton>
               </div>
-            </div>
-          </div>
+            </UiCard>
+          </UiModal>
         )}
 
         {/* Buttons List */}
-        <div className="card overflow-hidden">
+        <UiCard className="card overflow-hidden">
           {buttons.length === 0 ? (
             <div className="py-12 text-center text-[var(--color-text-muted)]">
               暂无快捷按钮，点击"添加按钮"创建
@@ -325,13 +327,13 @@ export default function QuickButtonsPage() {
                   className={`p-4 flex items-start gap-4 ${!btn.active ? 'opacity-50' : ''}`}
                 >
                   <div className="flex flex-col gap-1">
-                    <button
+                    <UiButton variant="plain"
                       onClick={() => moveButton(index, 'up')}
                       disabled={index === 0}
                       className="p-1 text-[var(--color-text-hint)] hover:text-[var(--color-text-primary)] disabled:opacity-30"
                     >
                       <GripVertical className="w-4 h-4" />
-                    </button>
+                    </UiButton>
                   </div>
 
                   <div className="flex-1 min-w-0">
@@ -345,33 +347,33 @@ export default function QuickButtonsPage() {
                   </div>
 
                   <div className="flex items-center gap-1">
-                    <button
+                    <UiButton variant="plain"
                       onClick={() => openEditForm(index)}
                       className="p-1.5 rounded-lg text-[var(--color-text-hint)] hover:text-[var(--color-gold)] hover:bg-[var(--color-bg-elevated)] transition-colors"
                       title="编辑"
                     >
                       <Edit3 className="w-4 h-4" />
-                    </button>
-                    <button
+                    </UiButton>
+                    <UiButton variant="plain"
                       onClick={() => toggleActive(index)}
                       className="p-1.5 rounded-lg text-[var(--color-text-hint)] hover:text-[var(--color-gold)] hover:bg-[var(--color-bg-elevated)] transition-colors"
                       title={btn.active ? '禁用' : '启用'}
                     >
                       {btn.active ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
-                    </button>
-                    <button
+                    </UiButton>
+                    <UiButton variant="plain"
                       onClick={() => deleteButton(index)}
                       className="p-1.5 rounded-lg text-[var(--color-text-hint)] hover:text-[var(--color-primary)] hover:bg-[var(--color-bg-elevated)] transition-colors"
                       title="删除"
                     >
                       <Trash2 className="w-4 h-4" />
-                    </button>
+                    </UiButton>
                   </div>
                 </div>
               ))}
             </div>
           )}
-        </div>
+        </UiCard>
       </div>
     </main>
   );

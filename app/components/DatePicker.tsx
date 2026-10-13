@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton } from '@/app/components/ui';
+
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { DateTimeTheme, dateTimeThemes } from './form/dateTimeThemes';
@@ -196,8 +198,8 @@ export function IOSWheelDate({
           已选 <span className={`ml-1 ${themeConfig.selectedText}`}>{y}年{pad(m)}月{pad(d)}日</span>
         </div>
         <div className="flex gap-2">
-          <button onClick={clear} className={`rounded-lg border px-2.5 py-1.5 text-xs ${themeConfig.popupButtonSecondary}`}>清空</button>
-          <button onClick={() => confirm()} className={`rounded-lg px-3 py-1.5 text-xs font-medium ${themeConfig.popupButton}`}>完成</button>
+          <UiButton variant="plain" onClick={clear} className={`rounded-lg border px-2.5 py-1.5 text-xs ${themeConfig.popupButtonSecondary}`}>清空</UiButton>
+          <UiButton variant="plain" onClick={() => confirm()} className={`rounded-lg px-3 py-1.5 text-xs font-medium ${themeConfig.popupButton}`}>完成</UiButton>
         </div>
       </div>
 
@@ -293,7 +295,7 @@ export function IOSWheelDate({
 
   return (
     <div className="relative">
-      <button
+      <UiButton variant="plain"
         ref={triggerRef}
         type="button"
         disabled={disabled}
@@ -304,7 +306,7 @@ export function IOSWheelDate({
         aria-label="选择日期"
       >
         {display}
-      </button>
+      </UiButton>
 
       {open && (attachToBody ? createPortal(popup, document.body) : <div className="absolute left-0 right-0 mt-2">{popup}</div>)}
     </div>

@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton } from '@/app/components/ui';
+
 
 import Link from 'next/link';
 import { ArrowLeft, ArrowUpRight, ChevronRight, FileText, History, Loader2, LogOut, MessageSquare, Settings } from 'lucide-react';
@@ -70,7 +72,7 @@ export default function AccountOverview({ user, quota, quotaLoading, quotaError,
             ) : quotaError || !quota ? (
               <div className={styles.quotaPlaceholder}>
                 <p className={styles.secondary}>{quotaError || '暂时无法获取额度'}</p>
-                <button type="button" className={styles.textButton} onClick={onRetry}>重新加载</button>
+                <UiButton variant="plain" type="button" className={styles.textButton} onClick={onRetry}>重新加载</UiButton>
               </div>
             ) : quota.is_unlimited ? (
               <>
@@ -119,10 +121,10 @@ export default function AccountOverview({ user, quota, quotaLoading, quotaError,
 
       <footer className={styles.accountFooter}>
         <Link href="/" className={styles.back}><ArrowLeft size={16} aria-hidden="true" />返回首页</Link>
-        <button type="button" className={styles.logout} onClick={onLogout} disabled={loggingOut}>
+        <UiButton variant="plain" type="button" className={styles.logout} onClick={onLogout} disabled={loggingOut}>
           {loggingOut ? <Loader2 size={16} className={styles.spinner} aria-hidden="true" /> : <LogOut size={16} aria-hidden="true" />}
           {loggingOut ? '正在退出…' : '退出登录'}
-        </button>
+        </UiButton>
         {logoutError && <p className={styles.logoutError} role="alert">{logoutError}</p>}
       </footer>
     </div>

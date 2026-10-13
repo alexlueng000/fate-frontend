@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton, Card as UiCard, Input as UiInput, Select as UiSelect } from '@/app/components/ui';
+
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -158,12 +160,12 @@ export default function FeedbacksPage() {
         </div>
 
         {/* Filters */}
-        <div className="card p-4 mb-6">
+        <UiCard className="card p-4 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* 搜索 */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-muted)]" />
-              <input
+              <UiInput
                 type="text"
                 placeholder="搜索内容、用户..."
                 value={searchTerm}
@@ -173,7 +175,7 @@ export default function FeedbacksPage() {
             </div>
 
             {/* 状态筛选 */}
-            <select
+            <UiSelect
               value={statusFilter}
               onChange={(e) => {
                 setStatusFilter(e.target.value);
@@ -185,10 +187,10 @@ export default function FeedbacksPage() {
               {Object.entries(STATUS_MAP).map(([key, { label }]) => (
                 <option key={key} value={key}>{label}</option>
               ))}
-            </select>
+            </UiSelect>
 
             {/* 类型筛选 */}
-            <select
+            <UiSelect
               value={typeFilter}
               onChange={(e) => {
                 setTypeFilter(e.target.value);
@@ -200,17 +202,17 @@ export default function FeedbacksPage() {
               {Object.entries(TYPE_MAP).map(([key, { label }]) => (
                 <option key={key} value={key}>{label}</option>
               ))}
-            </select>
+            </UiSelect>
           </div>
-        </div>
+        </UiCard>
 
         {/* Feedback List */}
         <div className="space-y-4">
           {filteredFeedbacks.length === 0 ? (
-            <div className="card p-12 text-center">
+            <UiCard className="card p-12 text-center">
               <MessageSquare className="w-12 h-12 text-[var(--color-text-hint)] mx-auto mb-4" />
               <p className="text-[var(--color-text-muted)]">暂无反馈</p>
-            </div>
+            </UiCard>
           ) : (
             filteredFeedbacks.map((feedback) => {
               const statusInfo = STATUS_MAP[feedback.status] || STATUS_MAP.pending;
@@ -288,23 +290,23 @@ export default function FeedbacksPage() {
         {/* Pagination */}
         {total > pageSize && (
           <div className="mt-8 flex items-center justify-center gap-2">
-            <button
+            <UiButton variant="plain"
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page === 1}
               className="px-4 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-elevated)] text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               上一页
-            </button>
+            </UiButton>
             <span className="text-[var(--color-text-muted)]">
               第 {page} / {Math.ceil(total / pageSize)} 页
             </span>
-            <button
+            <UiButton variant="plain"
               onClick={() => setPage(p => Math.min(Math.ceil(total / pageSize), p + 1))}
               disabled={page >= Math.ceil(total / pageSize)}
               className="px-4 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-elevated)] text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               下一页
-            </button>
+            </UiButton>
           </div>
         )}
       </div>

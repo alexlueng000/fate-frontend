@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton, Card as UiCard, Modal as UiModal } from '@/app/components/ui';
+
 
 import { useEffect, useState, useRef, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -135,7 +137,7 @@ function TryPageContent() {
   if (error) {
     return (
       <main className="min-h-screen flex items-center justify-center px-4">
-        <div className="card p-8 max-w-md text-center">
+        <UiCard className="card p-8 max-w-md text-center">
           <div className="w-16 h-16 rounded-full bg-[var(--color-primary)]/20 flex items-center justify-center mx-auto mb-4">
             <Info className="w-8 h-8 text-[var(--color-primary)]" />
           </div>
@@ -146,7 +148,7 @@ function TryPageContent() {
           <Link href="/" className="btn btn-primary">
             返回首页
           </Link>
-        </div>
+        </UiCard>
       </main>
     );
   }
@@ -184,7 +186,7 @@ function TryPageContent() {
         {/* Dashboard Section */}
         <section className="mb-6 sm:mb-8">
           {/* Four Pillars Card */}
-          <div className="card p-3 sm:p-6">
+          <UiCard className="card p-3 sm:p-6">
             <h2 className="text-base sm:text-lg font-semibold text-[var(--color-gold)] mb-3 sm:mb-4 flex items-center gap-2 whitespace-nowrap" style={{ fontFamily: 'var(--font-display)' }}>
               <span className="w-1 h-5 bg-[var(--color-gold)] rounded-full flex-shrink-0" />
               四柱命盘
@@ -240,7 +242,7 @@ function TryPageContent() {
                 </div>
               </div>
             )}
-          </div>
+          </UiCard>
         </section>
 
         {/* AI Analysis Section */}
@@ -298,12 +300,9 @@ function TryPageContent() {
 
       {/* Register Modal */}
       {showRegisterModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
-          <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            onClick={() => setShowRegisterModal(false)}
-          />
-          <div className="relative card p-6 sm:p-8 max-w-md w-full animate-scale-in">
+        <UiModal open bare onClose={() => setShowRegisterModal(false)} title="保存解读" size="md">
+
+          <UiCard className="relative card p-6 sm:p-8 max-w-md w-full animate-scale-in">
             <div className="text-center">
               <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-gold)] flex items-center justify-center mx-auto mb-3 sm:mb-4">
                 <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
@@ -323,16 +322,16 @@ function TryPageContent() {
                 <Link href="/login" className="btn btn-ghost w-full py-2.5 sm:py-3 text-sm sm:text-base">
                   已有账号？立即登录
                 </Link>
-                <button
+                <UiButton variant="plain"
                   onClick={() => setShowRegisterModal(false)}
                   className="text-xs sm:text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] transition-colors"
                 >
                   稍后再说
-                </button>
+                </UiButton>
               </div>
             </div>
-          </div>
-        </div>
+          </UiCard>
+        </UiModal>
       )}
     </main>
   );

@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton } from '@/app/components/ui';
+
 
 import TimeCorrectionNotice from '@/app/components/chat/TimeCorrectionNotice';
 
@@ -246,9 +248,9 @@ export default function ReportPage() {
       <div className="min-h-screen bg-[var(--color-bg)] flex items-center justify-center p-6">
         <div className="text-center">
           <div className="text-[var(--color-primary)] mb-4">{error}</div>
-          <button onClick={() => router.push('/profile/create')} className="btn btn-primary">
+          <UiButton variant="primary" onClick={() => router.push('/profile/create')} className="btn btn-primary">
             返回建档
-          </button>
+          </UiButton>
         </div>
       </div>
     );
@@ -363,7 +365,7 @@ export default function ReportPage() {
           {error && !aiReport && (
             <div className="py-12 text-center text-[var(--color-primary)]" role="alert">
               <p>{error}</p><p className="mt-3 text-sm text-[var(--color-text-muted)]">重新加载会先检查已保存的报告。</p>
-              <button className="reading-pill mt-4" onClick={() => setRetry(value => value + 1)}>重新加载报告</button>
+              <UiButton variant="plain" className="reading-pill mt-4" onClick={() => setRetry(value => value + 1)}>重新加载报告</UiButton>
             </div>
           )}
         </section>
@@ -375,7 +377,7 @@ export default function ReportPage() {
           </h2>
           <div className="mt-5 space-y-3">
             {questions.map((question, index) => (
-              <button
+              <UiButton variant="plain"
                 key={question}
                 type="button"
                 onClick={() => handleStartChat(question, 'question')}
@@ -388,17 +390,17 @@ export default function ReportPage() {
                 <span className="text-sm leading-6 text-[var(--color-text-body)]">
                   {question}
                 </span>
-              </button>
+              </UiButton>
             ))}
           </div>
           <div className="mt-6 text-center">
-          <button
+          <UiButton variant="primary"
             onClick={() => handleStartChat()}
             disabled={streaming || !conversationId}
             className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {streaming ? '分析中…' : '自己写问题'}
-          </button>
+          </UiButton>
           <p className="mx-auto mt-3 max-w-md text-xs leading-5 text-[var(--color-text-muted)]">
             {aiReport && !conversationId ? '这份历史报告缺少关联会话，暂不能直接追问。你仍可以阅读和复制原报告。' : '继续原报告的对话，补充现实处境，让建议更具体。'}
           </p>

@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton } from '@/app/components/ui';
+
 
 interface SuggestedQuestionsProps {
   questions: string[];
@@ -20,14 +22,14 @@ export function SuggestedQuestions({
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {questions.map((q, idx) => (
-          <button
+          <UiButton variant="primary"
             key={idx}
             onClick={() => onQuestionClick(q)}
             disabled={loading}
             className="text-left px-4 py-3 text-sm rounded-2xl border border-[var(--color-border)]/60 bg-[var(--color-bg-elevated)] hover:border-[var(--color-primary)]/40 hover:bg-[var(--color-primary)]/5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {q}
-          </button>
+          </UiButton>
         ))}
       </div>
     </div>

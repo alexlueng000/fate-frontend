@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton, Modal as UiModal } from '@/app/components/ui';
+
 
 import { useEffect, useState } from 'react';
 import { BookOpen, MessageCircle, User, Sparkles, Target, Archive } from 'lucide-react';
@@ -140,12 +142,12 @@ export default function XinjiPage() {
                   </div>
 
                   {user ? (
-                    <button
+                    <UiButton variant="primary"
                       onClick={() => setShowDialog(true)}
                       className="mt-4 relative overflow-hidden px-8 py-4 bg-[var(--color-primary)] text-[var(--color-text-inverse)] text-lg font-light transition-all duration-300 hover:bg-[var(--color-primary-hover)] hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[var(--color-primary-glow)] rounded-[3px]"
                     >
                       开始记录
-                    </button>
+                    </UiButton>
                   ) : (
                     <div className="mt-4 text-[var(--color-text-muted)] font-light">
                       请先登录以使用心镜灯功能
@@ -289,23 +291,18 @@ export default function XinjiPage() {
 
       {/* History modal */}
       {showHistory && (
-        <div
-          className="fixed inset-0 bg-[var(--color-text-primary)]/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="history-title"
-        >
+        <UiModal open bare onClose={() => setShowHistory(false)} title="历史记录" size="wide" aria-labelledby="history-title">
           <div className="bg-[var(--color-bg)] max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-[var(--shadow-lg)] flex flex-col rounded-[4px]">
             {/* Header */}
             <div className="relative border-b border-[var(--color-border)] p-6">
               <h2 id="history-title" className="text-2xl font-[var(--font-display)] text-[var(--color-text-primary)]">历史记录</h2>
-              <button
+              <UiButton variant="icon"
                 onClick={() => setShowHistory(false)}
                 className="absolute top-6 right-6 w-11 h-11 flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[var(--color-primary-glow)] rounded-[3px]"
                 aria-label="关闭历史记录"
               >
                 ✕
-              </button>
+              </UiButton>
             </div>
 
             {/* Records list */}
@@ -363,7 +360,7 @@ export default function XinjiPage() {
               )}
             </div>
           </div>
-        </div>
+        </UiModal>
       )}
     </div>
   );

@@ -1,4 +1,6 @@
 'use client';
+import { Card as UiCard } from '@/app/components/ui';
+
 
 import { ReactNode } from 'react';
 import { WuxingRadar, DayunTimeline, MetricCard } from '@/app/components/charts';
@@ -43,12 +45,12 @@ interface DashboardProps {
 export default function Dashboard({ paipan, currentAge = 30, children }: DashboardProps) {
   if (!paipan) {
     return (
-      <div className="card p-8 text-center">
+      <UiCard className="card p-8 text-center">
         <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-[var(--color-bg-elevated)] flex items-center justify-center text-2xl">
           🔮
         </div>
         <p className="text-[var(--color-text-secondary)]">请先完成排盘以查看命盘数据</p>
-      </div>
+      </UiCard>
     );
   }
 
@@ -71,7 +73,7 @@ export default function Dashboard({ paipan, currentAge = 30, children }: Dashboa
   return (
     <div className="space-y-6">
       {/* 四柱命盘 */}
-      <div className="card p-4">
+      <UiCard className="card p-4">
         <h3 className="text-sm font-medium text-[var(--color-gold)] mb-4">四柱命盘</h3>
         <div className="grid grid-cols-4 gap-3">
           <PillarCard pillar={four_pillars.year} label="年柱" />
@@ -79,7 +81,7 @@ export default function Dashboard({ paipan, currentAge = 30, children }: Dashboa
           <PillarCard pillar={four_pillars.day} label="日柱" highlight />
           <PillarCard pillar={four_pillars.hour} label="时柱" />
         </div>
-      </div>
+      </UiCard>
 
       {/* 指标卡片 + 五行雷达图 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -97,18 +99,18 @@ export default function Dashboard({ paipan, currentAge = 30, children }: Dashboa
             color="gold"
           />
         </div>
-        <div className="card p-4">
+        <UiCard className="card p-4">
           <h3 className="text-sm font-medium text-[var(--color-gold)] mb-2">五行分布</h3>
           <WuxingRadar data={wuxingData} />
-        </div>
+        </UiCard>
       </div>
 
       {/* 大运时间轴 */}
       {dayun && dayun.length > 0 && (
-        <div className="card p-4">
+        <UiCard className="card p-4">
           <h3 className="text-sm font-medium text-[var(--color-gold)] mb-4">大运流年</h3>
           <DayunTimeline data={dayun} currentAge={currentAge} />
-        </div>
+        </UiCard>
       )}
 
       {children}

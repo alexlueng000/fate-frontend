@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton, Textarea as UiTextarea } from '@/app/components/ui';
+
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
@@ -122,7 +124,7 @@ export function RelationshipTaskCard({ task, onTaskUpdate }: RelationshipTaskCar
             <span className="mb-2 block text-xs font-medium text-[var(--color-text-primary)]">
               今天有什么新进展？
             </span>
-            <textarea
+            <UiTextarea
               value={progress}
               onChange={(event) => setProgress(event.target.value)}
               rows={3}
@@ -131,15 +133,15 @@ export function RelationshipTaskCard({ task, onTaskUpdate }: RelationshipTaskCar
             />
           </label>
           <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-            <button
+            <UiButton variant="primary"
               type="button"
               onClick={saveProgress}
               disabled={!progress.trim() || isSaving}
               className="inline-flex min-h-10 items-center justify-center rounded-[3px] bg-[var(--color-primary)] px-4 text-sm font-medium text-[var(--color-text-inverse)] transition-colors hover:bg-[var(--color-primary-hover)] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSaving ? '保存中' : '保存进展'}
-            </button>
-            <button
+            </UiButton>
+            <UiButton variant="plain"
               type="button"
               onClick={() => {
                 setProgress('');
@@ -148,7 +150,7 @@ export function RelationshipTaskCard({ task, onTaskUpdate }: RelationshipTaskCar
               className="inline-flex min-h-10 items-center justify-center rounded-[3px] px-4 text-sm font-medium text-[var(--color-primary)] transition-colors hover:bg-[var(--color-bg-hover)]"
             >
               取消
-            </button>
+            </UiButton>
           </div>
         </div>
       )}
@@ -161,15 +163,15 @@ export function RelationshipTaskCard({ task, onTaskUpdate }: RelationshipTaskCar
           继续这个任务
           <ArrowRight className="h-4 w-4" strokeWidth={1.6} />
         </Link>
-        <button
+        <UiButton variant="plain"
           type="button"
           onClick={() => setIsRecording((current) => !current)}
           className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[3px] px-4 text-sm font-medium text-[var(--color-primary)] transition-colors hover:bg-[var(--color-bg-hover)] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)]"
         >
           <PenLine className="h-4 w-4" strokeWidth={1.6} />
           记录进展
-        </button>
-        <button
+        </UiButton>
+        <UiButton variant="plain"
           type="button"
           onClick={scheduleReview}
           disabled={isScheduling}
@@ -177,7 +179,7 @@ export function RelationshipTaskCard({ task, onTaskUpdate }: RelationshipTaskCar
         >
           <CalendarClock className="h-4 w-4" strokeWidth={1.6} />
           {isScheduling ? '设置中' : '3天后复盘'}
-        </button>
+        </UiButton>
         <Link
           href="/relationship"
           className="inline-flex min-h-11 items-center justify-center rounded-[3px] px-4 text-sm font-medium text-[var(--color-primary)] transition-colors hover:bg-[var(--color-bg-hover)] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[rgba(181,68,52,0.12)]"

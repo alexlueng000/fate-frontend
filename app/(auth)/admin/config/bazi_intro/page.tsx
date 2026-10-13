@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton, Input as UiInput, Textarea as UiTextarea } from '@/app/components/ui';
+
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
@@ -168,20 +170,20 @@ export default function BaziIntroPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <button onClick={() => loadConfig()} className="btn btn-secondary p-2" title="刷新">
+            <UiButton variant="secondary" onClick={() => loadConfig()} className="btn btn-secondary p-2" title="刷新">
               <RefreshCw className="w-5 h-5" />
-            </button>
-            <button onClick={useDefaultIntro} className="btn btn-secondary" type="button">
+            </UiButton>
+            <UiButton variant="secondary" onClick={useDefaultIntro} className="btn btn-secondary" type="button">
               使用默认文案
-            </button>
-            <button
+            </UiButton>
+            <UiButton variant="primary"
               onClick={saveConfig}
               disabled={saving || !hasChanges}
               className="btn btn-primary"
             >
               {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
               保存
-            </button>
+            </UiButton>
           </div>
         </div>
 
@@ -201,7 +203,7 @@ export default function BaziIntroPage() {
           <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-2">
             开场白内容
           </label>
-          <textarea
+          <UiTextarea
             value={content}
             onChange={(event) => updateContent(event.target.value)}
             className="w-full min-h-[360px] resize-y rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-5 py-4 text-base leading-8 text-[var(--color-text-primary)] shadow-inner transition focus:border-[var(--color-primary)] focus:outline-none focus:ring-4 focus:ring-[var(--color-primary)]/10"
@@ -211,7 +213,7 @@ export default function BaziIntroPage() {
           <label className="block text-sm font-medium text-[var(--color-text-secondary)] mt-5 mb-2">
             备注
           </label>
-          <input
+          <UiInput
             value={notes}
             onChange={(event) => updateNotes(event.target.value)}
             className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-4 py-3 text-base text-[var(--color-text-primary)] transition focus:border-[var(--color-primary)] focus:outline-none focus:ring-4 focus:ring-[var(--color-primary)]/10"

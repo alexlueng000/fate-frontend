@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton } from '@/app/components/ui';
+
 
 import TimeCorrectionNotice from '@/app/components/chat/TimeCorrectionNotice';
 import { ReadingLink } from '@/app/components/consultation/ReadingLink';
@@ -70,32 +72,32 @@ function HeaderMenu({
       aria-orientation="vertical"
       className="absolute right-0 top-11 z-50 min-w-[160px] rounded-[var(--radius-lg)] overflow-hidden border border-[var(--color-border)] bg-[var(--color-bg-elevated)] shadow-[var(--shadow-lg)]"
     >
-      <button
+      <UiButton variant="plain"
         role="menuitem"
         onClick={onReport}
         className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] focus-visible:bg-[var(--color-bg-hover)] focus-visible:outline-none transition-colors text-left"
       >
         <FileText className="w-4 h-4 text-[var(--color-text-muted)] flex-shrink-0" aria-hidden />
         查看命理报告
-      </button>
+      </UiButton>
       <div className="h-px bg-[var(--color-border)]" role="separator" />
-      <button
+      <UiButton variant="plain"
         role="menuitem"
         onClick={onEditProfile}
         className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] focus-visible:bg-[var(--color-bg-hover)] focus-visible:outline-none transition-colors text-left"
       >
         <Edit3 className="w-4 h-4 text-[var(--color-text-muted)] flex-shrink-0" aria-hidden />
         修改资料
-      </button>
+      </UiButton>
       <div className="h-px bg-[var(--color-border)]" role="separator" />
-      <button
+      <UiButton variant="plain"
         role="menuitem"
         onClick={onClear}
         className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-[var(--color-primary)] hover:bg-[var(--color-bg-hover)] focus-visible:bg-[var(--color-bg-hover)] focus-visible:outline-none transition-colors text-left"
       >
         <Trash2 className="w-4 h-4 text-[var(--color-primary)] flex-shrink-0" aria-hidden />
         清空对话
-      </button>
+      </UiButton>
     </div>
   );
 }
@@ -647,7 +649,7 @@ export default function PanelPage() {
             <h1 className="font-serif text-xl sm:text-2xl leading-relaxed">{taskContext?.title || '从你在意的一件事开始'}</h1>
           </div>
           <div className="reading-tools">
-            <ContextDrawer title="命盘与背景" description="查看本次解读使用的档案、排盘说明与现实背景。" trigger={<button className="reading-pill">命盘与背景</button>}>
+            <ContextDrawer title="命盘与背景" description="查看本次解读使用的档案、排盘说明与现实背景。" trigger={<UiButton variant="plain" className="reading-pill">命盘与背景</UiButton>}>
               <p className="mb-5 text-sm leading-7">{savedChart
                 ? `本次会话保存的命盘${typeof savedChart.solar_date === 'string' ? ` · 排盘时间 ${savedChart.solar_date}` : ''}`
                 : `${genderLabel} · ${profile?.birth_date || ''} · ${profile?.birth_time?.slice(0, 5) || ''} · ${profile?.birth_location || ''}`}</p>
@@ -662,13 +664,13 @@ export default function PanelPage() {
               <ReadingLink conversationId={conversationId} />
             </ContextDrawer>
             <QuotaBar type="chat" refreshKey={quotaRefreshKey} compact />
-            <button type="button" className="reading-pill inline-flex items-center gap-1.5"
+            <UiButton variant="plain" type="button" className="reading-pill inline-flex items-center gap-1.5"
               disabled={booting || !conversationId || loading || turn.busy || turn.blocked}
               onClick={() => { setShowMenu(false); setClearDialogOpen(true); }}>
               <Trash2 size={14} aria-hidden />清空对话
-            </button>
+            </UiButton>
             <div className="relative" ref={menuRefCollapsed}>
-              <button aria-label="更多操作" aria-haspopup="menu" aria-expanded={showMenu} className="consult-icon-button" onClick={() => setShowMenu(v => !v)} onKeyDown={e => { if (e.key === 'Escape') setShowMenu(false); }}><MoreVertical size={18} /></button>
+              <UiButton variant="plain" aria-label="更多操作" aria-haspopup="menu" aria-expanded={showMenu} className="consult-icon-button" onClick={() => setShowMenu(v => !v)} onKeyDown={e => { if (e.key === 'Escape') setShowMenu(false); }}><MoreVertical size={18} /></UiButton>
               {showMenu && <HeaderMenu id="panel-header-menu" onReport={() => { setShowMenu(false); router.push('/report'); }} onEditProfile={() => { setShowMenu(false); router.push('/profile/edit?returnTo=/panel'); }} onClear={() => { setShowMenu(false); setClearDialogOpen(true); }} />}
             </div>
           </div>
@@ -685,7 +687,7 @@ export default function PanelPage() {
             <p className="reading-welcome-copy">可以从一个困惑、一段关系，或一个新的选择聊起。结合你的命盘，我们一起整理思路，找到可以尝试的下一步。</p>
             <Link href="/career" className="reading-career-card"><span><span className="block font-serif text-xl">把事业问题想清楚</span><span className="mt-2 block text-sm text-[var(--color-text-secondary)]">职业方向、工作瓶颈，或一个正在犹豫的机会</span></span><ArrowUpRight size={22} /></Link>
             <p className="mb-3 mt-7 text-xs text-[var(--color-text-muted)]">也可以从这里聊起</p>
-            <div className="flex flex-wrap gap-2">{quickButtons.slice(0, 4).map(button => <button className="reading-pill" key={button.label} disabled={!canUseQuick} onClick={() => sendQuick(button.label, button.prompt)}>{button.label}</button>)}</div>
+            <div className="flex flex-wrap gap-2">{quickButtons.slice(0, 4).map(button => <UiButton variant="plain" className="reading-pill" key={button.label} disabled={!canUseQuick} onClick={() => sendQuick(button.label, button.prompt)}>{button.label}</UiButton>)}</div>
           </div>
         </div> : <MessageList
           conversationId={conversationId}
@@ -702,7 +704,7 @@ export default function PanelPage() {
           loading={loading || turn.blocked || turn.busy}
         />}
         {showBackToTop && (
-          <button
+          <UiButton variant="icon"
             type="button"
             onClick={() => scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
             aria-label="回到对话顶部"
@@ -711,7 +713,7 @@ export default function PanelPage() {
           >
             <ArrowUp className="h-5 w-5" aria-hidden="true" />
             <span className="hidden sm:inline">回到顶部</span>
-          </button>
+          </UiButton>
         )}
       </div>
 

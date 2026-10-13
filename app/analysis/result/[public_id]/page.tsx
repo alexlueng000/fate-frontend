@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton } from '@/app/components/ui';
+
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
@@ -191,7 +193,7 @@ export default function GuestAnalysisResultPage() {
               首轮解读可以完整查看。想把它保存下来，或围绕事业、感情、财富继续追问时，再登录即可。
             </p>
             <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-              <button
+              <UiButton variant="primary"
                 type="button"
                 onClick={bindAndContinue}
                 disabled={binding}
@@ -199,7 +201,7 @@ export default function GuestAnalysisResultPage() {
               >
                 {binding ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Save className="h-4 w-4" aria-hidden />}
                 保存并继续追问
-              </button>
+              </UiButton>
               {!user && (
                 <Link href={registerHref} className="btn btn-secondary">
                   注册后保存这份分析
@@ -289,7 +291,7 @@ export default function GuestAnalysisResultPage() {
             这份首轮解读已经完整生成。登录或注册后可以保存结果，并围绕同一张命盘继续追问，不需要重新填写出生信息。
           </p>
           <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-            <button
+            <UiButton variant="primary"
               type="button"
               onClick={bindAndContinue}
               disabled={binding}
@@ -297,7 +299,7 @@ export default function GuestAnalysisResultPage() {
             >
               {binding ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <ArrowRight className="h-4 w-4" aria-hidden />}
               保存并继续追问
-            </button>
+            </UiButton>
             <Link href="/analysis/start" className="btn btn-secondary">
               <RefreshCw className="h-4 w-4" aria-hidden />
               重新分析

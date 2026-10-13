@@ -1,4 +1,6 @@
 "use client";
+import { Card as UiCard } from '@/app/components/ui';
+
 
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
@@ -106,12 +108,12 @@ export default function FeatureCard({
   );
 
   const visualContent = (
-    <div
+    <UiCard
       className="card flex items-center justify-center p-6 md:p-8"
       style={{ minHeight: "320px" }}
     >
       {visual}
-    </div>
+    </UiCard>
   );
 
   return (

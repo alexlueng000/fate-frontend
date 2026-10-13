@@ -1,6 +1,7 @@
 'use client';
+import { Button as UiButton, Modal as UiModal } from '@/app/components/ui';
 
-import { useEffect } from 'react';
+
 import Link from 'next/link';
 import { AlertTriangle, CheckCircle2 } from 'lucide-react';
 
@@ -37,30 +38,12 @@ const DECLARATION_ITEMS = [
 ] as const;
 
 export function DisclaimerModal({ open, onAccept }: DisclaimerModalProps) {
-  // 禁用 body 滚动
-  useEffect(() => {
-    if (open) {
-      document.body.style.overflow = 'hidden';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [open]);
-
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-      {/* 背景遮罩 - 不可点击关闭 */}
-      <div
-        className="absolute inset-0 backdrop-blur-[2px]"
-        style={{ background: 'rgba(42, 37, 34, 0.66)' }}
-      />
-
+    <UiModal open bare onClose={onAccept} title="服务声明" size="xl" dismissible={false} aria-labelledby="disclaimer-title">
       {/* 弹窗内容 */}
       <div
-        role="dialog"
-        aria-modal="true"
         aria-labelledby="disclaimer-title"
         className="relative flex h-[78dvh] max-h-[680px] min-h-0 w-full max-w-3xl animate-scale-in flex-col overflow-hidden border border-[var(--color-border)] bg-[var(--color-bg-card)] shadow-[var(--shadow-lg)] sm:h-auto sm:max-h-[min(760px,calc(100dvh-3rem))]"
       >
@@ -131,17 +114,17 @@ export function DisclaimerModal({ open, onAccept }: DisclaimerModalProps) {
 
         {/* 同意按钮 */}
         <div className="flex-shrink-0 border-t border-[var(--color-border)] bg-[var(--color-bg-card)] px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-8 sm:py-5">
-          <button
+          <UiButton variant="primary"
             onClick={onAccept}
             className="btn btn-primary min-h-11 w-full text-[1rem] font-medium"
           >
             我已阅读并同意
-          </button>
+          </UiButton>
           <p className="mt-2 text-center text-[0.75rem] leading-5 text-[var(--color-text-hint)] sm:mt-3">
             点击同意后，本声明将记录在当前浏览器中；清除浏览器数据后可能会再次提示。
           </p>
         </div>
       </div>
-    </div>
+    </UiModal>
   );
 }

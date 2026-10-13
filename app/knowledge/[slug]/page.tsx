@@ -1,3 +1,5 @@
+
+import { Card as UiCard } from '@/app/components/ui';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Clock, ChevronRight } from 'lucide-react';
@@ -67,9 +69,9 @@ export default async function ArticlePage({ params }: Props) {
           </div>
 
           {/* 摘要 */}
-          <div className="card p-5 mb-8 bg-[var(--color-bg-deep)] border-l-4 border-[var(--color-gold)]">
+          <UiCard className="card p-5 mb-8 bg-[var(--color-bg-deep)] border-l-4 border-[var(--color-gold)]">
             <p className="text-[var(--color-text-secondary)] leading-relaxed text-sm">{article.summary}</p>
-          </div>
+          </UiCard>
 
           {/* 正文 */}
           <ArticleContent content={article.content} />
@@ -78,7 +80,7 @@ export default async function ArticlePage({ params }: Props) {
           <div className="my-12 border-t border-[var(--color-border)]" />
 
           {/* 引导测算 */}
-          <div className="card p-8 text-center mb-12 bg-gradient-to-br from-[var(--color-bg-deep)] to-white">
+          <UiCard className="card p-8 text-center mb-12 bg-gradient-to-br from-[var(--color-bg-deep)] to-white">
             <p className="text-lg font-medium text-[var(--color-text-primary)] mb-2">
               了解了命理基础，试试分析你的八字
             </p>
@@ -92,7 +94,7 @@ export default async function ArticlePage({ params }: Props) {
               免费生成我的命盘
               <ChevronRight className="w-4 h-4" />
             </Link>
-          </div>
+          </UiCard>
 
           {/* 相关文章 */}
           {related.length > 0 && (
@@ -101,7 +103,7 @@ export default async function ArticlePage({ params }: Props) {
               <div className="grid sm:grid-cols-2 gap-4">
                 {related.map((a) => (
                   <Link key={a.slug} href={`/knowledge/${a.slug}`} className="block group">
-                    <div className="card p-5 hover:shadow-md transition-shadow">
+                    <UiCard className="card p-5 hover:shadow-md transition-shadow">
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${categoryColors[a.category]}`}>
                         {a.category}
                       </span>
@@ -109,7 +111,7 @@ export default async function ArticlePage({ params }: Props) {
                         {a.title}
                       </h3>
                       <p className="text-xs text-[var(--color-text-muted)]">{a.subtitle}</p>
-                    </div>
+                    </UiCard>
                   </Link>
                 ))}
               </div>

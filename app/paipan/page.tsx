@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton, Input as UiInput, Select as UiSelect } from '@/app/components/ui';
+
 
 import TimeCorrectionNotice from '@/app/components/chat/TimeCorrectionNotice';
 
@@ -42,7 +44,7 @@ export default function Page() {
       const endpoint = API_BASE
         ? `${API_BASE}/bazi/calc_paipan`
         : `/api/bazi/calc_paipan`;
-  
+
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -115,7 +117,7 @@ export default function Page() {
   const detailedPaipan = mingpan ? calculateDetailedPaipan(mingpan) : null;
 
   return (
-    <main className="min-h-screen bg-[#f6f1e8] p-6 sm:p-10">
+    <main className="min-h-screen bg-[var(--color-bg)] p-6 sm:p-10">
       <div className="mx-auto w-full max-w-5xl space-y-6">
 
         {/* ===== 信息输入表单 ===== */}
@@ -124,7 +126,7 @@ export default function Page() {
           <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="text-sm text-stone-600">性别</label>
-              <select
+              <UiSelect
                 value={gender}
                 onChange={(e) => setGender(e.target.value as Gender)}
                 className="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm
@@ -132,12 +134,12 @@ export default function Page() {
               >
                 <option value="男">男</option>
                 <option value="女">女</option>
-              </select>
+              </UiSelect>
             </div>
 
             <div>
               <label className="text-sm text-stone-600">历法</label>
-              <select
+              <UiSelect
                 value={calendar}
                 onChange={(e) => setCalendar(e.target.value as Calendar)}
                 className="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm
@@ -145,12 +147,12 @@ export default function Page() {
               >
                 <option value="gregorian">公历</option>
                 <option value="lunar">农历</option>
-              </select>
+              </UiSelect>
             </div>
 
             <div>
               <label className="text-sm text-stone-600">出生日期</label>
-              <input
+              <UiInput
                 type="date"
                 value={birthDate}
                 onChange={(e) => setBirthDate(e.target.value)}
@@ -161,7 +163,7 @@ export default function Page() {
 
             <div>
               <label className="text-sm text-stone-600">出生时间</label>
-              <input
+              <UiInput
                 type="time"
                 value={birthTime}
                 onChange={(e) => setBirthTime(e.target.value)}
@@ -172,7 +174,7 @@ export default function Page() {
 
             <div className="sm:col-span-2">
               <label className="text-sm text-stone-600">出生地</label>
-              <input
+              <UiInput
                 type="text"
                 value={birthplace}
                 onChange={(e) => setBirthplace(e.target.value)}
@@ -183,14 +185,14 @@ export default function Page() {
             </div>
           </div>
           <div className="mt-6 flex justify-start">
-            <button
+            <UiButton variant="plain"
               onClick={onSubmit}
               disabled={loading || !birthDate || !birthTime || !birthplace}
-              className="rounded-xl bg-rose-600 px-5 py-2 text-sm font-medium text-white 
+              className="rounded-xl bg-rose-600 px-5 py-2 text-sm font-medium text-white
                         shadow hover:bg-rose-700 disabled:bg-rose-300 disabled:cursor-not-allowed"
             >
               {loading ? '计算中…' : '开始排盘'}
-            </button>
+            </UiButton>
           </div>
         </div>
 
@@ -214,16 +216,16 @@ export default function Page() {
         {/* ===== 四柱命盘卡片 ===== */}
         <div className="rounded-3xl bg-white/90 shadow-lg ring-1 ring-black/5">
           <div className="flex items-center justify-between px-6 py-5 border-b border-stone-100">
-            <h2 className="text-lg font-semibold text-[#a83232]">详细排盘</h2>
-            <button
+            <h2 className="text-lg font-semibold text-[var(--color-primary)]">详细排盘</h2>
+            <UiButton variant="plain"
               type="button"
               onClick={goChat}
               disabled={!mingpan}
-              className="rounded-full bg-[#a83232] px-4 py-2 text-sm font-medium text-white hover:bg-[#8c2b2b] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="rounded-full bg-[var(--color-primary)] px-4 py-2 text-sm font-medium text-white hover:bg-[#8c2b2b] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               title={!mingpan ? '请先提交计算' : '跳转到对话页'}
             >
               💬 咨询解读
-            </button>
+            </UiButton>
           </div>
 
           <div className="px-6 py-6">
@@ -360,7 +362,7 @@ export default function Page() {
         {/* ===== 五行平衡 ===== */}
         {wuxingData && (
           <div className="rounded-3xl bg-white/90 shadow-lg ring-1 ring-black/5 p-6">
-            <h2 className="text-lg font-semibold text-[#a83232] mb-4">五行平衡</h2>
+            <h2 className="text-lg font-semibold text-[var(--color-primary)] mb-4">五行平衡</h2>
             <div className="space-y-3">
               {wuxingData.map(({ name, percent }) => (
                 <div key={name} className="space-y-1">
@@ -383,7 +385,7 @@ export default function Page() {
         {/* ===== 大运 ===== */}
         {mingpan && (
           <div className="rounded-3xl bg-white/90 shadow-lg ring-1 ring-black/5 p-6">
-            <h2 className="text-lg font-semibold text-[#a83232] mb-4">大运</h2>
+            <h2 className="text-lg font-semibold text-[var(--color-primary)] mb-4">大运</h2>
             <div className="flex flex-wrap gap-3">
               {mingpan.dayun.slice(0, 10).map((d, i) => {
                 const ganWuxing = getWuxing(d.pillar[0]);

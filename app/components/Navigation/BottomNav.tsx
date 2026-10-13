@@ -1,4 +1,6 @@
 'use client';
+import { Button as UiButton } from '@/app/components/ui';
+
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -36,14 +38,14 @@ export default function BottomNav() {
                 <p className="text-[15px] font-medium text-[var(--color-text-primary)]">更多功能</p>
                 <p className="mt-1 text-xs text-[var(--color-text-muted)]">意见反馈、命理报告与解读记录</p>
               </div>
-              <button
+              <UiButton variant="icon"
                 type="button"
                 onClick={() => setMoreOpen(false)}
                 aria-label="关闭更多功能"
                 className="flex h-11 w-11 items-center justify-center rounded-[var(--radius-md)] text-[var(--color-text-secondary)]"
               >
                 <X size={20} />
-              </button>
+              </UiButton>
             </header>
             <nav aria-label="更多功能导航" className="grid grid-cols-2 gap-px bg-[var(--color-border)]">
               {MORE_NAV.map(({ href, Icon, longLabel }) => (
@@ -79,7 +81,7 @@ export default function BottomNav() {
               </Link>
             );
           })}
-          <button
+          <UiButton variant="plain"
             type="button"
             onClick={() => setMoreOpen((open) => !open)}
             aria-expanded={moreOpen}
@@ -89,7 +91,7 @@ export default function BottomNav() {
           >
             <MoreHorizontal size={22} strokeWidth={1.5} aria-hidden="true" />
             <span className="text-xs font-medium leading-none">更多</span>
-          </button>
+          </UiButton>
         </nav>
       </div>
     </>
