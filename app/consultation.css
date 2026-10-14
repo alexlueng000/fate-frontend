@@ -59,3 +59,59 @@
 .reading-composer-meta a{display:inline-flex;align-items:center;gap:4px;min-height:30px;color:var(--color-text-secondary)}
 @media(max-width:767px){.reading-header{padding:14px 18px 12px}.reading-header-inner{display:block}.reading-header h1{font-size:18px}.reading-tools{margin-top:10px;gap:6px}.reading-pill{font-size:12px;padding:8px 12px}.reading-welcome-inner{padding:24px 20px}.reading-welcome h2{font-size:28px}.reading-mark{width:46px;height:46px;border-radius:17px}.reading-career-card{padding:19px;border-radius:20px}.reading-messages{padding:20px 12px 28px!important}.reading-footer{padding:8px 12px 10px}.reading-composer{border-radius:22px}.reading-composer-meta>span{display:none}.consult-drawer{border-radius:28px 28px 0 0}}
 @media(prefers-reduced-motion:reduce){.reading-pill,.reading-career-card,.consult-primary,.consult-secondary{transition:none}}
+
+/* Shared reading layout. Keep decoration behind opaque reading surfaces. */
+.reading-workspace{background:var(--color-bg);color:var(--color-text-primary)}
+.reading-panel{background:radial-gradient(ellipse at 80% 8%,rgba(176,138,87,.07),transparent 55%),var(--color-bg)}
+.reading-header{background:rgba(251,248,244,.94);padding:24px 32px}
+.reading-header-inner{justify-content:space-between;align-items:flex-start}
+.reading-header h1{letter-spacing:.025em}
+.reading-header .consult-eyebrow{color:var(--color-text-secondary);font-size:12px}
+.reading-tools{justify-content:flex-end;max-width:50%}
+.reading-welcome-inner{max-width:840px;padding:clamp(28px,6vh,64px) 32px 40px}
+.reading-welcome h2{font-size:clamp(28px,3vw,42px);line-height:1.5;letter-spacing:.02em}
+.reading-welcome-copy{max-width:640px;font-size:16px;line-height:1.85}
+.reading-career-card{padding:26px 28px;background:var(--color-bg-elevated);border-color:var(--color-border);box-shadow:var(--shadow-sm)}
+.reading-career-card:hover{background:var(--color-bg-alt);border-color:var(--color-border-strong)}
+.reading-career-card>svg{flex-shrink:0;color:var(--color-primary)}
+.reading-topics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.reading-topics .reading-pill{min-height:48px;border-radius:16px;background:var(--color-bg-elevated);padding:10px 12px;white-space:normal}
+.reading-messages{padding:28px max(24px,calc((100% - 860px)/2)) 32px!important}
+.consult-reading-section{padding:24px 28px;margin-bottom:16px;border:1px solid var(--color-border);border-radius:20px;background:var(--color-bg-elevated)}
+.consult-reading-section .consult-eyebrow{color:var(--color-primary);font-weight:600;margin-bottom:16px}
+.consult-reading .consult-evidence{padding:2px 24px;margin-bottom:16px}
+.consult-prose{color:var(--color-text-body);line-height:1.9}
+.reading-footer{background:var(--color-bg);padding:12px 24px max(16px,env(safe-area-inset-bottom));border-top:1px solid var(--color-border-subtle)}
+.reading-composer{max-width:860px;background:var(--color-bg-elevated)}
+.reading-composer textarea{font-size:16px;line-height:1.75}
+.liuyao-heading{padding-bottom:24px;border-bottom:1px solid var(--color-border)}
+.liuyao-heading>div{margin-left:0}
+.liuyao-heading p{letter-spacing:.08em}
+.liuyao-entry>div{background:var(--color-bg-elevated);box-shadow:var(--shadow-sm)}
+.liuyao-form fieldset{min-width:0}
+.liuyao-form textarea{min-height:120px;background:var(--color-bg)}
+.liuyao-form input{font-size:16px}
+.liuyao-form button[type=submit]{min-width:220px;min-height:48px}
+.report-workspace>div>header{padding-bottom:24px;border-bottom:1px solid var(--color-border)}
+.report-directory{box-shadow:var(--shadow-sm);padding:24px}
+.report-directory nav button{background:var(--color-bg);line-height:1.65}
+.report-chapter{box-shadow:var(--shadow-sm)}
+.report-chapter-number{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;flex-shrink:0;background:var(--color-bg-alt);border-radius:12px;color:var(--color-primary);font:500 12px var(--font-mono)}
+.report-chapter-body{font-size:16px;line-height:1.9;color:var(--color-text-body);overflow-wrap:anywhere}
+.report-chapter-body p,.report-chapter-body li{line-height:1.9}
+.report-chapter-body>button{background:var(--color-bg);border-radius:999px}
+@media(max-width:767px){
+  .reading-header{padding:18px 20px 14px}
+  .reading-tools{max-width:none;justify-content:flex-start}
+  .reading-welcome-inner{padding:28px 20px}
+  .reading-welcome-copy{font-size:15px}
+  .reading-career-card{padding:20px}
+  .reading-topics{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .consult-reading-section{padding:20px 18px;border-radius:18px}
+  .reading-messages{padding:20px 12px 24px!important}
+  .reading-footer{padding:8px 12px max(10px,env(safe-area-inset-bottom))}
+  .report-directory{padding:18px}
+  .report-chapter-body{font-size:15px}
+  .liuyao-heading{padding-bottom:18px}
+}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}

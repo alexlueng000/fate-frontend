@@ -431,3 +431,6 @@
   .page *,
   .dialog * { scroll-behavior: auto !important; animation: none !important; transition: none !important; }
 }
+
+.form,.skeletonForm{border-radius:18px;box-shadow:var(--shadow-md);background-color:var(--color-bg-elevated);background-image:linear-gradient(rgba(255,252,248,.97),rgba(255,252,248,.97)),url('/images/ink/bamboo.webp');background-position:right bottom;background-size:auto,220px auto;background-repeat:no-repeat}
+.sectionIndex{display:grid;place-items:center;width:28px;height:28px;padding:0;border-radius:50%;background:#f6e5df}

@@ -230,7 +230,7 @@ export default function KBAdminPage() {
   };
 
   return (
-    <main className="min-h-screen pt-20 pb-8 px-4">
+    <main className="min-h-full pt-8 pb-8 px-4">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Back Link */}
         <Link

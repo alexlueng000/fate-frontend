@@ -42,12 +42,12 @@ function LayoutBody({ children }: { children: ReactNode }) {
   };
 
   // 判断是否显示功能导航（只在主功能页面显示）
-  const showFunctionNav = ['/dashboard', '/report', '/panel', '/xinji', '/videos', '/membership'].some(path =>
+  const showFunctionNav = ['/dashboard', '/report', '/panel', '/xinji', '/videos', '/membership', '/history', '/feedback', '/account', '/profile', '/reports', '/chat', '/career', '/relationship'].some(path =>
     pathname === path || pathname.startsWith(path + '/')
   ) || (isLoggedIn && (pathname === '/liuyao' || pathname.startsWith('/liuyao/')));
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="ink-app flex flex-col h-dvh">
       <DisclaimerModal
         open={showDisclaimer}
         onAccept={handleAcceptDisclaimer}
@@ -62,8 +62,8 @@ function LayoutBody({ children }: { children: ReactNode }) {
         {showFunctionNav && <SideNav />}
 
         {/* 主内容区 */}
-        <main className={`flex-1 overflow-auto ${showFunctionNav ? 'mb-16 sm:mb-0' : ''} ${pathname === '/panel' ? 'flex flex-col' : ''}`}>
-          {LOCAL_PREVIEW && <div className="shrink-0"><PreviewBanner /></div>}
+        <main data-area={pathname.startsWith('/admin') ? 'admin' : 'public'} className={`ink-main min-w-0 flex-1 overflow-auto ${showFunctionNav ? 'mb-16 sm:mb-0' : ''} ${pathname === '/panel' ? 'flex flex-col' : ''}`}>
+          {LOCAL_PREVIEW && <div className="ink-preview shrink-0"><PreviewBanner /></div>}
           {children}
         </main>
       </div>

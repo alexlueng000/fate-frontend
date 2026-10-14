@@ -640,7 +640,7 @@ export default function PanelPage() {
 
 
   return (
-    <div className="reading-workspace h-full min-h-0 flex flex-col">
+    <div className="reading-workspace reading-panel min-h-0 flex-1 flex flex-col">
 
       <header className="reading-header">
         <div className="reading-header-inner">
@@ -683,11 +683,11 @@ export default function PanelPage() {
           <div className="reading-welcome-inner">
             <span className="reading-mark"><Sparkles size={25} strokeWidth={1.3} /></span>
             <p className="consult-eyebrow mt-6">给自己一点思考的空间</p>
-            <h2 className="font-serif text-3xl sm:text-4xl leading-snug">最近，有什么事放在心上？</h2>
+            <h2 className="font-serif text-3xl sm:text-4xl leading-snug">最近，有什么事<span className="text-[var(--color-primary)]">放在心上</span>？</h2>
             <p className="reading-welcome-copy">可以从一个困惑、一段关系，或一个新的选择聊起。结合你的命盘，我们一起整理思路，找到可以尝试的下一步。</p>
             <Link href="/career" className="reading-career-card"><span><span className="block font-serif text-xl">把事业问题想清楚</span><span className="mt-2 block text-sm text-[var(--color-text-secondary)]">职业方向、工作瓶颈，或一个正在犹豫的机会</span></span><ArrowUpRight size={22} /></Link>
             <p className="mb-3 mt-7 text-xs text-[var(--color-text-muted)]">也可以从这里聊起</p>
-            <div className="flex flex-wrap gap-2">{quickButtons.slice(0, 4).map(button => <UiButton variant="plain" className="reading-pill" key={button.label} disabled={!canUseQuick} onClick={() => sendQuick(button.label, button.prompt)}>{button.label}</UiButton>)}</div>
+            <div className="reading-topics">{quickButtons.slice(0, 4).map(button => <UiButton variant="plain" className="reading-pill" key={button.label} disabled={!canUseQuick} onClick={() => sendQuick(button.label, button.prompt)}>{button.label}</UiButton>)}</div>
           </div>
         </div> : <MessageList
           conversationId={conversationId}

@@ -89,8 +89,6 @@ export default function Page() {
     }
   };
 
-  const j = (x?: string[]) => (x && x.length ? x.join('') : '（空）');
-
   // 计算五行分布
   const calculateWuxingDistribution = () => {
     if (!mingpan) return null;
@@ -117,11 +115,11 @@ export default function Page() {
   const detailedPaipan = mingpan ? calculateDetailedPaipan(mingpan) : null;
 
   return (
-    <main className="min-h-screen bg-[var(--color-bg)] p-6 sm:p-10">
+    <main className="reading-workspace min-h-full px-4 py-8 sm:p-10">
       <div className="mx-auto w-full max-w-5xl space-y-6">
 
         {/* ===== 信息输入表单 ===== */}
-        <div className="rounded-3xl bg-white/90 p-6 shadow ring-1 ring-black/5">
+        <div className="ink-card rounded-3xl bg-[var(--color-bg-elevated)] p-6 shadow border border-[var(--color-border)]">
           <h2 className="text-lg font-semibold text-stone-800">基本信息</h2>
           <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
@@ -130,7 +128,7 @@ export default function Page() {
                 value={gender}
                 onChange={(e) => setGender(e.target.value as Gender)}
                 className="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm
-                          text-stone-900 bg-white placeholder-stone-500"
+                          text-[var(--color-text-primary)] bg-[var(--color-bg-elevated)] placeholder-stone-500"
               >
                 <option value="男">男</option>
                 <option value="女">女</option>
@@ -143,7 +141,7 @@ export default function Page() {
                 value={calendar}
                 onChange={(e) => setCalendar(e.target.value as Calendar)}
                 className="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm
-                          text-stone-900 bg-white placeholder-stone-500"
+                          text-[var(--color-text-primary)] bg-[var(--color-bg-elevated)] placeholder-stone-500"
               >
                 <option value="gregorian">公历</option>
                 <option value="lunar">农历</option>
@@ -157,7 +155,7 @@ export default function Page() {
                 value={birthDate}
                 onChange={(e) => setBirthDate(e.target.value)}
                 className="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm
-                          text-stone-900 bg-white placeholder-stone-500"
+                          text-[var(--color-text-primary)] bg-[var(--color-bg-elevated)] placeholder-stone-500"
               />
             </div>
 
@@ -168,7 +166,7 @@ export default function Page() {
                 value={birthTime}
                 onChange={(e) => setBirthTime(e.target.value)}
                 className="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm
-                          text-stone-900 bg-white placeholder-stone-500"
+                          text-[var(--color-text-primary)] bg-[var(--color-bg-elevated)] placeholder-stone-500"
               />
             </div>
 
@@ -180,7 +178,7 @@ export default function Page() {
                 onChange={(e) => setBirthplace(e.target.value)}
                 placeholder="例如：广东阳春"
                 className="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm
-                          text-stone-900 bg-white placeholder-stone-500"
+                          text-[var(--color-text-primary)] bg-[var(--color-bg-elevated)] placeholder-stone-500"
               />
             </div>
           </div>
@@ -214,7 +212,7 @@ export default function Page() {
         <TimeCorrectionNotice info={mingpan} />
 
         {/* ===== 四柱命盘卡片 ===== */}
-        <div className="rounded-3xl bg-white/90 shadow-lg ring-1 ring-black/5">
+        <div className="ink-card rounded-3xl bg-[var(--color-bg-elevated)] shadow-[var(--shadow-sm)] border border-[var(--color-border)]">
           <div className="flex items-center justify-between px-6 py-5 border-b border-stone-100">
             <h2 className="text-lg font-semibold text-[var(--color-primary)]">详细排盘</h2>
             <UiButton variant="plain"
@@ -361,7 +359,7 @@ export default function Page() {
 
         {/* ===== 五行平衡 ===== */}
         {wuxingData && (
-          <div className="rounded-3xl bg-white/90 shadow-lg ring-1 ring-black/5 p-6">
+          <div className="ink-card rounded-3xl bg-[var(--color-bg-elevated)] shadow-[var(--shadow-sm)] border border-[var(--color-border)] p-6">
             <h2 className="text-lg font-semibold text-[var(--color-primary)] mb-4">五行平衡</h2>
             <div className="space-y-3">
               {wuxingData.map(({ name, percent }) => (
@@ -384,7 +382,7 @@ export default function Page() {
         )}
         {/* ===== 大运 ===== */}
         {mingpan && (
-          <div className="rounded-3xl bg-white/90 shadow-lg ring-1 ring-black/5 p-6">
+          <div className="ink-card rounded-3xl bg-[var(--color-bg-elevated)] shadow-[var(--shadow-sm)] border border-[var(--color-border)] p-6">
             <h2 className="text-lg font-semibold text-[var(--color-primary)] mb-4">大运</h2>
             <div className="flex flex-wrap gap-3">
               {mingpan.dayun.slice(0, 10).map((d, i) => {

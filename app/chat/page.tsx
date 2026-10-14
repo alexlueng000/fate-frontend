@@ -571,14 +571,14 @@ export default function ChatPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#F7F3EE] flex items-center justify-center">
+      <div className="min-h-full bg-[var(--color-bg)] flex items-center justify-center">
         <div className="text-neutral-600">加载中...</div>
       </div>
     );
   }
 
   return (
-    <main className="reading-workspace min-h-screen bg-[#F7F3EE] text-neutral-800 px-4 py-6 sm:p-10">
+    <main className="reading-workspace min-h-full bg-[var(--color-bg)] text-neutral-800 px-4 py-6 sm:p-10">
       <div ref={topAnchorRef} aria-hidden="true" />
       <div className="mx-auto w-full max-w-5xl space-y-6">
         <ChatHeader
@@ -591,7 +591,7 @@ export default function ChatPage() {
                 type="button"
                 onClick={() => setShareDialogOpen(true)}
                 disabled={!canShareImage}
-                className="inline-flex min-h-8 shrink-0 items-center gap-1.5 rounded-full border border-red-200 bg-white/90 px-3 py-1 text-red-800 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex min-h-8 shrink-0 items-center gap-1.5 rounded-full border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-3 py-1 text-[var(--color-primary)] transition hover:bg-[var(--color-bg-hover)] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <ImageDown className="h-3.5 w-3.5" aria-hidden="true" />
                 保存分享图

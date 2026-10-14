@@ -135,7 +135,7 @@ export default function FeedbacksPage() {
   }
 
   return (
-    <main className="min-h-screen pt-20 pb-12 px-4">
+    <main className="min-h-full pt-8 pb-12 px-4">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">

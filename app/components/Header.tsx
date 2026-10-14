@@ -111,7 +111,7 @@ export default function Header() {
   return (
     <>
       <header
-        className="fixed top-0 z-50 w-full border-b border-[var(--color-border)] bg-[var(--color-bg-elevated)] shadow-[var(--shadow-sm)]"
+        className="ink-site-header fixed top-0 z-50 w-full border-b border-[var(--color-border)] bg-[var(--color-bg-elevated)] shadow-[var(--shadow-sm)]"
       >
         <div className="mx-auto flex h-16 w-full items-center justify-between px-4 md:px-6 lg:px-10">
 

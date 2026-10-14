@@ -207,7 +207,7 @@ export default function QuickButtonsPage() {
   }
 
   return (
-    <main className="min-h-screen pt-20 pb-8 px-4">
+    <main className="min-h-full pt-8 pb-8 px-4">
       <div className="max-w-4xl mx-auto">
         {/* Back Link */}
         <Link

@@ -12,13 +12,13 @@
 .heading h1 span { color: var(--color-primary); }
 .description { margin-top: 8px; font-size: 16px; line-height: 1.8; color: var(--color-text-secondary); }
 .profile { flex-shrink: 0; font-size: 13px; line-height: 1.9; color: var(--color-text-secondary); text-align: right; }
-.reminder > section { border: 1px solid #e0d6ca; border-radius: 6px; padding: 24px; margin-bottom: 0; background: #fcfaf6ed; box-shadow: 0 5px 22px #57442e08; }
+.reminder > section { border: 1px solid #e0d6ca; border-radius: var(--radius-lg); padding: 24px; margin-bottom: 0; background: #fcfaf6ed; box-shadow: 0 5px 22px #57442e08; }
 .reminder h2 { font-family: var(--font-display); font-size: 28px; }
 .reminder > section > div { grid-template-columns: 1fr 1.12fr; }
-.reminder > section > div > div:last-child > div { border-radius: 4px; }
-.continue > div { border-radius: 6px; border-color: #e0d6ca; background: linear-gradient(90deg,#fcfaf6f5,#fcfaf6dd), url('/images/ink/plum-landscape.webp') right bottom / cover no-repeat; box-shadow: 0 5px 22px #57442e08; }
+.reminder > section > div > div:last-child > div { border-radius: var(--radius-md); }
+.continue > div { border-radius: var(--radius-lg); border-color: #e0d6ca; background: linear-gradient(90deg,#fcfaf6f5,#fcfaf6dd), url('/images/ink/plum-landscape.webp') right bottom / cover no-repeat; box-shadow: 0 5px 22px #57442e08; }
 .entries { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 18px; }
-.entry { display: grid; border: 1px solid #e0d6ca; border-radius: 6px; padding: 24px; background: linear-gradient(#fcfaf6ee,#fcfaf6cf),url('/images/ink/mountain-mist.webp') right bottom / cover no-repeat; box-shadow: 0 5px 22px #57442e06; transition: border-color .2s, box-shadow .2s; }
+.entry { display: grid; border: 1px solid #e0d6ca; border-radius: var(--radius-lg); padding: 24px; background: linear-gradient(#fcfaf6ee,#fcfaf6cf),url('/images/ink/mountain-mist.webp') right bottom / cover no-repeat; box-shadow: 0 5px 22px #57442e06; transition: border-color .2s, box-shadow .2s; }
 .entry:nth-child(2) { background-image: linear-gradient(#fcfaf6ee,#fcfaf6cf),url('/images/ink/bagua-landscape.webp'); }
 .entry:hover { border-color: #b69e87; box-shadow: 0 8px 25px #57442e12; }
 .entry h2 { font-family: var(--font-display); }

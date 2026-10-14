@@ -35,7 +35,7 @@ export default async function ArticlePage({ params }: Props) {
   ).slice(0, 2);
 
   return (
-    <main className="min-h-screen flex flex-col pt-20">
+    <main className="min-h-full flex flex-col pt-8">
       <div className="flex-1 pb-16 px-4">
         <div className="max-w-3xl mx-auto">
           {/* 返回 */}

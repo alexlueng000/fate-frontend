@@ -73,7 +73,7 @@ export default function ViewProfilePage() {
 
   if (loading || fetching) {
     return (
-      <div className="min-h-screen bg-[#F7F3EE] flex items-center justify-center">
+      <div className="min-h-full bg-[var(--color-bg)] flex items-center justify-center">
         <div className="text-neutral-600">加载中...</div>
       </div>
     );
@@ -81,7 +81,7 @@ export default function ViewProfilePage() {
 
   if (error || !profile) {
     return (
-      <div className="min-h-screen bg-[#F7F3EE] flex items-center justify-center p-6">
+      <div className="min-h-full bg-[var(--color-bg)] flex items-center justify-center p-6">
         <div className="text-center">
           <div className="text-red-600 mb-4">{error || '档案不存在'}</div>
           <UiButton variant="plain"
@@ -96,12 +96,12 @@ export default function ViewProfilePage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#F7F3EE] text-neutral-800 p-6 sm:p-10">
+    <main className="reading-workspace min-h-full px-4 py-8 sm:p-10">
       <div className="mx-auto w-full max-w-3xl">
         {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-neutral-900">我的命盘</h1>
-          <div className="flex gap-3">
+        <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+          <h1 className="font-serif text-3xl font-medium text-[var(--color-text-primary)]">我的命盘</h1>
+          <div className="flex flex-wrap gap-2">
             <UiButton variant="plain"
               onClick={() => router.push('/profile/edit?returnTo=/profile/view')}
               className="px-5 py-2.5 rounded-xl border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)]/5 transition-colors font-medium"
@@ -118,8 +118,8 @@ export default function ViewProfilePage() {
         </div>
 
         {/* 基本信息 */}
-        <div className="bg-white rounded-3xl border border-neutral-200 p-6 sm:p-8 mb-6">
-          <h2 className="text-xl font-bold text-neutral-900 mb-6">基本信息</h2>
+        <div className="bg-[var(--color-bg-elevated)] rounded-3xl border border-[var(--color-border)] p-5 sm:p-8 mb-6">
+          <h2 className="font-serif text-xl font-medium text-[var(--color-text-primary)] mb-6">基本信息</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <InfoItem label="性别" value={profile.gender === 'male' ? '男' : '女'} />
             <InfoItem label="历法类型" value={profile.calendar_type === 'solar' ? '公历' : '农历'} />
@@ -131,15 +131,15 @@ export default function ViewProfilePage() {
 
         {/* 八字命盘 */}
         {profile.bazi_chart?.four_pillars && (
-          <div className="bg-white rounded-3xl border border-neutral-200 p-6 sm:p-8">
-            <h2 className="text-xl font-bold text-neutral-900 mb-6">八字命盘</h2>
-            <div className="grid grid-cols-4 gap-4">
+          <div className="bg-[var(--color-bg-elevated)] rounded-3xl border border-[var(--color-border)] p-5 sm:p-8">
+            <h2 className="font-serif text-xl font-medium text-[var(--color-text-primary)] mb-6">八字命盘</h2>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <BaziPillar label="年柱" chars={profile.bazi_chart.four_pillars.year ?? []} />
               <BaziPillar label="月柱" chars={profile.bazi_chart.four_pillars.month ?? []} />
               <BaziPillar label="日柱" chars={profile.bazi_chart.four_pillars.day ?? []} />
               <BaziPillar label="时柱" chars={profile.bazi_chart.four_pillars.hour ?? []} />
             </div>
-            <div className="mt-6 p-4 rounded-xl bg-neutral-50 border border-neutral-200">
+            <div className="mt-6 p-4 rounded-xl bg-[var(--color-bg-alt)] border border-[var(--color-border)]">
               <p className="text-sm text-neutral-600 leading-relaxed">
                 八字命盘是根据您的出生时间计算得出，代表了您的先天命理格局。
                 您可以在聊天中询问关于命盘的详细解读。

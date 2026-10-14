@@ -9,7 +9,7 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
 
 export const Card = forwardRef<HTMLDivElement, CardProps>(
   ({ hover, glass, className = '', children, ...props }, ref) => {
-    const baseClass = glass ? 'glass' : 'card';
+    const baseClass = glass ? 'glass ink-card' : 'card ink-card';
     const hoverClass = hover ? 'card-hover' : '';
 
     return (

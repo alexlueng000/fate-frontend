@@ -12,7 +12,7 @@
 .label { display: block; margin-bottom: 8px; color: var(--color-text-body); font-size: 14px; font-weight: 500; }
 .input {
   width: 100%; min-width: 0; height: 52px; padding: 12px 14px;
-  border: 1px solid var(--color-border-strong); border-radius: 3px;
+  border: 1px solid var(--color-border-strong); border-radius: var(--radius-md);
   background: var(--color-bg-elevated); color: var(--color-text-primary);
   font-size: 16px; line-height: 1.5; transition: border-color 180ms ease-out;
 }
@@ -27,14 +27,14 @@
 .codeRow .input { flex: 1; }
 .sendButton {
   flex-shrink: 0; min-width: 112px; min-height: 52px; padding: 0 12px;
-  border: 1px solid var(--color-border-strong); border-radius: 3px;
+  border: 1px solid var(--color-border-strong); border-radius: var(--radius-md);
   color: var(--color-primary); background: var(--color-bg-elevated); font-size: 14px;
 }
 .sendButton:hover:not(:disabled) { background: var(--color-bg-hover); border-color: var(--color-primary); }
 .sendButton:disabled { color: var(--color-text-secondary); cursor: not-allowed; }
 .primary {
   display: flex; align-items: center; justify-content: center; gap: 8px;
-  width: 100%; min-height: 52px; padding: 12px 20px; border-radius: 3px;
+  width: 100%; min-height: 52px; padding: 12px 20px; border-radius: var(--radius-md);
   background: var(--color-primary); color: var(--color-text-inverse); font-size: 16px; font-weight: 500;
   transition: background-color 180ms ease-out;
 }
@@ -53,9 +53,9 @@
 .passwordLabel .label { margin: 0; }
 .passwordField { position: relative; }
 .passwordField .input { padding-right: 52px; }
-.eye { position: absolute; right: 4px; top: 4px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: var(--color-text-body); border-radius: 3px; }
+.eye { position: absolute; right: 4px; top: 4px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: var(--color-text-body); border-radius: var(--radius-md); }
 @media (min-width: 640px) {
-  .panel { padding: 40px; max-width: 488px; border: 1px solid var(--color-border); border-radius: 4px; background: var(--color-bg-elevated); }
+  .panel { padding: 40px; max-width: 488px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg-elevated); }
   .heading h1 { font-size: 32px; }
 }
 @media (max-width: 639px) {
@@ -64,3 +64,11 @@
 @media (prefers-reduced-motion: reduce) {
   .page *, .page *::before, .page *::after { animation: none !important; transition: none !important; }
 }
+
+/* Ink-paper sign-in panel shared by email, phone and recovery flows. */
+.panel { padding:32px;border:1px solid var(--color-border);border-radius:20px;background-color:var(--color-bg-elevated);background-image:linear-gradient(rgba(255,252,248,.94),rgba(255,252,248,.94)),url('/images/ink/plum-landscape.webp');background-position:right bottom;background-size:auto,320px auto;background-repeat:no-repeat;box-shadow:var(--shadow-md); }
+.heading { padding-bottom:20px;border-bottom:1px solid var(--color-border-subtle); }
+.brand { font-family:var(--font-display); }
+.primary,.sendButton,.input { border-radius:12px; }
+@media(min-width:640px){.panel{padding:40px;border-radius:20px}}
+@media(max-width:639px){.page{padding:28px 16px 40px}.panel{padding:28px 20px}.heading{margin-bottom:24px}.description{font-size:15px}}

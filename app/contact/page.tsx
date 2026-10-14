@@ -8,7 +8,7 @@ import Footer from '@/app/components/Footer';
 
 export default function ContactPage() {
   return (
-    <main className="min-h-screen flex flex-col pt-20">
+    <main className="min-h-full flex flex-col pt-8">
       <div className="flex-1 pb-12 px-4">
         <div className="max-w-2xl mx-auto">
         <Link

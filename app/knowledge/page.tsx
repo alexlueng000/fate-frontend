@@ -17,7 +17,7 @@ export default function KnowledgePage() {
   const categories = Array.from(new Set(articles.map((a) => a.category)));
 
   return (
-    <main className="min-h-screen flex flex-col pt-20">
+    <main className="min-h-full flex flex-col pt-8">
       <div className="flex-1 pb-16 px-4">
         <div className="max-w-5xl mx-auto">
           {/* 返回 */}

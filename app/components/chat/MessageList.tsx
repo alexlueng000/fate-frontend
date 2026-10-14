@@ -125,7 +125,7 @@ export function MessageList({
               <div
                 className={`rounded-[20px] px-3 py-2.5 sm:px-4 sm:py-3 ${
                   isAssistant
-                    ? 'bg-transparent text-[var(--color-text-primary)]'
+                    ? 'ink-assistant-message text-[var(--color-text-primary)]'
                     : 'bg-[var(--color-bg-alt)] text-[var(--color-text-primary)] max-w-[90%] sm:max-w-[75%] ml-auto'
                 }`}
               >

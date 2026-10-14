@@ -3,7 +3,6 @@ import { Button as UiButton } from '@/app/components/ui';
 
 
 import { useEffect, useState } from 'react';
-import { usePathname } from 'next/navigation';
 import styles from './SideNav.module.css';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import NavLink from './NavLink';
@@ -13,7 +12,6 @@ const STORAGE_KEY = 'sidenav_collapsed';
 
 export default function SideNav() {
   const [collapsed, setCollapsed] = useState(false);
-  const isDashboard = usePathname() === "/dashboard";
 
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -28,11 +26,11 @@ export default function SideNav() {
 
   return (
     <aside
-      className={`${isDashboard ? styles.inkSidebar : ''} group relative hidden sm:flex flex-col border-r border-[var(--color-border)] bg-[var(--color-bg-elevated)] flex-shrink-0 transition-[width] duration-200 motion-reduce:transition-none ${
+      className={`${styles.inkSidebar} ${collapsed ? styles.collapsed : ''} group relative hidden sm:flex flex-col border-r border-[var(--color-border)] bg-[var(--color-bg-elevated)] flex-shrink-0 transition-[width] duration-200 motion-reduce:transition-none ${
         collapsed ? 'w-14' : 'w-20 lg:w-44'
       }`}
     >
-      <nav aria-label="主导航" className={`flex flex-col gap-1 p-3 pt-4 ${isDashboard ? styles.primary : 'flex-1'}`}>
+      <nav aria-label="主导航" className={`flex flex-col gap-1 p-3 pt-4 ${styles.primary}`}>
         {PRIMARY_NAV.map(({ href, Icon, longLabel }) => (
           <NavLink
             key={href}
@@ -46,7 +44,7 @@ export default function SideNav() {
         ))}
       </nav>
 
-      <nav aria-label="辅助导航" className={`flex flex-col gap-1 border-t border-[var(--color-border)] p-3 ${isDashboard ? styles.secondary : ''}`}>
+      <nav aria-label="辅助导航" className={`flex flex-col gap-1 border-t border-[var(--color-border)] p-3 ${styles.secondary}`}>
         {SECONDARY_NAV.map(({ href, Icon, longLabel }) => (
           <NavLink
             key={href}
@@ -60,9 +58,9 @@ export default function SideNav() {
         ))}
       </nav>
 
-      {isDashboard && !collapsed && <div className={styles.motto} aria-hidden="true"><span>知命而行</span><span>顺势而为</span><i>易凡</i></div>}
+      {!collapsed && <div className={styles.motto} aria-hidden="true"><span>知命而行</span><span>顺势而为</span><i>易凡</i></div>}
 
-      <UiButton variant={isDashboard ? "plain" : "primary"}
+      <UiButton variant="plain"
         type="button"
         onClick={toggle}
         aria-label={collapsed ? '展开侧边栏' : '收起侧边栏'}

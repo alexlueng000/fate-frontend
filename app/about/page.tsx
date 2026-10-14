@@ -16,7 +16,7 @@ const BELIEFS = [
 
 export default function AboutPage() {
   return (
-    <main className="min-h-screen pt-20" style={{ background: "var(--color-bg)" }}>
+    <main className="min-h-full pt-8" style={{ background: "var(--color-bg)" }}>
       <section className="px-6 pt-16 pb-14 md:pt-24 md:pb-20">
         <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[0.92fr_1.08fr] lg:items-end">
           <div className="space-y-6">

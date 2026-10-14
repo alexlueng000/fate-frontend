@@ -134,7 +134,7 @@ export default function DemoPage() {
         </div>
 
         {/* 用户信息卡片 */}
-        <div className="bg-white rounded-2xl p-6 shadow-lg border border-[var(--color-border)] mb-8">
+        <div className="ink-card bg-[var(--color-bg-elevated)] rounded-2xl p-6 shadow-lg border border-[var(--color-border)] mb-8">
           <div className="flex items-center gap-4 mb-4">
             <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-gold)] flex items-center justify-center">
               <User className="w-6 h-6 text-white" />
@@ -149,7 +149,7 @@ export default function DemoPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4 text-sm">
+          <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-3">
             <div className="flex items-center gap-2 text-[var(--color-text-secondary)]">
               <Calendar className="w-4 h-4 text-[var(--color-primary)]" />
               {DEMO_PAIPAN.birthDate}
@@ -170,7 +170,7 @@ export default function DemoPage() {
           <h3 className="text-center text-sm font-medium text-[var(--color-text-muted)] mb-4">
             四柱八字
           </h3>
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-4 gap-2 sm:gap-4">
             {(['year', 'month', 'day', 'hour'] as const).map((pillar, index) => {
               const labels = ['年柱', '月柱', '日柱', '时柱'];
               const data = DEMO_PAIPAN.fourPillars[pillar];
@@ -179,7 +179,7 @@ export default function DemoPage() {
                   <div className="text-xs text-[var(--color-text-hint)] mb-2">
                     {labels[index]}
                   </div>
-                  <div className="bg-white rounded-xl p-3 shadow-sm">
+                  <div className="bg-[var(--color-bg-elevated)] rounded-xl p-3 shadow-sm">
                     <div className="text-2xl font-bold text-[var(--color-primary)]">
                       {data.gan}
                     </div>
@@ -194,7 +194,7 @@ export default function DemoPage() {
         </div>
 
         {/* 解读内容 */}
-        <div className="bg-white rounded-2xl shadow-lg border border-[var(--color-border)] overflow-hidden">
+        <div className="ink-card bg-[var(--color-bg-elevated)] rounded-2xl shadow-lg border border-[var(--color-border)] overflow-hidden">
           {/* 解读区块 */}
           {[
             { id: 'overview', title: '命盘概述', icon: '📋' },

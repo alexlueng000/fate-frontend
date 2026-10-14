@@ -90,7 +90,7 @@ export default function XinjiPage() {
           aria-live="polite"
           className="fixed top-20 left-1/2 -translate-x-1/2 z-50 animate-fade-in"
         >
-          <div className="bg-[var(--color-text-primary)] text-[var(--color-text-inverse)] px-6 py-3 rounded-[4px] shadow-[var(--shadow-lg)] flex items-center gap-2">
+          <div className="bg-[var(--color-text-primary)] text-[var(--color-text-inverse)] px-6 py-3 rounded-[var(--radius-lg)] shadow-[var(--shadow-lg)] flex items-center gap-2">
             <BookOpen size={16} />
             {successMessage}
           </div>
@@ -124,7 +124,7 @@ export default function XinjiPage() {
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 mb-12">
             {/* Left: Main action card */}
             <div className="lg:col-span-3">
-              <div className="relative bg-[var(--color-bg-card)] rounded-[4px] p-6 sm:p-12 border border-[var(--color-border)] shadow-[var(--shadow-md)] transition-all duration-300 hover:shadow-[var(--shadow-lg)] hover:-translate-y-1">
+              <div className="ink-card relative bg-[var(--color-bg-card)] rounded-[var(--radius-lg)] p-6 sm:p-12 border border-[var(--color-border)] shadow-[var(--shadow-md)] transition-all duration-300 hover:shadow-[var(--shadow-lg)] hover:-translate-y-1">
                 <div className="flex flex-col items-start gap-6">
                   <BookOpen
                     size={48}
@@ -163,7 +163,7 @@ export default function XinjiPage() {
                 <div
                   role="img"
                   aria-label={`一周情绪图表，平均分 ${weeklyData.average_score.toFixed(1)}`}
-                  className="bg-[var(--color-bg-elevated)] rounded-[4px] p-8 h-full border border-[var(--color-border)] shadow-[var(--shadow-md)]"
+                  className="ink-card bg-[var(--color-bg-elevated)] rounded-[var(--radius-lg)] p-8 h-full border border-[var(--color-border)] shadow-[var(--shadow-md)]"
                 >
                   <h3 className="text-xl font-[var(--font-display)] text-[var(--color-text-primary)] mb-6">一周情绪</h3>
 
@@ -211,10 +211,10 @@ export default function XinjiPage() {
             {/* Primary: Character Profile - larger card */}
             <div
               onClick={() => user && setShowProfile(true)}
-              className={`lg:col-span-2 relative bg-[var(--color-bg-card)] border border-[var(--color-border)] p-8 ${user ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'} transition-all duration-300 hover:shadow-[var(--shadow-md)] hover:-translate-y-1 rounded-[4px]`}
+              className={`lg:col-span-2 ink-card relative bg-[var(--color-bg-card)] border border-[var(--color-border)] p-8 ${user ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'} transition-all duration-300 hover:shadow-[var(--shadow-md)] hover:-translate-y-1 rounded-[var(--radius-lg)]`}
             >
               <div className="flex items-start gap-6">
-                <div className="flex-shrink-0 w-12 h-12 rounded-[4px] bg-[var(--color-mist)]/10 flex items-center justify-center">
+                <div className="flex-shrink-0 w-12 h-12 rounded-[var(--radius-lg)] bg-[var(--color-mist)]/10 flex items-center justify-center">
                   <User size={24} strokeWidth={1.5} className="text-[var(--color-mist-deep)]" />
                 </div>
                 <div className="flex-1">
@@ -227,10 +227,10 @@ export default function XinjiPage() {
             {/* Secondary: History - medium card */}
             <div
               onClick={handleShowHistory}
-              className="relative bg-gradient-to-br from-[var(--color-text-primary)] to-[var(--color-text-body)] p-8 text-[var(--color-text-inverse)] cursor-pointer hover:from-[var(--color-text-body)] hover:to-[var(--color-text-primary)] transition-all duration-300 rounded-[4px]"
+              className="relative bg-gradient-to-br from-[var(--color-text-primary)] to-[var(--color-text-body)] p-8 text-[var(--color-text-inverse)] cursor-pointer hover:from-[var(--color-text-body)] hover:to-[var(--color-text-primary)] transition-all duration-300 rounded-[var(--radius-lg)]"
             >
               <div className="flex flex-col gap-4">
-                <div className="w-12 h-12 rounded-[4px] bg-[var(--color-bg-elevated)]/10 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-[var(--radius-lg)] bg-[var(--color-bg-elevated)]/10 flex items-center justify-center">
                   <Archive size={24} strokeWidth={1.5} className="text-[var(--color-text-inverse)]" />
                 </div>
                 <div>
@@ -241,7 +241,7 @@ export default function XinjiPage() {
             </div>
 
             {/* Tertiary: Coming soon features - smaller cards */}
-            <div className="relative bg-[var(--color-bg-elevated)] border border-[var(--color-border)] p-6 opacity-50 cursor-not-allowed rounded-[4px]">
+            <div className="relative bg-[var(--color-bg-elevated)] border border-[var(--color-border)] p-6 opacity-50 cursor-not-allowed rounded-[var(--radius-lg)]">
               <div className="flex items-start gap-4">
                 <MessageCircle size={20} strokeWidth={1.5} className="text-[var(--color-text-muted)] flex-shrink-0" />
                 <div>
@@ -252,7 +252,7 @@ export default function XinjiPage() {
               </div>
             </div>
 
-            <div className="relative bg-[var(--color-bg-elevated)] border border-[var(--color-border)] p-6 opacity-50 cursor-not-allowed rounded-[4px]">
+            <div className="relative bg-[var(--color-bg-elevated)] border border-[var(--color-border)] p-6 opacity-50 cursor-not-allowed rounded-[var(--radius-lg)]">
               <div className="flex items-start gap-4">
                 <Sparkles size={20} strokeWidth={1.5} className="text-[var(--color-text-muted)] flex-shrink-0" />
                 <div>
@@ -263,7 +263,7 @@ export default function XinjiPage() {
               </div>
             </div>
 
-            <div className="relative bg-[var(--color-bg-elevated)] border border-[var(--color-border)] p-6 opacity-50 cursor-not-allowed rounded-[4px]">
+            <div className="relative bg-[var(--color-bg-elevated)] border border-[var(--color-border)] p-6 opacity-50 cursor-not-allowed rounded-[var(--radius-lg)]">
               <div className="flex items-start gap-4">
                 <Target size={20} strokeWidth={1.5} className="text-[var(--color-text-muted)] flex-shrink-0" />
                 <div>
@@ -292,7 +292,7 @@ export default function XinjiPage() {
       {/* History modal */}
       {showHistory && (
         <UiModal open bare onClose={() => setShowHistory(false)} title="历史记录" size="wide" aria-labelledby="history-title">
-          <div className="bg-[var(--color-bg)] max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-[var(--shadow-lg)] flex flex-col rounded-[4px]">
+          <div className="bg-[var(--color-bg)] max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-[var(--shadow-lg)] flex flex-col rounded-[var(--radius-lg)]">
             {/* Header */}
             <div className="relative border-b border-[var(--color-border)] p-6">
               <h2 id="history-title" className="text-2xl font-[var(--font-display)] text-[var(--color-text-primary)]">历史记录</h2>
@@ -315,7 +315,7 @@ export default function XinjiPage() {
                 records.map((record) => (
                   <div
                     key={record.id}
-                    className="bg-[var(--color-bg-card)] p-6 border border-[var(--color-border)] hover:shadow-[var(--shadow-sm)] transition-shadow rounded-[4px]"
+                    className="bg-[var(--color-bg-card)] p-6 border border-[var(--color-border)] hover:shadow-[var(--shadow-sm)] transition-shadow rounded-[var(--radius-lg)]"
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3">

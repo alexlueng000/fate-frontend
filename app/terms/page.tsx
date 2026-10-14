@@ -8,7 +8,7 @@ import Footer from '@/app/components/Footer';
 
 export default function TermsPage() {
   return (
-    <main className="min-h-screen flex flex-col pt-20">
+    <main className="min-h-full flex flex-col pt-8">
       <div className="flex-1 pb-12 px-4">
         <div className="max-w-4xl mx-auto">
         {/* 返回链接 */}

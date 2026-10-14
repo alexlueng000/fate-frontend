@@ -120,7 +120,7 @@ export default function FaqPage() {
   const [openFaq, setOpenFaq] = useState<FaqKey | null>("0-0");
 
   return (
-    <main className="min-h-screen pt-20" style={{ background: "var(--color-bg)" }}>
+    <main className="min-h-full pt-8" style={{ background: "var(--color-bg)" }}>
       <section className="px-6 pt-16 pb-14 md:pt-24 md:pb-20">
         <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
           <div className="space-y-5">

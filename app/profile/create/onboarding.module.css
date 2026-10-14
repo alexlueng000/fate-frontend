@@ -39,3 +39,5 @@
 @media (min-width: 640px) { .actions { flex-direction: row; flex-wrap: wrap; align-items: center; } .sample { padding: 2rem; } .draftNotice { padding-inline: 2rem; } }
 @media (min-width: 1024px) { .welcome { grid-template-columns: 1fr 1fr; gap: 5rem; min-height: calc(100svh - 4rem); padding: 4rem 2rem; } .title { font-size: 3rem; } }
 @media (prefers-reduced-motion: reduce) { .leaving, .formEntering, .sampleExpanded { animation: none; } }
+
+.sample{border-radius:18px;background-color:var(--color-bg-elevated);background-image:var(--ink-card-art);background-position:right bottom;background-size:auto,360px auto;background-repeat:no-repeat;box-shadow:var(--shadow-md)}

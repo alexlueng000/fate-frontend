@@ -63,7 +63,7 @@ export default function BottomNav() {
         </div>
       )}
 
-      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--color-border)] bg-[var(--color-bg-elevated)] shadow-[var(--shadow-lg)] pb-[env(safe-area-inset-bottom)]">
+      <div className="ink-bottom-nav fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--color-border)] bg-[var(--color-bg-elevated)] shadow-[var(--shadow-lg)] pb-[env(safe-area-inset-bottom)]">
         <nav aria-label="底部导航" className="flex items-stretch justify-around">
           {BOTTOM_NAV.map(({ href, Icon, shortLabel }) => {
             const active = matchActive(pathname, href);

@@ -1101,8 +1101,8 @@ export default function LiuyaoPage() {
     } ${extra}`;
 
   return (
-    <div className="reading-workspace min-h-screen bg-[color:var(--color-bg)]">
-      <div className="relative max-w-3xl mx-auto px-4 py-10 md:py-14">
+    <div className="reading-workspace liuyao-workspace min-h-full bg-[color:var(--color-bg)]">
+      <div className="relative max-w-5xl mx-auto px-4 py-8 md:px-8 md:py-10">
         {/* Quota chip */}
         {isLoggedIn && (
         <div className="flex justify-end mb-6">
@@ -1111,7 +1111,7 @@ export default function LiuyaoPage() {
         )}
 
         {/* Header — quiet, one ornament line, no orbs/noise */}
-        <header className="mb-10 text-center">
+        <header className="liuyao-heading mb-8">
           <h1
             className="font-serif text-[1.4rem] md:text-[2.25rem] leading-[1.25] tracking-[0.01em] text-[color:var(--color-text-primary)] font-medium"
           >
@@ -1183,7 +1183,7 @@ export default function LiuyaoPage() {
                 className="border border-[color:var(--color-border)] bg-[color:var(--color-bg-elevated)] rounded-[24px] p-5 md:p-6 shadow-[var(--shadow-md)]"
               >
                 <div>
-                  <label htmlFor="liuyao-question" className="block text-[11px] tracking-[0.24em] uppercase text-[color:var(--color-text-secondary)] font-medium mb-2">
+                  <label htmlFor="liuyao-question" className="block text-[13px] tracking-[0.08em] text-[color:var(--color-text-body)] font-semibold mb-2">
                     所问之事
                   </label>
                   <UiTextarea
@@ -1196,7 +1196,7 @@ export default function LiuyaoPage() {
                 </div>
 
                 <div className="mt-5">
-                  <p className="block text-[11px] tracking-[0.24em] uppercase text-[color:var(--color-text-secondary)] font-medium mb-3">
+                  <p className="block text-[13px] tracking-[0.08em] text-[color:var(--color-text-body)] font-semibold mb-3">
                     常见问题
                   </p>
                   <div className="flex flex-wrap gap-2">
@@ -1244,16 +1244,16 @@ export default function LiuyaoPage() {
           </div>
         ) : (
           /* === Form === */
-          <div className="max-w-2xl mx-auto">
+          <div className="liuyao-entry max-w-3xl mx-auto">
             <div className="bg-[color:var(--color-bg-elevated)] border border-[color:var(--color-border)] rounded-[24px] p-6 md:p-9 shadow-[var(--shadow-md)]">
               <p className="text-[14px] text-[color:var(--color-text-secondary)] mb-7 leading-relaxed">
                 静心想一件你最想确认的事，然后开始起卦。
               </p>
 
-              <form onSubmit={handleSubmit} className="space-y-7">
+              <form onSubmit={handleSubmit} className="liuyao-form space-y-7">
                 {/* Question */}
                 <div>
-                  <label htmlFor="liuyao-question" className="block text-[11px] tracking-[0.24em] uppercase text-[color:var(--color-text-secondary)] font-medium mb-2">
+                  <label htmlFor="liuyao-question" className="block text-[13px] tracking-[0.08em] text-[color:var(--color-text-body)] font-semibold mb-2">
                     所问之事
                   </label>
                   <p className="text-[12px] text-[color:var(--color-text-muted)] mb-3">
@@ -1270,7 +1270,7 @@ export default function LiuyaoPage() {
 
                 {/* Scenario chips */}
                 <fieldset>
-                  <legend className="block text-[11px] tracking-[0.24em] uppercase text-[color:var(--color-text-secondary)] font-medium mb-3">
+                  <legend className="block text-[13px] tracking-[0.08em] text-[color:var(--color-text-body)] font-semibold mb-3">
                     常见问题
                   </legend>
                   <p className="-mt-1 mb-3 text-[12px] leading-5 text-[color:var(--color-text-muted)]">
@@ -1293,7 +1293,7 @@ export default function LiuyaoPage() {
 
                 {/* Method */}
                 <fieldset>
-                  <legend className="block text-[11px] tracking-[0.24em] uppercase text-[color:var(--color-text-secondary)] font-medium mb-3">
+                  <legend className="block text-[13px] tracking-[0.08em] text-[color:var(--color-text-body)] font-semibold mb-3">
                     起卦方式
                   </legend>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -1336,7 +1336,7 @@ export default function LiuyaoPage() {
                 {method === 'number' && (
                   <div className="bg-[color:var(--color-bg-alt)] p-5 rounded-2xl border border-[color:var(--color-border)]">
                     <div className="mb-4">
-                      <p className="text-[11px] tracking-[0.24em] uppercase text-[color:var(--color-text-secondary)] font-medium">
+                      <p className="text-[13px] tracking-[0.08em] text-[color:var(--color-text-body)] font-semibold">
                         凭第一感觉，写下三个正整数
                       </p>
                       <p className="mt-2 text-[12px] leading-5 text-[color:var(--color-text-muted)]">

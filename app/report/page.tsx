@@ -268,10 +268,10 @@ export default function ReportPage() {
   const questions = parsedReport.questions.slice(0, 3);
 
   return (
-    <div className="reading-workspace min-h-screen bg-[var(--color-bg)]" ref={scrollRef}>
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+    <div className="reading-workspace report-workspace min-h-full bg-[var(--color-bg)]" ref={scrollRef}>
+      <div className="max-w-4xl mx-auto px-4 sm:px-8 py-8 sm:py-10">
         {/* Header */}
-        <header className="text-center mb-10 sm:mb-14">
+        <header className="mb-8 sm:mb-10">
           <h1 className="font-serif text-3xl sm:text-4xl text-[var(--color-text-primary)] mb-3 tracking-wide">
             命理分析报告
           </h1>
