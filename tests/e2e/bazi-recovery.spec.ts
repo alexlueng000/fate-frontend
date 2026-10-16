@@ -102,7 +102,19 @@ for (const surface of ['panel', 'chat']) {
     if (surface === 'chat' && !await quick.isVisible()) await page.getByRole('button', { name: '下一步可以这样问' }).click();
     await quick.click();
     const input = page.getByRole('textbox', { name: '对话输入框' });
-    await expect(input).toHaveValue(prompt);
+    await expect(input).toHaveValue('核对岗位');
+    await page.reload();
+    await expect(input).toHaveValue('核对岗位');
+    // Emulate a pending draft saved before display text was separated.
+    await page.evaluate(({ prompt }) => {
+      const key = 'bazi:pending:90001:bazi_conv_9001';
+      const draft = JSON.parse(sessionStorage.getItem(key)!);
+      draft.prompt = prompt;
+      draft.originalPrompt = prompt;
+      sessionStorage.setItem(key, JSON.stringify(draft));
+    }, { prompt });
+    await page.reload();
+    await expect(input).toHaveValue('核对岗位');
     await page.getByRole('button', { name: '重新加载对话' }).click();
     await page.getByRole('button', { name: '发送', exact: true }).click();
     await expect(page.getByText('同一快捷问题的完整回答。')).toBeVisible();

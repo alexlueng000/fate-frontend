@@ -95,7 +95,6 @@ export default function Header() {
     { href: '/report', label: '命理报告', icon: FileText },
     { href: '/panel', label: '八字对话', icon: LayoutDashboard },
     { href: '/history', label: '解读记录', icon: History },
-    { href: '/xinji', label: '心镜灯', icon: BookOpen },
     { href: '/liuyao', label: '六爻玄机', icon: Dices },
   ];
 
@@ -264,21 +263,23 @@ export default function Header() {
             )}
 
             {/* 汉堡菜单 — only visible below lg */}
-            <UiButton variant="icon"
-              className={`lg:hidden flex h-11 w-11 items-center justify-center rounded-[3px] border transition-colors ml-1 ${
-                mobileNavOpen
-                  ? 'border-[var(--color-primary)] bg-[var(--color-bg-elevated)] text-[var(--color-primary)]'
-                  : 'border-transparent text-[var(--color-text-secondary)] hover:border-[var(--color-border)] hover:bg-[var(--color-bg-hover)]'
-              }`}
-              onClick={() => {
-                setMenuOpen(false);
-                setMobileNavOpen((v) => !v);
-              }}
-              aria-label="导航菜单"
-              aria-expanded={mobileNavOpen}
-            >
-              {mobileNavOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </UiButton>
+            <div className="lg:hidden">
+              <UiButton variant="icon"
+                className={`flex h-11 w-11 items-center justify-center rounded-[3px] border transition-colors ml-1 ${
+                  mobileNavOpen
+                    ? 'border-[var(--color-primary)] bg-[var(--color-bg-elevated)] text-[var(--color-primary)]'
+                    : 'border-transparent text-[var(--color-text-secondary)] hover:border-[var(--color-border)] hover:bg-[var(--color-bg-hover)]'
+                }`}
+                onClick={() => {
+                  setMenuOpen(false);
+                  setMobileNavOpen((v) => !v);
+                }}
+                aria-label="导航菜单"
+                aria-expanded={mobileNavOpen}
+              >
+                {mobileNavOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </UiButton>
+            </div>
           </div>
         </div>
 

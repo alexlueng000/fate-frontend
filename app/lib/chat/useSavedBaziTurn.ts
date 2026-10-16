@@ -20,6 +20,11 @@ function readDraft(owner: number, cid: string): Draft | null {
     if (!value || typeof value.requestKey !== 'string' || !/^[a-f0-9]{32}$/.test(value.requestKey) || typeof value.retryable !== 'boolean') return null;
     if (![value.prompt, value.originalPrompt, value.submittedPrompt, value.display].every(text => typeof text === 'string' && text.length <= 16000)) return null;
     if (value.taskContext !== null && typeof value.taskContext !== 'object') return null;
+    // Migrate older quick-action drafts without exposing their internal prompt.
+    if (value.originalPrompt === value.submittedPrompt && value.display !== value.submittedPrompt) {
+      if (value.prompt === value.originalPrompt) value.prompt = value.display;
+      value.originalPrompt = value.display;
+    }
     return value;
   } catch { return null; }
 }
@@ -46,7 +51,7 @@ function remoteDraft(remote: ConversationTurn): Draft | null {
   if (display.length > 16000) return null;
   const topic = context?.taskType === 'career' ? context.facts?.topic : undefined;
   const editable = context && display === context.title
-    ? (typeof topic === 'string' && topic ? topic : display) : payload.message;
+    ? (typeof topic === 'string' && topic ? topic : display) : display;
   return { requestKey: remote.request_key, prompt: editable, originalPrompt: editable, submittedPrompt: payload.message,
     display, taskContext: context, retryable: remote.state === 'retryable' };
 }
@@ -117,7 +122,7 @@ export function useSavedBaziTurn({ owner, cid, input, setMessages, setInput, tas
     // edited question gets a fresh key only after the old attempt is retryable.
     const retry = previous?.retryable && previous.prompt === previous.originalPrompt && content === previous.originalPrompt;
     const editablePrompt = taskContext && displayMessage === taskContext.title
-      ? (taskContext.taskType === 'career' ? taskContext.facts?.topic : undefined) || displayMessage : content;
+      ? (taskContext.taskType === 'career' ? taskContext.facts?.topic : undefined) || displayMessage : displayMessage || content;
     const attempt: Draft = retry ? { ...previous, retryable: false } : { requestKey: newTurnKey(), prompt: editablePrompt,
       originalPrompt: editablePrompt, submittedPrompt: content, display: displayMessage || content, taskContext, retryable: false };
     update(attempt); // Persist before the network request, including page-close cases.
